@@ -1,7 +1,6 @@
 import { expect, test } from 'vitest'
 import { selectionQuery } from './issues'
 
-// Without ids the backend acts on every issue that matches the filters.
 test('refuses a bulk action with no issues selected', () => {
   expect(() => selectionQuery({ ids: [] })).toThrow()
 })

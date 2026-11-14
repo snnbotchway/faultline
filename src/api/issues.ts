@@ -154,9 +154,9 @@ export type IssueSelection = { ids: string[] } | { filters: IssueFilters }
 // empty arrays, so an empty selection must never reach it.
 export function selectionQuery(selection: IssueSelection) {
   if (!('ids' in selection)) return selection.filters
-  const id = selection.ids.map(Number)
-  if (id.length === 0 || id.some((n) => !Number.isInteger(n))) throw new Error('Select at least one issue.')
-  return { id }
+  if (selection.ids.length === 0) throw new Error('Select at least one issue.')
+  if (selection.ids.some((id) => !/^\d+$/.test(id))) throw new Error(`Unknown issue: ${selection.ids.join(', ')}`)
+  return { id: selection.ids.map(Number) }
 }
 
 export const issueActions = {
@@ -205,10 +205,13 @@ export const issueActions = {
         params: { path: { ...issuePath(slug, id), comment_id: commentId } },
       }),
     ),
-  unmerge: async (slug: string, id: string, hashIds: string[]) =>
-    unwrap(
+  // The screen must keep at least one hash on the issue.
+  unmerge: async (slug: string, id: string, hashIds: string[]) => {
+    if (hashIds.length === 0) throw new Error('Select at least one fingerprint to split off.')
+    return unwrap(
       await api.DELETE('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/hashes/', {
         params: { path: issuePath(slug, id), query: { id: hashIds } },
       }),
-    ),
+    )
+  },
 }

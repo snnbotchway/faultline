@@ -183,7 +183,7 @@ Other filters: `GET /organizations/{org}/environments/` and `/projects/{org}/{pr
 | Delete one | `DELETE /issues/{id}/` | none | |
 | Project-scoped (CLI) | `PUT /projects/{org}/{project}/issues/` | as above | `sentry-cli issues resolve/mute/unresolve`; not used by SPA |
 
-Permissions: `event:write` or `event:admin` on the org; reads need `event:read`.
+Permissions: `event:write` or `event:admin` on the org; reads need `event:read`. Unmerging hashes needs `event:admin` (`BE apps/issue_events/api/hashes.py:64`).
 
 ### 3.3 Event and issue detail
 

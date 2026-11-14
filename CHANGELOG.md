@@ -5,6 +5,10 @@ All notable changes to Faultline are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-14
+
+Tested against GlitchTip 7.0.0.
+
 ### Fixed
 
 - Release labels on the timelines no longer run into each other: releases too close to name apart share one label, and a commit hash shows its first seven characters.
@@ -35,5 +39,6 @@ The first release. Tested against GlitchTip 7.0.0.
 - Performance (`/:org/performance/transaction-groups`): transactions ranked by the time they take, with tabs for repeated queries, those slower this week (and the release they slowed down at) and failing ones. A transaction shows its all-time figures, a 7-day chart and where an average request spends its time; on a desktop it opens beside the list. Breakdowns, charts and repeated queries need GlitchTip's cold storage.
 - Logs (`/:org/logs`): search, filters by level, service, environment, host and project with counts, a time window and logs per hour, a log's attributes, and the other logs in its trace.
 
-[Unreleased]: https://github.com/snnbotchway/faultline/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/snnbotchway/faultline/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/snnbotchway/faultline/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/snnbotchway/faultline/releases/tag/v0.1.0

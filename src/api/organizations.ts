@@ -11,6 +11,14 @@ export type OrganizationDetail = Schemas['OrganizationDetailSchema']
 export const Feature = { logs: 'logs', uptime: 'uptime', email: 'email', mcp: 'mcp' } as const
 export type Feature = (typeof Feature)[keyof typeof Feature]
 
+export const organizationKeys = {
+  all: ['organizations'] as const,
+  detail: (slug: string) => [...organizationKeys.all, slug] as const,
+  projects: (slug: string) => [...organizationKeys.detail(slug), 'projects'] as const,
+  environments: (slug: string) => [...organizationKeys.detail(slug), 'environments'] as const,
+  members: (slug: string) => [...organizationKeys.detail(slug), 'members'] as const,
+  teams: (slug: string) => [...organizationKeys.detail(slug), 'teams'] as const,
+}
 
 export const instanceSettingsQuery = queryOptions({
   queryKey: ['instance-settings'],
@@ -24,20 +32,20 @@ export const currentUserQuery = queryOptions({
 })
 
 export const organizationsQuery = queryOptions({
-  queryKey: ['organizations'],
+  queryKey: organizationKeys.all,
   queryFn: () => fetchAllPages((cursor) => api.GET('/api/0/organizations/', { params: { query: { cursor, limit: MAX_PAGE_SIZE } } })),
 })
 
 export const organizationQuery = (slug: string) =>
   queryOptions({
-    queryKey: ['organizations', slug],
+    queryKey: organizationKeys.detail(slug),
     queryFn: async () =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/', { params: { path: orgPath(slug) } })),
   })
 
 export const projectsQuery = (slug: string) =>
   queryOptions({
-    queryKey: ['organizations', slug, 'projects'],
+    queryKey: organizationKeys.projects(slug),
     queryFn: () =>
       fetchAllPages((cursor) =>
         api.GET('/api/0/organizations/{organization_id_or_slug}/projects/', {
@@ -48,7 +56,7 @@ export const projectsQuery = (slug: string) =>
 
 export const environmentsQuery = (slug: string) =>
   queryOptions({
-    queryKey: ['organizations', slug, 'environments'],
+    queryKey: organizationKeys.environments(slug),
     queryFn: async () =>
       unwrap(
         await api.GET('/api/0/organizations/{organization_id_or_slug}/environments/', { params: { path: orgPath(slug) } }),
@@ -57,7 +65,7 @@ export const environmentsQuery = (slug: string) =>
 
 export const membersQuery = (slug: string) =>
   queryOptions({
-    queryKey: ['organizations', slug, 'members'],
+    queryKey: organizationKeys.members(slug),
     queryFn: () =>
       fetchAllPages((cursor) =>
         api.GET('/api/0/organizations/{organization_id_or_slug}/members/', {
@@ -68,7 +76,7 @@ export const membersQuery = (slug: string) =>
 
 export const teamsQuery = (slug: string) =>
   queryOptions({
-    queryKey: ['organizations', slug, 'teams'],
+    queryKey: organizationKeys.teams(slug),
     queryFn: () =>
       fetchAllPages((cursor) =>
         api.GET('/api/0/organizations/{organization_id_or_slug}/teams/', {

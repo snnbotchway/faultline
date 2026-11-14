@@ -27,6 +27,12 @@ export const issueKeys = {
   list: (slug: string, filters: IssueFilters) => [...issueKeys.all(slug), 'list', filters] as const,
   stats: (slug: string, ids: string[], period: StatsPeriod) => [...issueKeys.all(slug), 'stats', period, ids] as const,
   detail: (slug: string, id: string) => [...issueKeys.all(slug), 'detail', id] as const,
+  event: (slug: string, id: string, eventId?: string) => [...issueKeys.detail(slug, id), 'event', eventId ?? 'latest'] as const,
+  events: (slug: string, id: string, query?: string) => [...issueKeys.detail(slug, id), 'events', query] as const,
+  tags: (slug: string, id: string) => [...issueKeys.detail(slug, id), 'tags'] as const,
+  comments: (slug: string, id: string) => [...issueKeys.detail(slug, id), 'comments'] as const,
+  userReports: (slug: string, id: string) => [...issueKeys.detail(slug, id), 'user-reports'] as const,
+  hashes: (slug: string, id: string) => [...issueKeys.detail(slug, id), 'hashes'] as const,
 }
 
 export const issueListQuery = (slug: string, filters: IssueFilters) =>
@@ -68,7 +74,7 @@ export const issueQuery = (slug: string, id: string) =>
 // `eventId` is the server event id, or omitted for the latest event.
 export const issueEventQuery = (slug: string, id: string, eventId?: string) =>
   queryOptions({
-    queryKey: [...issueKeys.detail(slug, id), 'event', eventId ?? 'latest'],
+    queryKey: issueKeys.event(slug, id, eventId),
     queryFn: async () =>
       unwrap(
         eventId
@@ -83,7 +89,7 @@ export const issueEventQuery = (slug: string, id: string, eventId?: string) =>
 
 export const issueEventsQuery = (slug: string, id: string, query?: string) =>
   infiniteQueryOptions({
-    queryKey: [...issueKeys.detail(slug, id), 'events', query],
+    queryKey: issueKeys.events(slug, id, query),
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }) => {
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/events/', {
@@ -96,7 +102,7 @@ export const issueEventsQuery = (slug: string, id: string, query?: string) =>
 
 export const issueTagsQuery = (slug: string, id: string) =>
   queryOptions({
-    queryKey: [...issueKeys.detail(slug, id), 'tags'],
+    queryKey: issueKeys.tags(slug, id),
     queryFn: async () =>
       unwrap(
         await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/tags/', {
@@ -107,7 +113,7 @@ export const issueTagsQuery = (slug: string, id: string) =>
 
 export const issueCommentsQuery = (slug: string, id: string) =>
   queryOptions({
-    queryKey: [...issueKeys.detail(slug, id), 'comments'],
+    queryKey: issueKeys.comments(slug, id),
     queryFn: () =>
       fetchAllPages((cursor) =>
         api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/comments/', {
@@ -118,7 +124,7 @@ export const issueCommentsQuery = (slug: string, id: string) =>
 
 export const issueUserReportsQuery = (slug: string, id: string) =>
   queryOptions({
-    queryKey: [...issueKeys.detail(slug, id), 'user-reports'],
+    queryKey: issueKeys.userReports(slug, id),
     queryFn: () =>
       fetchAllPages((cursor) =>
         api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/user-reports/', {
@@ -129,7 +135,7 @@ export const issueUserReportsQuery = (slug: string, id: string) =>
 
 export const issueHashesQuery = (slug: string, id: string) =>
   queryOptions({
-    queryKey: [...issueKeys.detail(slug, id), 'hashes'],
+    queryKey: issueKeys.hashes(slug, id),
     queryFn: () =>
       fetchAllPages((cursor) =>
         api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/hashes/', {

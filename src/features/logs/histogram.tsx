@@ -1,0 +1,45 @@
+import { hourLabel } from '@/features/issues/format'
+import { cn } from '@/lib/utils'
+import { bucketTotal, type Bucket } from './data'
+import { dayOf } from './format'
+
+const DAY_HOURS = 24
+const MIN_BAR = 2
+
+// Logs per hour on a zero baseline, errors and warnings stacked on the rest. An hour is as fine as the
+// backend counts. With a pointer, picking a bar narrows the list to that hour.
+export function LogHistogram({ buckets, height, hour, onPick }: { buckets: Bucket[]; height: number; hour: number | undefined; onPick: (hour: number | undefined) => void }) {
+  const peak = Math.max(1, ...buckets.map(bucketTotal))
+  const px = (count: number) => (count <= 0 ? 0 : Math.max(MIN_BAR, Math.round((count / peak) * height)))
+  const first = buckets[0]!.start
+  return (
+    <div>
+      <div className="flex items-end gap-px border-b border-grid" style={{ height: height + 1 }} role="group" aria-label="Logs per hour">
+        {buckets.map((bucket) => {
+          const picked = hour === bucket.start
+          const label = `${buckets.length > DAY_HOURS ? `${dayOf(bucket.start * 1000)} ` : ''}${hourLabel(bucket.start)}, ${bucketTotal(bucket)} logs`
+          return (
+            <button
+              key={bucket.start}
+              type="button"
+              aria-pressed={picked}
+              aria-label={label}
+              title={label}
+              onClick={() => onPick(picked ? undefined : bucket.start)}
+              className={cn('flex h-full min-w-0 flex-1 flex-col-reverse justify-start hover:bg-accent max-lg:pointer-events-none', hour !== undefined && !picked && 'opacity-35')}
+            >
+              <span className="w-full bg-foreground/40" style={{ height: px(bucket.other) }} />
+              <span className="w-full bg-level-warning" style={{ height: px(bucket.warnings) }} />
+              <span className="w-full bg-level-error" style={{ height: px(bucket.errors) }} />
+            </button>
+          )
+        })}
+      </div>
+      <div className="mono mt-1 flex justify-between text-xs text-muted-foreground" aria-hidden>
+        <span>{buckets.length > DAY_HOURS ? dayOf(first * 1000) : hourLabel(first)}</span>
+        <span>peak {peak}/hour</span>
+        <span>Now</span>
+      </div>
+    </div>
+  )
+}

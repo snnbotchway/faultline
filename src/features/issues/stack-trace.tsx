@@ -116,19 +116,29 @@ const ORDERS = [
   { value: 'oldest', label: 'Oldest first' },
 ] as const
 
-// What an exception says about how it was caught.
 function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mechanism']> }) {
-  const parts = [mechanism.type, mechanism.handled == null ? undefined : mechanism.handled ? 'handled' : 'unhandled', mechanism.data?.function].filter(Boolean)
-  if (parts.length === 0) return null
+  const { function: caughtIn, ...data } = mechanism.data ?? {}
+  const parts = [
+    mechanism.type && { text: mechanism.type },
+    mechanism.handled != null && { text: mechanism.handled ? 'handled' : 'unhandled', error: !mechanism.handled },
+    caughtIn && { text: String(caughtIn) },
+    ...Object.entries(data).map(([key, item]) => ({ text: `${key}=${valueText(item)}` })),
+  ].filter((part): part is { text: string; error?: boolean } => !!part)
+  if (parts.length === 0 && !mechanism.description) return null
   return (
-    <p className="mono mb-2 text-muted-foreground">
-      {parts.map((part, index) => (
-        <span key={part}>
-          {index > 0 && ' · '}
-          <span className={part === 'unhandled' ? 'text-level-error' : undefined}>{part}</span>
-        </span>
-      ))}
-    </p>
+    <div className="mb-2 text-muted-foreground">
+      {parts.length > 0 && (
+        <p className="mono">
+          {parts.map((part, index) => (
+            <span key={index}>
+              {index > 0 && ' · '}
+              <span className={part.error ? 'text-level-error' : undefined}>{part.text}</span>
+            </span>
+          ))}
+        </p>
+      )}
+      {mechanism.description && <p>{mechanism.description}</p>}
+    </div>
   )
 }
 
@@ -153,7 +163,8 @@ export function StackTrace({ exceptions, platform }: { exceptions: ExceptionValu
               <span className="error-type">{exception.type}</span> <span>{exception.value}</span>
             </p>
             {exception.mechanism && <Mechanism mechanism={exception.mechanism} />}
-            <Frames frames={frames} platform={platform} />
+            {/* Which frames are open is kept by position, so a new order starts afresh. */}
+            <Frames key={order} frames={frames} platform={platform} />
           </div>
         ))
       )}

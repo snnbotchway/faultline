@@ -17,7 +17,7 @@ export type ExceptionValue = {
   value?: string | null
   module?: string | null
   stacktrace?: { frames?: Frame[] | null } | null
-  mechanism?: { type?: string | null; handled?: boolean | null; description?: string | null; data?: { function?: string | null } | null } | null
+  mechanism?: { type?: string | null; handled?: boolean | null; description?: string | null; data?: Record<string, unknown> | null } | null
 }
 export type Crumb = {
   type?: string | null
@@ -37,7 +37,6 @@ export type RequestEntry = {
   cookies?: Record<string, unknown> | [string, string][] | string | null
   env?: Record<string, unknown> | null
 }
-// The report a browser sends when a content security policy blocks something, keyed as the browser names its fields.
 export type CspEntry = Record<string, unknown>
 
 function entry<T>(event: IssueEvent, type: EventEntryType): T | undefined {

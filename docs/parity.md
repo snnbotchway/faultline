@@ -144,7 +144,7 @@ Where Faultline differs on purpose:
 | Projects | `/:org/projects` | Same project list component as Home, scoped to the active org | as Home | [x] |
 | Projects | `/:org/settings/projects` | Same project-rows list as Home (trend, unresolved, alerts, settings link); "New project" if `canWriteProject`; empty state differs for writers vs non-writers **Faultline:** the projects are a group of the settings index, which this path opens. | `GET /organizations/{org}/projects/` (fetch-all); per-row stats as Home | [x] |
 | Projects | `/:org/settings/projects/new` | Create: platform picker (grid, searchable), name (max 64), team select (opens "create team" dialog if none) **Faultline:** an organization with no team names its first one in the same form. | `POST /teams/{org}/{team_slug}/projects/`; `GET /organizations/{org}/teams/`; `POST /organizations/{org}/teams/` | [x] |
-| Projects | `/:org/settings/projects/:project-slug` (`?tab=general` default, `dsn`, `environments`, `alerts`; `&alert=new` or `&alert=<id>`) | Project detail with four tabs, counts on tab labels **Faultline:** a Set up tab (`?tab=setup`) comes first; `?tab=alerts` says the tab is not built yet until Alerts is built. | `GET /projects/{org}/{slug}/`; `GET .../keys/?limit=200` | [ ] |
+| Projects | `/:org/settings/projects/:project-slug` (`?tab=general` default, `dsn`, `environments`, `alerts`; `&alert=new` or `&alert=<id>`) | Project detail with four tabs, counts on tab labels **Faultline:** a Set up tab (`?tab=setup`) comes first. | `GET /projects/{org}/{slug}/`; `GET .../keys/?limit=200` | [x] |
 
 General tab:
 - [x] Rename (`PUT` `{name}`); needs `canWriteProject`. Server errors map onto the field.
@@ -167,14 +167,14 @@ Alerts tab (see Alerts section).
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Alerts | `/:org/settings/projects/:slug?tab=alerts` | Alert list: summary sentence, recipients with type icons, "New alert" | `GET /projects/{org}/{slug}/alerts/` | [ ] |
-| Alerts | `...?tab=alerts&alert=new` / `&alert=<id>` | Editor: name, "an issue gets N events in M minutes" (quantity 0-10000, timespan), "uptime check fails" checkbox, environment multi-select (empty = all), recipients list, add/edit recipient dialog, save, delete (`canAdminProject`), test | `POST /projects/{org}/{slug}/alerts/`; `PUT .../alerts/{id}/`; `DELETE .../alerts/{id}/`; `POST .../alerts/{id}/test/` | [ ] |
+| Alerts | `/:org/settings/projects/:slug?tab=alerts` | Alert list: summary sentence, recipients with type icons, "New alert" | `GET /projects/{org}/{slug}/alerts/` **Faultline:** the same rows also make up `/:org/alerts`, every project's rules on one page. | [x] |
+| Alerts | `...?tab=alerts&alert=new` / `&alert=<id>` | Editor: name, "an issue gets N events in M minutes" (quantity 0-10000, timespan), "uptime check fails" checkbox, environment multi-select (empty = all), recipients list, add/edit recipient dialog, save, delete (`canAdminProject`), test | `POST /projects/{org}/{slug}/alerts/`; `PUT .../alerts/{id}/`; `DELETE .../alerts/{id}/`; `POST .../alerts/{id}/test/` **Faultline:** a saved rule's project can't be changed, as the backend has no way to move one. | [x] |
 
-- [ ] At least one condition required: event frequency or uptime ("Select at least one condition").
-- [ ] Recipient types: Email, General (slack-compatible) Webhook, Discord, Google Chat, ntfy, Microsoft Teams, Zulip (bot email, API key, channel, topic default "GlitchTip Alerts"), Feishu (Lark). Email option hidden when an email recipient already exists. Default new alert starts with an email recipient.
-- [ ] URLs get `https://` prepended when no scheme.
-- [ ] "Send test" per recipient (hidden if `!canTest`).
-- [ ] Alerts are gated on `canWriteProject`; tests, create, update need admin since 7.0 (backend enforces).
+- [x] At least one condition required: event frequency or uptime ("Select at least one condition").
+- [x] Recipient types: Email, General (slack-compatible) Webhook, Discord, Google Chat, ntfy, Microsoft Teams, Zulip (bot email, API key, channel, topic default "GlitchTip Alerts"), Feishu (Lark). Email option hidden when an email recipient already exists. Default new alert starts with an email recipient.
+- [x] URLs get `https://` prepended when no scheme.
+- [x] "Send test" per recipient (hidden if `!canTest`). **Faultline:** one "Send test" on a saved rule sends to each of its saved recipients except email, which the backend never tests, and names any that couldn't be reached.
+- [x] Alerts are gated on `canWriteProject`; tests, create, update need admin since 7.0 (backend enforces).
 
 ---
 

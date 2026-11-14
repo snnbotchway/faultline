@@ -220,5 +220,4 @@ Designed at 390px, checked at 375px.
 
 ## Not built yet
 
-- Alerts, and with them the project's Alerts tab; until then `?tab=alerts` says it is not built.
 - The server-stored theme preference; the theme is per browser for now.

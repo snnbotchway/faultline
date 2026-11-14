@@ -25,7 +25,7 @@ export type RecipientType = (typeof RecipientType)[keyof typeof RecipientType]
 // What the backend says happened to each recipient of a test alert.
 export const TestStatus = { sent: 'sent', skipped: 'skipped', error: 'error' } as const
 export type TestStatus = (typeof TestStatus)[keyof typeof TestStatus]
-export type TestResult = { recipientType: string; status: string; message?: string | null }
+export type TestResult = Schemas['TestAlertResultSchema']
 
 export const alertKeys = {
   all: (slug: string) => ['alerts', slug] as const,
@@ -55,9 +55,7 @@ export const alertActions = {
     ),
   remove: async (slug: string, project: string, id: number) =>
     unwrap(await api.DELETE('/api/0/projects/{organization_id_or_slug}/{project_slug}/alerts/{alert_id}/', { params: { path: alertPath(slug, project, id) } })),
-  // Sends a sample alert to every recipient of the saved rule.
+  // Sends a sample alert to every recipient of the saved rule. Email recipients are skipped.
   test: async (slug: string, project: string, id: number) =>
-    unwrap(
-      await api.POST('/api/0/projects/{organization_id_or_slug}/{project_slug}/alerts/{alert_id}/test/', { params: { path: alertPath(slug, project, id) } }),
-    ) as unknown as TestResult[],
+    unwrap(await api.POST('/api/0/projects/{organization_id_or_slug}/{project_slug}/alerts/{alert_id}/test/', { params: { path: alertPath(slug, project, id) } })),
 }

@@ -21,7 +21,8 @@ export const releaseKeys = {
   commits: (slug: string, version: string) => [...releaseKeys.detail(slug, version), 'commits'] as const,
   files: (slug: string, version: string) => [...releaseKeys.detail(slug, version), 'files'] as const,
   issues: (slug: string, version: string) => [...releaseKeys.detail(slug, version), 'issues'] as const,
-  events: (slug: string, start: number) => [...releaseKeys.all(slug), 'events', start] as const,
+  newIssues: (slug: string) => [...releaseKeys.all(slug), 'new-issues'] as const,
+  events: (slug: string, days: number) => [...releaseKeys.all(slug), 'events', days] as const,
 }
 
 // openapi-fetch encodes the version, which can contain `/` and `@`.
@@ -89,8 +90,8 @@ export const releaseFilesQuery = (slug: string, version: string) =>
   })
 
 /**
- * The unresolved issues that had events in a release, most recent first. An issue is new in the
- * release when its `firstRelease` is this one; the backend has no search for that.
+ * The unresolved issues that had events in a release, most recently seen first. An issue is new in
+ * the release when its `firstRelease` is this one; the backend has no search for that.
  */
 export const releaseIssuesQuery = (slug: string, version: string) =>
   queryOptions({
@@ -104,20 +105,55 @@ export const releaseIssuesQuery = (slug: string, version: string) =>
     },
   })
 
-export const isNewIn = (issue: Issue, version: string) => issue.firstRelease?.version === version
+export const isNewIn = (issue: Pick<Issue, 'firstRelease'>, version: string) => issue.firstRelease?.version === version
 
+export type NewIssueCounts = { counts: Map<string, number>; complete: boolean; since?: string }
+
+/**
+ * How many unresolved issues each release brought, from one page of the newest issues. When the page
+ * is full, a release older than its oldest issue may have more than it shows, so `since` marks the
+ * oldest moment the counts still cover.
+ */
+export function countNewIssues(issues: Pick<Issue, 'firstRelease' | 'firstSeen'>[], full: boolean): NewIssueCounts {
+  const counts = new Map<string, number>()
+  for (const issue of issues) {
+    const version = issue.firstRelease?.version
+    if (version) counts.set(version, (counts.get(version) ?? 0) + 1)
+  }
+  return { counts, complete: !full, since: full ? issues.at(-1)?.firstSeen : undefined }
+}
+
+// The newest issues by first appearance, enough to say how many each recent release brought.
+export const newIssuesByReleaseQuery = (slug: string) =>
+  queryOptions({
+    queryKey: releaseKeys.newIssues(slug),
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/', {
+        params: { path: orgPath(slug), query: { query: 'is:unresolved', sort: '-first_seen', limit: MAX_PAGE_SIZE } },
+      })
+      const page = toPage(unwrap(result), result.response)
+      return countNewIssues(page.items, page.cursors.next !== undefined)
+    },
+  })
+
+// What the backend answers for event stats. The schema declares no response body for this path.
 type EventStats = { intervals: string[]; groups: { series: Record<string, (number | null)[]> }[] }
 const EVENTS_FIELD = 'sum(quantity)'
+const DAY_SECONDS = 86_400
 
-// Error events per day across the organization since `start` (seconds), as [time in seconds, count] points.
-export const dailyEventsQuery = (slug: string, start: number) =>
+// Error events per day across the organization, for the `days` days up to today, as [day start in seconds, count] points.
+export const dailyEventsQuery = (slug: string, days: number) =>
   queryOptions({
-    queryKey: releaseKeys.events(slug, start),
+    queryKey: releaseKeys.events(slug, days),
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<number[][]> => {
-      const query = { category: 'error', interval: '1d', field: EVENTS_FIELD, start: new Date(start * 1000).toISOString(), end: new Date().toISOString() }
-      // The schema declares no query for this path, though the endpoint requires one.
-      const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/stats_v2/', { params: { path: orgPath(slug), query } as never })
+      const today = Math.floor(Date.now() / 1000 / DAY_SECONDS) * DAY_SECONDS
+      const start = new Date((today - (days - 1) * DAY_SECONDS) * 1000).toISOString()
+      const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/stats_v2/', {
+        params: { path: orgPath(slug), query: { category: 'error', interval: '1d', field: EVENTS_FIELD, start, end: new Date().toISOString() } },
+      })
+      // The body is parsed as JSON at runtime; only its type is missing from the schema.
       const stats = unwrap(result) as unknown as EventStats
       const counts = stats.groups[0]?.series[EVENTS_FIELD] ?? []
       return stats.intervals.map((time, index) => [Date.parse(time) / 1000, counts[index] ?? 0])

@@ -31,7 +31,7 @@ import { AssignDialog, AssigneeBadge, LevelGlyph, Skeleton, Trace } from './part
 import { DEFAULT_QUERY, DEFAULT_SORT, SORTS, statusOf, toFilters, withStatus, type InboxSearch } from './search'
 import { Trend, axisFor, classify, fillBuckets, releaseMarks, type Mark } from './trend'
 
-const COLUMNS = 'lg:grid-cols-[44px_minmax(0,5fr)_minmax(0,4fr)_64px_56px_56px_72px_36px]'
+const COLUMNS = 'lg:grid-cols-[44px_minmax(0,5fr)_minmax(0,4fr)_64px_56px_72px_36px]'
 const TABS = [
   { status: IssueStatus.unresolved, label: 'Unresolved' },
   { status: IssueStatus.resolved, label: 'Resolved' },
@@ -126,7 +126,6 @@ function IssueRow({
         </div>
         <Trace buckets={buckets} trend={trend} marks={marks.map((mark) => mark.at)} height={22} className="lg:mx-4" />
         <span className="mono text-right max-lg:hidden">{compact(issue.count)}</span>
-        <span className="mono text-right max-lg:hidden">{compact(issue.userCount ?? 0)}</span>
         <time className="mono text-right text-muted-foreground max-lg:hidden" dateTime={issue.lastSeen} title={exact(issue.lastSeen)}>
           {ago(issue.lastSeen)}
         </time>
@@ -499,7 +498,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
               ))}
               <Trace buckets={totals} marks={marks.map((mark) => mark.at)} height={36} />
             </div>
-            <span className="mono col-span-5 pb-px text-muted-foreground max-lg:hidden">peak {compact(peak)}/day</span>
+            <span className="mono col-span-4 pb-px text-muted-foreground max-lg:hidden">peak {compact(peak)}/day</span>
           </div>
 
           <div className={cn('sticky top-11 z-10 grid h-8 items-center border-b bg-background pr-4 max-lg:hidden', COLUMNS)}>
@@ -521,7 +520,6 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
               <span>Today</span>
             </span>
             <span className="label-caps text-right">Events</span>
-            <span className="label-caps text-right">Users</span>
             <span className="label-caps text-right">Seen</span>
             <span className="label-caps text-right">Assignee</span>
             <span />

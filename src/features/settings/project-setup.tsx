@@ -76,7 +76,9 @@ function Waiting() {
 }
 
 function Arrived({ org, projectId, firstEvent }: { org: string; projectId: string; firstEvent: string }) {
-  const issue = useQuery(latestIssueQuery(org, projectId)).data
+  // The backend marks the first event before it files the issue, and a transaction marks it with no issue at all,
+  // so this keeps asking until an issue is there.
+  const issue = useQuery({ ...latestIssueQuery(org, projectId), refetchInterval: (query) => (query.state.data ? false : POLL_MS) }).data
   return (
     <div role="status" className="border border-ok/60">
       <div className="flex min-h-11 items-center gap-2 px-3">

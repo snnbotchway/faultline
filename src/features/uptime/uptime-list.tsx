@@ -37,7 +37,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
   const monitors = useMemo(() => list.data?.pages.flatMap((page) => page.items) ?? [], [list.data])
   const [opened] = useState(Date.now)
   const now = list.dataUpdatedAt || opened
-  const health = useMonitorHealth(org, monitors, now)
+  const health = useMonitorHealth(org, monitors, now, periodLength(period))
   const from = now - periodLength(period)
   const marks = releaseMarks(releases ?? [], spanAxis(from, now))
   const setPeriod = (next: StatsPeriod) => void navigate({ to: '/$org/uptime-monitors', params: { org }, search: next === StatsPeriod.day ? {} : { period: next }, replace: true })

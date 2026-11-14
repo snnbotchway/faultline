@@ -24,7 +24,7 @@ import { releaseName } from '@/lib/text'
 import { ago, brief, clock, dayTime, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { HISTORY_WINDOW, every, periodLength, span } from './format'
+import { every, periodLength, span } from './format'
 import { Health, checkHealth, checkScale, healthOf, isSlow, percent, uptimeShare, type Downtime, type HealthReport } from './health'
 import { isMonitorId } from './address'
 import { HEALTH, healthLine, isAlarm, isHeartbeat, reasonText, targetText } from './describe'
@@ -114,7 +114,6 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
 }
 
 function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetail; now: number }) {
-  const changes = useQuery(monitorChangesQuery(org, monitor.id, monitor.lastChange, HISTORY_WINDOW))
   const project = projectSlug(useQuery(projectsQuery(org)).data, monitor.projectID ? Number(monitor.projectID) : undefined)
   const releases = (useQuery(recentReleasesQuery(org)).data ?? []).filter((release) => !project || release.projects.some((other) => other.slug === project))
   const alerts = useQuery({ ...projectAlertsQuery(org, project ?? ''), enabled: !!project })
@@ -122,12 +121,14 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   // Which downtime is unfolded: the ongoing one until the user picks, and none once they fold it.
   const [unfolded, setUnfolded] = useState<number | null | undefined>()
   const [period, setPeriod] = useState<StatsPeriod>(StatsPeriod.day)
-  const from = now - periodLength(period)
+  const periodMs = periodLength(period)
+  const changes = useQuery(monitorChangesQuery(org, monitor.id, monitor.lastChange, periodMs))
+  const from = now - periodMs
   const marks = releaseMarks(releases, spanAxis(from, now))
 
   const report = healthOf(monitor, monitor.checks, changes.data?.changes ?? [], now)
   const health = report.health
-  const uptime = changes.data && health !== Health.waiting ? uptimeShare(changes.data, now, periodLength(period)) : undefined
+  const uptime = changes.data && health !== Health.waiting ? uptimeShare(changes.data, now, periodMs) : undefined
   const heartbeat = isHeartbeat(monitor)
   const loud = isAlarm(health)
   const alsoSlow = health === Health.flapping && report.slow

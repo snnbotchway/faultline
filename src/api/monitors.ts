@@ -1,10 +1,10 @@
-import { infiniteQueryOptions, keepPreviousData, queryOptions } from '@tanstack/react-query'
+import { infiniteQueryOptions, keepPreviousData, queryOptions, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { withBase } from './base'
 import { api, orgPath, unwrap } from './client'
 import { detailOf } from './errors'
 import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
 import type { components } from './schema/openapi'
-import { MINUTE_MS } from '@/lib/time'
+import { DAY_MS, MINUTE_MS } from '@/lib/time'
 
 type Schemas = components['schemas']
 // A saved monitor always has an id, though the schema shares its type with the unsaved one.
@@ -91,39 +91,82 @@ export const monitorQuery = (slug: string, id: number, stamp?: string) =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/', { params: { path: monitorPath(slug, id) } })) as MonitorDetail,
   })
 
-// What the backend has on when a monitor went down or came back: those checks, newest first, and
-// whether they reach back to its first check.
-export type ChangeHistory = { changes: Check[]; toFirst: boolean }
+// What the backend has on when a monitor went down or came back: those checks, newest first; whether
+// they reach back to its first check; and, while they end where a page ended, the cursor of the next.
+export type ChangeHistory = { changes: Check[]; toFirst: boolean; older?: string }
 
-// Each page holds 100 changes; 20 cover a monitor going down every 20 minutes for a fortnight.
+// Each page holds 100 changes; 20 cover a monitor going down every 20 minutes for a fortnight. No
+// more than that many are kept either.
 const MAX_CHANGE_PAGES = 20
+const MAX_CHANGES = MAX_CHANGE_PAGES * MAX_PAGE_SIZE
+// The furthest back any screen draws, the 14-day period. Older changes are dropped from the cache.
+const CHANGES_KEPT = 14 * DAY_MS
+
+/** The newest answer in the cache under `key`. */
+export function newestData<T>(client: QueryClient, key: QueryKey): T | undefined {
+  const queries = client.getQueryCache().findAll({ queryKey: key }).filter((query) => query.state.data !== undefined)
+  return queries.sort((a, b) => b.state.dataUpdatedAt - a.state.dataUpdatedAt)[0]?.state.data as T | undefined
+}
 
 /**
- * The checks where the monitor went down or came back, newest first, paged back until one is older
- * than the last `window` milliseconds or the first check is reached. `lastChange` is the monitor's
- * own, so the answer is fetched again only when the monitor has changed state. A monitor that went
- * down too often to page back that far gets fewer, and `toFirst` false.
+ * Pages back through the changes, newest first, until one is older than `since`, the first check is
+ * reached or there are as many as are kept. Pages never change once newer changes push them back, so
+ * on reaching the newest change in `cached` it takes the rest from there and goes on from its cursor.
+ */
+async function walkChanges(fetchPage: (cursor?: string) => Promise<Page<Check>>, since: number, cached: ChangeHistory | undefined): Promise<ChangeHistory> {
+  const changes: Check[] = []
+  const joinAt = cached?.changes[0]?.startCheck
+  let joined = joinAt === undefined
+  let cursor: string | undefined
+  const enough = () => changes.length >= MAX_CHANGES || (changes.length > 0 && Date.parse(changes.at(-1)!.startCheck) < since)
+  for (let pages = 0; pages < MAX_CHANGE_PAGES && !enough(); pages++) {
+    const page = await fetchPage(cursor)
+    const known = joined ? -1 : page.items.findIndex((check) => check.startCheck === joinAt)
+    if (known >= 0) {
+      joined = true
+      changes.push(...page.items.slice(0, known), ...cached!.changes)
+      if (cached!.toFirst) return { changes, toFirst: true }
+      cursor = cached!.older
+      if (cursor === undefined) break
+      continue
+    }
+    changes.push(...page.items)
+    cursor = page.cursors.next
+    if (cursor === undefined) return { changes, toFirst: true }
+  }
+  return { changes, toFirst: false, older: cursor }
+}
+
+// Keeps the changes back to the first one before `cutoff`, which says what state the monitor was in
+// then, and no more than are kept.
+function trimChanges(history: ChangeHistory, cutoff: number): ChangeHistory {
+  const before = history.changes.findIndex((check) => Date.parse(check.startCheck) < cutoff)
+  const keep = Math.min(before === -1 ? history.changes.length : before + 1, MAX_CHANGES)
+  return keep === history.changes.length ? history : { changes: history.changes.slice(0, keep), toFirst: false }
+}
+
+/**
+ * The checks where the monitor went down or came back, newest first, back to one older than the last
+ * `window` milliseconds or to the first check. `lastChange` is the monitor's own, so the answer is
+ * fetched again only when the monitor has changed state, and then only up to the changes already in
+ * the cache, usually one page. A monitor that went down too often to page back that far gets fewer,
+ * and `toFirst` false.
  */
 export const monitorChangesQuery = (slug: string, id: number, lastChange: string | null, window: number) =>
   queryOptions({
     queryKey: [...monitorKeys.changes(slug, id), lastChange, window],
     staleTime: Infinity,
     placeholderData: keepPreviousData,
-    queryFn: async (): Promise<ChangeHistory> => {
-      const since = Date.now() - window
-      const changes: Check[] = []
-      let cursor: string | undefined
-      for (let pages = 0; pages < MAX_CHANGE_PAGES; pages++) {
+    queryFn: async ({ client }): Promise<ChangeHistory> => {
+      const now = Date.now()
+      const fetchPage = async (cursor?: string) => {
         const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/checks/', {
           params: { path: monitorPath(slug, id), query: { is_change: true, limit: MAX_PAGE_SIZE, cursor } },
         })
-        const page = toPage(unwrap(result), result.response)
-        changes.push(...page.items)
-        cursor = page.cursors.next
-        if (cursor === undefined) return { changes, toFirst: true }
-        if (Date.parse(changes.at(-1)!.startCheck) < since) break
+        return toPage(unwrap(result), result.response)
       }
-      return { changes, toFirst: false }
+      const history = await walkChanges(fetchPage, now - window, newestData<ChangeHistory>(client, monitorKeys.changes(slug, id)))
+      return trimChanges(history, now - CHANGES_KEPT)
     },
   })
 

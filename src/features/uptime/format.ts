@@ -1,4 +1,4 @@
-import { StatsPeriod } from '@/api/issues'
+import type { StatsPeriod } from '@/api/issues'
 import { periodInfo } from '@/features/issues/trend'
 import { plural } from '@/lib/text'
 import { DAY, HOUR, MINUTE, MINUTE_MS, SECOND_MS } from '@/lib/time'
@@ -27,6 +27,3 @@ export function every(seconds: number): string {
 
 // How far back a downtime strip reaches for a period (24h or 14d), in milliseconds.
 export const periodLength = (period: StatsPeriod) => periodInfo(period).size * periodInfo(period).count * SECOND_MS
-
-// How far back a monitor's state changes are fetched: the longer period, so either can be drawn.
-export const HISTORY_WINDOW = periodLength(StatsPeriod.fortnight)

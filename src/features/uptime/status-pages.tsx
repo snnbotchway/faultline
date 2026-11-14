@@ -13,7 +13,7 @@ import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { span } from './format'
-import { Health, healthOf } from './health'
+import { FLAPPING_WINDOW, Health, healthOf } from './health'
 import { UptimeTab } from './address'
 import { HEALTH, HEALTH_ORDER } from './describe'
 import { HealthGlyph, UptimeTabs } from './parts'
@@ -39,7 +39,7 @@ export function StatusPages({ org }: { org: string }) {
   const [opened] = useState(Date.now)
   const now = pages.dataUpdatedAt || opened
   // Read from each monitor's checks, as the monitor list reads it, so the two never disagree.
-  const health = useMonitorHealth(org, monitors, now)
+  const health = useMonitorHealth(org, monitors, now, FLAPPING_WINDOW)
   const healthOfMonitor = (monitor: StatusPage['monitors'][number]) => (monitor.id == null ? undefined : health.get(monitor.id)?.report.health) ?? healthOf(monitor, [], [], now).health
 
   const bar = (

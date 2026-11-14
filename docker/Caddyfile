@@ -32,8 +32,8 @@
 				@redirect header Location *
 				handle_response @redirect {
 					@here expression `{rp.header.Location}.startsWith('http://' + {hostport} + '/') || {rp.header.Location}.startsWith('https://' + {hostport} + '/')`
-					header >Location ^(?:{$BASE_PATH_PATTERN})?(?:/([^/].*)?)?$ {$BASE_PATH}/$1
-					header @here >Location ^(https?://[^/]+)(?:{$BASE_PATH_PATTERN})?(?:/([^/].*)?)?$ $1{$BASE_PATH}/$2
+					header >Location ^(?:{$BASE_PATH_PATTERN})?(?:/([^/].*)?|(\?.*))?$ {$BASE_PATH}/$1$2
+					header @here >Location ^(https?://[^/]+)(?:{$BASE_PATH_PATTERN})?(?:/([^/].*)?|(\?.*))?$ $1{$BASE_PATH}/$2$3
 					copy_response
 				}
 			}

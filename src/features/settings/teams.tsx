@@ -241,7 +241,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
         pending={remove.pending}
         error={remove.error}
       >
-        {opens.length ? `Its members lose the access it gave them to ${plural(opens.length, 'project')}. The projects stay.` : 'It has no projects, so nobody loses access to anything.'}
+        {opens.length > 0 && `Its members lose the access it gave them to ${plural(opens.length, 'project')}. The projects stay.`}
       </Confirm>
     </div>
   )

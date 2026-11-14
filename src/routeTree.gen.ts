@@ -20,6 +20,7 @@ import { Route as LoginOrgRouteImport } from './routes/login_.$org'
 import { Route as LoginFinalizeRouteImport } from './routes/login_.finalize'
 import { Route as AppOrgIndexRouteImport } from './routes/_app/$org/index'
 import { Route as AppOrgSectionRouteRouteImport } from './routes/_app/$org/$section/route'
+import { Route as AppOrgAlertsRouteImport } from './routes/_app/$org/alerts'
 import { Route as AppOrgProjectsRouteImport } from './routes/_app/$org/projects'
 import { Route as AppHomeIndexRouteImport } from './routes/_app/_home/index'
 import { Route as AppHomeSystemInfoRouteImport } from './routes/_app/_home/system-info'
@@ -33,9 +34,14 @@ import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$sect
 import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
 import { Route as AppOrgLogsIndexRouteImport } from './routes/_app/$org/logs/index'
 import { Route as AppOrgPerformanceIndexRouteImport } from './routes/_app/$org/performance/index'
+import { Route as AppOrgReleasesIndexRouteImport } from './routes/_app/$org/releases/index'
+import { Route as AppOrgReleasesSplatRouteImport } from './routes/_app/$org/releases/$'
 import { Route as AppOrgSettingsIndexRouteImport } from './routes/_app/$org/settings/index'
 import { Route as AppOrgSettingsMembersRouteRouteImport } from './routes/_app/$org/settings/members/route'
 import { Route as AppOrgSettingsTeamsRouteRouteImport } from './routes/_app/$org/settings/teams/route'
+import { Route as AppOrgUptimeMonitorsIndexRouteImport } from './routes/_app/$org/uptime-monitors/index'
+import { Route as AppOrgUptimeMonitorsNewRouteImport } from './routes/_app/$org/uptime-monitors/new'
+import { Route as AppOrgUptimeMonitorsStatusPagesRouteImport } from './routes/_app/$org/uptime-monitors/status-pages'
 import { Route as AppHomeOrganizationsNewRouteImport } from './routes/_app/_home/organizations/new'
 import { Route as AppProfileAuthTokensNewRouteImport } from './routes/_app/profile/auth-tokens_.new'
 import { Route as AppProfileConfirmEmailKeyRouteImport } from './routes/_app/profile_.confirm-email.$key'
@@ -53,6 +59,8 @@ import { Route as AppOrgSettingsProjectsIndexRouteImport } from './routes/_app/$
 import { Route as AppOrgSettingsProjectsProjectRouteImport } from './routes/_app/$org/settings/projects/$project'
 import { Route as AppOrgSettingsProjectsNewRouteImport } from './routes/_app/$org/settings/projects/new'
 import { Route as AppOrgSettingsTeamsIndexRouteImport } from './routes/_app/$org/settings/teams/index'
+import { Route as AppOrgUptimeMonitorsMonitorIdIndexRouteImport } from './routes/_app/$org/uptime-monitors/$monitorId/index'
+import { Route as AppOrgUptimeMonitorsMonitorIdUpdateRouteImport } from './routes/_app/$org/uptime-monitors/$monitorId/update'
 import { Route as OrgredirectOrganizationsOrgSettingsAuthTokensRouteImport } from './routes/orgredirect.organizations.$org.settings.auth-tokens'
 import { Route as AppOrgIssuesIssueIdEventsEventIdRouteImport } from './routes/_app/$org/issues/$issueId/events/$eventId'
 import { Route as AppOrgSettingsTeamsTeamIndexRouteImport } from './routes/_app/$org/settings/teams/$team/index'
@@ -109,6 +117,11 @@ const AppOrgIndexRoute = AppOrgIndexRouteImport.update({
 const AppOrgSectionRouteRoute = AppOrgSectionRouteRouteImport.update({
   id: '/$section',
   path: '/$section',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgAlertsRoute = AppOrgAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
 const AppOrgProjectsRoute = AppOrgProjectsRouteImport.update({
@@ -178,6 +191,16 @@ const AppOrgPerformanceIndexRoute = AppOrgPerformanceIndexRouteImport.update({
   path: '/performance/',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppOrgReleasesIndexRoute = AppOrgReleasesIndexRouteImport.update({
+  id: '/releases/',
+  path: '/releases/',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgReleasesSplatRoute = AppOrgReleasesSplatRouteImport.update({
+  id: '/releases/$',
+  path: '/releases/$',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
 const AppOrgSettingsIndexRoute = AppOrgSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -193,6 +216,23 @@ const AppOrgSettingsTeamsRouteRoute =
   AppOrgSettingsTeamsRouteRouteImport.update({
     id: '/settings/teams',
     path: '/settings/teams',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgUptimeMonitorsIndexRoute =
+  AppOrgUptimeMonitorsIndexRouteImport.update({
+    id: '/uptime-monitors/',
+    path: '/uptime-monitors/',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgUptimeMonitorsNewRoute = AppOrgUptimeMonitorsNewRouteImport.update({
+  id: '/uptime-monitors/new',
+  path: '/uptime-monitors/new',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgUptimeMonitorsStatusPagesRoute =
+  AppOrgUptimeMonitorsStatusPagesRouteImport.update({
+    id: '/uptime-monitors/status-pages',
+    path: '/uptime-monitors/status-pages',
     getParentRoute: () => AppOrgRouteRoute,
   } as any)
 const AppHomeOrganizationsNewRoute = AppHomeOrganizationsNewRouteImport.update({
@@ -293,6 +333,18 @@ const AppOrgSettingsTeamsIndexRoute =
     path: '/',
     getParentRoute: () => AppOrgSettingsTeamsRouteRoute,
   } as any)
+const AppOrgUptimeMonitorsMonitorIdIndexRoute =
+  AppOrgUptimeMonitorsMonitorIdIndexRouteImport.update({
+    id: '/uptime-monitors/$monitorId/',
+    path: '/uptime-monitors/$monitorId/',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgUptimeMonitorsMonitorIdUpdateRoute =
+  AppOrgUptimeMonitorsMonitorIdUpdateRouteImport.update({
+    id: '/uptime-monitors/$monitorId/update',
+    path: '/uptime-monitors/$monitorId/update',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
 const OrgredirectOrganizationsOrgSettingsAuthTokensRoute =
   OrgredirectOrganizationsOrgSettingsAuthTokensRouteImport.update({
     id: '/orgredirect/organizations/$org/settings/auth-tokens',
@@ -328,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/login/$org': typeof LoginOrgRoute
   '/login/finalize': typeof LoginFinalizeRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/$org/alerts': typeof AppOrgAlertsRoute
   '/$org/projects': typeof AppOrgProjectsRoute
   '/system-info': typeof AppHomeSystemInfoRoute
   '/profile/auth-tokens': typeof AppProfileAuthTokensRoute
@@ -340,6 +393,9 @@ export interface FileRoutesByFullPath {
   '/$org/settings/members': typeof AppOrgSettingsMembersRouteRouteWithChildren
   '/$org/settings/teams': typeof AppOrgSettingsTeamsRouteRouteWithChildren
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/$org/releases/$': typeof AppOrgReleasesSplatRoute
+  '/$org/uptime-monitors/new': typeof AppOrgUptimeMonitorsNewRoute
+  '/$org/uptime-monitors/status-pages': typeof AppOrgUptimeMonitorsStatusPagesRoute
   '/organizations/new': typeof AppHomeOrganizationsNewRoute
   '/profile/auth-tokens/new': typeof AppProfileAuthTokensNewRoute
   '/profile/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
@@ -348,7 +404,9 @@ export interface FileRoutesByFullPath {
   '/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/$org/logs/': typeof AppOrgLogsIndexRoute
   '/$org/performance/': typeof AppOrgPerformanceIndexRoute
+  '/$org/releases/': typeof AppOrgReleasesIndexRoute
   '/$org/settings/': typeof AppOrgSettingsIndexRoute
+  '/$org/uptime-monitors/': typeof AppOrgUptimeMonitorsIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
   '/$org/performance/transaction-groups/$groupId': typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
@@ -356,12 +414,14 @@ export interface FileRoutesByFullPath {
   '/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
   '/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
   '/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
+  '/$org/uptime-monitors/$monitorId/update': typeof AppOrgUptimeMonitorsMonitorIdUpdateRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
   '/$org/performance/transaction-groups/': typeof AppOrgPerformanceTransactionGroupsIndexRoute
   '/$org/settings/members/': typeof AppOrgSettingsMembersIndexRoute
   '/$org/settings/projects/': typeof AppOrgSettingsProjectsIndexRoute
   '/$org/settings/teams/': typeof AppOrgSettingsTeamsIndexRoute
+  '/$org/uptime-monitors/$monitorId/': typeof AppOrgUptimeMonitorsMonitorIdIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
   '/$org/settings/teams/$team/$tab': typeof AppOrgSettingsTeamsTeamTabRoute
   '/$org/settings/teams/$team/': typeof AppOrgSettingsTeamsTeamIndexRoute
@@ -374,6 +434,7 @@ export interface FileRoutesByTo {
   '/login/$org': typeof LoginOrgRoute
   '/login/finalize': typeof LoginFinalizeRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/$org/alerts': typeof AppOrgAlertsRoute
   '/$org/projects': typeof AppOrgProjectsRoute
   '/system-info': typeof AppHomeSystemInfoRoute
   '/profile/auth-tokens': typeof AppProfileAuthTokensRoute
@@ -384,6 +445,9 @@ export interface FileRoutesByTo {
   '/$org': typeof AppOrgIndexRoute
   '/profile': typeof AppProfileIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/$org/releases/$': typeof AppOrgReleasesSplatRoute
+  '/$org/uptime-monitors/new': typeof AppOrgUptimeMonitorsNewRoute
+  '/$org/uptime-monitors/status-pages': typeof AppOrgUptimeMonitorsStatusPagesRoute
   '/organizations/new': typeof AppHomeOrganizationsNewRoute
   '/profile/auth-tokens/new': typeof AppProfileAuthTokensNewRoute
   '/profile/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
@@ -392,7 +456,9 @@ export interface FileRoutesByTo {
   '/$org/issues': typeof AppOrgIssuesIndexRoute
   '/$org/logs': typeof AppOrgLogsIndexRoute
   '/$org/performance': typeof AppOrgPerformanceIndexRoute
+  '/$org/releases': typeof AppOrgReleasesIndexRoute
   '/$org/settings': typeof AppOrgSettingsIndexRoute
+  '/$org/uptime-monitors': typeof AppOrgUptimeMonitorsIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
   '/$org/performance/transaction-groups/$groupId': typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
@@ -400,12 +466,14 @@ export interface FileRoutesByTo {
   '/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
   '/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
   '/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
+  '/$org/uptime-monitors/$monitorId/update': typeof AppOrgUptimeMonitorsMonitorIdUpdateRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId': typeof AppOrgIssuesIssueIdIndexRoute
   '/$org/performance/transaction-groups': typeof AppOrgPerformanceTransactionGroupsIndexRoute
   '/$org/settings/members': typeof AppOrgSettingsMembersIndexRoute
   '/$org/settings/projects': typeof AppOrgSettingsProjectsIndexRoute
   '/$org/settings/teams': typeof AppOrgSettingsTeamsIndexRoute
+  '/$org/uptime-monitors/$monitorId': typeof AppOrgUptimeMonitorsMonitorIdIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
   '/$org/settings/teams/$team/$tab': typeof AppOrgSettingsTeamsTeamTabRoute
   '/$org/settings/teams/$team': typeof AppOrgSettingsTeamsTeamIndexRoute
@@ -422,6 +490,7 @@ export interface FileRoutesById {
   '/login_/$org': typeof LoginOrgRoute
   '/login_/finalize': typeof LoginFinalizeRoute
   '/_app/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/_app/$org/alerts': typeof AppOrgAlertsRoute
   '/_app/$org/projects': typeof AppOrgProjectsRoute
   '/_app/_home/system-info': typeof AppHomeSystemInfoRoute
   '/_app/profile/auth-tokens': typeof AppProfileAuthTokensRoute
@@ -435,6 +504,9 @@ export interface FileRoutesById {
   '/_app/$org/settings/members': typeof AppOrgSettingsMembersRouteRouteWithChildren
   '/_app/$org/settings/teams': typeof AppOrgSettingsTeamsRouteRouteWithChildren
   '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/_app/$org/releases/$': typeof AppOrgReleasesSplatRoute
+  '/_app/$org/uptime-monitors/new': typeof AppOrgUptimeMonitorsNewRoute
+  '/_app/$org/uptime-monitors/status-pages': typeof AppOrgUptimeMonitorsStatusPagesRoute
   '/_app/_home/organizations/new': typeof AppHomeOrganizationsNewRoute
   '/_app/profile/auth-tokens_/new': typeof AppProfileAuthTokensNewRoute
   '/_app/profile_/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
@@ -443,7 +515,9 @@ export interface FileRoutesById {
   '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/_app/$org/logs/': typeof AppOrgLogsIndexRoute
   '/_app/$org/performance/': typeof AppOrgPerformanceIndexRoute
+  '/_app/$org/releases/': typeof AppOrgReleasesIndexRoute
   '/_app/$org/settings/': typeof AppOrgSettingsIndexRoute
+  '/_app/$org/uptime-monitors/': typeof AppOrgUptimeMonitorsIndexRoute
   '/_app/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/_app/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
   '/_app/$org/performance/transaction-groups/$groupId': typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
@@ -451,12 +525,14 @@ export interface FileRoutesById {
   '/_app/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
   '/_app/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
   '/_app/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
+  '/_app/$org/uptime-monitors/$monitorId/update': typeof AppOrgUptimeMonitorsMonitorIdUpdateRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/_app/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
   '/_app/$org/performance/transaction-groups/': typeof AppOrgPerformanceTransactionGroupsIndexRoute
   '/_app/$org/settings/members/': typeof AppOrgSettingsMembersIndexRoute
   '/_app/$org/settings/projects/': typeof AppOrgSettingsProjectsIndexRoute
   '/_app/$org/settings/teams/': typeof AppOrgSettingsTeamsIndexRoute
+  '/_app/$org/uptime-monitors/$monitorId/': typeof AppOrgUptimeMonitorsMonitorIdIndexRoute
   '/_app/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
   '/_app/$org/settings/teams/$team/$tab': typeof AppOrgSettingsTeamsTeamTabRoute
   '/_app/$org/settings/teams/$team/': typeof AppOrgSettingsTeamsTeamIndexRoute
@@ -473,6 +549,7 @@ export interface FileRouteTypes {
     | '/login/$org'
     | '/login/finalize'
     | '/$org/$section'
+    | '/$org/alerts'
     | '/$org/projects'
     | '/system-info'
     | '/profile/auth-tokens'
@@ -485,6 +562,9 @@ export interface FileRouteTypes {
     | '/$org/settings/members'
     | '/$org/settings/teams'
     | '/$org/$section/$'
+    | '/$org/releases/$'
+    | '/$org/uptime-monitors/new'
+    | '/$org/uptime-monitors/status-pages'
     | '/organizations/new'
     | '/profile/auth-tokens/new'
     | '/profile/confirm-email/$key'
@@ -493,7 +573,9 @@ export interface FileRouteTypes {
     | '/$org/issues/'
     | '/$org/logs/'
     | '/$org/performance/'
+    | '/$org/releases/'
     | '/$org/settings/'
+    | '/$org/uptime-monitors/'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
     | '/$org/performance/transaction-groups/$groupId'
@@ -501,12 +583,14 @@ export interface FileRouteTypes {
     | '/$org/settings/members/new'
     | '/$org/settings/projects/$project'
     | '/$org/settings/projects/new'
+    | '/$org/uptime-monitors/$monitorId/update'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId/'
     | '/$org/performance/transaction-groups/'
     | '/$org/settings/members/'
     | '/$org/settings/projects/'
     | '/$org/settings/teams/'
+    | '/$org/uptime-monitors/$monitorId/'
     | '/$org/issues/$issueId/events/$eventId'
     | '/$org/settings/teams/$team/$tab'
     | '/$org/settings/teams/$team/'
@@ -519,6 +603,7 @@ export interface FileRouteTypes {
     | '/login/$org'
     | '/login/finalize'
     | '/$org/$section'
+    | '/$org/alerts'
     | '/$org/projects'
     | '/system-info'
     | '/profile/auth-tokens'
@@ -529,6 +614,9 @@ export interface FileRouteTypes {
     | '/$org'
     | '/profile'
     | '/$org/$section/$'
+    | '/$org/releases/$'
+    | '/$org/uptime-monitors/new'
+    | '/$org/uptime-monitors/status-pages'
     | '/organizations/new'
     | '/profile/auth-tokens/new'
     | '/profile/confirm-email/$key'
@@ -537,7 +625,9 @@ export interface FileRouteTypes {
     | '/$org/issues'
     | '/$org/logs'
     | '/$org/performance'
+    | '/$org/releases'
     | '/$org/settings'
+    | '/$org/uptime-monitors'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
     | '/$org/performance/transaction-groups/$groupId'
@@ -545,12 +635,14 @@ export interface FileRouteTypes {
     | '/$org/settings/members/new'
     | '/$org/settings/projects/$project'
     | '/$org/settings/projects/new'
+    | '/$org/uptime-monitors/$monitorId/update'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId'
     | '/$org/performance/transaction-groups'
     | '/$org/settings/members'
     | '/$org/settings/projects'
     | '/$org/settings/teams'
+    | '/$org/uptime-monitors/$monitorId'
     | '/$org/issues/$issueId/events/$eventId'
     | '/$org/settings/teams/$team/$tab'
     | '/$org/settings/teams/$team'
@@ -566,6 +658,7 @@ export interface FileRouteTypes {
     | '/login_/$org'
     | '/login_/finalize'
     | '/_app/$org/$section'
+    | '/_app/$org/alerts'
     | '/_app/$org/projects'
     | '/_app/_home/system-info'
     | '/_app/profile/auth-tokens'
@@ -579,6 +672,9 @@ export interface FileRouteTypes {
     | '/_app/$org/settings/members'
     | '/_app/$org/settings/teams'
     | '/_app/$org/$section/$'
+    | '/_app/$org/releases/$'
+    | '/_app/$org/uptime-monitors/new'
+    | '/_app/$org/uptime-monitors/status-pages'
     | '/_app/_home/organizations/new'
     | '/_app/profile/auth-tokens_/new'
     | '/_app/profile_/confirm-email/$key'
@@ -587,7 +683,9 @@ export interface FileRouteTypes {
     | '/_app/$org/issues/'
     | '/_app/$org/logs/'
     | '/_app/$org/performance/'
+    | '/_app/$org/releases/'
     | '/_app/$org/settings/'
+    | '/_app/$org/uptime-monitors/'
     | '/_app/$org/$project/issues/$issueId'
     | '/_app/$org/issues/$issueId/$tab'
     | '/_app/$org/performance/transaction-groups/$groupId'
@@ -595,12 +693,14 @@ export interface FileRouteTypes {
     | '/_app/$org/settings/members/new'
     | '/_app/$org/settings/projects/$project'
     | '/_app/$org/settings/projects/new'
+    | '/_app/$org/uptime-monitors/$monitorId/update'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/_app/$org/issues/$issueId/'
     | '/_app/$org/performance/transaction-groups/'
     | '/_app/$org/settings/members/'
     | '/_app/$org/settings/projects/'
     | '/_app/$org/settings/teams/'
+    | '/_app/$org/uptime-monitors/$monitorId/'
     | '/_app/$org/issues/$issueId/events/$eventId'
     | '/_app/$org/settings/teams/$team/$tab'
     | '/_app/$org/settings/teams/$team/'
@@ -698,6 +798,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSectionRouteRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/alerts': {
+      id: '/_app/$org/alerts'
+      path: '/alerts'
+      fullPath: '/$org/alerts'
+      preLoaderRoute: typeof AppOrgAlertsRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
     '/_app/$org/projects': {
       id: '/_app/$org/projects'
       path: '/projects'
@@ -789,6 +896,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgPerformanceIndexRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/releases/': {
+      id: '/_app/$org/releases/'
+      path: '/releases'
+      fullPath: '/$org/releases/'
+      preLoaderRoute: typeof AppOrgReleasesIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/releases/$': {
+      id: '/_app/$org/releases/$'
+      path: '/releases/$'
+      fullPath: '/$org/releases/$'
+      preLoaderRoute: typeof AppOrgReleasesSplatRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
     '/_app/$org/settings/': {
       id: '/_app/$org/settings/'
       path: '/settings'
@@ -808,6 +929,27 @@ declare module '@tanstack/react-router' {
       path: '/settings/teams'
       fullPath: '/$org/settings/teams'
       preLoaderRoute: typeof AppOrgSettingsTeamsRouteRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/uptime-monitors/': {
+      id: '/_app/$org/uptime-monitors/'
+      path: '/uptime-monitors'
+      fullPath: '/$org/uptime-monitors/'
+      preLoaderRoute: typeof AppOrgUptimeMonitorsIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/uptime-monitors/new': {
+      id: '/_app/$org/uptime-monitors/new'
+      path: '/uptime-monitors/new'
+      fullPath: '/$org/uptime-monitors/new'
+      preLoaderRoute: typeof AppOrgUptimeMonitorsNewRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/uptime-monitors/status-pages': {
+      id: '/_app/$org/uptime-monitors/status-pages'
+      path: '/uptime-monitors/status-pages'
+      fullPath: '/$org/uptime-monitors/status-pages'
+      preLoaderRoute: typeof AppOrgUptimeMonitorsStatusPagesRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
     '/_app/_home/organizations/new': {
@@ -929,6 +1071,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSettingsTeamsIndexRouteImport
       parentRoute: typeof AppOrgSettingsTeamsRouteRoute
     }
+    '/_app/$org/uptime-monitors/$monitorId/': {
+      id: '/_app/$org/uptime-monitors/$monitorId/'
+      path: '/uptime-monitors/$monitorId'
+      fullPath: '/$org/uptime-monitors/$monitorId/'
+      preLoaderRoute: typeof AppOrgUptimeMonitorsMonitorIdIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/uptime-monitors/$monitorId/update': {
+      id: '/_app/$org/uptime-monitors/$monitorId/update'
+      path: '/uptime-monitors/$monitorId/update'
+      fullPath: '/$org/uptime-monitors/$monitorId/update'
+      preLoaderRoute: typeof AppOrgUptimeMonitorsMonitorIdUpdateRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
     '/orgredirect/organizations/$org/settings/auth-tokens': {
       id: '/orgredirect/organizations/$org/settings/auth-tokens'
       path: '/orgredirect/organizations/$org/settings/auth-tokens'
@@ -1009,45 +1165,63 @@ const AppOrgSettingsTeamsRouteRouteWithChildren =
 
 interface AppOrgRouteRouteChildren {
   AppOrgSectionRouteRoute: typeof AppOrgSectionRouteRouteWithChildren
+  AppOrgAlertsRoute: typeof AppOrgAlertsRoute
   AppOrgProjectsRoute: typeof AppOrgProjectsRoute
   AppOrgIndexRoute: typeof AppOrgIndexRoute
   AppOrgSettingsMembersRouteRoute: typeof AppOrgSettingsMembersRouteRouteWithChildren
   AppOrgSettingsTeamsRouteRoute: typeof AppOrgSettingsTeamsRouteRouteWithChildren
+  AppOrgReleasesSplatRoute: typeof AppOrgReleasesSplatRoute
+  AppOrgUptimeMonitorsNewRoute: typeof AppOrgUptimeMonitorsNewRoute
+  AppOrgUptimeMonitorsStatusPagesRoute: typeof AppOrgUptimeMonitorsStatusPagesRoute
   AppOrgIssuesIndexRoute: typeof AppOrgIssuesIndexRoute
   AppOrgLogsIndexRoute: typeof AppOrgLogsIndexRoute
   AppOrgPerformanceIndexRoute: typeof AppOrgPerformanceIndexRoute
+  AppOrgReleasesIndexRoute: typeof AppOrgReleasesIndexRoute
   AppOrgSettingsIndexRoute: typeof AppOrgSettingsIndexRoute
+  AppOrgUptimeMonitorsIndexRoute: typeof AppOrgUptimeMonitorsIndexRoute
   AppOrgProjectIssuesIssueIdRoute: typeof AppOrgProjectIssuesIssueIdRoute
   AppOrgIssuesIssueIdTabRoute: typeof AppOrgIssuesIssueIdTabRoute
   AppOrgPerformanceTransactionGroupsGroupIdRoute: typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
   AppOrgSettingsProjectsProjectRoute: typeof AppOrgSettingsProjectsProjectRoute
   AppOrgSettingsProjectsNewRoute: typeof AppOrgSettingsProjectsNewRoute
+  AppOrgUptimeMonitorsMonitorIdUpdateRoute: typeof AppOrgUptimeMonitorsMonitorIdUpdateRoute
   AppOrgIssuesIssueIdIndexRoute: typeof AppOrgIssuesIssueIdIndexRoute
   AppOrgPerformanceTransactionGroupsIndexRoute: typeof AppOrgPerformanceTransactionGroupsIndexRoute
   AppOrgSettingsProjectsIndexRoute: typeof AppOrgSettingsProjectsIndexRoute
+  AppOrgUptimeMonitorsMonitorIdIndexRoute: typeof AppOrgUptimeMonitorsMonitorIdIndexRoute
   AppOrgIssuesIssueIdEventsEventIdRoute: typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 
 const AppOrgRouteRouteChildren: AppOrgRouteRouteChildren = {
   AppOrgSectionRouteRoute: AppOrgSectionRouteRouteWithChildren,
+  AppOrgAlertsRoute: AppOrgAlertsRoute,
   AppOrgProjectsRoute: AppOrgProjectsRoute,
   AppOrgIndexRoute: AppOrgIndexRoute,
   AppOrgSettingsMembersRouteRoute: AppOrgSettingsMembersRouteRouteWithChildren,
   AppOrgSettingsTeamsRouteRoute: AppOrgSettingsTeamsRouteRouteWithChildren,
+  AppOrgReleasesSplatRoute: AppOrgReleasesSplatRoute,
+  AppOrgUptimeMonitorsNewRoute: AppOrgUptimeMonitorsNewRoute,
+  AppOrgUptimeMonitorsStatusPagesRoute: AppOrgUptimeMonitorsStatusPagesRoute,
   AppOrgIssuesIndexRoute: AppOrgIssuesIndexRoute,
   AppOrgLogsIndexRoute: AppOrgLogsIndexRoute,
   AppOrgPerformanceIndexRoute: AppOrgPerformanceIndexRoute,
+  AppOrgReleasesIndexRoute: AppOrgReleasesIndexRoute,
   AppOrgSettingsIndexRoute: AppOrgSettingsIndexRoute,
+  AppOrgUptimeMonitorsIndexRoute: AppOrgUptimeMonitorsIndexRoute,
   AppOrgProjectIssuesIssueIdRoute: AppOrgProjectIssuesIssueIdRoute,
   AppOrgIssuesIssueIdTabRoute: AppOrgIssuesIssueIdTabRoute,
   AppOrgPerformanceTransactionGroupsGroupIdRoute:
     AppOrgPerformanceTransactionGroupsGroupIdRoute,
   AppOrgSettingsProjectsProjectRoute: AppOrgSettingsProjectsProjectRoute,
   AppOrgSettingsProjectsNewRoute: AppOrgSettingsProjectsNewRoute,
+  AppOrgUptimeMonitorsMonitorIdUpdateRoute:
+    AppOrgUptimeMonitorsMonitorIdUpdateRoute,
   AppOrgIssuesIssueIdIndexRoute: AppOrgIssuesIssueIdIndexRoute,
   AppOrgPerformanceTransactionGroupsIndexRoute:
     AppOrgPerformanceTransactionGroupsIndexRoute,
   AppOrgSettingsProjectsIndexRoute: AppOrgSettingsProjectsIndexRoute,
+  AppOrgUptimeMonitorsMonitorIdIndexRoute:
+    AppOrgUptimeMonitorsMonitorIdIndexRoute,
   AppOrgIssuesIssueIdEventsEventIdRoute: AppOrgIssuesIssueIdEventsEventIdRoute,
 }
 

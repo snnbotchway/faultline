@@ -19,12 +19,19 @@ test('logs can be searched and narrowed to a service', async ({ page }) => {
 
 test('a log opens with its fields and leads to the other logs in its trace', async ({ page }) => {
   await page.goto(logs)
-  await rows(page).filter({ hasText: 'Quote' }).first().click()
   const detail = page.getByRole('complementary', { name: 'Log' })
-  await expect(detail).toContainText('Fields')
+  const toTrace = detail.getByRole('button', { name: 'Logs in this trace' })
+  // The seed leaves every seventh log outside a trace, so open quote logs until one belongs to one.
+  const quotes = rows(page).filter({ hasText: 'Quote' })
+  await expect(quotes.first()).toBeVisible()
+  for (const row of (await quotes.all()).slice(0, 8)) {
+    await row.click()
+    await expect(detail).toContainText('Fields')
+    if (await toTrace.isVisible()) break
+  }
   await expect(detail).toContainText('service')
 
-  await detail.getByRole('button', { name: 'Logs in this trace' }).click()
+  await toTrace.click()
   await expect(page.getByRole('button', { name: /^Remove trace/ })).toBeVisible()
   await expect(rows(page).first()).toBeVisible()
 })

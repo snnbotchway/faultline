@@ -2,8 +2,8 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import type { Issue } from '@/api/issues'
-import { canManageReleases, organizationQuery } from '@/api/organizations'
-import { canOpenRelease, isNewIn, releaseActions, releaseCommitsQuery, releaseDeploysQuery, releaseFilesQuery, releaseIssuesQuery, releaseKeys, releaseQuery, type ReleaseFile } from '@/api/releases'
+import { canManageReleases, organizationQuery, projectsQuery } from '@/api/organizations'
+import { canOpenRelease, isNewIn, releaseActions, releaseCommitsQuery, releaseDeploysQuery, releaseFilesQuery, releaseIssuesQuery, releaseKeys, releaseQuery, type Release, type ReleaseFile } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
 import { Button } from '@/components/ui/button'
@@ -18,10 +18,10 @@ import { LevelGlyph } from '@/features/issues/level'
 import { countWord, releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
+import { EventsChart } from './events-chart'
 
 const COMMITS_SHOWN = 3
 const SHA_SHOWN = 7
-
 
 /** One release: the issues it brought and the ones still happening in it, where it was deployed, its commits and its files. */
 export function ReleasePage({ org, version }: { org: string; version: string }) {
@@ -94,6 +94,7 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
               <Skeleton className="mt-2 h-4 w-48" />
             )}
           </header>
+          {release.data && <ReleaseEvents org={org} release={release.data} />}
           <ReleaseIssues org={org} version={version} />
         </div>
         <aside className="flex flex-col gap-8 pt-5 lg:border-l lg:pl-6">
@@ -103,6 +104,18 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
         </aside>
       </div>
     </>
+  )
+}
+
+// The errors of the release's projects over the last two weeks, with this release marked where it was made.
+function ReleaseEvents({ org, release }: { org: string; release: Release }) {
+  const projects = useQuery(projectsQuery(org)).data
+  const ids = projects?.filter((project) => release.projects.some((other) => other.slug === project.slug)).map((project) => Number(project.id))
+  if (!ids) return <Skeleton className="mb-8 h-25" />
+  return (
+    <Section label="Errors in its projects" className="mb-8">
+      <EventsChart org={org} releases={[release]} projects={ids} className="pt-3" />
+    </Section>
   )
 }
 

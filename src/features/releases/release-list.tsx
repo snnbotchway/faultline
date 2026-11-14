@@ -1,18 +1,14 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
-import { dailyEventsQuery, newIssuesByReleaseQuery, releaseListQuery, type NewIssueCounts, type Release } from '@/api/releases'
+import { newIssuesByReleaseQuery, releaseListQuery, type NewIssueCounts, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { releaseMarks, spanAxis } from '@/features/issues/trend'
-import { clock, compact, dayLabel, dayName, exact } from '@/features/issues/format'
-import { countWord, plural, releaseName } from '@/lib/text'
-import { ReleaseTrace } from '@/features/issues/trace'
-import { DAY_MS } from '@/lib/time'
+import { clock, compact, dayName, exact } from '@/features/issues/format'
+import { countWord, releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
-
-const DAYS = 14
+import { EventsChart } from './events-chart'
 
 // How many unresolved issues a release brought, when the one page of newest issues covers it.
 function newIssues(counts: NewIssueCounts | undefined, release: Release): number | undefined {
@@ -65,7 +61,7 @@ export function ReleaseList({ org }: { org: string }) {
     <>
       {bar}
       <div className="mx-auto w-full max-w-4xl pb-16">
-        <EventsChart org={org} releases={releases} />
+        <EventsChart org={org} releases={releases} className="border-b px-3 pt-4 pb-3 lg:px-4" />
         {list.isPending ? (
           <div aria-busy aria-label="Loading releases">
             {Array.from({ length: 5 }, (_, index) => (
@@ -104,10 +100,15 @@ export function ReleaseList({ org }: { org: string }) {
                               </span>
                             )}
                           </span>
-                          <span className="mono mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-                            <span>{release.projects.map((project) => project.slug).join(', ')}</span>
-                            <span>{release.deployCount ? plural(release.deployCount, 'deploy') : 'not deployed'}</span>
-                            {release.commitCount > 0 && <span>{plural(release.commitCount, 'commit')}</span>}
+                          {/* Slugs are machine text; the counts are words, with their figure in mono. */}
+                          <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+                            <span className="mono">{release.projects.map((project) => project.slug).join(', ')}</span>
+                            <span>{release.deployCount ? <Counted count={release.deployCount} word="deploy" /> : 'Not deployed'}</span>
+                            {release.commitCount > 0 && (
+                              <span>
+                                <Counted count={release.commitCount} word="commit" />
+                              </span>
+                            )}
                           </span>
                         </span>
                       </Link>
@@ -130,25 +131,11 @@ export function ReleaseList({ org }: { org: string }) {
   )
 }
 
-// The organization's error events per day, with each release marked where it was made.
-function EventsChart({ org, releases }: { org: string; releases: Release[] }) {
-  const events = useQuery(dailyEventsQuery(org, DAYS))
-  if (!events.data)
-    return (
-      <div className="border-b px-3 pt-4 pb-3 lg:px-4">
-        {events.isError ? <p className="flex h-25 items-center text-muted-foreground">The events per day didn't load.</p> : <Skeleton className="h-25" />}
-      </div>
-    )
-  const { start, counts } = events.data
-  const marks = releaseMarks(releases, spanAxis(start, start + DAYS * DAY_MS))
+// `2 deploys`: the figure in mono, the word in the sans.
+function Counted({ count, word }: { count: number; word: string }) {
   return (
-    <div className="border-b px-3 pt-4 pb-3 lg:px-4">
-      <ReleaseTrace buckets={counts} marks={marks} height={56} />
-      <p className="label-caps mt-2 flex justify-between">
-        <span>{dayLabel(start / 1000)}</span>
-        <span>Events / day</span>
-        <span>Today</span>
-      </p>
-    </div>
+    <>
+      <span className="mono">{count}</span> {countWord(count, word)}
+    </>
   )
 }

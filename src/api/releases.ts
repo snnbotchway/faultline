@@ -23,7 +23,7 @@ export const releaseKeys = {
   files: (slug: string, version: string) => [...releaseKeys.detail(slug, version), 'files'] as const,
   issues: (slug: string, version: string) => [...releaseKeys.detail(slug, version), 'issues'] as const,
   newIssues: (slug: string) => [...releaseKeys.all(slug), 'new-issues'] as const,
-  events: (slug: string, days: number) => [...releaseKeys.all(slug), 'events', days] as const,
+  events: (slug: string, days: number, projects?: number[]) => [...releaseKeys.all(slug), 'events', days, projects ?? 'all'] as const,
 }
 
 /**
@@ -159,9 +159,10 @@ export type DailyEvents = { start: number; counts: number[] }
  * time zone. The backend's `1d` interval counts only the first hour of each day, so hours are
  * fetched and added up here.
  */
-export const dailyEventsQuery = (slug: string, days: number) =>
+// `projects` (ids) narrows the count to those projects; without it every project counts.
+export const dailyEventsQuery = (slug: string, days: number, projects?: number[]) =>
   queryOptions({
-    queryKey: releaseKeys.events(slug, days),
+    queryKey: releaseKeys.events(slug, days, projects),
     staleTime: 5 * MINUTE_MS,
     queryFn: async (): Promise<DailyEvents> => {
       const midnight = new Date()
@@ -169,7 +170,7 @@ export const dailyEventsQuery = (slug: string, days: number) =>
       midnight.setDate(midnight.getDate() - (days - 1))
       const start = midnight.getTime()
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/stats_v2/', {
-        params: { path: orgPath(slug), query: { category: 'error', interval: '1h', field: EVENTS_FIELD, start: new Date(start).toISOString(), end: new Date().toISOString() } },
+        params: { path: orgPath(slug), query: { category: 'error', interval: '1h', field: EVENTS_FIELD, project: projects, start: new Date(start).toISOString(), end: new Date().toISOString() } },
       })
       // An organization without projects has no events; the backend answers that with 404.
       if (result.response.status === 404) return { start, counts: Array.from({ length: days }, () => 0) }

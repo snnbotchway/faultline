@@ -8,9 +8,8 @@ import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PeriodToggle, ReleaseLabels, ReleaseRules } from '@/features/issues/trace'
-import { periodInfo } from '@/features/issues/trend'
-import { releaseMarks, spanAxis, type Mark } from '@/features/issues/trend'
+import { MarkLabels, PeriodToggle, ReleaseRules } from '@/features/issues/trace'
+import { periodInfo, releaseMarks, spanAxis, type Mark } from '@/features/issues/trend'
 import { ago, dayTime, exact, noun } from '@/features/issues/format'
 import { SECOND_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
@@ -123,7 +122,9 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
         <span className="label-caps lg:hidden">Downtime since {since}</span>
         <div className="lg:hidden">{toggle}</div>
         <div className="relative mx-4 max-lg:hidden">
-          <ReleaseLabels marks={marks} />
+          <div className="relative h-5">
+            <MarkLabels marks={marks} />
+          </div>
           <div className="relative h-1">
             <ReleaseRules marks={marks} />
           </div>

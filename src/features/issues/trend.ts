@@ -1,6 +1,6 @@
 import { StatsPeriod } from '@/api/issues'
 import { releaseName } from '@/lib/text'
-import { DAY, HOUR } from '@/lib/time'
+import { DAY, HOUR, SECOND_MS } from '@/lib/time'
 import { dayLabel, hourLabel } from './format'
 
 // Each period the traces can show: its buckets, and how it is named on screen.
@@ -115,6 +115,19 @@ export function markLabels(marks: Mark[], width: number): MarkLabel[] {
     }
   }
   return groups.map((group) => ({ at: group.first, text: text(group), left: label(group).from, releases: [...group.versions].reverse() }))
+}
+
+// An axis over an exact stretch of time (milliseconds), for strips that end at now rather than at a bucket's edge.
+export const spanAxis = (from: number, to: number): Axis => ({ start: from / SECOND_MS, size: (to - from) / SECOND_MS, count: 1 })
+
+// The newest release made before a moment, from a list in any order.
+export function releaseBefore<T extends { dateCreated: string }>(releases: T[], time: number): T | undefined {
+  let found: T | undefined
+  for (const release of releases) {
+    const at = Date.parse(release.dateCreated)
+    if (at < time && (!found || at > Date.parse(found.dateCreated))) found = release
+  }
+  return found
 }
 
 export const axisStartLabel = (period: StatsPeriod, start: number) => (period === StatsPeriod.day ? hourLabel(start) : dayLabel(start))

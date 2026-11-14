@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { StatsPeriod } from '@/api/issues'
-import { axisFor, barHeights, classify, fillBuckets, markLabels, position, releaseMarks } from './trend'
+import { axisFor, barHeights, classify, fillBuckets, markLabels, position, releaseMarks, releaseBefore, spanAxis } from './trend'
 
 const now = new Date('2026-11-14T12:30:00Z')
 const seconds = (iso: string) => new Date(iso).getTime() / 1000
@@ -96,5 +96,18 @@ describe('bar heights', () => {
 
   it('scales to a shared peak when one is given', () => {
     expect(barHeights([10], 20, 40)).toEqual([5])
+  })
+})
+
+describe('monitoring axes', () => {
+  it('places a release on an exact stretch that ends now', () => {
+    const axis = spanAxis(Date.parse('2026-11-14T00:00:00Z'), Date.parse('2026-11-14T10:00:00Z'))
+    expect(position('2026-11-14T05:00:00Z', axis)).toBeCloseTo(0.5)
+  })
+
+  it('finds the newest release made before a moment, in a list in any order', () => {
+    const releases = [{ dateCreated: '2026-11-03T00:00:00Z' }, { dateCreated: '2026-11-09T00:00:00Z' }, { dateCreated: '2026-11-05T00:00:00Z' }]
+    expect(releaseBefore(releases, Date.parse('2026-11-08T00:00:00Z'))).toBe(releases[2])
+    expect(releaseBefore(releases, Date.parse('2026-11-01T00:00:00Z'))).toBeUndefined()
   })
 })

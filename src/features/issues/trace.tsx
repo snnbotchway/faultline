@@ -1,7 +1,25 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { StatsPeriod } from '@/api/issues'
 import { cn } from '@/lib/utils'
 import { PERIODS, Trend, barHeights, markLabels, type Mark } from './trend'
+
+/**
+ * The shell every chart on a time axis shares: a baseline in the grid colour, the release rules
+ * behind, and the chart's own marks (bars, blocks) standing on the baseline.
+ */
+export function TraceFrame({ height, marks, phoneMarks = true, className, children }: { height: number; marks?: Mark[]; phoneMarks?: boolean; className?: string; children: ReactNode }) {
+  return (
+    <div className={cn('relative flex items-end gap-px border-b border-grid', className)} style={{ height: height + 1 }} aria-hidden>
+      {marks && <ReleaseRules marks={marks} phone={phoneMarks} />}
+      {children}
+    </div>
+  )
+}
+
+// Release rules through a chart, in the quiet grid colour. `phone={false}` hides them where the chart is too narrow for them.
+export function ReleaseRules({ marks, phone = true }: { marks: Mark[]; phone?: boolean }) {
+  return marks.map((mark, index) => <span key={index} data-mark className={cn('absolute inset-y-0 w-px bg-grid', !phone && 'max-lg:hidden')} style={{ left: `${mark.at * 100}%` }} />)
+}
 
 // Events per bucket as bars on a zero baseline. `marks` are positions (0 to 1) of releases on the same axis.
 export function Trace({
@@ -21,10 +39,7 @@ export function Trace({
 }) {
   const heights = barHeights(buckets, height, peak)
   return (
-    <div className={cn('relative flex items-end gap-px border-b border-grid', className)} style={{ height: height + 1 }} aria-hidden>
-      {marks?.map((mark, index) => (
-        <span key={index} data-mark className="absolute inset-y-0 w-px bg-grid" style={{ left: `${mark.at * 100}%` }} />
-      ))}
+    <TraceFrame height={height} marks={marks} className={className}>
       {heights.map((barHeight, index) => (
         <span
           key={index}
@@ -35,7 +50,7 @@ export function Trace({
           style={{ height: barHeight }}
         />
       ))}
-    </div>
+    </TraceFrame>
   )
 }
 

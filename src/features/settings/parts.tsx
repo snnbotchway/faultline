@@ -329,7 +329,7 @@ export function CopyButton({
 export function CopyField({ value, label, className }: { value: string; label: string; className?: string }) {
   return (
     <div className={cn('flex items-stretch border bg-code', className)}>
-      <code aria-label={label} className="mono min-w-0 flex-1 px-3 py-2 leading-[1.5] [overflow-wrap:anywhere] max-lg:py-3">
+      <code aria-label={label} className="mono min-w-0 flex-1 px-3 py-2 leading-normal [overflow-wrap:anywhere] max-lg:py-3">
         {value}
       </code>
       <CopyButton text={value} inBox />
@@ -345,7 +345,7 @@ export function CodeBlock({ code, label, className }: { code: string; label: str
         <span className="mono flex min-w-0 items-center truncate text-muted-foreground">{label}</span>
         <CopyButton text={code} inBox />
       </figcaption>
-      <pre className="mono p-3 leading-[1.6] break-all whitespace-pre-wrap">{code}</pre>
+      <pre className="mono p-3 leading-code break-all whitespace-pre-wrap">{code}</pre>
     </figure>
   )
 }

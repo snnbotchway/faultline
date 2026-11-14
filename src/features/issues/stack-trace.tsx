@@ -6,7 +6,7 @@ import { frameFile, framesOf, valueText, type ExceptionValue, type Frame } from 
 export function ContextLines({ frame }: { frame: Frame }) {
   if (!frame.context?.length) return null
   return (
-    <pre className="mono overflow-x-auto bg-code py-2 leading-[1.6]">
+    <pre className="mono overflow-x-auto bg-code py-2 leading-code">
       {frame.context.map(([line, text]) => (
         <div key={line} className={cn('flex min-w-max pr-3', line === frame.lineNo && 'bg-hit font-medium')}>
           <span className="w-12 shrink-0 pr-3 text-right text-muted-foreground select-none">{line}</span>

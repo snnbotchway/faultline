@@ -32,6 +32,8 @@
   --tracking-label: 0.12em;
   --tracking-wordmark: 0.18em;
   --tracking-code: 0.2em;
+  /* Code and stack traces: looser than body text, so long lines stay apart. */
+  --leading-code: 1.6;
 
   --radius-sm: 0;
   --radius-md: 0;

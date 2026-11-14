@@ -41,7 +41,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 
 Every size on screen is one of these steps; a headline that shrinks on a phone moves down a step (`text-2xl lg:text-3xl`), not to a size in between.
 
-The root font size stays at the browser's 16px, so a rem is always 16px and the sizes above are what renders; the body size is set on `body`, never on `html`. Nothing is set below 12px except key hints. Text inputs are 16px on touch layouts so the browser does not zoom (the `touch-input` utility). Prose (`prose-text`) has a 1.55 line height and a measure of at most 72 characters.
+The root font size stays at the browser's 16px, so a rem is always 16px and the sizes above are what renders; the body size is set on `body`, never on `html`. Nothing is set below 12px except key hints. Text inputs are 16px on touch layouts so the browser does not zoom (the `touch-input` utility). Prose (`prose-text`) has a 1.55 line height and a measure of at most 72 characters. Code blocks and stack traces have a 1.6 line height, the `leading-code` token.
 
 ## Colour
 

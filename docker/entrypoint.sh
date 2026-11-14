@@ -9,6 +9,8 @@ case "$base" in
 esac
 [ -n "$base" ] && base="/$base"
 export BASE_PATH="$base"
+# The Caddyfile matches the prefix in a pattern, where a `.` would stand for any character.
+export BASE_PATH_PATTERN=$(printf %s "$base" | sed 's#\.#\\.#g')
 
 if [ -z "$base" ]; then
   export SITE_ROOT=/srv

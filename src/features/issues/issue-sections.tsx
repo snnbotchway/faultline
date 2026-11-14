@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import {
@@ -320,30 +320,39 @@ export function ContextRail({ event }: { event: IssueEvent }) {
   )
 }
 
+// The whole report opens its event, but a click that ends a text selection does not, so the comment can be copied.
 export function UserReports({ org, issueId }: { org: string; issueId: string }) {
+  const navigate = useNavigate()
   const reports = useQuery(issueUserReportsQuery(org, issueId)).data
   if (!reports?.length) return null
   return (
     <Section title="User reports" count={reports.length}>
       <ul className="space-y-4">
-        {reports.map((report) => (
-          <li key={report.eventID + report.dateCreated}>
-            <Link
-              to="/$org/issues/$issueId/events/$eventId"
-              params={{ org, issueId, eventId: report.eventID }}
-              className="block border-l pl-3 hover:bg-accent max-lg:min-h-11"
+        {reports.map((report) => {
+          const who = report.name || report.email
+          const open = { to: '/$org/issues/$issueId/events/$eventId', params: { org, issueId, eventId: report.eventID } } as const
+          return (
+            <li
+              key={report.eventID + report.dateCreated}
+              onClick={(event) => {
+                if ((event.target as Element).closest('a') || window.getSelection()?.toString()) return
+                void navigate(open)
+              }}
+              className="cursor-pointer border-l pl-3 hover:bg-accent max-lg:min-h-11"
             >
               <span className="mono flex flex-wrap items-center gap-x-3 text-muted-foreground">
-                <span className="text-foreground">{report.name || report.email}</span>
+                <Link {...open} aria-label={`${who}, open event`} className="text-foreground hover:underline max-lg:min-h-11 max-lg:content-center">
+                  {who}
+                </Link>
                 {report.name && <span>{report.email}</span>}
                 <time dateTime={report.dateCreated} title={exact(report.dateCreated)}>
                   {ago(report.dateCreated)}
                 </time>
               </span>
               <span className="prose-text mt-1 block whitespace-pre-wrap">{report.comments}</span>
-            </Link>
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
     </Section>
   )

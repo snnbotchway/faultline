@@ -5,6 +5,7 @@ import { useRef, useState } from 'react'
 import { ORGANIZATION_NAME_MAX, Scope, instanceSettingsQuery, membersQuery, organizationActions, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
 import { signInAppsQuery } from '@/api/sign-in-apps'
 import { stale } from '@/api/stale'
+import { sumDays, totalOf, usageDaysQuery } from '@/api/usage'
 import { PageBar } from '@/components/shell/app-shell'
 import { RowButton } from '@/components/ui/row-button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +21,7 @@ import { teamList } from './labels'
 import { useFold } from './rows'
 import { platformName } from './platforms'
 import { matchEntries, settingsEntries } from './search'
+import { exactCount } from './usage'
 import { SignInApps } from './sign-in-apps'
 
 /**
@@ -35,6 +37,8 @@ export function SettingsIndex({ org }: { org: string }) {
   const teams = useQuery(teamsQuery(org)).data
   const projects = useQuery(projectsQuery(org)).data
   const version = useQuery(instanceSettingsQuery).data?.version
+  const usageDays = useQuery(usageDaysQuery(org)).data
+  const events = usageDays && totalOf(sumDays(usageDays))
   const signInApps = useQuery({ ...signInAppsQuery(org), enabled: can(Scope.orgWrite) }).data
   const [query, setQuery] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -103,6 +107,7 @@ export function SettingsIndex({ org }: { org: string }) {
               <FoldRow label="Name" value={organization.name} open={row.is('name')} onToggle={can(Scope.orgWrite) ? () => row.toggle('name') : undefined}>
                 <RenameOrganization org={org} name={organization.name} onDone={row.close} />
               </FoldRow>
+              <LinkRow label="Usage" value={events === undefined ? undefined : `${plural(exactCount(events), 'event')} in the last 30 days`} to="/$org/settings/subscription" params={{ org }} />
             </Group>
 
             <Group

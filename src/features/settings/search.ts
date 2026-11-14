@@ -33,6 +33,7 @@ export function settingsEntries({
   const org = organization.slug
   return [
     { path: [org, 'Name'], value: organization.name, link: { to: '/$org/settings', params: { org } } },
+    { path: [org, 'Usage'], value: 'Events in the last 30 days', link: { to: '/$org/settings/subscription', params: { org } } },
     { path: [org, 'Delete organization'], value: '', link: { to: '/$org/settings', params: { org } } },
     { path: ['Members', 'Invite members'], value: '', link: { to: '/$org/settings/members/new', params: { org } } },
     ...members.map((member) => ({

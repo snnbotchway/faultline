@@ -1,8 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ExternalLink, Globe, Lock } from 'lucide-react'
-import { useState } from 'react'
-import { MonitorSort, STATUS_PAGE_ADMIN_URL, monitorActions, monitorKeys, monitorListQuery, statusPageUrl, statusPagesQuery } from '@/api/monitors'
-import { canWriteProjects, currentUserQuery, organizationQuery } from '@/api/organizations'
+import { useMemo, useState } from 'react'
+import { MonitorSort, STATUS_PAGE_ADMIN_URL, monitorActions, monitorKeys, monitorListQuery, statusPageUrl, statusPagesQuery, type StatusPage } from '@/api/monitors'
+import { currentUserQuery } from '@/api/organizations'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -12,12 +12,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
-import { cn } from '@/lib/utils'
 import { span } from './format'
 import { Health, healthOf } from './health'
 import { UptimeTab } from './address'
 import { HEALTH, HEALTH_ORDER } from './describe'
 import { HealthGlyph, UptimeTabs } from './parts'
+import { useMonitorHealth } from './use-health'
+import { CopyButton } from '@/features/settings/parts'
 
 // A row's action as a plain word (DESIGN.md, Rows), above the row's own link so it can be tapped on its own.
 const ADMIN_LINK = 'relative z-10 flex min-h-8 shrink-0 cursor-pointer items-center gap-1 text-sm font-medium hover:underline max-lg:min-h-11'
@@ -30,17 +31,21 @@ const ADMIN_LINK = 'relative z-10 flex min-h-8 shrink-0 cursor-pointer items-cen
 export function StatusPages({ org }: { org: string }) {
   useTitle('Status pages', 'Uptime')
   const pages = useQuery(statusPagesQuery(org))
-  const monitors = useInfiniteQuery(monitorListQuery(org, MonitorSort.name)).data?.pages.flatMap((page) => page.items)
-  const canWrite = canWriteProjects(useQuery(organizationQuery(org)).data?.access)
+  const list = useInfiniteQuery(monitorListQuery(org, MonitorSort.name))
+  const monitors = useMemo(() => list.data?.pages.flatMap((page) => page.items) ?? [], [list.data])
+  // Only a superuser can put monitors on a page (in the backend's admin), so a page made by anyone else would stay empty.
   const canAdmin = useQuery(currentUserQuery).data?.isSuperuser === true
   const [creating, setCreating] = useState(false)
   const [opened] = useState(Date.now)
   const now = pages.dataUpdatedAt || opened
+  // Read from each monitor's checks, as the monitor list reads it, so the two never disagree.
+  const health = useMonitorHealth(org, monitors, now)
+  const healthOfMonitor = (monitor: StatusPage['monitors'][number]) => (monitor.id == null ? undefined : health.get(monitor.id)?.report.health) ?? healthOf(monitor, [], [], now).health
 
   const bar = (
     <PageBar>
-      <UptimeTabs org={org} current={UptimeTab.statusPages} counts={{ [UptimeTab.monitors]: monitors?.length, [UptimeTab.statusPages]: pages.data?.length }} />
-      {canWrite && (
+      <UptimeTabs org={org} current={UptimeTab.statusPages} counts={{ [UptimeTab.statusPages]: pages.data?.length }} />
+      {canAdmin && (
         <Button variant="default" size="bar" className="ml-auto" onClick={() => setCreating(true)}>
           New status page
         </Button>
@@ -63,7 +68,7 @@ export function StatusPages({ org }: { org: string }) {
       <>
         {bar}
         <Screen title="Make a status page to show others which services are up">
-          {canWrite && (
+          {canAdmin && (
             <Button variant="default" onClick={() => setCreating(true)}>
               New status page
             </Button>
@@ -89,7 +94,7 @@ export function StatusPages({ org }: { org: string }) {
         <ul>
           {pages.data.map((page) => {
             const onPage = page.monitors
-              .map((monitor) => ({ monitor, health: healthOf(monitor, [], [], now).health }))
+              .map((monitor) => ({ monitor, health: healthOfMonitor(monitor) }))
               .sort((a, b) => HEALTH_ORDER.indexOf(a.health) - HEALTH_ORDER.indexOf(b.health))
             const Visibility = page.isPublic ? Globe : Lock
             const url = statusPageUrl(org, page.slug ?? '')
@@ -107,16 +112,23 @@ export function StatusPages({ org }: { org: string }) {
                     </span>
                     <ExternalLink className="size-3 shrink-0 text-muted-foreground" aria-label="Opens in a new tab" />
                   </h2>
-                  <p className="mono truncate text-muted-foreground">{url}</p>
+                  <p className="flex min-w-0 items-center gap-3">
+                    <span className="mono truncate text-muted-foreground">{url}</span>
+                    <CopyButton text={url} label="Copy link" variant="ghost" size="bar" className="relative z-10 shrink-0" />
+                  </p>
                 </div>
                 <ul className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1">
                   {onPage.length === 0 && (
                     <li className="flex items-center gap-3 text-muted-foreground">
-                      No monitors yet
-                      {canAdmin && (
-                        <a href={STATUS_PAGE_ADMIN_URL} target="_blank" rel="noreferrer" className={ADMIN_LINK}>
-                          Add monitors
-                        </a>
+                      {canAdmin ? (
+                        <>
+                          No monitors yet
+                          <a href={STATUS_PAGE_ADMIN_URL} target="_blank" rel="noreferrer" className={ADMIN_LINK}>
+                            Add monitors
+                          </a>
+                        </>
+                      ) : (
+                        'An admin adds monitors to this page.'
                       )}
                     </li>
                   )}
@@ -125,7 +137,15 @@ export function StatusPages({ org }: { org: string }) {
                       <HealthGlyph health={health} />
                       {monitor.name}
                       {health !== Health.up && (
-                        <span className={cn('mono', HEALTH[health].color)}>{health === Health.down && monitor.lastChange ? `down ${span(now - Date.parse(monitor.lastChange))}` : HEALTH[health].label.toLowerCase()}</span>
+                        <span className={HEALTH[health].color}>
+                          {health === Health.down && monitor.lastChange ? (
+                            <>
+                              down <span className="mono">{span(now - Date.parse(monitor.lastChange))}</span>
+                            </>
+                          ) : (
+                            HEALTH[health].label.toLowerCase()
+                          )}
+                        </span>
                       )}
                     </li>
                   ))}

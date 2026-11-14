@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Download } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { account, accountKeys, totpSetupQuery, twoStep, type SecurityKey } from '@/api/account'
+import { account, accountKeys, recoveryPreviewQuery, totpSetupQuery, twoStep, type SecurityKey } from '@/api/account'
 import { explain } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { Field, FormAlert } from '@/components/ui/field'
@@ -80,13 +80,7 @@ function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) 
 
 // New codes are shown once and only start working when one of them is typed back, which proves they were saved.
 function RecoveryCodesForm({ action, later, onDone, onClose }: { action: string; later: string; onDone: () => void; onClose: () => void }) {
-  const preview = useQuery({
-    queryKey: [...accountKeys.authenticators, 'recovery-preview'],
-    queryFn: twoStep.previewRecoveryCodes,
-    staleTime: Infinity,
-    gcTime: 0,
-    retry: false,
-  })
+  const preview = useQuery(recoveryPreviewQuery)
   const [code, setCode] = useState('')
   const confirm = useAction(() => twoStep.confirmRecoveryCodes(code.trim()), {
     action: 'save those codes',

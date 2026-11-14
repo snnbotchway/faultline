@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { MfaType } from './auth'
-import { ApiError, allauth, api, unwrap } from './client'
+import { ApiError, allauthAccount, api, unwrap } from './client'
 import { MAX_PAGE_SIZE, fetchAllPages } from './pagination'
 import type { components as AllauthComponents } from './schema/allauth'
 import type { components } from './schema/openapi'
@@ -30,6 +30,8 @@ export const accountKeys = {
   alerts: ['users', 'me', 'alerts'] as const,
   tokens: ['users', 'me', 'api-tokens'] as const,
   projects: ['users', 'me', 'projects'] as const,
+  // Outside the user's keys on purpose: every read makes a new set, so nothing may refresh it while it is shown.
+  recoveryPreview: ['recovery-codes-preview'] as const,
   invite: (memberId: string, token: string) => ['invite', memberId, token] as const,
 }
 
@@ -58,11 +60,11 @@ export const account = {
 
   // Leave `current` out for an account that only signs in through a provider and has no password yet.
   changePassword: async ({ current, next }: { current?: string; next: string }) => {
-    unwrap(await allauth.POST('/_allauth/browser/v1/account/password/change', { body: { current_password: current, new_password: next } }))
+    unwrap(await allauthAccount.POST('/_allauth/browser/v1/account/password/change', { body: { current_password: current, new_password: next } }))
   },
 
   disconnect: async (linked: Pick<LinkedAccount, 'provider' | 'uid'>) => {
-    unwrap(await allauth.DELETE('/_allauth/browser/v1/account/providers', { body: { provider: linked.provider, account: linked.uid } }))
+    unwrap(await allauthAccount.DELETE('/_allauth/browser/v1/account/providers', { body: { provider: linked.provider, account: linked.uid } }))
   },
 }
 
@@ -86,7 +88,7 @@ export function toTwoStep(list: Authenticator[]): TwoStep {
 
 export const twoStepQuery = queryOptions({
   queryKey: accountKeys.authenticators,
-  queryFn: async () => toTwoStep(unwrap(await allauth.GET('/_allauth/browser/v1/account/authenticators')).data),
+  queryFn: async () => toTwoStep(unwrap(await allauthAccount.GET('/_allauth/browser/v1/account/authenticators')).data),
 })
 
 // The backend answers "not found" for an account without an authenticator app, and that answer carries the new secret.
@@ -95,7 +97,7 @@ const NOT_SET_UP = 404
 export const totpSetupQuery = queryOptions({
   queryKey: accountKeys.totpSetup,
   queryFn: async (): Promise<TotpSetup> => {
-    const { error, response } = await allauth.GET('/_allauth/browser/v1/account/authenticators/totp')
+    const { error, response } = await allauthAccount.GET('/_allauth/browser/v1/account/authenticators/totp')
     const meta = error && 'meta' in error ? (error.meta as TotpSetup | undefined) : undefined
     if (response.status === NOT_SET_UP && meta) return meta
     throw new ApiError(response.status, error)
@@ -108,32 +110,40 @@ export const totpSetupQuery = queryOptions({
 
 export const twoStep = {
   activateTotp: async (code: string) => {
-    unwrap(await allauth.POST('/_allauth/browser/v1/account/authenticators/totp', { body: { code } }))
+    unwrap(await allauthAccount.POST('/_allauth/browser/v1/account/authenticators/totp', { body: { code } }))
   },
   deactivateTotp: async () => {
-    unwrap(await allauth.DELETE('/_allauth/browser/v1/account/authenticators/totp'))
+    unwrap(await allauthAccount.DELETE('/_allauth/browser/v1/account/authenticators/totp'))
   },
 
-  // New codes are only shown here. They replace the old ones once `confirmRecoveryCodes` gets one of them back.
-  previewRecoveryCodes: async () => unwrap(await api.GET('/api/0/generate-recovery-codes/')).codes,
+  // Makes the previewed codes the active ones, given one of them back.
   confirmRecoveryCodes: async (code: string) => {
     unwrap(await api.POST('/api/0/generate-recovery-codes/', { body: { code } }))
   },
 
   // Pass the options to navigator.credentials.create(), then send back the credential's toJSON().
-  securityKeyOptions: async () => unwrap(await allauth.GET('/_allauth/browser/v1/account/authenticators/webauthn')).data.creation_options as unknown,
+  securityKeyOptions: async () => unwrap(await allauthAccount.GET('/_allauth/browser/v1/account/authenticators/webauthn')).data.creation_options as unknown,
   // allauth's schema types the credential as an empty object; it is the browser's PublicKeyCredential JSON.
   addSecurityKey: async (name: string, credential: unknown) => {
     unwrap(
-      await allauth.POST('/_allauth/browser/v1/account/authenticators/webauthn', {
+      await allauthAccount.POST('/_allauth/browser/v1/account/authenticators/webauthn', {
         body: { name, credential: credential as Allauth['WebAuthnCredential'] },
       }),
     )
   },
   removeSecurityKey: async (id: number) => {
-    unwrap(await allauth.DELETE('/_allauth/browser/v1/account/authenticators/webauthn', { body: { authenticators: [id] } }))
+    unwrap(await allauthAccount.DELETE('/_allauth/browser/v1/account/authenticators/webauthn', { body: { authenticators: [id] } }))
   },
 }
+
+// New codes, shown only here. They replace the old ones once `twoStep.confirmRecoveryCodes` gets one of them back.
+export const recoveryPreviewQuery = queryOptions({
+  queryKey: accountKeys.recoveryPreview,
+  queryFn: async () => unwrap(await api.GET('/api/0/generate-recovery-codes/')).codes,
+  staleTime: Infinity,
+  gcTime: 0,
+  retry: false,
+})
 
 /* ---------- Notifications ---------- */
 

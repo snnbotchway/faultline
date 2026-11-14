@@ -90,3 +90,19 @@ api.use(csrf, signedOut, unreachable)
 // allauth's own 401s describe sign-in state, so they skip the signed-out handler.
 export const allauth = createClient<AllauthPaths>({ baseUrl: '/', credentials: 'same-origin' })
 allauth.use(csrf, unreachable)
+
+// On allauth's account endpoints a 401 with no step pending means the session ended.
+const accountSignedOut: Middleware = {
+  async onResponse({ response }) {
+    if (response.status !== HttpStatus.unauthenticated) return
+    const body = (await response
+      .clone()
+      .json()
+      .catch(() => undefined)) as { data?: { flows?: { is_pending?: boolean }[] } } | undefined
+    if (!body?.data?.flows?.some((flow) => flow.is_pending)) onSignedOut()
+  },
+}
+
+// For the signed-in account's own settings (password, authenticators, linked accounts), never for signing in.
+export const allauthAccount = createClient<AllauthPaths>({ baseUrl: '/', credentials: 'same-origin' })
+allauthAccount.use(csrf, accountSignedOut, unreachable)

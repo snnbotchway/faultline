@@ -54,6 +54,10 @@ export const projectEnvironmentsQuery = (org: string, project: string) =>
       ),
   })
 
+// The environment names a filter offers: hidden ones are left out.
+export const shownEnvironmentNames = (environments: ProjectEnvironment[] | undefined) =>
+  (environments ?? []).filter((environment) => !environment.isHidden).map((environment) => environment.name)
+
 const DAY = 24 * 3600 * 1000
 export const ACTIVITY_DAYS = 14
 

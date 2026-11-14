@@ -4,30 +4,29 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, Ellipsis } from 
 import { useMemo, useState } from 'react'
 import { ApiError } from '@/api/client'
 import { IssueStatus, StatsPeriod, issueEventQuery, issueQuery, issueStatsQuery, issueTagsQuery, rawEventUrl, type IssueDetail } from '@/api/issues'
-import { organizationQuery } from '@/api/organizations'
+import { canAdminEvents, canWriteEvents, organizationQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { useCommands, type Command } from '@/components/shell/commands'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
 import { notify } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { oneIssue, useIssueActions } from './actions'
-import { exceptionsOf, messageOf } from './event'
-import { ago, compact, dayLabel, exact, hourLabel } from './format'
+import { AssignDialog, AssigneeBadge } from './assignee'
+import { DeleteIssuesDialog } from './dialogs'
+import { errorParts, exceptionsOf, messageOf } from './event'
+import { ago, compact, exact } from './format'
 import { Comments, ContextRail, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
-import { AssignDialog, AssigneeBadge, LevelGlyph, Skeleton, Trace } from './parts'
+import { LevelGlyph } from './level'
 import { StackTrace } from './stack-trace'
-import { axisFor, fillBuckets, releaseMarks } from './trend'
-
-const PERIODS = [
-  { value: StatsPeriod.day, label: '24h', unit: 'hour' },
-  { value: StatsPeriod.fortnight, label: '14d', unit: 'day' },
-]
+import { STATUS, isStatus, statusActions } from './status'
+import { PeriodToggle, ReleaseTrace } from './trace'
+import { axisFor, axisStartLabel, fillBuckets, periodInfo, releaseMarks } from './trend'
 
 function Chart({ org, issueId }: { org: string; issueId: string }) {
   const [period, setPeriod] = useState<StatsPeriod>(StatsPeriod.fortnight)
@@ -36,7 +35,7 @@ function Chart({ org, issueId }: { org: string; issueId: string }) {
   const axis = useMemo(() => axisFor(period, new Date(stats.dataUpdatedAt)), [period, stats.dataUpdatedAt])
   const buckets = fillBuckets(stats.data?.[0]?.stats[period], axis)
   const marks = releaseMarks(releases ?? [], axis)
-  const unit = PERIODS.find((item) => item.value === period)!.unit
+  const { unit, now } = periodInfo(period)
   return (
     <div>
       <div className="mb-1 flex items-center gap-3">
@@ -44,36 +43,21 @@ function Chart({ org, issueId }: { org: string; issueId: string }) {
         <span className="mono text-muted-foreground">
           peak {compact(Math.max(...buckets, 0))}/{unit}
         </span>
-        <div className="ml-auto flex border" role="group" aria-label="Period">
-          {PERIODS.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              aria-pressed={item.value === period}
-              onClick={() => setPeriod(item.value)}
-              className={cn('mono h-6 px-2 max-lg:h-9 max-lg:px-3', item.value === period ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground')}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div className="ml-auto">
+          <PeriodToggle period={period} onChange={setPeriod} />
         </div>
       </div>
-      <div className="relative pt-5">
-        {marks.map((mark) => (
-          <span
-            key={mark.at}
-            className={cn('absolute top-0 font-mono text-xs whitespace-nowrap text-brand', mark.at > 0.8 ? '-translate-x-full pr-1' : 'pl-1')}
-            style={{ left: `${mark.at * 100}%` }}
-          >
-            {mark.label}
-          </span>
-        ))}
-        {stats.isPending ? <Skeleton className="h-10 lg:h-16" /> : <Trace buckets={buckets} marks={marks.map((mark) => mark.at)} height={40} className="lg:hidden" />}
-        {!stats.isPending && <Trace buckets={buckets} marks={marks.map((mark) => mark.at)} height={64} className="max-lg:hidden" />}
-      </div>
+      {stats.isPending ? (
+        <Skeleton className="mt-5 h-10 lg:h-16" />
+      ) : (
+        <>
+          <ReleaseTrace buckets={buckets} marks={marks} height={40} className="lg:hidden" />
+          <ReleaseTrace buckets={buckets} marks={marks} height={64} className="max-lg:hidden" />
+        </>
+      )}
       <div className="label-caps mt-1 flex justify-between">
-        <span>{period === StatsPeriod.day ? hourLabel(axis.start) : dayLabel(axis.start)}</span>
-        <span>{period === StatsPeriod.day ? 'Now' : 'Today'}</span>
+        <span>{axisStartLabel(period, axis.start)}</span>
+        <span>{now}</span>
       </div>
     </div>
   )
@@ -84,18 +68,16 @@ function Fact({ label, value, detail, title }: { label: string; value: string; d
     <div className="min-w-0" title={title}>
       <dt className="label-caps">{label}</dt>
       <dd className="mono mt-0.5 truncate">
-        <span className="text-[1.0625rem] font-semibold lg:text-[1.25rem]">{value}</span>
+        <span className="text-lg font-semibold lg:text-xl">{value}</span>
         {detail && <span className="text-muted-foreground max-lg:block lg:ml-2">{detail}</span>}
       </dd>
     </div>
   )
 }
 
-const STATUS_LABEL: Record<string, string> = { resolved: 'Resolved', ignored: 'Ignored', unresolved: 'Unresolved' }
-
 function statusLabel(issue: IssueDetail) {
   if (issue.status === IssueStatus.resolved && issue.statusDetails?.inNextRelease) return 'Resolved in next release'
-  return STATUS_LABEL[issue.status] ?? issue.status
+  return isStatus(issue.status) ? STATUS[issue.status].label : issue.status
 }
 
 export function IssuePage({ org, issueId, eventId }: { org: string; issueId: string; eventId?: string }) {
@@ -105,9 +87,9 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   // The backend keeps no user count per issue; the distinct values of the user tag are the people affected.
   const tags = useQuery(issueTagsQuery(org, issueId)).data
   const users = (tags?.find((tag) => tag.key === 'user.id') ?? tags?.find((tag) => tag.key === 'user.email'))?.uniqueValues
-  const access = useQuery(organizationQuery(org)).data?.access ?? []
-  const canWrite = access.includes('event:write') || access.includes('event:admin')
-  const canAdmin = access.includes('event:admin')
+  const access = useQuery(organizationQuery(org)).data?.access
+  const canWrite = canWriteEvents(access)
+  const canAdmin = canAdminEvents(access)
   const actions = useIssueActions(org)
   const [assigning, setAssigning] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -116,11 +98,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const data = issue.data
   const status = data?.status
   const target = oneIssue(issueId)
-  const statusActions = [
-    { status: IssueStatus.resolved, label: 'Resolve', keys: 'e' },
-    { status: IssueStatus.unresolved, label: 'Unresolve', keys: 'u' },
-    { status: IssueStatus.ignored, label: 'Ignore', keys: 'i' },
-  ].filter((action) => action.status !== status)
+  const offered = status && isStatus(status) ? statusActions(status) : []
   const setStatus = (next: IssueStatus) => canWrite && void actions.setStatus(target, next)
   const toEvent = (id: string | null | undefined) =>
     id && void navigate({ to: '/$org/issues/$issueId/events/$eventId', params: { org, issueId, eventId: id } })
@@ -130,9 +108,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const copyLink = () => void navigator.clipboard.writeText(`${window.location.origin}/${org}/issues/${issueId}`).then(() => notify('Link copied'))
 
   useHotkeys({
-    e: () => status !== IssueStatus.resolved && setStatus(IssueStatus.resolved),
-    i: () => status !== IssueStatus.ignored && setStatus(IssueStatus.ignored),
-    u: () => status !== IssueStatus.unresolved && setStatus(IssueStatus.unresolved),
+    ...Object.fromEntries(offered.map((action) => [action.key, () => setStatus(action.status)])),
     a: () => canWrite && setAssigning(true),
     '[': () => toEvent(older),
     ']': () => toEvent(newer),
@@ -141,7 +117,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const commands: Command[] = [
     ...(canWrite
       ? [
-          ...statusActions.map((action) => ({ id: `issue:${action.status}`, group: 'issue', label: action.label, keys: action.keys, run: () => setStatus(action.status) })),
+          ...offered.map((action) => ({ id: `issue:${action.status}`, group: 'issue', label: action.action, keys: action.key, run: () => setStatus(action.status) })),
           ...(status === IssueStatus.unresolved
             ? [{ id: 'issue:next-release', group: 'issue', label: 'Resolve in next release', run: () => void actions.resolveInNextRelease(target) }]
             : []),
@@ -173,11 +149,11 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
         <div className="ml-auto flex items-center gap-1.5">
           {canWrite && (
             <div className="flex items-center gap-1.5 max-lg:hidden">
-              {statusActions[0] && (
+              {offered[0] && (
                 <span className="flex">
-                  <Button size="sm" variant="default" onClick={() => setStatus(statusActions[0]!.status)}>
-                    {statusActions[0].label}
-                    <Kbd>{statusActions[0].keys}</Kbd>
+                  <Button size="sm" variant="default" onClick={() => setStatus(offered[0]!.status)}>
+                    {offered[0].action}
+                    <Kbd>{offered[0].key}</Kbd>
                   </Button>
                   {status === IssueStatus.unresolved && (
                     <DropdownMenu>
@@ -193,10 +169,10 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                   )}
                 </span>
               )}
-              {statusActions.slice(1).map((action) => (
+              {offered.slice(1).map((action) => (
                 <Button key={action.status} size="sm" onClick={() => setStatus(action.status)}>
-                  {action.label}
-                  <Kbd>{action.keys}</Kbd>
+                  {action.action}
+                  <Kbd>{action.key}</Kbd>
                 </Button>
               ))}
               <Button size="sm" onClick={() => setAssigning(true)}>
@@ -274,7 +250,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
     )
   }
 
-  const { type, value } = data.metadata as { type?: string; value?: string }
+  const { type, text } = errorParts(data)
   const exceptions = event.data ? exceptionsOf(event.data) : []
   const message = event.data && messageOf(event.data)
 
@@ -286,13 +262,8 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           <h1 className="flex items-baseline gap-2.5 text-xl leading-snug font-semibold lg:text-2xl">
             <LevelGlyph level={data.level} className="size-3 translate-y-[-1px]" />
             <span className="min-w-0 break-words">
-              {type ? (
-                <>
-                  <span className="font-mono text-[0.9em]">{type}</span> <span className="font-medium">{value}</span>
-                </>
-              ) : (
-                data.title
-              )}
+              {type && <span className="font-mono text-[0.9em]">{type} </span>}
+              <span className={cn(type && 'font-medium')}>{text}</span>
             </span>
           </h1>
           {data.culprit && <p className="mono mt-1 truncate pl-[22px] text-muted-foreground">{data.culprit}</p>}
@@ -378,9 +349,9 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
 
       {canWrite && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center gap-1.5 border-t bg-card px-3 pb-[env(safe-area-inset-bottom)] lg:hidden">
-          {statusActions.slice(0, 2).map((action, index) => (
+          {offered.slice(0, 2).map((action, index) => (
             <Button key={action.status} size="touch" variant={index === 0 ? 'default' : 'outline'} className="flex-1" onClick={() => setStatus(action.status)}>
-              {action.label}
+              {action.action}
             </Button>
           ))}
           <Button size="touch" className="flex-1" onClick={() => setAssigning(true)}>
@@ -391,26 +362,14 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
       )}
 
       <AssignDialog org={org} open={assigning} current={data.assignedTo} onClose={() => setAssigning(false)} onPick={(assignee) => void actions.assign(target, assignee)} />
-      <Dialog open={deleting} onOpenChange={setDeleting}>
-        <DialogContent className="p-5">
-          <DialogTitle>Delete {data.shortId}?</DialogTitle>
-          <DialogDescription className="mt-2">Its events are deleted too. This can't be undone.</DialogDescription>
-          <div className="mt-5 flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button>Cancel</Button>
-            </DialogClose>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                setDeleting(false)
-                if (await actions.remove(target)) void navigate({ to: '/$org/issues', params: { org } })
-              }}
-            >
-              Delete issue
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DeleteIssuesDialog
+        open={deleting}
+        what={data.shortId}
+        onClose={() => setDeleting(false)}
+        onConfirm={async () => {
+          if (await actions.remove(target)) void navigate({ to: '/$org/issues', params: { org } })
+        }}
+      />
     </>
   )
 }

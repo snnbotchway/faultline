@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
 import { SessionStatus, sessionQuery } from '@/api/auth'
 import {
+  IssueLevel,
   issueActions,
   issueCommentsQuery,
   issueHashesQuery,
@@ -14,11 +15,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { failed } from '@/lib/notice'
 import { cn } from '@/lib/utils'
-import { crumbText, crumbsOf, requestOf, type Crumb } from './event'
+import { crumbText, crumbsOf, requestOf, valueText, type Crumb } from './event'
+import { levelColor } from './levels'
 import { ago, exact, hourLabel } from './format'
-import { Skeleton } from './parts'
 import { DEFAULT_QUERY, withFilter } from './search'
 
 export function Section({ title, count, className, children }: { title: string; count?: number; className?: string; children: ReactNode }) {
@@ -63,7 +65,7 @@ export function Timeline({ event, title }: { event: IssueEvent; title: string })
         {shown.map((crumb, index) => (
           <li key={index} className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 border-b px-3 py-1.5 lg:grid-cols-[64px_96px_minmax(0,1fr)]">
             <span className="text-right text-muted-foreground">{crumbTime(crumb, errorAt)}</span>
-            <span className={cn('truncate max-lg:hidden', crumb.level === 'error' ? 'text-level-error' : crumb.level === 'warning' ? 'text-level-warning' : 'text-muted-foreground')}>
+            <span className={cn('truncate max-lg:hidden', crumb.level === IssueLevel.error || crumb.level === IssueLevel.warning ? levelColor(crumb.level) : 'text-muted-foreground')}>
               {crumb.category ?? crumb.type}
             </span>
             <span className="min-w-0 break-words">
@@ -88,7 +90,7 @@ function Pairs({ pairs }: { pairs: [string, unknown][] }) {
       {pairs.map(([name, value], index) => (
         <div key={`${name}:${index}`} className="contents">
           <dt className="truncate text-muted-foreground">{name}</dt>
-          <dd className="min-w-0 break-words">{typeof value === 'string' ? value : JSON.stringify(value)}</dd>
+          <dd className="min-w-0 break-words">{valueText(value)}</dd>
         </div>
       ))}
     </dl>
@@ -162,7 +164,6 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
                     to="/$org/issues"
                     params={{ org }}
                     search={{ query: withFilter(DEFAULT_QUERY, tag.key, top.value) }}
-                    title={`Show issues with ${tag.key}:${top.value}`}
                     className="mono relative flex min-h-6 items-center gap-2.5 pr-1.5 hover:bg-accent max-lg:min-h-11"
                   >
                     <span className="absolute inset-y-0.5 left-[46px] bg-foreground/10" style={{ width: `calc((100% - 46px) * ${top.count / Math.max(1, tag.totalValues)})` }} aria-hidden />
@@ -224,7 +225,7 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
       setText('')
       refresh()
     },
-    onError: failed,
+    onError: (error) => failed(error, 'add the comment'),
   })
   const edit = useMutation({
     mutationFn: (comment: { id: number; text: string }) => issueActions.editComment(org, issueId, comment.id, comment.text.trim()),
@@ -232,9 +233,14 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
       setEditing(undefined)
       refresh()
     },
-    onError: failed,
+    onError: (error) => failed(error, 'save the comment'),
   })
-  const remove = useMutation({ mutationFn: (id: number) => issueActions.deleteComment(org, issueId, id), onSuccess: refresh, onError: failed })
+  const remove = useMutation({
+    mutationFn: (id: number) => issueActions.deleteComment(org, issueId, id),
+    onSuccess: refresh,
+    onError: (error) => failed(error, 'delete the comment'),
+  })
+  const [removing, setRemoving] = useState<number>()
 
   return (
     <Section title="Comments" count={comments.data?.length}>
@@ -252,12 +258,25 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
                 </time>
                 {mine && editing?.id !== id && (
                   <span className="ml-auto flex gap-3 font-sans text-sm">
-                    <button type="button" className="hover:text-foreground" onClick={() => setEditing({ id, text: comment.data.text ?? '' })}>
-                      Edit
-                    </button>
-                    <button type="button" className="hover:text-destructive" onClick={() => remove.mutate(id)}>
-                      Delete
-                    </button>
+                    {removing === id ? (
+                      <>
+                        <button type="button" className="font-medium text-destructive hover:underline" onClick={() => remove.mutate(id)}>
+                          Delete comment
+                        </button>
+                        <button type="button" className="hover:text-foreground" onClick={() => setRemoving(undefined)}>
+                          Keep
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="hover:text-foreground" onClick={() => setEditing({ id, text: comment.data.text ?? '' })}>
+                          Edit
+                        </button>
+                        <button type="button" className="hover:text-destructive" onClick={() => setRemoving(id)}>
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </span>
                 )}
               </p>
@@ -345,7 +364,7 @@ export function Fingerprints({ org, issueId }: { org: string; issueId: string })
       setPicked(new Set())
       void queryClient.invalidateQueries({ queryKey: issueKeys.all(org) })
     },
-    onError: failed,
+    onError: (error) => failed(error, 'split off the fingerprints'),
   })
   if (!hashes || hashes.length < 2) return null
   const canSplit = picked.size > 0 && picked.size < hashes.length

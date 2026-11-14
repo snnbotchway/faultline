@@ -78,6 +78,7 @@ function OrgItems({ org }: { org: string }) {
       {organizations.map((organization) => (
         <DropdownMenuRadioItem key={organization.slug} value={organization.slug}>
           {organization.name}
+          {organization.name !== organization.slug && <span className="mono ml-auto pl-4 text-muted-foreground">{organization.slug}</span>}
         </DropdownMenuRadioItem>
       ))}
     </DropdownMenuRadioGroup>
@@ -281,7 +282,8 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
       .map((organization) => ({
         id: `org:${organization.slug}`,
         group: CommandGroup.organization,
-        label: `Switch to ${organization.name}`,
+        // Names can repeat; the slug tells two apart and can be searched.
+        label: organization.name === organization.slug ? `Switch to ${organization.name}` : `Switch to ${organization.name} (${organization.slug})`,
         run: () => void navigate({ to: '/$org/issues', params: { org: organization.slug } }),
       })),
     ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => setTheme(t.value) })),

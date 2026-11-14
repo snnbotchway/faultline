@@ -1,5 +1,6 @@
-// PROTOTYPE, throwaway: three variants of the logs screen, switched with ?variant=A|B|C.
+// PROTOTYPE, throwaway: three variants of the logs screen, switched with ?variant=A|B|C|D.
 import { createFileRoute } from '@tanstack/react-router'
+import { LogsD } from '@/features/prototype-performance/logs-d'
 import { LogsA } from '@/features/prototype-performance/logs-a'
 import { LogsB } from '@/features/prototype-performance/logs-b'
 import { LogsC } from '@/features/prototype-performance/logs-c'
@@ -19,6 +20,7 @@ function PrototypeLogs() {
       {search.variant === Variant.A && <LogsA org={org} search={search} />}
       {search.variant === Variant.B && <LogsB org={org} search={search} />}
       {search.variant === Variant.C && <LogsC org={org} search={search} />}
+      {search.variant === Variant.D && <LogsD org={org} search={search} />}
       <PrototypeSwitcher org={org} variant={search.variant} names={LOG_NAMES} />
     </>
   )

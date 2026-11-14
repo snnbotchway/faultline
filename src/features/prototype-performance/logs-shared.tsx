@@ -119,7 +119,7 @@ export function useLogs(org: string, search: LogSearch) {
   const resourcesOf = (type: LogResourceType) => (resources ?? []).filter((resource) => resource.type === type).map((resource) => resource.name).sort()
   const projectOf = (log: LogEvent) => projects?.find((project) => Number(project.id) === log.projectId)?.slug ?? undefined
 
-  return { list, logs, hits, buckets, levelCounts, range, set, clear, narrowed, resourcesOf, projectOf, loading: list.isPending }
+  return { scope, filters, list, logs, hits, buckets, levelCounts, range, set, clear, narrowed, resourcesOf, projectOf, loading: list.isPending }
 }
 
 export type Logs = ReturnType<typeof useLogs>
@@ -291,7 +291,10 @@ export function ServiceMenu({ logs, search }: { logs: Logs; search: LogSearch })
 const shown = (value: unknown) => (typeof value === 'string' ? value : JSON.stringify(value))
 
 // Everything a log carries besides its message: where it came from, then its attributes.
-export function LogFields({ log, project, className }: { log: LogEvent; project?: string; className?: string }) {
+const VENDOR_PREFIX = /^sentry\./
+
+// `plain` shows a key without the SDK's own prefix: `sentry.release` reads `release`.
+export function LogFields({ log, project, className, plain }: { log: LogEvent; project?: string; className?: string; plain?: boolean }) {
   const where = [
     ['service', log.service],
     ['environment', log.environment],
@@ -303,7 +306,7 @@ export function LogFields({ log, project, className }: { log: LogEvent; project?
     <dl className={cn('mono grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3', className)}>
       {[...where, ...attributes].map(([key, value]) => (
         <div key={key} className="col-span-2 grid grid-cols-subgrid border-b py-1.5">
-          <dt className="break-all text-muted-foreground">{key}</dt>
+          <dt className="break-all text-muted-foreground">{plain ? key.replace(VENDOR_PREFIX, '') : key}</dt>
           <dd className="break-all">{shown(value)}</dd>
         </div>
       ))}

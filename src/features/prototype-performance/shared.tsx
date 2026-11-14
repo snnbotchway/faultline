@@ -1,4 +1,5 @@
-// PROTOTYPE, throwaway. Three variants of the performance and logs screens, switched with ?variant=A|B|C.
+// PROTOTYPE, throwaway. Variants of the performance and logs screens, switched with ?variant=A|B|C|D.
+// D is the revision after the first pick: B as the base, with parts of A and C.
 // The question: how does a developer get from "something is slow" to the cause, and how are logs scanned
 // and narrowed? Nothing here is production code; the winner is rebuilt under src/features/performance.
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query'
@@ -22,12 +23,12 @@ import { recentReleasesQuery } from '@/api/releases'
 import { releaseMarks, type Axis } from '@/features/issues/trend'
 import { cn } from '@/lib/utils'
 
-export const Variant = { A: 'A', B: 'B', C: 'C' } as const
+export const Variant = { A: 'A', B: 'B', C: 'C', D: 'D' } as const
 export type Variant = (typeof Variant)[keyof typeof Variant]
 const VARIANT_KEYS = Object.values(Variant)
 
-export const PERFORMANCE_NAMES: Record<Variant, string> = { A: 'Ledger', B: 'Time spent', C: 'Findings' }
-export const LOG_NAMES: Record<Variant, string> = { A: 'Table and panel', B: 'Stream and facets', C: 'Patterns' }
+export const PERFORMANCE_NAMES: Record<Variant, string> = { A: 'Ledger', B: 'Time spent', C: 'Findings', D: 'Revised mix' }
+export const LOG_NAMES: Record<Variant, string> = { A: 'Table and panel', B: 'Stream and facets', C: 'Patterns', D: 'Revised mix' }
 
 export const Flag = { repeats: 'repeats', slower: 'slower', failing: 'failing' } as const
 export type Flag = (typeof Flag)[keyof typeof Flag]

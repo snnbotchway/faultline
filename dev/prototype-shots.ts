@@ -25,6 +25,7 @@ const state = await login.storageState()
 const api = async (path: string) => (await page.request.get(`${base}/api/0/organizations/demo-co/${path}`)).json()
 const groups: { id: number; transaction: string }[] = await api('transaction-groups/?limit=100')
 const group = groups.find((item) => item.transaction === '/api/policies/')!.id
+const regressed = groups.find((item) => item.transaction === '/api/quotes/')!.id
 const logs: { id: string; level: string; traceID: string | null; service: string }[] = await api('logs/?limit=200&start=now-24h')
 const log = logs.find((item) => item.level === 'error' && item.traceID && item.service === 'payments-api')!.id
 await login.close()
@@ -32,13 +33,15 @@ await login.close()
 const root = '/demo-co/prototype'
 const screens = (variant: string) => [
   { name: 'transactions', themes: BOTH, url: () => `${root}/performance?variant=${variant}` },
-  { name: 'transaction', themes: LIGHT, url: (width: number) => (variant === 'B' && width === 1440 ? `${root}/performance?variant=B&group=${group}` : `${root}/performance/${group}?variant=${variant}`) },
-  { name: 'n-plus-one', themes: LIGHT, url: (width: number) => `${root}/performance/n-plus-one?variant=${variant}${variant === 'C' && width === 390 ? '&pattern=1' : variant === 'C' ? '&pattern=1' : ''}` },
+  { name: 'transaction', themes: LIGHT, url: (width: number) => ((variant === 'B' || variant === 'D') && width === 1440 ? `${root}/performance?variant=${variant}&group=${group}` : `${root}/performance/${group}?variant=${variant}`) },
+  { name: 'n-plus-one', themes: LIGHT, url: () => `${root}/performance/n-plus-one?variant=${variant}${variant === 'C' || variant === 'D' ? '&pattern=1' : ''}` },
+  ...(variant === 'D' ? [{ name: 'transactions-slowest', themes: LIGHT, url: () => `${root}/performance?variant=D&order=-avg_duration` }] : []),
+  ...(variant === 'D' ? [{ name: 'transaction-slower', themes: LIGHT, url: (width: number) => (width === 1440 ? `${root}/performance?variant=D&group=${regressed}` : `${root}/performance/${regressed}?variant=D`) }] : []),
   { name: 'logs', themes: BOTH, url: () => `${root}/logs?variant=${variant}` },
   { name: 'log', themes: LIGHT, url: () => `${root}/logs?variant=${variant}&log=${log}` },
 ]
 
-for (const variant of ['A', 'B', 'C']) {
+for (const variant of ['A', 'B', 'C', 'D']) {
   for (const [width, viewport] of Object.entries(SIZES)) {
     for (const theme of BOTH) {
       const context = await browser.newContext({ storageState: state, viewport, deviceScaleFactor: 2, colorScheme: theme, hasTouch: width === '390', isMobile: width === '390' })
@@ -51,6 +54,7 @@ for (const variant of ['A', 'B', 'C']) {
         await tab.goto(base + screen.url(Number(width)))
         await tab.waitForLoadState('networkidle')
         await tab.addStyleTag({ content: '[data-prototype-switcher]{display:none}' })
+        if (screen.name === 'log') await tab.locator('[aria-expanded="true"]').first().scrollIntoViewIfNeeded().catch(() => {})
         await tab.waitForTimeout(400)
         await tab.screenshot({ path: join(out, file) })
         console.log(file)

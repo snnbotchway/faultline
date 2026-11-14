@@ -3,7 +3,6 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import {
-  IssueLevel,
   TagKey,
   issueActions,
   issueHashesQuery,
@@ -18,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { failed } from '@/lib/notice'
 import { cn } from '@/lib/utils'
 import { cookiesOf, crumbKind, crumbText, crumbsOf, cspOf, requestOf, valueText, type Crumb } from './event'
-import { levelColor } from './levels'
+import { LevelGlyph } from './level'
 import { ago, exact, hourLabel } from './format'
 import { DEFAULT_QUERY, withFilter } from './search'
 import { SHOWN_VALUES, isUrl, pathOf, sharedOrigin, tagFacets, type Facets, type IssueTag } from './tags'
@@ -74,9 +73,10 @@ export function Timeline({ event, title }: { event: IssueEvent; title: string })
           </li>
         )}
         {shown.map((crumb, index) => (
-          <li key={index} className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 border-b px-3 py-2 lg:grid-cols-[64px_96px_minmax(0,1fr)]">
+          <li key={index} className="grid grid-cols-[64px_12px_minmax(0,1fr)] gap-x-3 border-b px-3 py-2 lg:grid-cols-[64px_12px_96px_minmax(0,1fr)]">
             <span className="text-right text-muted-foreground">{crumbTime(crumb, errorAt)}</span>
-            <span className={cn('truncate max-lg:hidden', crumb.level === IssueLevel.error || crumb.level === IssueLevel.warning ? levelColor(crumb.level) : 'text-muted-foreground')}>
+            <span className="flex h-[1lh] items-center">{crumb.level && <LevelGlyph level={crumb.level} />}</span>
+            <span className="truncate text-muted-foreground max-lg:hidden">
               {crumbKind(crumb)}
             </span>
             <span className="min-w-0 break-words">
@@ -85,8 +85,9 @@ export function Timeline({ event, title }: { event: IssueEvent; title: string })
             </span>
           </li>
         ))}
-        <li className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 bg-hit px-3 py-2 font-semibold lg:grid-cols-[64px_96px_minmax(0,1fr)]">
+        <li className="grid grid-cols-[64px_12px_minmax(0,1fr)] gap-x-3 bg-hit px-3 py-2 font-semibold lg:grid-cols-[64px_12px_96px_minmax(0,1fr)]">
           <span className="text-right">0.0s</span>
+          <span />
           <span className="max-lg:hidden">threw</span>
           <span className="min-w-0 break-words">{title}</span>
         </li>

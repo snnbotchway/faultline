@@ -39,6 +39,11 @@ export const canManageReleases = (access: Access) => !!access && access.includes
 // Controls the user cannot use are left out, so every gate fails closed until the organization has loaded.
 export const hasScope = (access: Access, scope: Scope) => !!access && access.includes(scope)
 
+// Instance settings change rarely; the user, their organizations and the open organization (access, throttling)
+// change when someone else edits them, so the shell keeps all of them fresh while the tab is in view.
+const SETTINGS_REFRESH_MS = 30 * 60_000
+const ACCOUNT_REFRESH_MS = 5 * 60_000
+
 export const organizationKeys = {
   all: ['organizations'] as const,
   detail: (slug: string) => [...organizationKeys.all, slug] as const,
@@ -51,7 +56,8 @@ export const organizationKeys = {
 export const instanceSettingsQuery = queryOptions({
   queryKey: ['instance-settings'],
   queryFn: async () => unwrap(await api.GET('/api/settings/')),
-  staleTime: Infinity,
+  staleTime: SETTINGS_REFRESH_MS,
+  refetchInterval: SETTINGS_REFRESH_MS,
 })
 
 // The providers one organization signs in with, for its own sign-in page. Unknown organizations have none.
@@ -65,11 +71,13 @@ export const loginSettingsQuery = (slug: string) =>
 export const currentUserQuery = queryOptions({
   queryKey: ['users', 'me'],
   queryFn: async () => unwrap(await api.GET('/api/0/users/{user_id}/', { params: { path: { user_id: 'me' } } })),
+  refetchInterval: ACCOUNT_REFRESH_MS,
 })
 
 export const organizationsQuery = queryOptions({
   queryKey: organizationKeys.all,
   queryFn: () => fetchAllPages((cursor) => api.GET('/api/0/organizations/', { params: { query: { cursor, limit: MAX_PAGE_SIZE } } })),
+  refetchInterval: ACCOUNT_REFRESH_MS,
 })
 
 export const organizationQuery = (slug: string) =>
@@ -77,6 +85,7 @@ export const organizationQuery = (slug: string) =>
     queryKey: organizationKeys.detail(slug),
     queryFn: async () =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/', { params: { path: orgPath(slug) } })),
+    refetchInterval: ACCOUNT_REFRESH_MS,
   })
 
 export const projectsQuery = (slug: string) =>

@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
+import type { TransactionSort } from '@/api/performance'
 import { ArrowDownWideNarrow } from 'lucide-react'
 import { ProjectMenu } from '@/components/project-menu'
 import { SearchField } from '@/components/search-field'
@@ -28,8 +29,15 @@ const REPEATED_ORDERS = [{ value: DEFAULT_ORDER, label: 'Most repeated' }, ...RE
 // What a row's bar and figure show, which follows from how the list is ordered.
 const Measure = { time: 'time', duration: 'duration', requests: 'requests' } as const
 type Measure = (typeof Measure)[keyof typeof Measure]
-const measureOf = (order: ReturnType<typeof transactionSort>): Measure =>
-  order?.includes('avg_duration') ? Measure.duration : order?.includes('count') ? Measure.requests : Measure.time
+const MEASURE_OF: Record<TransactionSort, Measure> = {
+  avg_duration: Measure.duration,
+  '-avg_duration': Measure.duration,
+  count: Measure.requests,
+  '-count': Measure.requests,
+  created: Measure.time,
+  '-created': Measure.time,
+}
+const measureOf = (order: TransactionSort | undefined): Measure => (order ? MEASURE_OF[order] : Measure.time)
 
 const requests = (transaction: Transaction) => plural(compact(transaction.group.count), 'request')
 const typical = (transaction: Transaction) => `typical ${formatMs(transaction.group.p50 ?? 0)}`
@@ -41,8 +49,8 @@ type MeasureView = {
   headings: [string, string]
   // The row's figure, at the right of its name.
   figure: (transaction: Transaction) => string
-  // The row's bar, scaled to the largest in the list. Without it the row draws typical to slow durations.
-  size?: (transaction: Transaction) => number
+  // The row's bar, scaled to the largest in the list. Undefined draws the span from typical to slow instead.
+  size: ((transaction: Transaction) => number) | undefined
   // Whether the bar's size is a share, written as a percentage beside it.
   percent: boolean
   // The other figures, under the bar.
@@ -60,6 +68,7 @@ const MEASURES: Record<Measure, MeasureView> = {
   [Measure.duration]: {
     headings: ['Typical to slow', 'Slow, all time'],
     figure: (transaction) => formatMs(transaction.group.p95 ?? 0),
+    size: undefined,
     percent: false,
     details: [requests, typical, total],
   },

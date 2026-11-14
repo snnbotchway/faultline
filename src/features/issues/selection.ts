@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { IssueFilters } from '@/api/issues'
 import type { Target } from './actions'
-import { hitsText, type Hits } from './format'
+import { hitsText, plural, type Hits } from './format'
 import type { Row } from './inbox-row'
 import { statusActions, type StatusView } from './status'
 
@@ -69,7 +69,7 @@ export function selectionOffer({ rows, selection, view, filters, hits, hasMore }
     canSelectAllMatching: everyLoaded && hasMore && !allMatching,
     target,
     count,
-    what: `${count} ${allMatching || ids.length !== 1 ? 'issues' : 'issue'}`,
+    what: plural(count, 'issue'),
     statuses: statusActions(view),
     // The backend only takes a status change or a delete for "every match"; assigning and merging need the issues named.
     canAssign: !allMatching,

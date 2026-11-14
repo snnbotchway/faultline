@@ -1,5 +1,6 @@
 import type { IssueFilters, IssueSort } from '@/api/issues'
 import { StatusView, isStatus } from './status'
+import { plural } from './format'
 
 export const DEFAULT_QUERY = 'is:unresolved'
 export const DEFAULT_SORT: IssueSort = '-last_seen'
@@ -69,7 +70,6 @@ export const TIME_RANGES = [
 export const rangeStart = (days: number) => `now-${days}d`
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
-const plural = (count: number, unit: string) => `${count} ${unit}${count === 1 ? '' : 's'}`
 
 // The range in words. `days` is set when it is one of the choices; absolute dates are shown as they are.
 export function timeRange(search: Pick<InboxSearch, 'start' | 'end'>): { days?: number; label: string } {

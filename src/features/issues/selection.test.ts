@@ -12,7 +12,8 @@ test('every match stays selected when more rows load, and acts on the filters ra
   expect(offer.allMatching).toBe(true)
   expect(offer.what).toBe('340 issues')
   expect(offer.target.selection).toEqual({ filters: base.filters })
-  expect(offer.canAssign || offer.canMerge).toBe(false)
+  expect(offer.canAssign).toBe(false)
+  expect(offer.canMerge).toBe(false)
 })
 
 test('merging is offered for two or more issues of one project, and the newest is the one kept', () => {

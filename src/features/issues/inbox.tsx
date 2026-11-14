@@ -5,7 +5,7 @@ import { StatsPeriod, issueListQuery, issueStatsQuery, type IssueStatus } from '
 import { canWriteEvents, organizationQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
-import { useCommands, type Command } from '@/components/shell/commands'
+import { CommandGroup, useCommands, type Command } from '@/components/shell/commands'
 import { ScopeFilters } from '@/components/shell/scope-filters'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -21,7 +21,7 @@ import { SearchBox, SortMenu, StatusMenu, StatusTabs, TimeRangeMenu } from './in
 import { COLUMNS, IssueRow, SkeletonRows, type Row } from './inbox-row'
 import { DEFAULT_QUERY, isFiltered, statusOf, toFilters, withStatus, type InboxSearch } from './search'
 import { useSelection, useSelectionOffer } from './selection'
-import { SelectionBar, SelectionSheet } from './selection-bar'
+import { SelectionBar, SelectionSheet, type SelectionActions } from './selection-bar'
 import { ACTION, STATUS_VIEWS, type StatusView } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { Trend, axisFor, axisStartLabel, classify, fillBuckets, periodInfo, releaseMarks } from './trend'
@@ -121,8 +121,14 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     const on = target()
     if (on && canWrite && (offer.canAssign || !offer.selecting)) setAssigning(on)
   }
-  const merge = () => offer.canMerge && setMerging(true)
-  const remove = () => setDeleting({ target: offer.target, what: offer.what })
+  const selected: SelectionActions = {
+    setStatus,
+    assign: offer.canAssign ? assign : undefined,
+    merge: offer.canMerge ? () => setMerging(true) : undefined,
+    remove: () => setDeleting({ target: offer.target, what: offer.what }),
+    clear: selection.clear,
+    selectAllMatching: offer.canSelectAllMatching ? selection.selectAllMatching : undefined,
+  }
   const move = (step: number) => {
     const index = cursor ? loadedIds.indexOf(cursor) : -1
     const next = loadedIds[Math.max(0, Math.min(loadedIds.length - 1, index + step))]
@@ -153,7 +159,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     Enter: () => cursor && void navigate({ to: '/$org/issues/$issueId', params: { org, issueId: cursor } }),
     ...Object.fromEntries(offer.statuses.map((action) => [action.key, () => setStatus(action.status)])),
     [ACTION.assign.key]: assign,
-    [ACTION.merge.key]: merge,
+    [ACTION.merge.key]: () => selected.merge?.(),
     Escape: () => (offer.selecting ? selection.clear() : setUnfolded(undefined)),
   })
 
@@ -161,20 +167,20 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     ? [
         ...offer.statuses.map((action) => ({
           id: `selection:${action.status}`,
-          group: 'selection',
+          group: CommandGroup.selection,
           label: `${action.action} ${offer.what}`,
           keys: action.key,
           run: () => setStatus(action.status),
         })),
-        ...(offer.canAssign ? [{ id: 'selection:assign', group: 'selection', label: `${ACTION.assign.label} ${offer.what}`, keys: ACTION.assign.key, run: assign }] : []),
-        ...(offer.canMerge ? [{ id: 'selection:merge', group: 'selection', label: `${ACTION.merge.label} ${offer.what}`, keys: ACTION.merge.key, run: merge }] : []),
-        { id: 'selection:delete', group: 'selection', label: `Delete ${offer.what}`, run: remove },
-        { id: 'selection:clear', group: 'selection', label: 'Clear selection', keys: 'esc', run: selection.clear },
+        ...(selected.assign ? [{ id: 'selection:assign', group: CommandGroup.selection, label: `${ACTION.assign.label} ${offer.what}`, keys: ACTION.assign.key, run: selected.assign }] : []),
+        ...(selected.merge ? [{ id: 'selection:merge', group: CommandGroup.selection, label: `${ACTION.merge.label} ${offer.what}`, keys: ACTION.merge.key, run: selected.merge }] : []),
+        { id: 'selection:delete', group: CommandGroup.selection, label: `Delete ${offer.what}`, run: selected.remove },
+        { id: 'selection:clear', group: CommandGroup.selection, label: 'Clear selection', keys: 'esc', run: selected.clear },
       ]
     : []
   useCommands([
     ...commands,
-    ...STATUS_VIEWS.filter((item) => item.view !== view).map((item) => ({ id: `show:${item.view}`, group: 'show', label: `${item.label} issues`, run: () => setView(item.view) })),
+    ...STATUS_VIEWS.filter((item) => item.view !== view).map((item) => ({ id: `show:${item.view}`, group: CommandGroup.show, label: `${item.label} issues`, run: () => setView(item.view) })),
   ])
 
   const directHit = rows.length === 1 && UUID.test(query.trim()) ? rows[0]!.issue : undefined
@@ -201,16 +207,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   )
 
   const unit = periodInfo(period)
-  const bar = {
-    offer,
-    matching: hits && hitsText(hits),
-    onStatus: setStatus,
-    onAssign: assign,
-    onMerge: merge,
-    onDelete: remove,
-    onClear: selection.clear,
-    onSelectAllMatching: selection.selectAllMatching,
-  }
+  const bar = { offer, matching: hits && hitsText(hits), actions: selected }
 
   return (
     <>
@@ -229,9 +226,9 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
         )}
       </PageBar>
 
-      <div className="flex items-center gap-1.5 overflow-x-auto border-b px-3 py-2 lg:hidden">
+      <div className="flex items-center gap-2 overflow-x-auto border-b px-3 py-2 lg:hidden">
         <StatusMenu view={view} onChange={setView} />
-        <ScopeFilters org={org} className="shrink-0 gap-1.5" />
+        <ScopeFilters org={org} className="shrink-0 gap-2" />
         <TimeRangeMenu chip search={search} onChange={go} />
       </div>
 

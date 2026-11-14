@@ -16,6 +16,10 @@ export function ago(time: string | Date, now = new Date()): string {
   return ''
 }
 
+// `Nov 14, 12:54 PM`: the moment without the year or seconds, for narrow screens.
+const briefFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+export const brief = (time: string | Date) => briefFormat.format(new Date(time))
+
 const exactFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' })
 export const exact = (time: string | Date) => exactFormat.format(new Date(time))
 
@@ -30,3 +34,6 @@ export const hourLabel = (seconds: number) => hourFormat.format(new Date(seconds
 // How many issues a search matches. The backend stops counting at a limit; `capped` says it was reached.
 export type Hits = { n: number; capped: boolean }
 export const hitsText = (hits: Hits) => `${hits.n}${hits.capped ? '+' : ''}`
+
+// `1 issue`, `3 issues`. `count` may already be worded (`1000+`).
+export const plural = (count: number | string, word: string) => `${count} ${word}${String(count) === '1' ? '' : 's'}`

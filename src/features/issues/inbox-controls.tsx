@@ -13,10 +13,9 @@ import {
 import { Kbd } from '@/components/ui/kbd'
 import { cn } from '@/lib/utils'
 import { DEFAULT_SORT, SORTS, TIME_RANGES, rangeStart, timeRange, type InboxSearch } from './search'
-import { STATUS_VIEWS, type StatusView } from './status'
+import { STATUS_VIEWS, isView, type StatusView } from './status'
 
 const isSort = (value: string): value is IssueSort => SORTS.some((sort) => sort.value === value)
-const isView = (value: string): value is StatusView => STATUS_VIEWS.some((item) => item.view === value)
 
 export function SearchBox({ query, inputRef, onSubmit }: { query: string; inputRef: RefObject<HTMLInputElement | null>; onSubmit: (query: string) => void }) {
   const [text, setText] = useState(query)
@@ -25,8 +24,8 @@ export function SearchBox({ query, inputRef, onSubmit }: { query: string; inputR
     onSubmit(text.trim())
   }
   return (
-    <form onSubmit={submit} role="search" className="flex h-8 min-w-0 flex-1 items-center gap-2 border bg-background px-2.5 focus-within:border-brand max-lg:h-9">
-      <Search className="size-3.5 shrink-0 text-muted-foreground" />
+    <form onSubmit={submit} role="search" className="flex h-8 min-w-0 flex-1 items-center gap-2 border bg-background px-3 focus-within:border-foreground max-lg:h-11">
+      <Search className="size-3 shrink-0 text-muted-foreground" />
       <input
         ref={inputRef}
         value={text}
@@ -59,7 +58,7 @@ export function StatusTabs({ view, onChange }: { view: StatusView; onChange: (vi
   )
 }
 
-const CHIP = 'flex h-9 shrink-0 items-center gap-1.5 border bg-card px-2.5 text-sm'
+const CHIP = 'flex h-11 shrink-0 items-center gap-2 border bg-card px-3 text-sm'
 
 // The status tabs as one control, for the phone's filter row.
 export function StatusMenu({ view, onChange }: { view: StatusView; onChange: (view: StatusView) => void }) {
@@ -87,7 +86,7 @@ export function SortMenu({ sort, disabled, onChange }: { sort: IssueSort | undef
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label="Sort" disabled={disabled}>
+        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label="Sort" title="Sort" disabled={disabled}>
           <ArrowDownWideNarrow />
           <span className="max-lg:hidden">{SORTS.find((item) => item.value === current)?.label}</span>
         </Button>

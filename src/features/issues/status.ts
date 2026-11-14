@@ -19,6 +19,8 @@ export const STATUS_VIEWS: { view: StatusView; label: string }[] = [
   { view: StatusView.all, label: 'All' },
 ]
 
+export const isView = (value: string): value is StatusView => STATUS_VIEWS.some((item) => item.view === value)
+
 const ACTION_ORDER = [IssueStatus.resolved, IssueStatus.unresolved, IssueStatus.ignored]
 
 // The status changes on offer, the main one first. `current` is the status every affected issue already has, if they share one.
@@ -30,4 +32,5 @@ export function statusActions(current: StatusView | undefined) {
 export const ACTION = {
   assign: { label: 'Assign', key: 'a' },
   merge: { label: 'Merge', key: 'm' },
+  resolveNext: { label: 'Resolve in next release' },
 } as const

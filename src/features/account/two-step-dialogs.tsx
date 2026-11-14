@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { account, accountKeys, recoveryPreviewQuery, totpSetupQuery, twoStep, type SecurityKey } from '@/api/account'
 import { explain } from '@/api/errors'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert } from '@/components/ui/field'
+import { CODE_INPUT, Field, FieldError, FormAlert, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
@@ -13,9 +13,9 @@ import { CopyButton } from './copy-button'
 import { day } from './format'
 import { QrCode } from './qr'
 import { RowButton } from './rows'
+import { cn } from '@/lib/utils'
 import { useAction } from './use-action'
 
-const CODE_INPUT = 'h-10 font-mono tracking-code sm:max-w-48'
 
 /* ---------- Authenticator app ---------- */
 
@@ -62,14 +62,14 @@ function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) 
             autoComplete="one-time-code"
             maxLength={6}
             required
-            className={CODE_INPUT}
+            className={cn(CODE_INPUT, 'sm:max-w-48')}
           />
         )}
       </Field>
       <TaskActions>
-        <Button type="submit" variant="default" disabled={activate.busy || !setup.data} aria-busy={activate.busy}>
+        <SubmitButton busy={activate.busy} disabled={!setup.data}>
           Continue
-        </Button>
+        </SubmitButton>
         <Button onClick={onClose}>Cancel</Button>
       </TaskActions>
     </form>
@@ -79,7 +79,8 @@ function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) 
 /* ---------- Recovery codes ---------- */
 
 // New codes are shown once and only start working when one of them is typed back, which proves they were saved.
-function RecoveryCodesForm({ action, later, onDone, onClose }: { action: string; later: string; onDone: () => void; onClose: () => void }) {
+// `cancel` names the way out; without one the codes must be confirmed.
+function RecoveryCodesForm({ action, cancel, onDone, onClose }: { action: string; cancel?: string; onDone: () => void; onClose: () => void }) {
   const preview = useQuery(recoveryPreviewQuery)
   const [code, setCode] = useState('')
   const confirm = useAction(() => twoStep.confirmRecoveryCodes(code.trim()), {
@@ -109,7 +110,7 @@ function RecoveryCodesForm({ action, later, onDone, onClose }: { action: string;
       <div>
         <p className="label-caps mb-2">Recovery codes</p>
         {preview.data ? (
-          <ul className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-label">
+          <ul className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-code">
             {codes.map((item) => (
               <li key={item}>{item}</li>
             ))}
@@ -138,15 +139,15 @@ function RecoveryCodesForm({ action, later, onDone, onClose }: { action: string;
             inputMode="numeric"
             autoComplete="off"
             required
-            className={CODE_INPUT}
+            className={cn(CODE_INPUT, 'sm:max-w-48')}
           />
         )}
       </Field>
       <TaskActions>
-        <Button type="submit" variant="default" disabled={confirm.busy || !preview.data} aria-busy={confirm.busy}>
+        <SubmitButton busy={confirm.busy} disabled={!preview.data}>
           {action}
-        </Button>
-        <Button onClick={onClose}>{later}</Button>
+        </SubmitButton>
+        {cancel && <Button onClick={onClose}>{cancel}</Button>}
       </TaskActions>
     </form>
   )
@@ -158,12 +159,12 @@ type TotpStep = (typeof TotpStep)[keyof typeof TotpStep]
 function TotpSteps({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<TotpStep>(TotpStep.scan)
   return (
-    <TaskDialog open onClose={onClose} title="Turn on two-step verification" step={step === TotpStep.scan ? 'Step 1 of 2' : 'Step 2 of 2'}>
+    // Once the app is on, the backend has also made recovery codes nobody has seen, so the new ones must be confirmed.
+    <TaskDialog open onClose={onClose} title="Turn on two-step verification" step={step === TotpStep.scan ? 'Step 1 of 2' : 'Step 2 of 2'} modal={step === TotpStep.codes}>
       {step === TotpStep.scan ? (
         <Scan onDone={() => setStep(TotpStep.codes)} onClose={onClose} />
       ) : (
-        // The app is already on by now, so leaving here keeps it on; the codes can be made again from the profile.
-        <RecoveryCodesForm action="Confirm codes" later="Later" onDone={onClose} onClose={onClose} />
+        <RecoveryCodesForm action="Confirm codes" onDone={onClose} onClose={onClose} />
       )}
     </TaskDialog>
   )
@@ -177,7 +178,7 @@ export function TotpDialog({ open, onClose }: { open: boolean; onClose: () => vo
 export function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <TaskDialog open={open} onClose={onClose} title="New recovery codes">
-      <RecoveryCodesForm action="Replace old codes" later="Cancel" onDone={onClose} onClose={onClose} />
+      <RecoveryCodesForm action="Replace old codes" cancel="Cancel" onDone={onClose} onClose={onClose} />
     </TaskDialog>
   )
 }
@@ -211,11 +212,7 @@ function KeyRow({ item }: { item: SecurityKey }) {
           )}
         </span>
       </div>
-      {remove.message && (
-        <p className="prose-text pb-1 text-destructive" role="alert">
-          {remove.message}
-        </p>
-      )}
+      <FieldError className="pb-1">{remove.message}</FieldError>
     </li>
   )
 }
@@ -254,9 +251,9 @@ function AddKey() {
         {(field) => <Input {...field} name="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={100} className="h-10" autoComplete="off" />}
       </Field>
       <TaskActions>
-        <Button type="submit" variant="default" disabled={add.busy} aria-busy={add.busy}>
+        <SubmitButton busy={add.busy}>
           {add.busy ? 'Waiting for your security key' : 'Add security key'}
-        </Button>
+        </SubmitButton>
       </TaskActions>
     </form>
   )

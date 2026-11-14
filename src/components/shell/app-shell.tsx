@@ -307,8 +307,13 @@ export function Notice() {
       className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 max-lg:bottom-32 [body[data-scroll-locked]_&]:top-4 [body[data-scroll-locked]_&]:bottom-auto"
     >
       {notice && (
-        <p className={cn('pointer-events-auto max-w-md border bg-card px-3 py-2 shadow-float', notice.error && 'border-destructive text-destructive')}>
+        <p className={cn('pointer-events-auto flex max-w-md items-center gap-3 border bg-card px-3 py-2 shadow-float', notice.error && 'border-destructive text-destructive')}>
           {notice.text}
+          {notice.action && (
+            <Button variant="link" className="text-foreground underline" onClick={notice.action.run}>
+              {notice.action.label}
+            </Button>
+          )}
         </p>
       )}
     </div>

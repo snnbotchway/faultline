@@ -118,7 +118,7 @@ Where Faultline differs on purpose:
 
 - [x] Empty states: "No logs yet" vs "No matching logs".
 - [x] Initial hit count kept while paging (`X-Hits` from the first page).
-- Faultline also filters by environment and host, counts each filter value, charts logs per hour (pick an hour to narrow the list), opens a log with its attributes, and lists the other logs in its trace or span. Backend limits: the search matches the message only, and counts above 1000 read `1000+` where the hourly statistics cannot answer (a text search, a host or a trace).
+- Faultline also filters by environment and host, counts each filter value, charts logs per hour (pick an hour to narrow the list), opens a log with its attributes, and lists the other logs in its trace or span. Backend limits: the search matches the message only, and counts above 1000 read `1000+` where the hourly statistics cannot answer (a text search, a host or a trace). The backend cannot filter by span, so a span's logs are picked from the first 1000 of its trace, and the screen says so when the trace has more.
 
 ---
 

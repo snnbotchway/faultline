@@ -15,6 +15,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppOrgRouteRouteImport } from './routes/_app/$org/route'
+import { Route as PrototypeAccountRouteImport } from './routes/prototype.account'
 import { Route as AppOrgIndexRouteImport } from './routes/_app/$org/index'
 import { Route as AppOrgSectionRouteRouteImport } from './routes/_app/$org/$section/route'
 import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$section/$'
@@ -52,6 +53,11 @@ const AppOrgRouteRoute = AppOrgRouteRouteImport.update({
   id: '/$org',
   path: '/$org',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const PrototypeAccountRoute = PrototypeAccountRouteImport.update({
+  id: '/prototype/account',
+  path: '/prototype/account',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppOrgIndexRoute = AppOrgIndexRouteImport.update({
   id: '/',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/$org': typeof AppOrgRouteRouteWithChildren
+  '/prototype/account': typeof PrototypeAccountRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
   '/$org/': typeof AppOrgIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/prototype/account': typeof PrototypeAccountRoute
   '/': typeof AppIndexRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
   '/$org': typeof AppOrgIndexRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/$org': typeof AppOrgRouteRouteWithChildren
+  '/prototype/account': typeof PrototypeAccountRoute
   '/_app/': typeof AppIndexRoute
   '/_app/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
   '/_app/$org/': typeof AppOrgIndexRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/$org'
+    | '/prototype/account'
     | '/$org/$section'
     | '/$org/'
     | '/$org/$section/$'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/prototype/account'
     | '/'
     | '/$org/$section'
     | '/$org'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_app/$org'
+    | '/prototype/account'
     | '/_app/'
     | '/_app/$org/$section'
     | '/_app/$org/'
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PrototypeAccountRoute: typeof PrototypeAccountRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$org'
       preLoaderRoute: typeof AppOrgRouteRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/prototype/account': {
+      id: '/prototype/account'
+      path: '/prototype/account'
+      fullPath: '/prototype/account'
+      preLoaderRoute: typeof PrototypeAccountRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/$org/': {
       id: '/_app/$org/'
@@ -355,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PrototypeAccountRoute: PrototypeAccountRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

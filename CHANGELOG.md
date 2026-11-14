@@ -23,6 +23,7 @@ All notable changes to Faultline are listed here. The format follows
 - Your theme choice is saved to your account, so it follows you to another browser; this browser's copy stays the fallback.
 - `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps. Give GlitchTip the same `BASE_PATH`.
 - Usage, under Settings (the stock `/:org/settings/subscription` path): the errors, transactions, logs and uptime checks an organization took in over the last 30 days, a day at a time on one axis. Pick a day to see its figures, unfold errors or transactions to see which project sent them, and see the share of new events the organization and each project are set to drop, when they drop any.
+- A "Skip to content" link as the first Tab stop on every signed-in page, and the page content in one `main` landmark with a heading.
 
 ### Changed
 
@@ -33,6 +34,12 @@ All notable changes to Faultline are listed here. The format follows
 
 - Issue page: the copied issue link and the "Copy for AI" event URL and instance include the path Faultline is served under.
 - The projects list's 14-day error traces count every event; GlitchTip 7.0.0 counts only the first hour of each day when asked by the day, so they are summed from hours.
+- Closing a dialog with Esc or its buttons puts focus back on the control that opened it.
+- `j` and `k` in the inbox move focus with the cursor, so a screen reader reads the row and Enter opens it.
+- Menu buttons that show a value (organization, projects, environment, sort, time range) and the issue page's relative times are named with the words they show, so speech control can find them; key hints are no longer read out as part of a button's name.
+- The command palette tells a screen reader which command is current as the arrow keys move.
+- The bottom message stays while the pointer or focus is on it, so its Undo can be reached.
+- The settings back link is a full 44px target on a phone.
 - The environment filter lists only the environments of the chosen projects, and drops a choice they do not have.
 - "Resolve in next release" works on 7.0.0, names the release the issue was tied to (or says none was found) with an Undo, and the issue's status shows that release; it used to be refused by the bulk route.
 - The image tells browsers to check for a new page on every load, so a new release shows without a hard refresh, and a missing script file is a 404 instead of the page.

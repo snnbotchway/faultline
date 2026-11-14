@@ -9,4 +9,6 @@ test('serves the app and reaches the backend on the same origin', async ({ page 
   const settings = await page.request.get('/api/settings/')
   expect((await settings.json()).version).toBeTruthy()
   expect((await page.request.get('/assets/missing.js')).status()).toBe(404)
+  const redirect = await page.request.get('/admin/', { maxRedirects: 0 })
+  expect(redirect.headersArray().filter((header) => header.name.toLowerCase() === 'location')).toHaveLength(1)
 })

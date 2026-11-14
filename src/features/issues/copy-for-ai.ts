@@ -37,7 +37,7 @@ export async function copyForAi(event: IssueEvent, where: Omit<Where, 'instance'
     return
   }
   localStorage.setItem(MCP_HINT_KEY, 'true')
-  notify('Copied. Skip the pasting with MCP.', false, {
+  notify('Copied. Let your agent read events directly with MCP.', false, {
     label: 'Set up MCP',
     run: () => void window.open(`${MCP_GUIDE}#instance=${encodeURIComponent(instance)}`, '_blank', 'noreferrer'),
   })

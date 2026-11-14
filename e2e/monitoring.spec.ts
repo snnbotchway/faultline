@@ -78,6 +78,15 @@ test('an alert rule is created and deleted', async ({ page }) => {
   await expect(rule).toHaveCount(0)
 })
 
+test("a project's Alerts tab lists its rules and opens one from the stock address", async ({ page }) => {
+  await page.goto(`/${DEMO.org}/settings/projects/web-app?tab=alerts`)
+  await expect(page.getByRole('navigation', { name: 'Project settings' }).getByRole('link', { name: /Alerts/ })).toHaveAttribute('aria-current', 'page')
+  const rule = page.getByRole('region', { name: 'Alert rules' }).getByRole('button', { name: /Error burst/ })
+  await rule.click()
+  await expect(page).toHaveURL(/tab=alerts&alert=\d+/)
+  await expect(page.getByRole('dialog').getByLabel('Name')).toHaveValue('Error burst')
+})
+
 test('a release lists the issues it brought apart from older ones', async ({ page }) => {
   await page.goto(`/${DEMO.org}/releases`)
   await row(page, '1.5.0').getByRole('link').click()

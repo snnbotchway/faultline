@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useChange } from './change'
 import { Confirm } from './fields'
-import { CopyField, Field, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton } from './parts'
+import { Field } from '@/components/ui/field'
+import { CopyField, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton } from './parts'
 import { useFold } from './rows'
 
 // A key without a name goes by the start of its id, which is also how its DSN begins.

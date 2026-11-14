@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { useChange } from './change'
 import { RoleField, TeamChecklist } from './fields'
 import { parseEmails } from './invite'
-import { CopyField, Field, FormDialog, FormError } from './parts'
+import { Field, FieldError } from '@/components/ui/field'
+import { CopyField, FormDialog } from './parts'
 
 type Outcome = { email: string; link?: string | null; error?: string }
 
@@ -97,9 +98,9 @@ export function InviteDialog({
         )}
       </Field>
       {refused.map((outcome) => (
-        <FormError key={outcome.email}>
+        <FieldError key={outcome.email}>
           {outcome.email}: {outcome.error}
-        </FormError>
+        </FieldError>
       ))}
       <RoleField value={role} onChange={setRole} allowOwner={allowOwner} />
       <div className="flex flex-col gap-2">

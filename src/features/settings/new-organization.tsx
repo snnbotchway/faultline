@@ -4,7 +4,8 @@ import { ORGANIZATION_NAME_MAX, organizationActions } from '@/api/organizations'
 import { stale } from '@/api/stale'
 import { Input } from '@/components/ui/input'
 import { useChange } from './change'
-import { Field, FormDialog } from './parts'
+import { Field } from '@/components/ui/field'
+import { FormDialog } from './parts'
 
 /**
  * A new organization is only its name, so it is made in a dialog over whatever page the user is on. A new one has

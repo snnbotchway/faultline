@@ -18,7 +18,8 @@ import { useAccess, useOwnMember } from './access'
 import { useChange } from './change'
 import { Confirm, RoleField, TeamChecklist } from './fields'
 import { InviteDialog } from './invite-dialog'
-import { CopyButton, FoldChevron, FormError, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
+import { FormAlert } from '@/components/ui/field'
+import { CopyButton, FoldChevron, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { memberName, teamList } from './labels'
 import { ROLE_LABEL } from './roles'
 
@@ -196,7 +197,7 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
           <TeamChecklist teams={teams} projects={projects} value={chosen} onChange={setChosen} />
         </div>
       </div>
-      {save.error && <FormError>{save.error}</FormError>}
+      {save.error && <FormAlert>{save.error}</FormAlert>}
       <div className="flex flex-wrap gap-2">
         <Button variant="default" disabled={save.pending || (role === member.role && !added.length && !removed.length)} aria-busy={save.pending} onClick={() => save.run()}>
           Save

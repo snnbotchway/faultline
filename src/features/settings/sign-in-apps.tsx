@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useChange } from './change'
 import { Confirm } from './fields'
-import { CopyField, Field, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton, Segmented } from './parts'
+import { Field } from '@/components/ui/field'
+import { CopyField, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton, Segmented } from './parts'
 import { useFold } from './rows'
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { [SignInProvider.openIdConnect]: 'OpenID Connect', [SignInProvider.google]: 'Google' }

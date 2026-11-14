@@ -1,11 +1,12 @@
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy } from 'lucide-react'
 import { Link, type LinkProps } from '@tanstack/react-router'
-import { useId, useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Field, FormAlert } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { cn } from '@/lib/utils'
 
 // The bar of a page that sits under Settings: the way back, then where you are.
@@ -109,28 +110,6 @@ export function FoldRow({
   )
 }
 
-
-export function Field({ label, error, className, children }: { label: string; error?: string; className?: string; children: (props: { id: string; 'aria-invalid': boolean; 'aria-describedby'?: string }) => ReactNode }) {
-  const id = useId()
-  return (
-    <div className={cn('flex flex-col gap-2', className)}>
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {children({ id, 'aria-invalid': !!error, 'aria-describedby': error ? `${id}-error` : undefined })}
-      {error && <FormError id={`${id}-error`}>{error}</FormError>}
-    </div>
-  )
-}
-
-export function FormError({ id, children }: { id?: string; children: ReactNode }) {
-  return (
-    <p id={id} role="alert" className="text-sm text-destructive">
-      {children}
-    </p>
-  )
-}
-
 // The form inside an unfolded row: one field, Save and Cancel.
 export function InlineForm({
   onSubmit,
@@ -154,7 +133,7 @@ export function InlineForm({
   return (
     <form noValidate onSubmit={submit} className="flex flex-col gap-3">
       {children}
-      {error && <FormError>{error}</FormError>}
+      <FormAlert>{error}</FormAlert>
       <div className="flex gap-2">
         <Button type="submit" variant="default" disabled={disabled || pending} aria-busy={pending}>
           Save
@@ -199,35 +178,26 @@ export function FormDialog({
     if (!disabled && !pending) onSubmit?.()
   }
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent aria-describedby={undefined} className={cn('max-lg:top-[5vh]', className)}>
-        <form noValidate onSubmit={send} className="flex max-h-[84dvh] flex-col">
-          <div className="flex h-11 shrink-0 items-center border-b px-4">
-            <DialogTitle className="text-base">{title}</DialogTitle>
-          </div>
-          <div className="flex flex-col gap-4 overflow-y-auto p-4">
-            {children}
-            {error && <FormError>{error}</FormError>}
-          </div>
-          <div className="flex shrink-0 justify-end gap-2 border-t px-4 py-3">
-            {submit ? (
-              <>
-                <Button onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant={destructive ? 'destructive' : 'default'} disabled={disabled || pending} aria-busy={pending}>
-                  {submit}
-                </Button>
-              </>
-            ) : (
-              <Button variant="default" onClick={onClose}>
-                Done
+    <TaskDialog open={open} onClose={onClose} title={title} className={className}>
+      <form noValidate onSubmit={send} className="flex flex-col gap-4">
+        {children}
+        <FormAlert>{error}</FormAlert>
+        <TaskActions className="sm:justify-end">
+          {submit ? (
+            <>
+              <Button type="submit" variant={destructive ? 'destructive' : 'default'} disabled={disabled || pending} aria-busy={pending} className="sm:order-2">
+                {submit}
               </Button>
-            )}
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <Button onClick={onClose}>Cancel</Button>
+            </>
+          ) : (
+            <Button variant="default" onClick={onClose}>
+              Done
+            </Button>
+          )}
+        </TaskActions>
+      </form>
+    </TaskDialog>
   )
 }
 

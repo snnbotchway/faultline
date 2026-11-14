@@ -12,7 +12,8 @@ import { useTitle } from '@/lib/title'
 import { useAccess } from './access'
 import { useChange } from './change'
 import { PlatformPicker, Snippets } from './fields'
-import { Field, FormError, SettingsBar } from './parts'
+import { Field, FormAlert } from '@/components/ui/field'
+import { SettingsBar } from './parts'
 import { teamLabel } from './labels'
 import { OTHER_PLATFORM, platformName, storedPlatform } from './platforms'
 import { ProjectTab } from './project-tabs'
@@ -109,7 +110,7 @@ export function NewProject({ org }: { org: string }) {
               )}
             </Field>
           )}
-          {create.error && <FormError>{create.error}</FormError>}
+          {create.error && <FormAlert>{create.error}</FormAlert>}
           <Button type="submit" variant="default" className="lg:self-start" disabled={!teams || create.pending} aria-busy={create.pending}>
             Create project
           </Button>

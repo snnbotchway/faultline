@@ -97,7 +97,7 @@ export function makeEvent(project: string, e: SampleError, i: number, at: number
     release: release.version,
     server_name: python ? `api-${(i % 3) + 1}` : undefined,
     user: { id: String(user), email: `user${user}@example.com`, ip_address: `10.0.${i % 8}.${user % 250}` },
-    tags: python ? { region: i % 3 ? 'af-west' : 'eu-west' } : undefined,
+    tags: python ? { region: i % 3 ? 'af-west' : 'eu-west' } : { url: `https://app.example.com/quotes/${i % 3 ? 'new' : 'review'}` },
     contexts: python ? { runtime: { name: 'CPython', version: '3.13.1' } } : { browser, os: { name: i % 3 ? 'Windows' : 'macOS' } },
     breadcrumbs: {
       values: [
@@ -110,6 +110,7 @@ export function makeEvent(project: string, e: SampleError, i: number, at: number
         {
           type: e.type,
           value: e.value,
+          mechanism: python ? { type: 'django', handled: false } : { type: 'onerror', handled: false, data: { function: 'window.onerror' } },
           stacktrace: {
             frames: [
               { filename: python ? 'django/core/handlers/base.py' : 'node_modules/react-dom/client.js', function: python ? 'get_response' : 'commitRoot', lineno: 197, in_app: false },
@@ -128,6 +129,14 @@ export function makeEvent(project: string, e: SampleError, i: number, at: number
         },
       ],
     },
-    request: { url: `https://app.example.com/${project}/${e.fn}`, method: python ? 'POST' : 'GET' },
+    request: {
+      url: `https://app.example.com/${project}/${e.fn}`,
+      method: python ? 'POST' : 'GET',
+      headers: { 'User-Agent': python ? 'python-requests/2.32' : `${browser.name}/${browser.version}`, Accept: 'application/json' },
+      query_string: `quote=${100 + i}&plan=${i % 2 ? 'gold' : 'basic'}`,
+      cookies: { session: `s-${user}`, theme: i % 2 ? 'dark' : 'light' },
+    },
+    // What the SDK attached by hand, which GlitchTip keeps as the event's additional data.
+    extra: { quoteId: 5000 + i, plan: { tier: i % 2 ? 'gold' : 'basic', seats: 1 + (i % 4) } },
   }
 }

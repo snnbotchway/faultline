@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { BACKEND_PATHS } from './backend-paths'
 import { ApiError, HttpStatus, allauth, csrfToken, unwrap, type ApiResult } from './client'
 import type { components } from './schema/allauth'
 
@@ -51,7 +52,7 @@ export const sessionQuery = queryOptions({
 
 export const authConfigQuery = queryOptions({
   queryKey: ['auth', 'config'],
-  queryFn: async () => (await allauth.GET('/_allauth/browser/v1/config')).data?.data,
+  queryFn: async () => unwrap(await allauth.GET('/_allauth/browser/v1/config')).data,
   staleTime: Infinity,
 })
 
@@ -91,7 +92,9 @@ export function redirectToProvider(provider: string, callbackUrl: string, proces
   const form = document.createElement('form')
   form.method = 'POST'
   form.action = '/_allauth/browser/v1/auth/provider/redirect'
-  const fields = { provider, process, callback_url: callbackUrl, csrfmiddlewaretoken: csrfToken() ?? '' }
+  const token = csrfToken()
+  if (!token) throw new Error('Reload the page, then try signing in again.')
+  const fields = { provider, process, callback_url: callbackUrl, csrfmiddlewaretoken: token }
   for (const [name, value] of Object.entries(fields)) {
     const input = document.createElement('input')
     input.type = 'hidden'
@@ -103,15 +106,22 @@ export function redirectToProvider(provider: string, callbackUrl: string, proces
   form.submit()
 }
 
-// Only same-origin paths. Resolving through URL also catches `//host`, `/\host` and `/\t/host`.
+// Only same-origin paths. The resolved path is checked again because URL normalisation
+// turns `/.//host` into `//host`, which a browser reads as another site.
 export function safeNext(next: unknown): string | undefined {
   if (typeof next !== 'string' || !next.startsWith('/')) return undefined
-  const url = new URL(next, window.location.origin)
-  if (url.origin !== window.location.origin) return undefined
-  return url.pathname + url.search + url.hash
+  let url: URL
+  try {
+    url = new URL(next, window.location.origin)
+  } catch {
+    return undefined
+  }
+  const path = url.pathname + url.search + url.hash
+  if (url.origin !== window.location.origin || /^\/[/\\]/.test(path)) return undefined
+  return path
 }
 
-// Server-rendered backend pages need a full page load after sign-in.
+// Backend paths are server-rendered (admin, OAuth consent…), so they need a full page load.
 export function isBackendPage(path: string) {
-  return /^\/(admin|oauth)\//.test(path)
+  return BACKEND_PATHS.some((prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`))
 }

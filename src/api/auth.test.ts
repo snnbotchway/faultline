@@ -1,13 +1,21 @@
 import { expect, test } from 'vitest'
-import { SessionStatus, safeNext, toSession } from './auth'
+import { SessionStatus, isBackendPage, safeNext, toSession } from './auth'
 
 const response = (status: number) => new Response(null, { status })
 
 test('follows only same-origin paths after sign-in', () => {
   expect(safeNext('/demo-co/issues/12?query=is:unresolved')).toBe('/demo-co/issues/12?query=is:unresolved')
-  for (const unsafe of ['//evil.example', '/\\evil.example', '/\t/evil.example', 'https://evil.example', 'javascript:alert(1)', undefined]) {
-    expect(safeNext(unsafe)).toBeUndefined()
+  const unsafe = ['//evil.example', '/\\evil.example', '/\t/evil.example', '/.//evil.example', '/x/..//evil.example']
+  for (const next of [...unsafe, '//', '//[', '//:80', 'https://evil.example', 'javascript:alert(1)', undefined]) {
+    expect(safeNext(next)).toBeUndefined()
   }
+})
+
+test('server-rendered backend pages need a full page load', () => {
+  expect(isBackendPage('/admin')).toBe(true)
+  expect(isBackendPage('/oauth/authorize/?client_id=x')).toBe(true)
+  expect(isBackendPage('/demo-co/issues')).toBe(false)
+  expect(isBackendPage('/administrators')).toBe(false)
 })
 
 test('a signed-in session carries the user', () => {

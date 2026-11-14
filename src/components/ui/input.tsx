@@ -6,7 +6,7 @@ export function Input({ className, ...props }: React.ComponentProps<'input'>) {
     <input
       data-slot="input"
       className={cn(
-        'h-9 w-full min-w-0 border bg-card px-2.5 text-base outline-none transition-colors duration-100 placeholder:text-muted-foreground focus-visible:border-brand focus-visible:outline-none disabled:opacity-50 aria-invalid:border-destructive max-lg:h-11 max-lg:text-[1rem]',
+        'h-9 w-full min-w-0 border bg-card px-3 text-base outline-none transition-colors duration-100 placeholder:text-muted-foreground touch-input focus-visible:border-foreground focus-visible:outline-none disabled:opacity-50 aria-invalid:border-destructive max-lg:h-11',
         className,
       )}
       {...props}
@@ -19,7 +19,7 @@ export function Textarea({ className, ...props }: React.ComponentProps<'textarea
     <textarea
       data-slot="textarea"
       className={cn(
-        'prose-text block w-full resize-y border bg-card px-3 py-2 outline-none transition-colors duration-100 placeholder:text-muted-foreground focus-visible:border-brand focus-visible:outline-none',
+        'prose-text block w-full max-w-none resize-y border bg-card px-3 py-2 outline-none transition-colors duration-100 placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:outline-none aria-invalid:border-destructive',
         className,
       )}
       {...props}

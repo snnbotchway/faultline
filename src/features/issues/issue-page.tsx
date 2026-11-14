@@ -3,14 +3,15 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, Ellipsis } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ApiError } from '@/api/client'
-import { IssueStatus, StatsPeriod, issueEventQuery, issueQuery, issueStatsQuery, issueTagsQuery, rawEventUrl, type IssueDetail } from '@/api/issues'
+import { IssueStatus, StatsPeriod, TagKey, issueEventQuery, issueQuery, issueStatsQuery, issueTagsQuery, rawEventUrl, type IssueDetail } from '@/api/issues'
 import { canAdminEvents, canWriteEvents, organizationQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
-import { useCommands, type Command } from '@/components/shell/commands'
+import { CommandGroup, useCommands, type Command } from '@/components/shell/commands'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
 import { notify } from '@/lib/notice'
@@ -18,15 +19,19 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { oneIssue, useIssueActions } from './actions'
 import { AssignDialog, AssigneeBadge } from './assignee'
+import { Comments } from './comments'
 import { DeleteIssuesDialog } from './dialogs'
 import { errorParts, exceptionsOf, messageOf } from './event'
-import { ago, compact, exact } from './format'
-import { Comments, ContextRail, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
+import { ago, brief, compact, exact } from './format'
+import { ContextRail, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
 import { LevelGlyph } from './level'
 import { StackTrace } from './stack-trace'
 import { ACTION, STATUS, isStatus, statusActions } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { axisFor, axisStartLabel, fillBuckets, periodInfo, releaseMarks } from './trend'
+
+// Enough of an event id to tell two apart; the full id is in the title and the raw event.
+const EVENT_ID_SHOWN = 8
 
 function Chart({ org, issueId }: { org: string; issueId: string }) {
   const [period, setPeriod] = useState<StatsPeriod>(StatsPeriod.fortnight)
@@ -63,12 +68,25 @@ function Chart({ org, issueId }: { org: string; issueId: string }) {
   )
 }
 
-function Fact({ label, value, detail, title }: { label: string; value: string; detail?: string; title?: string }) {
+// A headline figure. A relative time opens to the exact moment, on tap as well as on hover.
+function Fact({ label, value, detail, moment }: { label: string; value: string; detail?: string; moment?: string }) {
+  const figure = <span className="text-lg font-semibold lg:text-xl">{value}</span>
   return (
-    <div className="min-w-0" title={title}>
+    <div className="min-w-0">
       <dt className="label-caps">{label}</dt>
-      <dd className="mono mt-0.5 truncate">
-        <span className="text-lg font-semibold lg:text-xl">{value}</span>
+      <dd className={cn('mono mt-1', !moment && 'truncate')}>
+        {moment ? (
+          <Popover>
+            <PopoverTrigger title={exact(moment)} aria-label={`${label} ${exact(moment)}`} className="underline decoration-border decoration-dotted underline-offset-4 max-lg:-my-3 max-lg:min-w-11 max-lg:py-3 max-lg:text-left">
+              {figure}
+            </PopoverTrigger>
+            <PopoverContent className="mono w-auto px-3 py-2">
+              <time dateTime={moment}>{exact(moment)}</time>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          figure
+        )}
         {detail && <span className="text-muted-foreground max-lg:block lg:ml-2">{detail}</span>}
       </dd>
     </div>
@@ -86,7 +104,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const event = useQuery(issueEventQuery(org, issueId, eventId))
   // The backend keeps no user count per issue; the distinct values of the user tag are the people affected.
   const tags = useQuery(issueTagsQuery(org, issueId)).data
-  const users = (tags?.find((tag) => tag.key === 'user.id') ?? tags?.find((tag) => tag.key === 'user.email'))?.uniqueValues
+  const users = (tags?.find((tag) => tag.key === TagKey.userId) ?? tags?.find((tag) => tag.key === TagKey.userEmail))?.uniqueValues
   const access = useQuery(organizationQuery(org)).data?.access
   const canWrite = canWriteEvents(access)
   const canAdmin = canAdminEvents(access)
@@ -100,6 +118,8 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const target = oneIssue(issueId)
   const offered = status && isStatus(status) ? statusActions(status) : []
   const setStatus = (next: IssueStatus) => canWrite && void actions.setStatus(target, next)
+  // Offered only for an unresolved issue; the page bar, the phone menu and the palette all read this.
+  const resolveNext = canWrite && status === IssueStatus.unresolved ? () => void actions.resolveInNextRelease(target) : undefined
   const toEvent = (id: string | null | undefined) =>
     id && void navigate({ to: '/$org/issues/$issueId/events/$eventId', params: { org, issueId, eventId: id } })
   const older = event.data?.previousEventID
@@ -117,24 +137,22 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const commands: Command[] = [
     ...(canWrite
       ? [
-          ...offered.map((action) => ({ id: `issue:${action.status}`, group: 'issue', label: action.action, keys: action.key, run: () => setStatus(action.status) })),
-          ...(status === IssueStatus.unresolved
-            ? [{ id: 'issue:next-release', group: 'issue', label: 'Resolve in next release', run: () => void actions.resolveInNextRelease(target) }]
-            : []),
-          { id: 'issue:assign', group: 'issue', label: ACTION.assign.label, keys: ACTION.assign.key, run: () => setAssigning(true) },
+          ...offered.map((action) => ({ id: `issue:${action.status}`, group: CommandGroup.issue, label: action.action, keys: action.key, run: () => setStatus(action.status) })),
+          ...(resolveNext ? [{ id: 'issue:next-release', group: CommandGroup.issue, label: ACTION.resolveNext.label, run: resolveNext }] : []),
+          { id: 'issue:assign', group: CommandGroup.issue, label: ACTION.assign.label, keys: ACTION.assign.key, run: () => setAssigning(true) },
         ]
       : []),
-    ...(older ? [{ id: 'issue:older', group: 'issue', label: 'Older event', keys: '[', run: () => toEvent(older) }] : []),
-    ...(newer ? [{ id: 'issue:newer', group: 'issue', label: 'Newer event', keys: ']', run: () => toEvent(newer) }] : []),
-    { id: 'issue:copy', group: 'issue', label: 'Copy link', run: copyLink },
-    ...(rawUrl ? [{ id: 'issue:json', group: 'issue', label: 'Open raw event', run: () => void window.open(rawUrl, '_blank') }] : []),
-    ...(canWrite ? [{ id: 'issue:delete', group: 'issue', label: 'Delete issue', run: () => setDeleting(true) }] : []),
+    ...(older ? [{ id: 'issue:older', group: CommandGroup.issue, label: 'Older event', keys: '[', run: () => toEvent(older) }] : []),
+    ...(newer ? [{ id: 'issue:newer', group: CommandGroup.issue, label: 'Newer event', keys: ']', run: () => toEvent(newer) }] : []),
+    { id: 'issue:copy', group: CommandGroup.issue, label: 'Copy link', run: copyLink },
+    ...(rawUrl ? [{ id: 'issue:json', group: CommandGroup.issue, label: 'Open raw event', run: () => void window.open(rawUrl, '_blank') }] : []),
+    ...(canWrite ? [{ id: 'issue:delete', group: CommandGroup.issue, label: 'Delete issue', run: () => setDeleting(true) }] : []),
   ]
   useCommands(data ? commands : [])
 
   const bar = (
     <PageBar>
-      <Link to="/$org/issues" params={{ org }} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/$org/issues" params={{ org }} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground max-lg:h-11">
         <ChevronLeft className="size-4" />
         Issues
       </Link>
@@ -146,16 +164,16 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
         </>
       )}
       {data && (
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-2">
           {canWrite && (
-            <div className="flex items-center gap-1.5 max-lg:hidden">
+            <div className="flex items-center gap-2 max-lg:hidden">
               {offered[0] && (
                 <span className="flex">
                   <Button size="sm" variant="default" onClick={() => setStatus(offered[0]!.status)}>
                     {offered[0].action}
                     <Kbd>{offered[0].key}</Kbd>
                   </Button>
-                  {status === IssueStatus.unresolved && (
+                  {resolveNext && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button size="icon-sm" variant="default" className="border-l-primary-foreground/30" aria-label="More ways to resolve">
@@ -163,7 +181,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => void actions.resolveInNextRelease(target)}>Resolve in next release</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={resolveNext}>{ACTION.resolveNext.label}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
@@ -197,9 +215,9 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                   </a>
                 </DropdownMenuItem>
               )}
-              {canWrite && status === IssueStatus.unresolved && (
-                <DropdownMenuItem className="lg:hidden" onSelect={() => void actions.resolveInNextRelease(target)}>
-                  Resolve in next release
+              {resolveNext && (
+                <DropdownMenuItem className="lg:hidden" onSelect={resolveNext}>
+                  {ACTION.resolveNext.label}
                 </DropdownMenuItem>
               )}
               {canWrite && (
@@ -260,7 +278,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
       <div className="grid gap-x-10 gap-y-4 border-b px-3 py-4 md:px-4 lg:grid-cols-[minmax(0,1fr)_440px] lg:py-5">
         <div className="min-w-0">
           <h1 className="flex items-baseline gap-3 text-xl leading-snug font-semibold lg:text-2xl">
-            <LevelGlyph level={data.level} className="size-3 translate-y-[-1px]" />
+            <LevelGlyph level={data.level} className="size-3" />
             <span className="min-w-0 break-words">
               {type && <span className="font-mono text-lg lg:text-xl">{type} </span>}
               <span className={cn(type && 'font-medium')}>{text}</span>
@@ -270,8 +288,8 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           <dl className="mt-4 flex gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-6">
             <Fact label="Events" value={compact(data.count)} />
             {users !== undefined && <Fact label="Users" value={compact(users)} />}
-            <Fact label="First seen" value={ago(data.firstSeen)} detail={data.firstRelease?.shortVersion} title={exact(data.firstSeen)} />
-            <Fact label="Last seen" value={ago(data.lastSeen)} detail={data.lastRelease?.shortVersion} title={exact(data.lastSeen)} />
+            <Fact label="First seen" value={ago(data.firstSeen)} detail={data.firstRelease?.shortVersion} moment={data.firstSeen} />
+            <Fact label="Last seen" value={ago(data.lastSeen)} detail={data.lastRelease?.shortVersion} moment={data.lastSeen} />
           </dl>
         </div>
         <Chart org={org} issueId={issueId} />
@@ -286,13 +304,16 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           ) : (
             <>
               <div className="flex items-center gap-2 border-b pb-2">
-                <span className="label-caps font-semibold text-foreground">Event</span>
-                <span className="mono truncate" title={event.data.eventID}>
-                  {event.data.eventID.slice(0, 8)}
-                </span>
-                <time className="mono truncate text-muted-foreground" dateTime={event.data.dateCreated}>
-                  {exact(event.data.dateCreated)}
-                </time>
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                  <span className="label-caps font-semibold text-foreground">Event</span>
+                  <span className="mono" title={event.data.eventID}>
+                    {event.data.eventID.slice(0, EVENT_ID_SHOWN)}
+                  </span>
+                  <time className="mono text-muted-foreground" dateTime={event.data.dateCreated} title={exact(event.data.dateCreated)}>
+                    <span className="lg:hidden">{brief(event.data.dateCreated)}</span>
+                    <span className="max-lg:hidden">{exact(event.data.dateCreated)}</span>
+                  </time>
+                </div>
                 <div className="ml-auto flex shrink-0 items-center">
                   <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!older} onClick={() => toEvent(older)} aria-label="Older event">
                     <ChevronLeft />
@@ -310,7 +331,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                     )}
                   </Button>
                   {rawUrl && (
-                    <a href={rawUrl} target="_blank" rel="noreferrer" className="mono ml-1 px-1.5 text-muted-foreground underline hover:text-foreground max-lg:hidden">
+                    <a href={rawUrl} target="_blank" rel="noreferrer" className="mono ml-1 px-2 text-muted-foreground underline hover:text-foreground max-lg:hidden">
                       json
                     </a>
                   )}
@@ -348,7 +369,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
       </div>
 
       {canWrite && (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center gap-1.5 border-t bg-card px-3 pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center gap-2 border-t bg-card px-3 pb-[env(safe-area-inset-bottom)] lg:hidden">
           {offered.slice(0, 2).map((action, index) => (
             <Button key={action.status} size="touch" variant={index === 0 ? 'default' : 'outline'} className="flex-1" onClick={() => setStatus(action.status)}>
               {action.action}

@@ -56,7 +56,7 @@
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--border);
-  --color-ring: var(--brand);
+  --color-ring: var(--foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-selected: var(--selected);
@@ -143,13 +143,15 @@
   * {
     @apply border-border;
   }
+  /* The root stays at the browser's 16px so rem keeps its meaning; the body text size is set on the body. */
   html {
-    @apply bg-background font-sans text-base text-foreground antialiased;
+    @apply bg-background font-sans text-foreground antialiased;
     font-variant-numeric: tabular-nums;
     scrollbar-color: var(--border) transparent;
     -webkit-tap-highlight-color: transparent;
   }
   body {
+    @apply text-base;
     min-height: 100dvh;
   }
   ::selection {
@@ -157,10 +159,11 @@
   }
   input,
   textarea {
-    caret-color: var(--brand);
+    caret-color: var(--foreground);
   }
+  /* Focus is drawn in the text colour. Red is kept for what is wrong. */
   :focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid var(--foreground);
     outline-offset: 1px;
   }
   button,
@@ -222,4 +225,5 @@
 @utility prose-text {
   font-size: var(--fs-body);
   line-height: 1.55;
+  max-width: 72ch;
 }

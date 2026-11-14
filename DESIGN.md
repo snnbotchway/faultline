@@ -39,7 +39,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 
 Every size on screen is one of these steps; a headline that shrinks on a phone moves down a step (`text-2xl lg:text-3xl`), not to a size in between.
 
-Nothing is set below 12px except key hints. Text inputs are 16px on touch layouts so the browser does not zoom (the `touch-input` utility). Prose (`prose-text`) has a 1.55 line height and a measure of at most 72 characters.
+The root font size stays at the browser's 16px, so a rem is always 16px and the sizes above are what renders; the body size is set on `body`, never on `html`. Nothing is set below 12px except key hints. Text inputs are 16px on touch layouts so the browser does not zoom (the `touch-input` utility). Prose (`prose-text`) has a 1.55 line height and a measure of at most 72 characters.
 
 ## Colour
 
@@ -55,7 +55,7 @@ Warm paper in light, warm near-black in dark. Values are OKLCH; the names are th
 | `border` | `0.84 0.018 85` | `0.33 0.012 70` | hairlines |
 | `grid` | `0.905 0.018 85` | `0.24 0.008 70` | chart baselines and gridlines |
 | `primary` | the foreground | the foreground | the one filled button on a screen |
-| `brand` | `0.52 0.19 33` | `0.8 0.16 68` | the mark, focus, current item, links |
+| `brand` | `0.52 0.19 33` | `0.8 0.16 68` | the mark, current item, links |
 | `destructive` | `0.5 0.19 27` | `0.72 0.17 27` | delete, error messages |
 | `selected` | `0.925 0.035 60` | `0.27 0.035 68` | selected rows |
 | `code` | `0.955 0.013 85` | `0.14 0.006 70` | code and stack frames |
@@ -74,14 +74,16 @@ Rules:
 - Text is at least 4.5:1 against the surface it sits on, muted text included. Measure when a token changes; `muted-foreground` is 6.6:1 or better on every surface in both themes.
 - Colour is never the only signal. A level is a shape and a colour; a trend is a word and a colour.
 - New is teal and spiking is red-orange, so the two group labels cannot be mistaken for each other in either theme.
-- The brand colour marks one thing per view: where you are, or what has focus. It is not a fill for large areas.
+- The brand colour marks where you are. It is not a fill for large areas.
+- Focus is drawn in `foreground`: a 2px outline, or the field's border. In the light theme the brand is red, so a focused field must never look like an invalid one; red on a field means `aria-invalid` and nothing else.
+- Release marks are quiet: the rule is `grid` and the label is `muted-foreground`. Red on the time axis is reserved for a spike.
 - The theme follows the system unless the user picks light or dark; the choice is stored in `localStorage.theme` and applied before first paint.
 
 ## Space, density, shape
 
-- 4px grid. Horizontal page padding is 12px on a phone and 16px from 768px.
+- 4px grid: every gap, padding, margin and size is a multiple of 4px. No half steps (`gap-1.5`, `px-2.5`) and no one-off pixel values. Horizontal page padding is 12px on a phone and 16px from 768px.
 - A list's checkbox column is 44px wide, the `check` spacing token; text that lines up with the row titles is indented by it (`pl-check`).
-- Bars are 44px tall. Desktop rows are 36 to 44px; controls are 28 to 36px.
+- Bars are 44px tall. Desktop rows are 36 to 52px (a two-line issue row is 52px); controls are 28 to 36px.
 - On touch layouts every tap target is at least 44 by 44px, including checkboxes, whose visible box stays 16px.
 - Radius is 0 everywhere.
 - Surfaces are separated by 1px hairlines, not shadows. Only things that float above the page (menus, dialogs, the palette) cast a shadow, and they all cast the same one: the `shadow-float` token.
@@ -96,7 +98,9 @@ Rules:
 
 ## Icons
 
-Lucide, 16px, 1.6 to 2 stroke, in the text colour. Icons accompany a label; an icon alone is allowed only for theme, account, close and the palette button, and always has an accessible name. No emoji and no character glyphs standing in for icons.
+Lucide, in the text colour. An icon is 16px, or 12px when it sits inline with small text (a chevron in a chip, a count beside an id); there are no other sizes.
+
+Icons accompany a label. An icon alone is allowed for theme, account, close and the palette button, and for the glyphs everyone reads: more (ellipsis), previous and next (chevrons), disclosure (a chevron that unfolds), and sort. Every icon-only control has an accessible name and, on desktop, shows that name on hover. No emoji and no character glyphs standing in for icons.
 
 - Level: a filled square (fatal, error), a triangle (warning), a circle (info), a hollow circle (debug), in the level colour.
 - Assignee: the person's initials at 12px in a filled 24px square; unassigned is the `UserRound` outline. The column is labelled.
@@ -109,14 +113,14 @@ The inbox and the issue page draw events the same way.
 - **A visible zero.** Every trace sits on a 1px baseline in the `grid` colour that runs the full width, so an empty bucket reads as zero and not as missing data. A bucket with any events is at least 2px tall.
 - **One shared time scale.** All rows in a list cover the same period, and the axis is labelled once, above the rows. A 24h / 14d toggle beside the axis switches the period.
 - **Height scale.** In the inbox each trace is scaled to its own peak, and the row's event count gives the magnitude. On the issue page the chart is labelled with its peak (`peak 31/day`).
-- **Releases** are vertical rules through the axis with the short version as a mono label. The same rule runs through every row.
+- **Releases** are vertical rules through the axis with the short version as a mono label. The same rule runs through every row. On a phone the rows' traces are too narrow for rules, so they show on the issue page only.
 - **Colour.** Bars are the foreground at reduced strength. A new issue's bars use `trend-new`; the latest bucket of a spiking issue uses `trend-spiking`.
 - Buckets are arrival times, as the backend reports them.
 
 ## Components
 
 - **Buttons.** Outline is the default. One filled (`primary`) button per view marks the main action. Destructive is outlined in red and fills on hover. Labels are verbs in sentence case.
-- **Inputs.** A hairline box on `card`; the border turns `brand` on focus and `destructive` when invalid. The label is always visible above the field. Errors appear under the field in the user's words.
+- **Inputs.** A hairline box on `card`; the border turns `foreground` on focus and `destructive` when invalid. The label is always visible above the field. Errors appear under the field in the user's words; forms check themselves (`noValidate`), so the browser's own bubbles never show.
 - **Menus and popovers.** Square, hairline, on `card`. Items are 32px tall, 44px on touch.
 - **Dialogs** are for short tasks that keep their context (confirm a delete or a merge, pick an assignee). They are not a page. A confirmation names what it acts on: how many issues, and for a merge which one is kept.
 - **Top bar.** Mark and wordmark, organization, then on the inbox the project and environment filters, navigation at the right, the palette button, theme, account.
@@ -127,7 +131,20 @@ The inbox and the issue page draw events the same way.
 
 ## Command palette
 
-`⌘K` or `Ctrl K`. 640px wide, centred near the top; full width on a phone. It lists the commands that apply right now and nothing else: a command that cannot run in the current context is absent, not disabled. Groups, in order: selection, issue, go to, organization, theme, account. Free text offers a search of issues.
+`⌘K` or `Ctrl K`. 640px wide, centred near the top; full width on a phone. It lists the commands that apply right now and nothing else: a command that cannot run in the current context is absent, not disabled.
+
+| Group | Holds |
+| --- | --- |
+| selection | what can be done to the selected issues |
+| issue | what can be done to the open issue |
+| show | the inbox's other status views |
+| go to | every section except the one you are in |
+| organization | the other organizations |
+| theme | system, light and dark |
+| account | sign out |
+| search | free text, as a search of issues; always last |
+
+The groups are listed in this order.
 
 ## Keyboard
 
@@ -169,7 +186,8 @@ Designed at 390px, checked at 375px.
 - Errors say what happened and what to do next, in one sentence.
 - Buttons name the action ("Resolve", "Delete 3 issues"), not "OK" or "Submit".
 - Counts are exact up to the backend's limit, then shown as `1000+`.
-- Times are relative in lists (`7m`, `3d`) and exact on hover and on the issue page.
+- Times are relative in lists (`7m`, `3d`) and exact on hover. On the issue page a relative time opens to the exact one on tap, and the event's time is written out (without the year and seconds on a phone).
+- Words are not abbreviated: `9 events`, not `9 ev`.
 
 ## Not built yet
 

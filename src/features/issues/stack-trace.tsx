@@ -6,7 +6,7 @@ import { frameFile, framesOf, valueText, type ExceptionValue, type Frame } from 
 export function ContextLines({ frame }: { frame: Frame }) {
   if (!frame.context?.length) return null
   return (
-    <pre className="mono overflow-x-auto bg-code py-1.5 leading-[1.6]">
+    <pre className="mono overflow-x-auto bg-code py-2 leading-[1.6]">
       {frame.context.map(([line, text]) => (
         <div key={line} className={cn('flex min-w-max pr-3', line === frame.lineNo && 'bg-hit font-medium')}>
           <span className="w-12 shrink-0 pr-3 text-right text-muted-foreground select-none">{line}</span>
@@ -19,7 +19,7 @@ export function ContextLines({ frame }: { frame: Frame }) {
 
 function Vars({ vars }: { vars: Record<string, unknown> }) {
   return (
-    <dl className="mono grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 border-t px-3 py-2">
+    <dl className="mono grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 border-t px-3 py-2">
       {Object.entries(vars).map(([name, value]) => (
         <div key={name} className="contents">
           <dt className="text-muted-foreground">{name}</dt>
@@ -42,8 +42,8 @@ function FrameRow({ frame, startOpen }: { frame: Frame; startOpen: boolean }) {
         aria-expanded={detail ? open : undefined}
         className={cn('mono flex min-h-8 w-full items-center gap-2 px-2 py-1 text-left max-lg:min-h-11 disabled:cursor-default', detail && 'hover:bg-accent', !frame.inApp && 'text-muted-foreground')}
       >
-        <ChevronRight className={cn('size-3.5 shrink-0 transition-transform duration-150', open && 'rotate-90', !detail && 'invisible')} />
-        <span className="min-w-0 break-all">
+        <ChevronRight className={cn('size-3 shrink-0 transition-transform duration-150', open && 'rotate-90', !detail && 'invisible')} />
+        <span className="min-w-0 [overflow-wrap:anywhere]">
           <span className={cn(frame.inApp && 'font-medium')}>{frameFile(frame)}</span>
           {frame.lineNo != null && <span>:{frame.lineNo}</span>}
           {frame.function && <span className="text-muted-foreground"> in {frame.function}</span>}
@@ -82,7 +82,7 @@ function Frames({ frames }: { frames: Frame[] }) {
               onClick={() => setShown(new Set(shown).add(run.start))}
               className="flex min-h-8 w-full items-center gap-2 px-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground max-lg:min-h-11"
             >
-              <ChevronRight className="size-3.5 shrink-0" />
+              <ChevronRight className="size-3 shrink-0" />
               {run.frames.length} library {run.frames.length === 1 ? 'frame' : 'frames'}
             </button>
           </li>

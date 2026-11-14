@@ -12,10 +12,10 @@ const buttonVariants = cva(
         outline: 'bg-card hover:bg-accent aria-expanded:bg-accent',
         ghost: 'border-transparent hover:bg-accent aria-expanded:bg-accent',
         destructive: 'border-destructive bg-card text-destructive hover:bg-destructive hover:text-primary-foreground',
-        link: 'h-auto border-transparent px-0 text-brand underline-offset-4 hover:underline',
+        link: 'h-auto border-transparent px-0 text-brand underline-offset-4 hover:underline max-lg:min-h-11',
       },
       size: {
-        sm: 'h-7 px-2.5',
+        sm: 'h-7 px-3',
         default: 'h-8 px-3',
         lg: 'h-9 px-4',
         touch: 'h-11 px-4',
@@ -37,7 +37,9 @@ function Button({
   ...props
 }: React.ComponentProps<'button'> & VariantProps<typeof buttonVariants> & { asChild?: boolean }) {
   const Comp = asChild ? Slot.Root : 'button'
-  return <Comp data-slot="button" type={asChild ? undefined : type} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+  // A button that is only an icon shows its name on hover.
+  const title = props.title ?? (size?.startsWith('icon') ? props['aria-label'] : undefined)
+  return <Comp data-slot="button" type={asChild ? undefined : type} className={cn(buttonVariants({ variant, size }), className)} {...props} title={title} />
 }
 
 export { Button }

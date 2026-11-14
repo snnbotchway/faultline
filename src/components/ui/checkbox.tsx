@@ -11,7 +11,7 @@ export function Checkbox({ className, hit, ...props }: React.ComponentProps<type
       className={cn('group/checkbox grid shrink-0 place-items-center outline-none', hit ? 'size-11 lg:size-8' : 'size-4', className)}
       {...props}
     >
-      <span className="grid size-4 place-items-center border border-foreground/45 transition-colors duration-100 group-hover/checkbox:border-foreground group-focus-visible/checkbox:outline-2 group-focus-visible/checkbox:outline-offset-1 group-focus-visible/checkbox:outline-brand group-data-[state=checked]/checkbox:border-brand group-data-[state=checked]/checkbox:bg-brand group-data-[state=checked]/checkbox:text-brand-foreground group-data-[state=indeterminate]/checkbox:border-brand group-data-[state=indeterminate]/checkbox:bg-brand group-data-[state=indeterminate]/checkbox:text-brand-foreground">
+      <span className="grid size-4 place-items-center border border-foreground/45 transition-colors duration-100 group-hover/checkbox:border-foreground group-focus-visible/checkbox:outline-2 group-focus-visible/checkbox:outline-offset-1 group-focus-visible/checkbox:outline-foreground group-data-[state=checked]/checkbox:border-brand group-data-[state=checked]/checkbox:bg-brand group-data-[state=checked]/checkbox:text-brand-foreground group-data-[state=indeterminate]/checkbox:border-brand group-data-[state=indeterminate]/checkbox:bg-brand group-data-[state=indeterminate]/checkbox:text-brand-foreground">
         <CheckboxPrimitive.Indicator>
           {props.checked === 'indeterminate' ? <Minus className="size-3" strokeWidth={3} /> : <Check className="size-3" strokeWidth={3} />}
         </CheckboxPrimitive.Indicator>

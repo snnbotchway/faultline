@@ -74,17 +74,19 @@ export function AssignDialog({
               key={`${person.type}:${person.id}`}
               type="button"
               onClick={() => pick(person)}
-              className="flex min-h-9 w-full items-center gap-2.5 px-3 text-left hover:bg-accent max-lg:min-h-11"
+              className="flex min-h-9 w-full items-center gap-2 px-3 text-left hover:bg-accent max-lg:min-h-11"
             >
               <AssigneeBadge assignee={person} />
               <span className="min-w-0 flex-1 truncate">{person.name}</span>
               {current?.type === person.type && current.id === person.id && <span className="label-caps">current</span>}
             </button>
           ))}
-          {shown.length === 0 && <UserRound className="mx-auto my-3 size-6 p-1 text-muted-foreground" aria-hidden />}
+          {shown.length === 0 && <UserRound className="mx-auto my-4 size-4 text-muted-foreground" aria-hidden />}
           {current && (
-            <button type="button" onClick={() => pick(null)} className="flex min-h-9 w-full items-center gap-2.5 border-t px-3 text-left hover:bg-accent max-lg:min-h-11">
-              <UserRound className="size-6 p-1 text-muted-foreground" />
+            <button type="button" onClick={() => pick(null)} className="flex min-h-9 w-full items-center gap-2 border-t px-3 text-left hover:bg-accent max-lg:min-h-11">
+              <span className="grid size-6 place-items-center">
+                <UserRound className="size-4 text-muted-foreground" />
+              </span>
               Unassign
             </button>
           )}

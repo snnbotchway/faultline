@@ -9,7 +9,7 @@ export const DropdownMenuGroup = Primitive.Group
 export const DropdownMenuRadioGroup = Primitive.RadioGroup
 
 const ITEM =
-  'relative flex min-h-8 cursor-pointer items-center gap-2 px-2.5 py-1.5 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent max-lg:min-h-11 [&_svg]:size-4 [&_svg]:shrink-0'
+  'relative flex min-h-8 cursor-pointer items-center gap-2 px-3 py-1 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent max-lg:min-h-11 [&_svg]:size-4 [&_svg]:shrink-0'
 
 export function DropdownMenuContent({ className, sideOffset = 4, align = 'start', ...props }: React.ComponentProps<typeof Primitive.Content>) {
   return (
@@ -35,7 +35,7 @@ export function DropdownMenuRadioItem({ className, children, ...props }: React.C
   return (
     <Primitive.RadioItem className={cn(ITEM, 'pr-8', className)} {...props}>
       {children}
-      <Primitive.ItemIndicator className="absolute right-2.5">
+      <Primitive.ItemIndicator className="absolute right-3">
         <Check />
       </Primitive.ItemIndicator>
     </Primitive.RadioItem>
@@ -43,7 +43,7 @@ export function DropdownMenuRadioItem({ className, children, ...props }: React.C
 }
 
 export function DropdownMenuLabel({ className, ...props }: React.ComponentProps<typeof Primitive.Label>) {
-  return <Primitive.Label className={cn('label-caps px-2.5 pt-2 pb-1', className)} {...props} />
+  return <Primitive.Label className={cn('label-caps px-3 pt-2 pb-1', className)} {...props} />
 }
 
 export function DropdownMenuSeparator({ className, ...props }: React.ComponentProps<typeof Primitive.Separator>) {

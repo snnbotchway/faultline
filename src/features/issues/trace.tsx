@@ -22,7 +22,7 @@ export function Trace({
   return (
     <div className={cn('relative flex items-end gap-px border-b border-grid', className)} style={{ height: height + 1 }} aria-hidden>
       {marks?.map((mark) => (
-        <span key={mark.at} className="absolute inset-y-0 w-px bg-brand/45" style={{ left: `${mark.at * 100}%` }} />
+        <span key={mark.at} data-mark className="absolute inset-y-0 w-px bg-grid" style={{ left: `${mark.at * 100}%` }} />
       ))}
       {heights.map((barHeight, index) => (
         <span
@@ -45,7 +45,7 @@ export function ReleaseTrace({ buckets, marks, height, className }: { buckets: n
       {marks.map((mark) => (
         <span
           key={mark.at}
-          className={cn('absolute top-0 font-mono text-xs whitespace-nowrap text-brand', mark.at > 0.8 ? '-translate-x-full pr-1' : 'pl-1')}
+          className={cn('absolute top-0 font-mono text-xs whitespace-nowrap text-muted-foreground', mark.at > 0.8 ? '-translate-x-full pr-1' : 'pl-1')}
           style={{ left: `${mark.at * 100}%` }}
         >
           {mark.label}
@@ -65,7 +65,7 @@ export function PeriodToggle({ period, onChange }: { period: StatsPeriod; onChan
           type="button"
           aria-pressed={item.value === period}
           onClick={() => onChange(item.value)}
-          className={cn('mono h-6 px-2 max-lg:h-9 max-lg:px-3', item.value === period ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground')}
+          className={cn('mono h-6 px-2 max-lg:h-11 max-lg:px-3', item.value === period ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground')}
         >
           {item.label}
         </button>

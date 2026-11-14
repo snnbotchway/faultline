@@ -14,7 +14,7 @@ import {
 import type { InboxSearch } from '@/features/issues/search'
 import { cn } from '@/lib/utils'
 
-const TRIGGER = 'flex h-7 min-w-0 items-center gap-1.5 px-1.5 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-9 max-lg:border max-lg:bg-card max-lg:px-2.5'
+const TRIGGER = 'flex h-7 min-w-0 items-center gap-2 px-2 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11 max-lg:border max-lg:bg-card max-lg:px-3'
 const ALL_ENVIRONMENTS = ''
 
 // Project and environment filters of the inbox. They live in the URL, so a filtered view can be shared.

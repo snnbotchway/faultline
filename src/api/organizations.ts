@@ -16,6 +16,7 @@ export const Scope = {
   eventAdmin: 'event:admin',
   projectWrite: 'project:write',
   projectAdmin: 'project:admin',
+  projectReleases: 'project:releases',
   teamWrite: 'team:write',
   teamAdmin: 'team:admin',
   memberWrite: 'member:write',
@@ -29,6 +30,10 @@ type Access = OrganizationDetail['access'] | undefined
 // Changing issues (status, assignee, merge, delete) needs either scope; splitting merged issues needs admin.
 export const canWriteEvents = (access: Access) => !!access && (access.includes(Scope.eventWrite) || access.includes(Scope.eventAdmin))
 export const canAdminEvents = (access: Access) => !!access && access.includes(Scope.eventAdmin)
+// Monitors need either project scope. Alert rules need admin: the backend refuses create, update and test without it.
+export const canWriteProjects = (access: Access) => !!access && (access.includes(Scope.projectWrite) || access.includes(Scope.projectAdmin))
+export const canAdminProjects = (access: Access) => !!access && access.includes(Scope.projectAdmin)
+export const canManageReleases = (access: Access) => !!access && (access.includes(Scope.projectReleases) || canWriteProjects(access))
 
 // Controls the user cannot use are left out, so every gate fails closed until the organization has loaded.
 export const hasScope = (access: Access, scope: Scope) => !!access && access.includes(scope)

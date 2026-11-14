@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { withBase } from './base'
 import { api, orgPath, unwrap } from './client'
 import { MAX_PAGE_SIZE, fetchAllPages } from './pagination'
 import type { components } from './schema/openapi'
@@ -87,6 +88,9 @@ export const organizationQuery = (slug: string) =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/', { params: { path: orgPath(slug) } })),
     refetchInterval: ACCOUNT_REFRESH_MS,
   })
+
+// Where a superuser changes what the API will not, such as the share of an organization's events it drops.
+export const organizationAdminUrl = (id: string) => withBase(`/admin/organizations_ext/organization/${id}/change/`)
 
 export const projectsQuery = (slug: string) =>
   queryOptions({

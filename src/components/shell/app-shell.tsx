@@ -24,12 +24,11 @@ import { signOut } from '@/lib/session'
 import { Theme, useTheme } from '@/lib/theme'
 import { useChooseTheme, useThemeSync } from '@/lib/theme-sync'
 import { cn } from '@/lib/utils'
-import { VerifyEmailBanner } from './banners'
+import { OverLimitBanner, VerifyEmailBanner } from './banners'
 import { palette, CommandGroup, useCommands, type Command } from './commands'
 import { Palette } from './palette'
 import { ScopeFilters } from './scope-filters'
 import { SupportItems, SupportMenu } from './support-menu'
-import { useOverLimitNotice } from './use-over-limit-notice'
 import { SECTIONS, SECTION_OF_PAGE, TAB_PATHS, sectionLink, type Section } from './sections'
 
 const THEMES = [
@@ -274,7 +273,6 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
   const leave = useSignOut()
   const chooseTheme = useChooseTheme()
   useThemeSync()
-  useOverLimitNotice(org)
 
   const commands: Command[] = [
     ...sections
@@ -313,6 +311,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
     <div className="flex min-h-dvh flex-col max-lg:pb-14">
       <TopBar org={org} current={current} inbox={current === 'issues' && deeper.length === 0} />
       <VerifyEmailBanner />
+      <OverLimitBanner org={org} />
       {children}
       <TabBar org={org} current={current} />
       <Notice />

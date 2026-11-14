@@ -3,8 +3,9 @@ import { DEMO } from '../dev/seed.ts'
 
 test('an unverified email can be sent its link again from any page', async ({ page }) => {
   await page.goto(`/${DEMO.org}/issues`)
-  await page.getByRole('region', { name: 'Verify your email' }).getByRole('button', { name: 'Send verification email' }).click()
-  await expect(page.getByRole('button', { name: 'Email sent' })).toBeDisabled()
+  const banner = page.getByRole('region', { name: 'Verify your email' })
+  await banner.getByRole('button', { name: 'Send verification email' }).click()
+  await expect(banner.getByRole('status')).toHaveText(`Sent to ${DEMO.email}`)
 })
 
 test('the theme follows the account, not just this browser', async ({ page }) => {

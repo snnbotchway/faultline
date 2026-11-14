@@ -21,7 +21,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 | Words | IBM Plex Sans (variable) | issue titles and error messages, navigation and tabs, buttons, form labels and inputs, breadcrumbs, comments and other prose, empty and error states |
 | Machine text | IBM Plex Mono 400/500/600 | short ids (`WEB-APP-1`), event ids, numbers in tables and stats, timestamps and durations, axis and release labels, section labels, the search query, stack traces and code, DSNs, tag keys and values, URLs, file paths, culprits, slugs |
 
-- An exception type in a row (`TypeError`) is mono semibold and its message is sans, so the type still scans as code.
+- An exception type in a row (`TypeError`) is mono semibold at 13px and its message is sans, so the type still scans as code.
 - Section labels (`STACK TRACE`, `WHAT HAPPENED`, `EVENTS`) are mono, 12px, uppercase, tracked 0.12em, muted: the `label-caps` utility. A label names a section; it never sits above a heading as a kicker.
 - Sans text is sentence case. Identifiers are shown exactly as the system has them.
 - Numbers are tabular everywhere.
@@ -107,7 +107,7 @@ The inbox and the issue page draw events the same way.
 - **One shared time scale.** All rows in a list cover the same period, and the axis is labelled once, above the rows.
 - **Height scale.** In the inbox each trace is scaled to its own peak, and the row's event count gives the magnitude. On the issue page the chart is labelled with its peak (`peak 31/day`).
 - **Releases** are vertical rules through the axis with the short version as a mono label. The same rule runs through every row.
-- **Colour.** Bars are the foreground at reduced strength; the last bucket of a spiking issue uses `trend-spiking`, and bars after an issue's first appearance within 24 hours use `trend-new`.
+- **Colour.** Bars are the foreground at reduced strength. A new issue's bars use `trend-new`; the latest bucket of a spiking issue uses `trend-spiking`.
 - Buckets are arrival times, as the backend reports them.
 
 ## Components
@@ -134,7 +134,7 @@ The inbox and the issue page draw events the same way.
 | `/` | inbox | focus search |
 | `j` / `k` | inbox | next / previous issue |
 | `Enter` | inbox | open the issue |
-| `o` | inbox | unfold the row |
+| `o` | inbox | unfold the row (desktop) |
 | `x` | inbox | select the row |
 | `e` | inbox, issue | resolve |
 | `i` | inbox, issue | ignore |
@@ -152,7 +152,7 @@ Designed at 390px, checked at 375px.
 
 - Navigation moves to a bottom tab bar: issues, releases, uptime, alerts, more. Theme and sign out are under more.
 - Project and environment filters stay on the inbox, as a row under the page bar.
-- Tapping a row opens the issue; rows do not unfold.
+- Tapping a row opens the issue; rows do not unfold. Titles wrap to two lines instead of cutting off.
 - With a selection, the tab bar gives way to an action bar holding the bulk actions.
 - An issue's actions sit in a sticky bar at the bottom, the main action filled.
 - Stats sit in one row and the chart is short, so the stack trace starts on the first screen.

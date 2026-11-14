@@ -26,3 +26,16 @@ export function Textarea({ className, ...props }: React.ComponentProps<'textarea
     />
   )
 }
+
+export function Select({ className, ...props }: React.ComponentProps<'select'>) {
+  return (
+    <select
+      data-slot="select"
+      className={cn(
+        'touch-input h-9 w-full min-w-0 border bg-card px-2 text-base outline-none transition-colors duration-100 focus-visible:border-foreground focus-visible:outline-none disabled:opacity-50 aria-invalid:border-destructive max-lg:h-11',
+        className,
+      )}
+      {...props}
+    />
+  )
+}

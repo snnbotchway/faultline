@@ -89,7 +89,7 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
             {release.data ? (
               <p className="mono mt-2 text-muted-foreground">
                 {release.data.projects.length > 0 && `${release.data.projects.map((project) => project.slug).join(', ')} · `}
-                <time dateTime={release.data.dateCreated}>{brief(release.data.dateCreated)}</time>
+                <time className="whitespace-nowrap" dateTime={release.data.dateCreated}>{brief(release.data.dateCreated)}</time>
               </p>
             ) : (
               <Skeleton className="mt-2 h-4 w-48" />
@@ -113,6 +113,8 @@ function ReleaseEvents({ org, release }: { org: string; release: Release }) {
   const projects = useQuery(projectsQuery(org)).data
   const ids = projects?.filter((project) => release.projects.some((other) => other.slug === project.slug)).map((project) => Number(project.id))
   if (!ids) return <Skeleton className="mb-8 h-25" />
+  // A release of no project has no errors to chart.
+  if (ids.length === 0) return null
   return (
     <Section label="Errors in its projects" className="mb-8">
       <EventsChart org={org} releases={[release]} projects={ids} className="pt-3" />
@@ -225,7 +227,7 @@ function Commits({ org, version }: { org: string; version: string }) {
       ) : commits.isError ? (
         <p className="py-3 text-muted-foreground">The commits didn't load.</p>
       ) : commits.data.length === 0 ? (
-        <p className="py-3 text-muted-foreground">No commits were sent with this release.</p>
+        <p className="py-3 text-muted-foreground">No commits sent.</p>
       ) : (
         <>
           <ul>

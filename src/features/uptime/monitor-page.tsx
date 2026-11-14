@@ -1,11 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { StatsPeriod } from '@/api/issues'
 import { projectAlertsQuery } from '@/api/alerts'
 import { explain, isNotFound } from '@/api/errors'
-import { isHttp, monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
+import { isHttp, monitorActions, monitorChangesQuery, monitorChecksQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectSlug, projectsQuery } from '@/api/organizations'
 import { canOpenRelease, recentReleasesQuery, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { CopyField } from '@/features/settings/parts'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
 import { Section, Stat } from '@/components/ui/section'
+import { Segmented } from '@/components/ui/segmented'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
@@ -24,15 +25,20 @@ import { ago, brief, clock, dayTime, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { every, periodLength, span } from './format'
-import { Health, checkHealth, checkScale, healthOf, isSlow, type Downtime, type HealthReport } from './health'
+import { Health, checkHealth, checkScale, healthOf, isSlow, percent, uptimeShare, type Downtime, type HealthReport } from './health'
 import { isMonitorId } from './address'
 import { HEALTH, healthLine, isAlarm, isHeartbeat, reasonText, targetText } from './describe'
 import { CheckBars, DowntimeGlyph, DowntimeStrip, HealthGlyph } from './parts'
 import { formatMs } from '@/features/performance/format'
 
-const CHECKS_SHOWN = 8
+const ChecksView = { all: 'all', incidents: 'incidents' } as const
+type ChecksView = (typeof ChecksView)[keyof typeof ChecksView]
+const CHECKS_VIEWS = [
+  { value: ChecksView.all, label: 'All' },
+  { value: ChecksView.incidents, label: 'Incidents only' },
+]
 
-/** One monitor: its health and since when, its newest checks, every stretch of downtime with the release before it, and who hears about it. */
+/** One monitor: its health and since when, its uptime, its checks, every stretch of downtime with the release before it, and who hears about it. */
 export function MonitorPage({ org, monitorId }: { org: string; monitorId: number }) {
   const valid = isMonitorId(monitorId)
   const monitor = useQuery({ ...monitorQuery(org, monitorId), enabled: valid })
@@ -121,6 +127,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
 
   const report = healthOf(monitor, monitor.checks, changes.data ?? [], now)
   const health = report.health
+  const share = changes.data && health !== Health.waiting ? uptimeShare(report.downtimes, Math.min(Date.parse(monitor.created), ...report.downtimes.map((downtime) => downtime.from)), now, periodLength(period)) : undefined
   const heartbeat = isHeartbeat(monitor)
   const loud = isAlarm(health)
   const alsoSlow = health === Health.flapping && report.slow
@@ -178,6 +185,11 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
                   <span>{dayTime(new Date(from), new Date(now))}</span>
                   <span>Now</span>
                 </p>
+                {share !== undefined && (
+                  <p className="mt-3">
+                    <span className={cn('mono font-semibold', share < 1 && HEALTH[Health.down].color)}>{percent(share)}</span> up in the last {period === StatsPeriod.day ? '24 hours' : '14 days'}
+                  </p>
+                )}
               </div>
             )}
             {changes.isPending ? (
@@ -205,7 +217,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
             )}
           </Section>
 
-          <LatestChecks monitor={monitor} now={now} />
+          <Checks org={org} monitor={monitor} now={now} />
         </div>
       </div>
 
@@ -392,37 +404,75 @@ function DowntimeRow({
   )
 }
 
-// The newest checks, a few at first and all 60 on request.
-function LatestChecks({ monitor, now }: { monitor: MonitorDetail; now: number }) {
-  const [allChecks, setAllChecks] = useState(false)
-  const checks = monitor.checks
+// Every check, newest first, a page at a time; "Incidents only" keeps the ones where the monitor went down or came back.
+function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; now: number }) {
+  const [view, setView] = useState<ChecksView>(ChecksView.all)
+  const checks = useInfiniteQuery(monitorChecksQuery(org, monitor.id, view === ChecksView.incidents))
+  const items = checks.data?.pages.flatMap((page) => page.items) ?? []
+  const { hits, maxHits } = checks.data?.pages[0] ?? {}
+  // The backend counts no further than its cap.
+  const total = hits === undefined ? undefined : `${hits}${maxHits !== undefined && hits >= maxHits ? '+' : ''}`
   return (
-    <Section label="Latest checks" className="mt-8">
-      {checks.length === 0 ? (
-        <p className="py-4 text-muted-foreground">No checks yet.</p>
+    <Section label="Checks" className="mt-8" action={<Segmented label="Show checks" value={view} options={CHECKS_VIEWS} onChange={setView} />}>
+      {checks.isPending ? (
+        <Skeleton className="mt-3 h-40" />
+      ) : checks.isError ? (
+        <p className="py-4 text-muted-foreground">
+          The checks didn't load.{' '}
+          <button type="button" className="text-brand hover:underline" onClick={() => void checks.refetch()}>
+            Try again
+          </button>
+        </p>
+      ) : items.length === 0 ? (
+        <p className="py-4 text-muted-foreground">{view === ChecksView.incidents ? 'No incidents recorded.' : 'No checks yet.'}</p>
       ) : (
-        <ul>
-          {checks.slice(0, allChecks ? undefined : CHECKS_SHOWN).map((check) => {
-            const state = checkHealth(check, monitor.timeout)
-            return (
-              <li key={check.startCheck} className="grid min-h-9 grid-cols-[48px_minmax(0,1fr)_64px] items-center gap-3 border-b lg:grid-cols-[48px_minmax(0,1fr)_72px]">
-                <time className="mono text-muted-foreground" dateTime={check.startCheck} title={exact(check.startCheck)}>
-                  {ago(check.startCheck, new Date(now))}
-                </time>
-                <span className="flex min-w-0 items-center gap-2">
-                  <HealthGlyph health={state} />
-                  <span className={cn('truncate', state !== Health.up && HEALTH[state].color)}>{state === Health.down ? reasonText(monitor, check.reason) : HEALTH[state].label}</span>
-                </span>
-                <span className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{check.responseTime == null ? '' : formatMs(check.responseTime)}</span>
-              </li>
-            )
-          })}
-        </ul>
+        <table className={cn('w-full', checks.isPlaceholderData && 'opacity-60')}>
+          <caption className="sr-only">{total} checks, newest first</caption>
+          <thead>
+            <tr className="label-caps h-9 text-left">
+              <th scope="col" className="w-36 font-normal">
+                Time
+              </th>
+              <th scope="col" className="font-normal">
+                Result
+              </th>
+              <th scope="col" className="w-20 text-right font-normal lg:w-24">
+                Response
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((check) => {
+              const state = checkHealth(check, monitor.timeout)
+              return (
+                <tr key={check.startCheck} className="h-9 border-t">
+                  <td>
+                    <time className="mono text-muted-foreground" dateTime={check.startCheck} title={`${ago(check.startCheck, new Date(now))} ago`}>
+                      {brief(check.startCheck)}
+                    </time>
+                  </td>
+                  <td>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <HealthGlyph health={state} />
+                      <span className={cn('truncate', state !== Health.up && HEALTH[state].color)}>{state === Health.down ? reasonText(monitor, check.reason) : HEALTH[state].label}</span>
+                    </span>
+                  </td>
+                  <td className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{check.responseTime == null ? '' : formatMs(check.responseTime)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       )}
-      {!allChecks && checks.length > CHECKS_SHOWN && (
-        <Button className="mt-3" onClick={() => setAllChecks(true)}>
-          All {checks.length} checks
+      {checks.hasNextPage && (
+        <Button className="mt-3" aria-busy={checks.isFetchingNextPage} disabled={checks.isFetchingNextPage} onClick={() => void checks.fetchNextPage()}>
+          More checks
         </Button>
+      )}
+      {total !== undefined && items.length > 0 && (
+        <p className="mono mt-2 text-muted-foreground">
+          {items.length} of {total}
+        </p>
       )}
     </Section>
   )

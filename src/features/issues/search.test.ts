@@ -40,6 +40,14 @@ describe('inbox search', () => {
     expect(timeRange({ start: '2026-11-03T12:00:00Z', end: '2026-11-05T12:00:00Z' }).start).toBeUndefined()
   })
 
+  it('words a range with one end as since or before, and names the year only when it is not this one', () => {
+    const year = new Date().getFullYear()
+    expect(timeRange({ start: `${year}-03-03T12:00:00Z` }).label).toMatch(/^Since \w{3} \d{1,2}, /)
+    expect(timeRange({ start: `${year}-03-03T12:00:00Z` }).label).not.toContain(String(year))
+    expect(timeRange({ end: '2019-03-03T12:00:00Z' }).label).toMatch(/^Before .*2019/)
+    expect(timeRange({ start: `${year}-03-03T12:00:00Z`, end: '2019-03-04T12:00:00Z' }).label).toContain(' – ')
+  })
+
   it('sends a picked date and time as UTC with a Z, and shows it back as the viewer typed it', () => {
     const utc = localToUtc('2026-11-14T10:30')
     expect(utc).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00Z$/)

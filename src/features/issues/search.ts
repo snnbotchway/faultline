@@ -70,6 +70,12 @@ export const TIME_RANGES = [
 ]
 
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+const dateTimeYearFormat = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+// The year is left out for a date in the current one.
+const dateTime = (value: string) => {
+  const at = new Date(value)
+  return (at.getFullYear() === new Date().getFullYear() ? dateTimeFormat : dateTimeYearFormat).format(at)
+}
 
 // The range in words. `start` is set when it is one of the choices; other ranges are shown as they are.
 export function timeRange(search: Pick<InboxSearch, 'start' | 'end'>): { start?: string; label: string } {
@@ -81,8 +87,10 @@ export function timeRange(search: Pick<InboxSearch, 'start' | 'end'>): { start?:
     const preset = TIME_RANGES.find((range) => range.start === search.start)
     return preset ?? TIME_RANGES.find((range) => range.start === `now-${count / unit.perDay}d`) ?? { label: `Last ${plural(count, unit.word)}` }
   }
-  const words = (value: string | undefined, missing: string) => (!value ? missing : RELATIVE.test(value) ? value : dateTimeFormat.format(new Date(value)))
-  return { label: `${words(search.start, 'Start')} – ${words(search.end, 'now')}` }
+  const words = (value: string) => (RELATIVE.test(value) ? value : dateTime(value))
+  if (!search.end) return { label: `Since ${words(search.start!)}` }
+  if (!search.start) return { label: `Before ${words(search.end)}` }
+  return { label: `${words(search.start)} – ${words(search.end)}` }
 }
 
 // A `datetime-local` field holds the viewer's wall-clock time; the backend takes UTC with a `Z`.

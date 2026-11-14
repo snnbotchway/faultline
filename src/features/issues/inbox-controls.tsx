@@ -1,5 +1,5 @@
 import { ArrowDownWideNarrow, CalendarDays, ChevronDown, CircleHelp, Search } from 'lucide-react'
-import { useState, type FormEvent, type RefObject } from 'react'
+import { useState, type ChangeEvent, type FormEvent, type RefObject } from 'react'
 import type { IssueSort } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import {
@@ -48,7 +48,7 @@ export function SearchBox({ query, inputRef, onSubmit }: { query: string; inputR
 }
 
 const SYNTAX: { token: string; meaning: string }[] = [
-  { token: 'is:unresolved', meaning: 'or resolved, ignored' },
+  { token: 'is:unresolved', meaning: 'also is:resolved, is:ignored' },
   { token: 'level:error', meaning: 'fatal, error, warning, info, debug, sample' },
   { token: 'browser:Chrome', meaning: 'any tag as key:value' },
   { token: 'has:release', meaning: 'issues with that tag set' },
@@ -59,20 +59,22 @@ function SearchHelp() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" aria-label="Search syntax" title="Search syntax" className="grid size-6 shrink-0 place-items-center text-muted-foreground hover:text-foreground max-lg:size-9">
-          <CircleHelp className="size-3" />
+        <button type="button" aria-label="Search syntax" title="Search syntax" className="grid size-7 shrink-0 place-items-center text-muted-foreground hover:text-foreground max-lg:size-11">
+          <CircleHelp className="size-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 max-lg:w-[calc(100vw-1.5rem)]">
+      <PopoverContent align="end" aria-label="Search syntax" className="w-96 max-lg:w-[calc(100vw-1.5rem)]">
         <dl className="mono grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
           {SYNTAX.map((item) => (
             <div key={item.token} className="contents">
               <dt className="font-semibold">{item.token}</dt>
-              <dd className="text-muted-foreground">{item.meaning}</dd>
+              <dd className="font-sans text-muted-foreground">{item.meaning}</dd>
             </div>
           ))}
-          <dt className="font-semibold">words</dt>
-          <dd className="text-muted-foreground">last, after the filters</dd>
+          <div className="contents">
+            <dt className="font-semibold">words</dt>
+            <dd className="font-sans text-muted-foreground">free text, after any filters</dd>
+          </div>
         </dl>
         <p className="mt-3 border-t pt-3 text-muted-foreground">Every part must match. There is no OR or NOT.</p>
       </PopoverContent>
@@ -216,19 +218,30 @@ function CustomRange({ search, onClose, onApply }: { search: Pick<InboxSearch, '
   const initial = (value: string | undefined) => (value && ABSOLUTE.test(value) ? utcToLocal(value) : '')
   const [from, setFrom] = useState(initial(search.start))
   const [to, setTo] = useState(initial(search.end))
-  const [error, setError] = useState<string>()
-  const apply = (event: FormEvent) => {
+  const [errors, setErrors] = useState<{ from?: string; to?: string }>({})
+  const edit = (set: (value: string) => void) => (event: ChangeEvent<HTMLInputElement>) => {
+    set(event.target.value)
+    setErrors({})
+  }
+  const apply = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!from && !to) return setError('Pick a start or an end.')
-    if (from && to && new Date(from) >= new Date(to)) return setError('The end must come after the start.')
+    // A date without a time reads as empty, so the field says it is incomplete rather than missing.
+    const incomplete = 'Add a time, or clear the date.'
+    const badInput = (name: string) => (event.currentTarget.elements.namedItem(name) as HTMLInputElement).validity.badInput
+    const [badFrom, badTo] = [badInput('from'), badInput('to')]
+    if (badFrom || badTo) return setErrors({ from: badFrom ? incomplete : undefined, to: badTo ? incomplete : undefined })
+    if (!from && !to) return setErrors({ from: 'Pick a start or an end.' })
+    if (from && to && new Date(from) >= new Date(to)) return setErrors({ to: 'The end must come after the start.' })
     onApply({ start: from ? localToUtc(from) : undefined, end: to ? localToUtc(to) : undefined })
   }
   return (
     <TaskDialog open onClose={onClose} title="First seen between">
       <form onSubmit={apply} noValidate className="space-y-4">
-        <Field label="From">{(props) => <Input {...props} type="datetime-local" value={from} onChange={(event) => setFrom(event.target.value)} />}</Field>
-        <Field label="To" error={error}>
-          {(props) => <Input {...props} type="datetime-local" value={to} onChange={(event) => setTo(event.target.value)} />}
+        <Field label="From" error={errors.from}>
+          {(props) => <Input {...props} name="from" type="datetime-local" value={from} onChange={edit(setFrom)} />}
+        </Field>
+        <Field label="To" error={errors.to}>
+          {(props) => <Input {...props} name="to" type="datetime-local" value={to} onChange={edit(setTo)} />}
         </Field>
         <TaskActions className="sm:justify-end">
           <Button type="submit" variant="default" className="sm:order-2">

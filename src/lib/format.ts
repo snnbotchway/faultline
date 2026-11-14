@@ -2,9 +2,6 @@
 export type Hits = { n: number; capped: boolean }
 export const hitsText = (hits: Hits) => `${hits.n}${hits.capped ? '+' : ''}`
 
-// `1 issue`, `3 issues`. `count` may already be worded (`1000+`).
-export const plural = (count: number | string, word: string) => `${count} ${word}${String(count) === '1' ? '' : 's'}`
-
 // A count that may not be known: still loading, not available (shown as a dash), or counted.
 export const CountState = { loading: 'loading', unavailable: 'unavailable', counted: 'counted' } as const
 export type CountState = (typeof CountState)[keyof typeof CountState]

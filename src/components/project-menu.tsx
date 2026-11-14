@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronsUpDown } from 'lucide-react'
 import { projectsQuery } from '@/api/organizations'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { plural } from '@/lib/format'
+import { plural } from '@/lib/text'
 import { cn } from '@/lib/utils'
 
 const ALL = ''

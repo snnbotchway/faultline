@@ -8,13 +8,13 @@ export function AuthFrame({ title, children }: { title: string; children: ReactN
   return (
     <main className="min-h-dvh pb-16">
       {/* One line that slips where the form begins. Smaller on a phone, so the form starts in the first third of the screen. */}
-      <div className="flex items-start pt-[14vh] max-sm:pt-8" aria-hidden>
+      <div className="flex items-start pt-28 max-sm:pt-8" aria-hidden>
         <div className="mt-4 h-px flex-1 -translate-y-1/2 bg-border max-sm:mt-3" />
         <Mark className="-mx-1 size-12 max-sm:size-9" />
         <div className="mt-8 h-px flex-1 -translate-y-1/2 bg-border max-sm:mt-6" />
       </div>
       <div className="mx-auto w-full max-w-94 px-4 pt-7 max-sm:pt-4">
-        <p className="text-center font-mono text-xs font-semibold tracking-[0.18em]">FAULTLINE</p>
+        <p className="text-center font-mono text-xs font-semibold tracking-wordmark">FAULTLINE</p>
         <h1 className="mt-10 text-2xl font-semibold text-balance max-sm:mt-7">{title}</h1>
         <div className="mt-5">{children}</div>
       </div>

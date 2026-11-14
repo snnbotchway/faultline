@@ -13,7 +13,7 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn('flex items-center gap-2', className)}>
       <Mark />
-      <span className="font-mono text-xs font-semibold tracking-[0.18em]">FAULTLINE</span>
+      <span className="font-mono text-xs font-semibold tracking-wordmark">FAULTLINE</span>
     </span>
   )
 }

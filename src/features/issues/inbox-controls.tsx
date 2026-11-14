@@ -68,12 +68,12 @@ function SearchHelp() {
           {SYNTAX.map((item) => (
             <div key={item.token} className="contents">
               <dt className="font-semibold">{item.token}</dt>
-              <dd className="font-sans text-muted-foreground">{item.meaning}</dd>
+              <dd className="font-sans text-balance text-muted-foreground">{item.meaning}</dd>
             </div>
           ))}
           <div className="contents">
             <dt className="font-semibold">words</dt>
-            <dd className="font-sans text-muted-foreground">free text, after any filters</dd>
+            <dd className="font-sans text-balance text-muted-foreground">free text, after any filters</dd>
           </div>
         </dl>
         <p className="mt-3 border-t pt-3 text-muted-foreground">Every part must match. There is no OR or NOT.</p>

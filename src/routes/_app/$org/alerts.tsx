@@ -26,9 +26,9 @@ function AlertsRoute() {
   return (
     <>
       <PageBar>
-        <h1 className="text-sm font-medium">Alerts</h1>
+        <h1 className="text-2xl font-semibold">Alerts</h1>
         {canWrite && first && (
-          <Button variant="default" size="sm" className="ml-auto max-lg:h-9" onClick={() => openRule({ alert: RuleEditor.new, project: first })}>
+          <Button variant="default" size="bar" className="ml-auto" onClick={() => openRule({ alert: RuleEditor.new, project: first })}>
             New rule
           </Button>
         )}

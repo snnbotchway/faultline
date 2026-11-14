@@ -120,7 +120,7 @@ export function AddRecipient({ hasEmail, onAdd }: { hasEmail: boolean; onAdd: (r
                 </div>
               </>
             )}
-            <Button type="submit" variant="default" className="max-lg:h-11">
+            <Button type="submit" variant="default">
               Add {RECIPIENTS[type].label}
             </Button>
           </form>

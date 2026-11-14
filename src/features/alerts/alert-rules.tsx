@@ -3,6 +3,7 @@ import { projectAlertsQuery, type Alert } from '@/api/alerts'
 import { canAdminProjects, canWriteProjects, organizationQuery, projectsQuery } from '@/api/organizations'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
+import { RowButton } from '@/components/ui/row-button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { AlertDialog } from './alert-dialog'
@@ -11,7 +12,8 @@ import { conditions } from './conditions'
 import { RuleEditor, type OpenRule } from './open-rule'
 import { RecipientChip } from './recipients'
 
-const COLUMNS = 'lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,1.5fr)_minmax(0,3fr)]'
+// The last column holds the row's action word.
+const COLUMNS = 'lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,1.5fr)_minmax(0,3fr)_48px]'
 
 /**
  * The alert rules of every project, or of one (`project`), and the editor for the one that is open.
@@ -40,6 +42,7 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
         <span className="label-caps">Alerts when</span>
         <span className="label-caps">Environments</span>
         <span className="label-caps">Notifies</span>
+        <span />
       </div>
       {!project && projects.isPending && <RuleSkeleton />}
       {slugs.map((slug, index) => {
@@ -57,18 +60,12 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
             ) : query.isError ? (
               <p className="flex min-h-11 items-center gap-3 border-b px-3 text-muted-foreground lg:px-4">
                 These rules didn't load.
-                <Button variant="link" onClick={() => void query.refetch()}>
-                  Try again
-                </Button>
+                <RowButton onClick={() => void query.refetch()}>Try again</RowButton>
               </p>
             ) : query.data.length === 0 ? (
               <p className="flex min-h-11 items-center gap-3 border-b px-3 text-muted-foreground lg:px-4">
                 No rules yet.
-                {canWrite && (
-                  <Button variant="link" onClick={() => onOpen({ alert: RuleEditor.new, project: slug })}>
-                    Add one
-                  </Button>
-                )}
+                {canWrite && <RowButton onClick={() => onOpen({ alert: RuleEditor.new, project: slug })}>Add rule</RowButton>}
               </p>
             ) : (
               <ul>
@@ -89,6 +86,7 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
   )
 }
 
+// The whole row opens the rule; "Edit" names what that does (DESIGN.md, Rows).
 function RuleRow({ rule, onOpen }: { rule: Alert; onOpen?: () => void }) {
   const when = conditions(rule).join(', or ')
   const cells = (
@@ -102,11 +100,16 @@ function RuleRow({ rule, onOpen }: { rule: Alert; onOpen?: () => void }) {
           <RecipientChip key={recipient.id ?? `${recipient.recipientType}${recipient.url}`} recipient={recipient} />
         ))}
       </span>
+      {onOpen && (
+        <span aria-hidden className="text-right text-sm font-medium group-hover:underline max-lg:hidden">
+          Edit
+        </span>
+      )}
     </>
   )
   const layout = cn('grid w-full grid-cols-1 items-center gap-x-4 gap-y-1 px-3 py-3 text-left lg:min-h-11 lg:px-4 lg:py-2', COLUMNS)
   return onOpen ? (
-    <button type="button" onClick={onOpen} className={cn(layout, 'cursor-pointer transition-colors duration-100 hover:bg-accent/60')}>
+    <button type="button" onClick={onOpen} className={cn(layout, 'group cursor-pointer transition-colors duration-100 hover:bg-accent/60')}>
       {cells}
     </button>
   ) : (

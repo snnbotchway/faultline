@@ -60,7 +60,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
       <div className="ml-auto flex items-center gap-2">
         {monitors.length > 0 && <div className="max-lg:hidden">{toggle}</div>}
         {canWrite && (
-          <Button asChild variant="default" size="sm" className="max-lg:h-9">
+          <Button asChild variant="default" size="bar">
             <Link to="/$org/uptime-monitors/new" params={{ org }}>
               New monitor
             </Link>
@@ -160,7 +160,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
       {shown && pending.length > 0 && <ListSkeleton rows={pending.length} />}
       {list.hasNextPage && (
         <div className="px-3 py-4 lg:px-4">
-          <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage} className="max-lg:h-11">
+          <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage}>
             More monitors
           </Button>
         </div>

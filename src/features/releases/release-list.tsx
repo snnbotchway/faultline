@@ -40,7 +40,7 @@ export function ReleaseList({ org }: { org: string }) {
 
   const bar = (
     <PageBar>
-      <h1 className="text-sm font-medium">Releases</h1>
+      <h1 className="text-2xl font-semibold">Releases</h1>
       {hits !== undefined && <span className="mono text-muted-foreground">{compact(hits)}</span>}
     </PageBar>
   )
@@ -120,7 +120,7 @@ export function ReleaseList({ org }: { org: string }) {
         )}
         {list.hasNextPage && (
           <div className="px-3 py-4 lg:px-4">
-            <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage} className="max-lg:h-11">
+            <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage}>
               More releases
             </Button>
           </div>

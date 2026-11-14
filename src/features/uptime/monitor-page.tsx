@@ -4,21 +4,21 @@ import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { projectAlertsQuery } from '@/api/alerts'
 import { ApiError } from '@/api/client'
+import { explain } from '@/api/errors'
 import { isHttp, monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectsQuery } from '@/api/organizations'
 import { recentReleasesQuery, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
 import { Button } from '@/components/ui/button'
-import { CopyField } from '@/components/ui/copy-field'
-import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { CopyField } from '@/features/settings/parts'
+import { ConfirmDialog } from '@/components/ui/task-dialog'
 import { Section, Stat } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
 import { releaseBefore, shortName } from '@/lib/axis'
 import { ago, brief, clock, exact } from '@/lib/format'
-import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { every, responseText, span } from './format'
@@ -50,12 +50,12 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
       </Crumbs>
       {canWrite && monitor.data && (
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <Button asChild size="sm" className="max-lg:h-9">
+          <Button asChild size="bar">
             <Link to="/$org/uptime-monitors/$monitorId/update" params={{ org, monitorId: String(monitorId) }}>
               Edit
             </Link>
           </Button>
-          <Button size="sm" variant="destructive" className="max-lg:h-9" onClick={() => setConfirming(true)}>
+          <Button size="bar" variant="destructive" onClick={() => setConfirming(true)}>
             Delete
           </Button>
         </div>
@@ -351,7 +351,7 @@ function LatestChecks({ monitor, now }: { monitor: MonitorDetail; now: number })
         </ul>
       )}
       {!allChecks && checks.length > CHECKS_SHOWN && (
-        <Button size="sm" className="mt-3 max-lg:h-11" onClick={() => setAllChecks(true)}>
+        <Button className="mt-3" onClick={() => setAllChecks(true)}>
           All {checks.length} checks
         </Button>
       )}
@@ -362,6 +362,7 @@ function LatestChecks({ monitor, now }: { monitor: MonitorDetail; now: number })
 function DeleteMonitor({ org, monitor, open, onClose }: { org: string; monitor: MonitorDetail; open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [error, setError] = useState<string>()
   const remove = useMutation({
     mutationFn: () => monitorActions.remove(org, monitor.id),
     onSuccess: () => {
@@ -369,7 +370,21 @@ function DeleteMonitor({ org, monitor, open, onClose }: { org: string; monitor: 
       void queryClient.invalidateQueries({ queryKey: monitorKeys.all(org) })
       void navigate({ to: '/$org/uptime-monitors', params: { org } })
     },
-    onError: (error) => failed(error, 'delete the monitor'),
+    onError: (failure) => setError(explain(failure, 'delete the monitor')),
   })
-  return <ConfirmDialog open={open} destructive title={`Delete ${monitor.name}?`} detail="Its check history is deleted with it." confirm="Delete monitor" onConfirm={() => remove.mutate()} onClose={onClose} />
+  return (
+    <ConfirmDialog
+      open={open}
+      title={`Delete ${monitor.name}?`}
+      description="Its check history is deleted with it."
+      action="Delete monitor"
+      busy={remove.isPending}
+      error={error}
+      onConfirm={() => {
+        setError(undefined)
+        remove.mutate()
+      }}
+      onClose={onClose}
+    />
+  )
 }

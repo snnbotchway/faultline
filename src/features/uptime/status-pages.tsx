@@ -6,10 +6,10 @@ import { canWriteProjects, currentUserQuery, organizationQuery } from '@/api/org
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Field } from '@/components/ui/field'
+import { Field, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -19,8 +19,8 @@ import { UptimeTab } from './address'
 import { HEALTH, HEALTH_ORDER } from './describe'
 import { HealthGlyph, UptimeTabs } from './parts'
 
-// Links that sit above the row's own link, so they can be tapped on their own.
-const ADMIN_LINK = 'relative z-10 flex shrink-0 cursor-pointer items-center gap-1 text-sm font-medium text-brand hover:underline max-lg:min-h-11'
+// A row's action as a plain word (DESIGN.md, Rows), above the row's own link so it can be tapped on its own.
+const ADMIN_LINK = 'relative z-10 flex min-h-8 shrink-0 cursor-pointer items-center gap-1 text-sm font-medium hover:underline max-lg:min-h-11'
 
 /**
  * The organization's status pages and the monitors on each. The backend can create a page but not
@@ -41,7 +41,7 @@ export function StatusPages({ org }: { org: string }) {
     <PageBar>
       <UptimeTabs org={org} current={UptimeTab.statusPages} counts={{ [UptimeTab.monitors]: monitors?.length, [UptimeTab.statusPages]: pages.data?.length }} />
       {canWrite && (
-        <Button variant="default" size="sm" className="ml-auto max-lg:h-9" onClick={() => setCreating(true)}>
+        <Button variant="default" size="bar" className="ml-auto" onClick={() => setCreating(true)}>
           New status page
         </Button>
       )}
@@ -160,35 +160,30 @@ function NewStatusPage({ org, onClose }: { org: string; onClose: () => void }) {
     onError: (error) => failed(error, 'create the status page'),
   })
   return (
-    <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent aria-describedby={undefined} className="p-4">
-        <DialogTitle>New status page</DialogTitle>
-        <form
-          noValidate
-          className="mt-4 flex flex-col gap-4"
-          onSubmit={(event) => {
-            event.preventDefault()
-            setTried(true)
-            if (name.trim()) create.mutate()
-          }}
-        >
-          <Field label="Name" error={tried && !name.trim() ? 'Give the page a name.' : undefined}>
-            {(props) => <Input {...props} autoFocus value={name} onChange={(event) => setName(event.target.value)} />}
-          </Field>
-          <label className="flex min-h-9 cursor-pointer items-center gap-3 max-lg:min-h-11">
-            <Checkbox checked={isPublic} onCheckedChange={(checked) => setIsPublic(checked === true)} />
-            Anyone with the link can see it
-          </label>
-          <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button className="max-lg:h-11">Cancel</Button>
-            </DialogClose>
-            <Button type="submit" variant="default" className="max-lg:h-11" aria-busy={create.isPending} disabled={create.isPending}>
-              Create status page
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <TaskDialog open onClose={onClose} title="New status page">
+      <form
+        noValidate
+        className="flex flex-col gap-4"
+        onSubmit={(event) => {
+          event.preventDefault()
+          setTried(true)
+          if (name.trim()) create.mutate()
+        }}
+      >
+        <Field label="Name" error={tried && !name.trim() ? 'Give the page a name.' : undefined}>
+          {(props) => <Input {...props} value={name} onChange={(event) => setName(event.target.value)} />}
+        </Field>
+        <label className="flex min-h-9 cursor-pointer items-center gap-3 max-lg:min-h-11">
+          <Checkbox checked={isPublic} onCheckedChange={(checked) => setIsPublic(checked === true)} />
+          Anyone with the link can see it
+        </label>
+        <TaskActions className="sm:justify-end">
+          <SubmitButton busy={create.isPending} className="sm:order-last">
+            Create status page
+          </SubmitButton>
+          <Button onClick={onClose}>Cancel</Button>
+        </TaskActions>
+      </form>
+    </TaskDialog>
   )
 }

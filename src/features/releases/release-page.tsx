@@ -8,14 +8,15 @@ import { canOpenRelease, isNewIn, releaseActions, releaseCommitsQuery, releaseDe
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
 import { Button } from '@/components/ui/button'
-import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { RowButton } from '@/components/ui/row-button'
 import { Section } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ConfirmDialog } from '@/components/ui/task-dialog'
+import { explain } from '@/api/errors'
 import { errorParts } from '@/features/issues/event'
 import { shortName } from '@/lib/axis'
 import { ago, brief, compact, exact, noun } from '@/lib/format'
 import { LevelGlyph } from '@/features/issues/level'
-import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
@@ -118,7 +119,7 @@ function ReleaseIssues({ org, version }: { org: string; version: string }) {
       {fresh.length > 0 && <IssueList org={org} label="First seen in this release" count={`${fresh.length}${more}`} issues={fresh} fresh />}
       {known.length > 0 && <IssueList org={org} label="Seen before, still happening" count={`${known.length}${more}`} issues={known} className={fresh.length ? 'mt-6' : undefined} />}
       {issues.hasNextPage && (
-        <Button size="sm" className="mt-3 max-lg:h-11" aria-busy={issues.isFetchingNextPage} disabled={issues.isFetchingNextPage} onClick={() => void issues.fetchNextPage()}>
+        <Button className="mt-3" aria-busy={issues.isFetchingNextPage} disabled={issues.isFetchingNextPage} onClick={() => void issues.fetchNextPage()}>
           More issues
         </Button>
       )}
@@ -223,7 +224,7 @@ function Commits({ org, version }: { org: string; version: string }) {
             ))}
           </ul>
           {!all && commits.data.length > COMMITS_SHOWN && (
-            <Button size="sm" className="mt-3 max-lg:h-11" onClick={() => setAll(true)}>
+            <Button className="mt-3" onClick={() => setAll(true)}>
               All {commits.data.length} commits
             </Button>
           )}
@@ -245,7 +246,7 @@ function Files({ org, version }: { org: string; version: string }) {
       count={files.data ? items.length : undefined}
       action={
         items.length > 0 && (
-          <Button size="sm" variant="ghost" aria-expanded={shown} onClick={() => setShown((current) => !current)} className="max-lg:h-11">
+          <Button variant="ghost" aria-expanded={shown} onClick={() => setShown((current) => !current)}>
             {shown ? 'Hide' : 'Show'}
           </Button>
         )
@@ -269,7 +270,7 @@ function Files({ org, version }: { org: string; version: string }) {
             ))}
           </ul>
           {files.hasNextPage && (
-            <Button size="sm" className="mt-3 max-lg:h-11" aria-busy={files.isFetchingNextPage} onClick={() => void files.fetchNextPage()}>
+            <Button className="mt-3" aria-busy={files.isFetchingNextPage} onClick={() => void files.fetchNextPage()}>
               More files
             </Button>
           )}
@@ -282,10 +283,14 @@ function Files({ org, version }: { org: string; version: string }) {
 function FileRow({ org, version, file, canDelete }: { org: string; version: string; file: ReleaseFile; canDelete: boolean }) {
   const queryClient = useQueryClient()
   const [confirming, setConfirming] = useState(false)
+  const [error, setError] = useState<string>()
   const remove = useMutation({
     mutationFn: () => releaseActions.removeFile(org, version, file.id),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: releaseKeys.files(org, version) }),
-    onError: (error) => failed(error, 'delete the file'),
+    onSuccess: () => {
+      setConfirming(false)
+      void queryClient.invalidateQueries({ queryKey: releaseKeys.files(org, version) })
+    },
+    onError: (failure) => setError(explain(failure, 'delete the file')),
   })
   const name = file.name.replace(/^~\//, '')
   return (
@@ -295,17 +300,21 @@ function FileRow({ org, version, file, canDelete }: { org: string; version: stri
       </span>
       <span className="mono text-muted-foreground">{bytes(file.size)}</span>
       {canDelete && (
-        <Button size="sm" variant="destructive" onClick={() => setConfirming(true)} disabled={remove.isPending} aria-busy={remove.isPending} className="max-lg:h-11">
+        <RowButton danger onClick={() => setConfirming(true)}>
           Delete
-        </Button>
+        </RowButton>
       )}
       <ConfirmDialog
         open={confirming}
-        destructive
         title={`Delete ${name}?`}
-        detail="New errors in this release that need this file won't be matched to your source. This can't be undone."
-        confirm="Delete file"
-        onConfirm={() => remove.mutate()}
+        description="New errors in this release that need this file won't be matched to your source. This can't be undone."
+        action="Delete file"
+        busy={remove.isPending}
+        error={error}
+        onConfirm={() => {
+          setError(undefined)
+          remove.mutate()
+        }}
         onClose={() => setConfirming(false)}
       />
     </li>

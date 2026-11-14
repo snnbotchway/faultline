@@ -1,4 +1,4 @@
-import { keepPreviousData, queryOptions } from '@tanstack/react-query'
+import { queryOptions } from '@tanstack/react-query'
 import { inTurns } from '@/lib/in-turns'
 import { api, orgPath, unwrap } from './client'
 import type { components } from './schema/openapi'
@@ -36,7 +36,7 @@ const usageKeys = {
   all: (org: string) => ['organizations', org, 'usage'] as const,
   period: (org: string) => [...usageKeys.all(org), 'period'] as const,
   days: (org: string) => [...usageKeys.all(org), 'days'] as const,
-  project: (org: string, kind: ProjectKind, id: string, now: number) => [...usageKeys.all(org), 'projects', kind, id, now] as const,
+  project: (org: string, kind: ProjectKind, id: string, hour: number) => [...usageKeys.all(org), 'projects', kind, id, hour] as const,
 }
 
 const STALE_MS = 60_000
@@ -105,9 +105,9 @@ const projectTurns = inTurns(4)
  */
 export const projectUsageQuery = (org: string, kind: ProjectKind, id: string, now: number) =>
   queryOptions({
-    queryKey: usageKeys.project(org, kind, id, now),
-    staleTime: Infinity,
-    placeholderData: keepPreviousData,
+    // Keyed by the hour the window ends in, so a newer clock within it refetches in place instead of starting over.
+    queryKey: usageKeys.project(org, kind, id, Math.floor(now / HOUR_MS)),
+    staleTime: STALE_MS,
     // A retry waits its turn behind the other projects; the row offers its own after one.
     retry: 1,
     queryFn: ({ signal }) =>

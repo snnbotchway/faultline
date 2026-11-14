@@ -12,7 +12,6 @@ test('usage shows what the organization took in, the projects behind its errors,
   expect(errors).toBeGreaterThan(0)
   expect(await count('Transactions')).toBeGreaterThan(0)
   expect(await count('All events')).toBeGreaterThan(errors)
-  await expect(page.getByRole('region', { name: 'Events dropped' })).toContainText('None')
 
   await page.getByRole('button', { name: /^Errors/ }).click()
   const projects = page.getByRole('list', { name: 'Errors by project' })

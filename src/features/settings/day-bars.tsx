@@ -6,7 +6,7 @@ import { dayAt } from './usage'
 // A finger has to travel this far sideways before it is dragging across the days rather than tapping one.
 const DRAG_START_PX = 8
 
-export type Pick = { picked: number | undefined; hover: (index: number | undefined) => void; pin: (index: number, toggle: boolean) => void }
+export type DayPick = { picked: number | undefined; hover: (index: number | undefined) => void; pin: (index: number, toggle: boolean) => void }
 
 /**
  * Counts per day as bars on the shared 30-day axis. With `pick` a mouse shows the day under it and a click keeps it;
@@ -14,7 +14,7 @@ export type Pick = { picked: number | undefined; hover: (index: number | undefin
  * Unlike `LogHistogram`'s button per bar, the chart takes the pointer as a whole: a day is a few pixels wide on a phone,
  * too narrow to tap, and the keyboard steps through days with the arrow keys and the header's chevrons instead.
  */
-export function DayBars({ label, buckets, height, peak, picked, pick, className }: { label: string; buckets: number[]; height: number; peak?: number; picked: number | undefined; pick?: Pick; className?: string }) {
+export function DayBars({ label, buckets, height, peak, picked, pick, className }: { label: string; buckets: number[]; height: number; peak?: number; picked: number | undefined; pick?: DayPick; className?: string }) {
   const touchStart = useRef<number>(undefined)
   const heights = barHeights(buckets, height, peak)
   const at = (event: PointerEvent<HTMLDivElement>) => {

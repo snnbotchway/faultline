@@ -37,7 +37,6 @@ export function dropRange(organization: number, projects: number[]): { min: numb
   return { min: Math.min(...rates), max: Math.max(...rates) }
 }
 
-// `25%`, or `25–33%` when projects differ.
 export const rangeText = ({ min, max }: { min: number; max: number }) => (min === max ? `${max}%` : `${min}–${max}%`)
 
 export function dayAt(x: number, left: number, width: number, count: number): number {
@@ -51,10 +50,9 @@ export function stepDay(current: number | undefined, step: -1 | 1, count: number
 }
 
 const countFormat = new Intl.NumberFormat('en')
-// `4,810`: an exact count.
 export const exactCount = (count: number) => countFormat.format(count)
 
-// A part of a whole as a whole percent; a part too small to round to one still shows.
+// A part too small to round to one still shows.
 export function share(part: number, whole: number): string {
   if (whole <= 0 || part <= 0) return '0%'
   const percent = Math.round((part / whole) * 100)

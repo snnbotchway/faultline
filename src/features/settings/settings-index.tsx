@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 import { ORGANIZATION_NAME_MAX, Scope, instanceSettingsQuery, membersQuery, organizationActions, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
 import { signInAppsQuery } from '@/api/sign-in-apps'
 import { stale } from '@/api/stale'
-import { totalOf, usagePeriodQuery } from '@/api/usage'
+import { USAGE_DAYS, totalOf, usagePeriodQuery } from '@/api/usage'
 import { PageBar } from '@/components/shell/app-shell'
 import { RowButton } from '@/components/ui/row-button'
 import { Input } from '@/components/ui/input'
@@ -38,7 +38,7 @@ export function SettingsIndex({ org }: { org: string }) {
   const projects = useQuery(projectsQuery(org)).data
   const version = useQuery(instanceSettingsQuery).data?.version
   const usagePeriod = useQuery(usagePeriodQuery(org)).data
-  const usage = usagePeriod && `${plural(exactCount(totalOf(usagePeriod)), 'event')} in the last 30 days`
+  const usage = usagePeriod && `${plural(exactCount(totalOf(usagePeriod)), 'event')} in the last ${USAGE_DAYS} days`
   const signInApps = useQuery({ ...signInAppsQuery(org), enabled: can(Scope.orgWrite) }).data
   const [query, setQuery] = useState('')
   const [deleting, setDeleting] = useState(false)

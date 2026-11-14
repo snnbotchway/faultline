@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useState } from 'react'
 import { Scope, instanceSettingsQuery, organizationQuery, projectsQuery } from '@/api/organizations'
-import { USAGE_KINDS, isProjectKind, licenseEmailQuery, totalOf, usageDaysQuery, usagePeriodQuery, type UsageDay } from '@/api/usage'
+import { USAGE_DAYS, USAGE_KINDS, isProjectKind, licenseEmailQuery, totalOf, usageDaysQuery, usagePeriodQuery, type UsageDay } from '@/api/usage'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,7 +12,7 @@ import { plural } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useAccess } from './access'
-import { DayBars, type Pick } from './day-bars'
+import { DayBars, type DayPick } from './day-bars'
 import { SettingsBar, Sheet } from './parts'
 import { useFold } from './rows'
 import { DropRows } from './usage-drops'
@@ -22,16 +22,12 @@ import { KIND_LABEL, KIND_WORD, exactCount, organizationDropRate, share, stepDay
 
 const DROPPED = 'dropped'
 const TODAY = 'Today'
+const PERIOD = `${USAGE_DAYS} days`
 
 const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
 const dayName = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z`))
 const dayLabel = (days: UsageDay[], index: number) => (index === days.length - 1 ? TODAY : dayName(days[index]!.date))
 
-/**
- * What an organization took in over the last 30 days: every kind of event on one time axis, with the projects behind
- * the errors and the transactions, and the share of new events set to be dropped. Picking a day turns every figure
- * into that day's. This is the stock subscription page of an instance without billing.
- */
 export function UsagePage({ org }: { org: string }) {
   useTitle('Usage', org)
   const can = useAccess(org)
@@ -80,7 +76,7 @@ export function UsagePage({ org }: { org: string }) {
         <Sheet className="flex flex-col">
           {/* Dropping everything is one reason there is nothing to show. */}
           {drops}
-          <Screen title="No events in the last 30 days">
+          <Screen title={`No events in the last ${PERIOD}`}>
             {projects.length === 0 && can(Scope.projectWrite) && (
               <Button asChild>
                 <Link to="/$org/settings/projects/new" params={{ org }}>
@@ -95,7 +91,7 @@ export function UsagePage({ org }: { org: string }) {
 
   const picked = hovered ?? pinned
   const counts = picked === undefined ? totals : days[picked]!.counts
-  const pick: Pick = { picked, hover: setHovered, pin: (index, toggle) => setPinned(toggle && pinned === index ? undefined : index) }
+  const pick: DayPick = { picked, hover: setHovered, pin: (index, toggle) => setPinned(toggle && pinned === index ? undefined : index) }
   const allBuckets = days.map((day) => totalOf(day.counts))
 
   return (
@@ -108,7 +104,7 @@ export function UsagePage({ org }: { org: string }) {
           <div>
             <p className={FIGURES}>
               <span className="min-w-0 flex-1 font-medium">All events</span>
-              <span className="mono text-2xl leading-none font-semibold lg:text-3xl">{exactCount(totalOf(counts))}</span>
+              <strong className="mono text-2xl leading-none font-semibold lg:text-3xl">{exactCount(totalOf(counts))}</strong>
               <span className={SHARE} />
               <span className={SLOT} />
             </p>
@@ -132,7 +128,7 @@ export function UsagePage({ org }: { org: string }) {
                 figures={
                   <>
                     <span className="min-w-0 flex-1 font-medium">{KIND_LABEL[kind]}</span>
-                    <span className="mono font-semibold">{exactCount(counts[kind])}</span>
+                    <strong className="mono font-semibold">{exactCount(counts[kind])}</strong>
                     <span className={SHARE}>{share(counts[kind], totalOf(counts))}</span>
                   </>
                 }
@@ -167,13 +163,12 @@ export function UsagePage({ org }: { org: string }) {
   )
 }
 
-// The axis, labelled once above every row, and the day picked on it with the way back to all 30.
 function AxisHeader({ days, picked, pinned, onStep, onClear }: { days: UsageDay[]; picked: number | undefined; pinned: number | undefined; onStep: (by: -1 | 1) => void; onClear: () => void }) {
   const pinnedDay = pinned === undefined ? undefined : days[pinned]
   return (
     <div className={cn(GRID, 'sticky top-11 z-10 items-center border-b bg-muted max-lg:pb-1')}>
       <div className="flex h-11 items-center lg:h-9">
-        <h2 className="label-caps w-28 whitespace-nowrap">{picked === undefined ? 'Last 30 days' : dayLabel(days, picked)}</h2>
+        <h2 className="label-caps w-28 whitespace-nowrap">{picked === undefined ? `Last ${PERIOD}` : dayLabel(days, picked)}</h2>
         {pinned !== undefined && (
           <>
             <Button variant="ghost" size="icon-sm" className="max-lg:size-11" aria-label="Previous day" disabled={pinned === 0} onClick={() => onStep(-1)}>
@@ -184,7 +179,7 @@ function AxisHeader({ days, picked, pinned, onStep, onClear }: { days: UsageDay[
             </Button>
             <Button size="bar" className="ml-auto gap-1" onClick={onClear}>
               <X className="size-3" />
-              All 30 days
+              All {PERIOD}
             </Button>
           </>
         )}

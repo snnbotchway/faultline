@@ -7,7 +7,7 @@ test('usage shows what the organization took in, the projects behind its errors,
   await expect(page).toHaveURL(new RegExp(`/${DEMO.org}/settings/subscription$`))
 
   // The seed sends errors, transactions and logs, so each has a count and they add up to more than the errors alone.
-  const count = async (name: string) => Number((await page.getByRole('region', { name, exact: true }).locator('.mono').first().textContent())!.replaceAll(',', ''))
+  const count = async (name: string) => Number((await page.getByRole('region', { name, exact: true }).getByRole('strong').first().textContent())!.replaceAll(',', ''))
   const errors = await count('Errors')
   expect(errors).toBeGreaterThan(0)
   expect(await count('Transactions')).toBeGreaterThan(0)

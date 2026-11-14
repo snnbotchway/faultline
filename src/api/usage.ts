@@ -7,7 +7,6 @@ export const UsageKind = { errors: 'errors', transactions: 'transactions', logs:
 export type UsageKind = (typeof UsageKind)[keyof typeof UsageKind]
 export const USAGE_KINDS = Object.values(UsageKind)
 
-// The two kinds the backend can count for one project.
 export type ProjectKind = typeof UsageKind.errors | typeof UsageKind.transactions
 export const isProjectKind = (kind: UsageKind): kind is ProjectKind => kind === UsageKind.errors || kind === UsageKind.transactions
 
@@ -42,6 +41,8 @@ const usageKeys = {
 
 const STALE_MS = 60_000
 
+export const USAGE_DAYS = 30
+
 // What an organization took in over the 30 days ending now, the figure stock shows. Without billing the backend's
 // period is those 30 days.
 export const usagePeriodQuery = (org: string) =>
@@ -68,7 +69,6 @@ export const usageDaysQuery = (org: string) =>
   })
 
 const HOUR_MS = 3600_000
-const USAGE_DAYS = 30
 const FIELD = 'sum(quantity)'
 
 // The schema leaves this response untyped. An hour without events comes back as null.
@@ -120,7 +120,6 @@ export const projectUsageQuery = (org: string, kind: ProjectKind, id: string) =>
       }),
   })
 
-// The address a paid support license is registered to; empty without one.
 export const licenseEmailQuery = queryOptions({
   queryKey: ['instance-license', 'billing-email'],
   queryFn: async () => unwrap(await api.GET('/api/0/instance-license/')).billingEmail,

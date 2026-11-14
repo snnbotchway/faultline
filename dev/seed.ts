@@ -4,8 +4,12 @@
 // which runs inside the local compose backend. Skip it for any other backend with
 // --no-backdate or SEED_BACKDATE=0; every issue then shows as new.
 // Usage: bun dev/seed.ts [backendUrl] [--no-backdate]
+import { spawn } from 'node:child_process'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { ERRORS, RELEASES, eventTimes, makeEvent, titleOf } from './sample-events.ts'
+import { ALERTS, MONITORS, STATUS_PAGE, uptimeHistory } from './sample-uptime.ts'
 
 export const DEMO = {
   email: 'demo@example.com',
@@ -70,16 +74,48 @@ async function ensure<T>(list: () => Promise<T[]>, match: (t: T) => boolean, cre
   if (!(await list()).some(match)) await create()
 }
 
-// The step that needs the local compose backend; see dev/backdate.py for what it does and why.
+// Steps that need the local compose backend; see dev/backdate.py and dev/uptime-history.py for what they do and why.
+// Node APIs rather than Bun's, because Playwright's setup runs the seed under Node.
+async function runInBackend(script: string, env: Record<string, string>, failure: string) {
+  const root = fileURLToPath(new URL('..', import.meta.url))
+  const code = await readFile(join(root, script), 'utf8')
+  const flags = Object.entries(env).flatMap(([key, value]) => ['-e', `${key}=${value}`])
+  const run = spawn('docker', ['compose', '-f', 'dev/compose.yml', 'exec', '-T', ...flags, 'web', './manage.py', 'shell', '-c', code], { cwd: root, stdio: 'inherit' })
+  const exitCode = await new Promise<number | null>((resolve) => run.on('close', resolve))
+  if (exitCode !== 0) throw new Error(`${failure} Set SEED_BACKDATE=0 to seed a backend that is not the local compose.`)
+}
+
 async function backdateEvents(now: number) {
-  const root = join(import.meta.dir, '..')
   const releases = Object.fromEntries(RELEASES.map((release) => [release.version, new Date(now - release.daysAgo * DAY).toISOString()]))
-  const script = await Bun.file(join(root, 'dev/backdate.py')).text()
-  const run = Bun.spawn(
-    ['docker', 'compose', '-f', 'dev/compose.yml', 'exec', '-T', '-e', `SEED_ORG=${DEMO.org}`, '-e', `SEED_RELEASES=${JSON.stringify(releases)}`, 'web', './manage.py', 'shell', '-c', script],
-    { cwd: root, stdout: 'inherit', stderr: 'inherit' },
+  await runInBackend('dev/backdate.py', { SEED_ORG: DEMO.org, SEED_RELEASES: JSON.stringify(releases) }, 'Backdating the seeded events failed.')
+}
+
+// Monitors, alert rules, a status page and a deploy, through the public API.
+async function seedUptime(s: Session) {
+  const o = DEMO.org
+  const projects: { id: string; slug: string }[] = await s.ok('GET', `/api/0/organizations/${o}/projects/`)
+  const monitors: { name: string }[] = await s.ok('GET', `/api/0/organizations/${o}/monitors/?limit=100`)
+  for (const monitor of MONITORS) {
+    if (monitors.some((existing) => existing.name === monitor.body.name)) continue
+    const project = projects.find((p) => p.slug === monitor.project)?.id ?? null
+    await s.ok('POST', `/api/0/organizations/${o}/monitors/`, { ...monitor.body, project, confirmationThreshold: 1 })
+  }
+  for (const [slug, rules] of Object.entries(ALERTS)) {
+    const path = `/api/0/projects/${o}/${slug}/alerts/`
+    const have: { name: string }[] = await s.ok('GET', path)
+    for (const rule of rules) if (!have.some((existing) => existing.name === rule.name)) await s.ok('POST', path, rule)
+  }
+  await ensure(
+    () => s.ok('GET', `/api/0/organizations/${o}/status-pages/`),
+    (page: { name: string }) => page.name === STATUS_PAGE.name,
+    () => s.ok('POST', `/api/0/organizations/${o}/status-pages/`, { name: STATUS_PAGE.name, isPublic: STATUS_PAGE.isPublic }),
   )
-  if ((await run.exited) !== 0) throw new Error('Backdating the seeded events failed. Set SEED_BACKDATE=0 to seed a backend that is not the local compose.')
+  const deploys = `/api/0/organizations/${o}/releases/${RELEASES.at(-1)!.version}/deploys/`
+  await ensure(
+    () => s.ok('GET', deploys),
+    () => true,
+    () => s.ok('POST', deploys, { environment: 'production', url: 'https://demo.example.com' }),
+  )
 }
 
 // `backdate` spreads the events over two weeks; it only works against the local compose backend.
@@ -168,6 +204,8 @@ export async function seed(base: string, backdate = process.env.SEED_BACKDATE !=
     // Release dates count back from when the events were sent.
     await backdateEvents(ingested ? now : Math.max(...after.map((issue) => new Date(issue.lastSeen).getTime())))
   }
+  await seedUptime(s)
+  if (backdate) await runInBackend('dev/uptime-history.py', { SEED_ORG: o, SEED_UPTIME: JSON.stringify(uptimeHistory()) }, 'Writing the monitors\' check history failed.')
   const seeded = await issues()
   for (const error of Object.values(ERRORS).flat()) {
     const issue = seeded.find((item) => item.title === titleOf(error))

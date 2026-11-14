@@ -17,6 +17,7 @@ import { useChange } from './change'
 import { Confirm } from './fields'
 import { Field, FoldChevron, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { atLeast } from './roles'
+import { notify } from '@/lib/notice'
 import { plural } from '@/lib/text'
 import { memberName, projectHasTeam, teamLabel } from './labels'
 import { teamSlugError } from './team-slug'
@@ -142,12 +143,20 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
   const everyone = useQuery(membersQuery(org)).data ?? []
   const [renaming, setRenaming] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [unlinking, setUnlinking] = useState<string>()
   const onRoster = { stale: [stale.teams(org)], notice: true }
   const onAccess = { stale: [stale.teams(org), stale.projects(org)], notice: true }
   const addMember = useChange('add the member', (id: string) => teamActions.addMember(org, team.slug, id), onRoster)
-  const removeMember = useChange('remove the member', (id: string) => teamActions.removeMember(org, team.slug, id), onRoster)
+  // A team membership carries nothing but itself, so adding the member back undoes the removal exactly.
+  const removeMember = useChange('remove the member', (member: Member) => teamActions.removeMember(org, team.slug, member.id), {
+    ...onRoster,
+    onDone: (_, member) => notify(`${memberName(member)} removed from #${team.slug}`, false, { label: 'Undo', run: () => addMember.run(member.id) }),
+  })
   const addProject = useChange('add the project', (slug: string) => projectActions.addTeam(org, slug, team.slug), onAccess)
-  const removeProject = useChange('remove the project', (slug: string) => projectActions.removeTeam(org, slug, team.slug), onAccess)
+  const removeProject = useChange('remove the project', (slug: string) => projectActions.removeTeam(org, slug, team.slug), {
+    stale: onAccess.stale,
+    onDone: () => setUnlinking(undefined),
+  })
   const remove = useChange('delete the team', () => teamActions.remove(org, team.slug), { stale: [stale.teams(org), stale.projects(org)], leavesPage: true, onDone: () => onOpen() })
   const outside = everyone.filter((member) => member.id !== me?.id && !roster?.some((m) => m.id === member.id) && canChange(member.id))
   const closed = projects.filter((project) => !opens.includes(project))
@@ -168,7 +177,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
               <Tag>You</Tag>
             ) : (
               canChange(member.id) && (
-                <Button variant="ghost" disabled={removeMember.pending} onClick={() => removeMember.run(member.id)}>
+                <Button variant="ghost" disabled={removeMember.pending} onClick={() => removeMember.run(member)}>
                   Remove
                 </Button>
               )
@@ -197,7 +206,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
               {project.slug}
             </Link>
             {linkProjects && (
-              <Button variant="ghost" disabled={removeProject.pending} onClick={() => removeProject.run(project.slug ?? '')}>
+              <Button variant="ghost" onClick={() => setUnlinking(project.slug ?? '')}>
                 Remove
               </Button>
             )}
@@ -243,6 +252,21 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
         error={remove.error}
       >
         {opens.length > 0 && `Its members lose the access it gave them to ${plural(opens.length, 'project')}. The projects stay.`}
+      </Confirm>
+      <Confirm
+        open={!!unlinking}
+        onClose={() => {
+          setUnlinking(undefined)
+          removeProject.clear()
+        }}
+        title={`Remove ${unlinking} from #${team.slug}?`}
+        confirm="Remove project"
+        destructive
+        onConfirm={() => unlinking && removeProject.run(unlinking)}
+        pending={removeProject.pending}
+        error={removeProject.error}
+      >
+        Its members lose access to {unlinking} unless another of their teams has it.
       </Confirm>
     </div>
   )

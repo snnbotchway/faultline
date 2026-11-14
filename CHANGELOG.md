@@ -5,6 +5,11 @@ All notable changes to Faultline are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Release labels on the timelines no longer run into each other: releases too close to name apart share one label, and a commit hash shows its first seven characters.
+- The top bar, organization switcher and palette show the organization's name, which can be changed, instead of its slug.
+
 ## [0.1.0] - 2026-11-14
 
 The first release. Tested against GlitchTip 7.0.0.

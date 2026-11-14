@@ -1,4 +1,4 @@
-import type { IssueEvent } from '@/api/issues'
+import { EventEntryType, type Issue, type IssueEvent } from '@/api/issues'
 
 // The event's entries are loosely typed by the backend; these are the fields the screens read.
 export type Frame = {
@@ -37,16 +37,16 @@ export type RequestEntry = {
   env?: Record<string, unknown> | null
 }
 
-function entry<T>(event: IssueEvent, type: string): T | undefined {
+function entry<T>(event: IssueEvent, type: EventEntryType): T | undefined {
   const found = (event.entries as { type: string; data: unknown }[] | undefined)?.find((item) => item.type === type)
   return found?.data as T | undefined
 }
 
 // Outermost first: the last exception is the one that was raised, the earlier ones caused it.
-export const exceptionsOf = (event: IssueEvent) => entry<{ values?: ExceptionValue[] }>(event, 'exception')?.values ?? []
-export const crumbsOf = (event: IssueEvent) => entry<{ values?: Crumb[] }>(event, 'breadcrumbs')?.values ?? []
-export const requestOf = (event: IssueEvent) => entry<RequestEntry>(event, 'request')
-export const messageOf = (event: IssueEvent) => entry<{ formatted?: string; message?: string }>(event, 'message')
+export const exceptionsOf = (event: IssueEvent) => entry<{ values?: ExceptionValue[] }>(event, EventEntryType.exception)?.values ?? []
+export const crumbsOf = (event: IssueEvent) => entry<{ values?: Crumb[] }>(event, EventEntryType.breadcrumbs)?.values ?? []
+export const requestOf = (event: IssueEvent) => entry<RequestEntry>(event, EventEntryType.request)
+export const messageOf = (event: IssueEvent) => entry<{ formatted?: string; message?: string }>(event, EventEntryType.message)
 
 // Frames arrive oldest call first; the screen reads from where it threw.
 export const framesOf = (exception: ExceptionValue) => [...(exception.stacktrace?.frames ?? [])].reverse()
@@ -61,8 +61,17 @@ export function crumbText(crumb: Crumb): string {
   const data = crumb.data ?? {}
   if (data.url) return [data.method, data.url, data.status_code && `→ ${String(data.status_code)}`].filter(Boolean).join(' ')
   return Object.entries(data)
-    .map(([key, value]) => `${key}=${typeof value === 'string' ? value : JSON.stringify(value)}`)
+    .map(([key, value]) => `${key}=${valueText(value)}`)
     .join(' ')
 }
 
 export const frameFile = (frame: Frame) => frame.filename ?? frame.module ?? frame.absPath ?? '?'
+
+// Tag, header and variable values arrive as strings or as structured data.
+export const valueText = (value: unknown) => (typeof value === 'string' ? value : JSON.stringify(value))
+
+// An error's type and message, kept apart so the type can be set as code. Issues without a type have only a title.
+export function errorParts(issue: Pick<Issue, 'metadata' | 'title'>): { type?: string; text: string } {
+  const { type, value } = issue.metadata as { type?: string; value?: string }
+  return type ? { type, text: value ?? '' } : { text: issue.title }
+}

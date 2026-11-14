@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
+import { infiniteQueryOptions, queryOptions, type InfiniteData, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { api, orgPath, unwrap } from './client'
 import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
 import type { components, operations } from './schema/openapi'
@@ -16,6 +16,15 @@ export type IssueFilters = Pick<ListQuery, 'query' | 'sort' | 'project' | 'envir
 export const IssueStatus = { unresolved: 'unresolved', resolved: 'resolved', ignored: 'ignored' } as const
 export type IssueStatus = (typeof IssueStatus)[keyof typeof IssueStatus]
 
+export const IssueLevel = { fatal: 'fatal', error: 'error', warning: 'warning', info: 'info', debug: 'debug' } as const
+export type IssueLevel = (typeof IssueLevel)[keyof typeof IssueLevel]
+
+export const AssigneeType = { user: 'user', team: 'team' } as const
+export type AssigneeType = (typeof AssigneeType)[keyof typeof AssigneeType]
+
+export const EventEntryType = { exception: 'exception', breadcrumbs: 'breadcrumbs', request: 'request', message: 'message' } as const
+export type EventEntryType = (typeof EventEntryType)[keyof typeof EventEntryType]
+
 export const StatsPeriod = { day: '24h', fortnight: '14d' } as const
 export type StatsPeriod = (typeof StatsPeriod)[keyof typeof StatsPeriod]
 
@@ -24,7 +33,8 @@ const issuePath = (slug: string, id: string) => ({ ...orgPath(slug), issue_id: N
 
 export const issueKeys = {
   all: (slug: string) => ['issues', slug] as const,
-  list: (slug: string, filters: IssueFilters) => [...issueKeys.all(slug), 'list', filters] as const,
+  lists: (slug: string) => [...issueKeys.all(slug), 'list'] as const,
+  list: (slug: string, filters: IssueFilters) => [...issueKeys.lists(slug), filters] as const,
   stats: (slug: string, ids: string[], period: StatsPeriod) => [...issueKeys.all(slug), 'stats', period, ids] as const,
   detail: (slug: string, id: string) => [...issueKeys.all(slug), 'detail', id] as const,
   event: (slug: string, id: string, eventId?: string) => [...issueKeys.detail(slug, id), 'event', eventId ?? 'latest'] as const,
@@ -47,6 +57,15 @@ export const issueListQuery = (slug: string, filters: IssueFilters) =>
     },
     getNextPageParam: (page) => page.cursors.next,
   })
+
+export type IssueListData = InfiniteData<Page<Issue>, string | undefined>
+
+// Every issue list in the cache for an organization, with the filters it was fetched for.
+export function cachedIssueLists(queryClient: QueryClient, slug: string) {
+  return queryClient
+    .getQueriesData<IssueListData>({ queryKey: issueKeys.lists(slug) })
+    .map(([key, data]): { key: QueryKey; filters: IssueFilters; data: IssueListData | undefined } => ({ key, filters: key.at(-1) as IssueFilters, data }))
+}
 
 export const issueStatsQuery = (slug: string, ids: string[], period: StatsPeriod) =>
   queryOptions({

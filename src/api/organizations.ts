@@ -11,6 +11,15 @@ export type OrganizationDetail = Schemas['OrganizationDetailSchema']
 export const Feature = { logs: 'logs', uptime: 'uptime', email: 'email', mcp: 'mcp' } as const
 export type Feature = (typeof Feature)[keyof typeof Feature]
 
+export const Scope = { eventWrite: 'event:write', eventAdmin: 'event:admin' } as const
+export type Scope = (typeof Scope)[keyof typeof Scope]
+
+type Access = OrganizationDetail['access'] | undefined
+
+// Changing issues (status, assignee, merge, delete) needs either scope; splitting merged issues needs admin.
+export const canWriteEvents = (access: Access) => !!access && (access.includes(Scope.eventWrite) || access.includes(Scope.eventAdmin))
+export const canAdminEvents = (access: Access) => !!access && access.includes(Scope.eventAdmin)
+
 export const organizationKeys = {
   all: ['organizations'] as const,
   detail: (slug: string) => [...organizationKeys.all, slug] as const,

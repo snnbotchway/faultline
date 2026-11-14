@@ -49,7 +49,7 @@ export function GroupAction({ className, ...props }: React.ComponentProps<typeof
 }
 
 export const ROW = 'flex min-h-12 w-full items-center gap-3 border-b px-3 text-left md:px-4 lg:min-h-11'
-const ROW_LABEL = 'w-36 shrink-0 font-medium lg:w-52'
+export const ROW_LABEL = 'w-36 shrink-0 font-medium lg:w-52'
 
 const Chevron = ({ open }: { open: boolean }) => (
   <ChevronDown className={cn('size-4 shrink-0 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />

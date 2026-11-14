@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronRight, Plus } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
 import {
@@ -10,7 +10,7 @@ import {
   projectEnvironmentsQuery,
   projectKeysQuery,
   projectQuery,
-  type Project,
+  type ProjectDetail,
   type ProjectEnvironment,
   type ProjectKey,
 } from '@/api/projects'
@@ -22,7 +22,7 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useAccess, useChange } from './access'
 import { Confirm, TeamChecklist } from './fields'
-import { CopyField, DeleteDialog, Field, FoldRow, FormDialog, Group, GroupAction, InlineForm, ROW, Row, RowSkeleton, SettingsBar, Sheet, Tabs, type TabItem } from './parts'
+import { CopyField, DeleteDialog, Field, FoldRow, FormDialog, Group, GroupAction, InlineForm, ROW, ROW_LABEL, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
 import { useFold } from './rows'
 import { OTHER_PLATFORM, PLATFORMS, platformName } from './platforms'
 import { ProjectSetup } from './project-setup'
@@ -56,13 +56,8 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
     )
 
   const current = tab ?? (project.data && !project.data.firstEvent ? ProjectTab.setup : ProjectTab.general)
-  const tabs: TabItem<ProjectTab>[] = [
-    { value: ProjectTab.setup, label: 'Set up' },
-    { value: ProjectTab.general, label: 'General' },
-    { value: ProjectTab.keys, label: 'Client keys', count: keys?.length },
-    { value: ProjectTab.environments, label: 'Environments', count: environments?.length },
-  ]
-  const write = can(Scope.projectWrite)
+  const context: TabContext = { org, slug, can, keys, environments, teams: listed?.teams.map((team) => team.slug) }
+  const panel = PROJECT_TABS.find((entry) => entry.value === current)
 
   return (
     <>
@@ -82,14 +77,11 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
           <>
             <Tabs
               label="Project settings"
-              tabs={tabs}
+              tabs={PROJECT_TABS.map((entry) => ({ value: entry.value, label: entry.label, count: entry.count?.(context) }))}
               current={current}
               link={(value) => ({ to: '/$org/settings/projects/$project', params: { org, project: slug }, search: { tab: value } })}
             />
-            {current === ProjectTab.setup && <ProjectSetup org={org} project={project.data} dsn={keys?.[0]?.dsn.public} keysLoaded={!!keys} write={write} />}
-            {current === ProjectTab.general && <General org={org} project={project.data} teams={listed?.teams.map((team) => team.slug)} write={write} admin={can(Scope.projectAdmin)} />}
-            {current === ProjectTab.keys && <Keys org={org} slug={slug} keys={keys} write={write} />}
-            {current === ProjectTab.environments && <Environments org={org} slug={slug} environments={environments} write={write} />}
+            {panel ? panel.render({ ...context, project: project.data }) : <Screen title="Not built yet" />}
           </>
         )}
       </Sheet>
@@ -97,9 +89,37 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
   )
 }
 
+type TabContext = { org: string; slug: string; can: (scope: Scope) => boolean; keys?: ProjectKey[]; environments?: ProjectEnvironment[]; teams?: string[] }
+
+// The project page's tabs, in order. A `?tab=` value with no entry here has no screen yet, and its address says so.
+const PROJECT_TABS: { value: ProjectTab; label: string; count?: (context: TabContext) => number | undefined; render: (context: TabContext & { project: ProjectDetail }) => ReactNode }[] = [
+  {
+    value: ProjectTab.setup,
+    label: 'Set up',
+    render: ({ org, project, keys, can }) => <ProjectSetup org={org} project={project} dsn={keys?.[0]?.dsn.public} keysLoaded={!!keys} write={can(Scope.projectWrite)} />,
+  },
+  {
+    value: ProjectTab.general,
+    label: 'General',
+    render: ({ org, project, teams, can }) => <General org={org} project={project} teams={teams} write={can(Scope.projectWrite)} admin={can(Scope.projectAdmin)} />,
+  },
+  {
+    value: ProjectTab.keys,
+    label: 'Client keys',
+    count: ({ keys }) => keys?.length,
+    render: ({ org, slug, keys, can }) => <Keys org={org} slug={slug} keys={keys} write={can(Scope.projectWrite)} />,
+  },
+  {
+    value: ProjectTab.environments,
+    label: 'Environments',
+    count: ({ environments }) => environments?.length,
+    render: ({ org, slug, environments, can }) => <Environments org={org} slug={slug} environments={environments} write={can(Scope.projectWrite)} />,
+  },
+]
+
 /* ---------- general ---------- */
 
-function General({ org, project, teams, write, admin }: { org: string; project: Pick<Project, 'name' | 'slug' | 'platform' | 'eventThrottleRate'>; teams?: string[]; write: boolean; admin: boolean }) {
+function General({ org, project, teams, write, admin }: { org: string; project: ProjectDetail; teams?: string[]; write: boolean; admin: boolean }) {
   const slug = project.slug ?? ''
   const row = useFold()
   const [deleting, setDeleting] = useState(false)
@@ -125,6 +145,16 @@ function General({ org, project, teams, write, admin }: { org: string; project: 
         <FoldRow label="Events to drop" mono value={`${project.eventThrottleRate}%`} open={row.is('throttle')} onToggle={edit('throttle')}>
           <ThrottleForm org={org} slug={slug} name={project.name} rate={project.eventThrottleRate} onDone={row.close} />
         </FoldRow>
+      </Group>
+      <Group label="You">
+        {/* Someone who manages the project through their organization role sees no team of theirs above. */}
+        {write && !project.isMember && <Row label="Your access" value="Through your organization role, not a team" />}
+        {/* The notification settings belong to the account, so this is a full page load away. */}
+        <a href="/profile/notifications" className={cn(ROW, 'hover:bg-accent')}>
+          <span className={ROW_LABEL}>Your notifications</span>
+          <span className="min-w-0 flex-1 text-muted-foreground">Alerts from this project</span>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+        </a>
       </Group>
       {admin && (
         <Group label="Danger">

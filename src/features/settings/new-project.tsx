@@ -12,6 +12,7 @@ import { useTitle } from '@/lib/title'
 import { useAccess, useChange } from './access'
 import { PlatformPicker, Snippets } from './fields'
 import { Field, FormError, SettingsBar } from './parts'
+import { teamLabel } from './labels'
 import { DSN_PLACEHOLDER, OTHER_PLATFORM, platformName } from './platforms'
 import { ProjectTab } from './project-tabs'
 import { teamSlugError } from './team-slug'
@@ -91,7 +92,7 @@ export function NewProject({ org }: { org: string }) {
                 <Select {...field} value={team ?? teams?.[0]?.slug ?? ''} onChange={(event) => setTeam(event.target.value)} disabled={!teams}>
                   {teams?.map((t) => (
                     <option key={t.slug} value={t.slug}>
-                      #{t.slug}
+                      {teamLabel(t.slug)}
                     </option>
                   ))}
                 </Select>

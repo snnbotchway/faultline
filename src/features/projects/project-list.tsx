@@ -12,7 +12,7 @@ import { ago, exact } from '@/features/issues/format'
 import { Trace } from '@/features/issues/trace'
 import { useAccess, useLastOrganization } from '@/features/settings/access'
 import { platformName } from '@/features/settings/platforms'
-import { plural } from '@/features/settings/rows'
+import { hasWords, plural, searchWords } from '@/lib/text'
 import { useSeen } from '@/lib/seen'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -48,12 +48,12 @@ export function ProjectList({ org }: { org?: string }) {
       </Screen>
     )
 
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  const words = searchWords(query)
   const groups = slugs.map((slug, index) => ({
     slug,
     pending: lists[index]?.isPending ?? true,
     projects: (lists[index]?.data ?? [])
-      .filter((project) => words.every((word) => `${slug} ${project.slug} ${project.name} ${platformName(project.platform)}`.toLowerCase().includes(word)))
+      .filter((project) => hasWords(`${slug} ${project.slug} ${project.name} ${platformName(project.platform)}`, words))
       .sort((a, b) => (a.slug ?? '').localeCompare(b.slug ?? '')),
   }))
   const loading = organizations.isPending || groups.some((group) => group.pending)

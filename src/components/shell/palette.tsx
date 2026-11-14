@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Mark } from '@/components/mark'
 import { DialogContent } from '@/components/ui/dialog'
 import { Kbd } from '@/components/ui/kbd'
+import { hasWords, searchWords } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { CommandGroup, palette, registry, usePaletteOpen, type Command } from './commands'
 
@@ -23,10 +24,10 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
   const [cursor, setCursor] = useState(0)
 
   const shown = useMemo(() => {
-    const words = text.toLowerCase().split(/\s+/).filter(Boolean)
+    const words = searchWords(text)
     const matches = [...registry.values()]
       .flat()
-      .filter((command) => words.every((word) => `${command.group} ${command.label}`.toLowerCase().includes(word)))
+      .filter((command) => hasWords(`${command.group} ${command.label}`, words))
       .sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group))
     if (text.trim() && onSearch) {
       matches.push({ id: 'search', group: CommandGroup.search, label: `Search issues for “${text.trim()}”`, run: () => onSearch(text.trim()) })

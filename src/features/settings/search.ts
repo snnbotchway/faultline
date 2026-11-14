@@ -4,6 +4,8 @@ import type { Organization } from '@/api/organizations'
 import type { Project } from '@/api/projects'
 import type { SignInApp } from '@/api/sign-in-apps'
 import type { Team } from '@/api/teams'
+import { hasWords, searchWords } from '@/lib/text'
+import { memberName, teamLabel, teamList } from './labels'
 import { platformName } from './platforms'
 import { ProjectTab } from './project-tabs'
 import { ROLE_LABEL } from './roles'
@@ -12,7 +14,6 @@ import { TeamTab } from './team-tabs'
 // One thing the settings search can land on: where it sits, what it is set to, and the page that changes it.
 export type Entry = { path: string[]; value: string; link: LinkProps }
 
-const teamText = (teams: { slug: string }[]) => teams.map((team) => `#${team.slug}`).join(' ')
 
 export function settingsEntries({
   organization,
@@ -36,12 +37,12 @@ export function settingsEntries({
     { path: [org, 'Delete organization'], value: '', link: { to: '/$org/settings', params: { org } } },
     { path: ['Members', 'Invite members'], value: '', link: { to: '/$org/settings/members/new', params: { org } } },
     ...members.map((member) => ({
-      path: ['Members', member.user?.name || member.email],
+      path: ['Members', memberName(member)],
       value: `${member.email} · ${member.pending ? 'Invited' : ROLE_LABEL[member.role]}`,
       link: { to: '/$org/settings/members/$memberId', params: { org, memberId: member.id } } as LinkProps,
     })),
     ...teams.map((team) => ({
-      path: ['Teams', `#${team.slug}`],
+      path: ['Teams', teamLabel(team.slug)],
       value: `${team.memberCount} ${team.memberCount === 1 ? 'member' : 'members'}`,
       link: { to: '/$org/settings/teams/$team/$tab', params: { org, team: team.slug, tab: TeamTab.members } } as LinkProps,
     })),
@@ -61,7 +62,7 @@ export function settingsEntries({
       return [
         at('Name', project.name, ProjectTab.general),
         at('Platform', platformName(project.platform), ProjectTab.general),
-        at('Teams with access', teamText(project.teams), ProjectTab.general),
+        at('Teams with access', teamList(project.teams.map((team) => team.slug)), ProjectTab.general),
         at('Events to drop', `${project.eventThrottleRate}%`, ProjectTab.general),
         at('Delete project', '', ProjectTab.general),
         at('Set up', project.firstEvent ? '' : 'No events yet', ProjectTab.setup),
@@ -75,10 +76,7 @@ export function settingsEntries({
 
 // Every word of the query has to appear somewhere in the entry, in any order.
 export function matchEntries(entries: Entry[], query: string): Entry[] {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  const words = searchWords(query)
   if (!words.length) return []
-  return entries.filter((entry) => {
-    const text = `${entry.path.join(' ')} ${entry.value}`.toLowerCase()
-    return words.every((word) => text.includes(word))
-  })
+  return entries.filter((entry) => hasWords(`${entry.path.join(' ')} ${entry.value}`, words))
 }

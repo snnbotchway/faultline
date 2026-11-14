@@ -14,7 +14,9 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useAccess, useChange } from './access'
 import { DeleteDialog, Field, FoldRow, Group, GroupAction, InlineForm, LinkRow, ROW, Row, RowSkeleton, Sheet } from './parts'
-import { plural, useFold } from './rows'
+import { plural } from '@/lib/text'
+import { teamList } from './labels'
+import { useFold } from './rows'
 import { platformName } from './platforms'
 import { matchEntries, settingsEntries } from './search'
 import { SignInApps } from './sign-in-apps'
@@ -124,7 +126,7 @@ export function SettingsIndex({ org }: { org: string }) {
               <LinkRow
                 label="Teams"
                 mono={teams.length > 0}
-                value={teams.length ? teams.map((team) => `#${team.slug}`).join('  ') : 'None yet'}
+                value={teams.length ? teamList(teams.map((team) => team.slug)) : 'None yet'}
                 to="/$org/settings/teams"
                 params={{ org }}
               />
@@ -155,7 +157,7 @@ export function SettingsIndex({ org }: { org: string }) {
                       {project.teams.length > 0 && (
                         <span className="max-lg:hidden">
                           {' · '}
-                          <span className="mono">{project.teams.map((team) => `#${team.slug}`).join(' ')}</span>
+                          <span className="mono">{teamList(project.teams.map((team) => team.slug))}</span>
                         </span>
                       )}
                       {!project.firstEvent && ' · no events yet'}

@@ -1,6 +1,6 @@
 import type { IssueFilters, IssueSort } from '@/api/issues'
 import { StatusView, isStatus } from './status'
-import { plural } from './format'
+import { plural } from '@/lib/text'
 
 export const DEFAULT_QUERY = 'is:unresolved'
 export const DEFAULT_SORT: IssueSort = '-last_seen'

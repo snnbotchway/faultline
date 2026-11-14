@@ -5,6 +5,7 @@ import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 // The bar of a page that sits under Settings: the way back, then where you are.
@@ -293,32 +294,29 @@ function useCopy(text: string | (() => Promise<string>)) {
   return { copied, copy }
 }
 
-// Copies a value that may first have to be fetched. `onError` hears about a fetch or clipboard failure.
+/**
+ * Copies a value that may first have to be fetched. `onError` hears about a fetch or clipboard failure.
+ * `inBox` draws it as the end of the box that holds the value, ruled off by a hairline.
+ */
 export function CopyButton({
   text,
   label = 'Copy',
   onError,
+  inBox,
   className,
   ...props
-}: { text: string | (() => Promise<string>); label?: string; onError?: (error: unknown) => void } & Omit<React.ComponentProps<typeof Button>, 'onClick' | 'onError'>) {
+}: { text: string | (() => Promise<string>); label?: string; onError?: (error: unknown) => void; inBox?: boolean } & Omit<React.ComponentProps<typeof Button>, 'onClick' | 'onError'>) {
   const { copied, copy } = useCopy(text)
   return (
-    <Button className={cn('max-lg:h-11', className)} onClick={() => void copy().catch((error: unknown) => onError?.(error))} {...props}>
+    <Button
+      variant={inBox ? 'ghost' : 'outline'}
+      className={cn(inBox && 'h-auto self-stretch border-0 border-l border-l-border bg-card -outline-offset-2 max-lg:h-auto', className)}
+      onClick={() => void copy().catch((error: unknown) => onError?.(error))}
+      {...props}
+    >
       {copied ? <Check className="text-ok" /> : <Copy />}
       <span aria-live="polite">{copied ? 'Copied' : label}</span>
     </Button>
-  )
-}
-
-const COPY = 'flex shrink-0 items-center gap-2 border-l bg-card px-3 text-sm font-medium -outline-offset-2 hover:bg-accent'
-
-function CopyControl({ text }: { text: string }) {
-  const { copied, copy } = useCopy(text)
-  return (
-    <button type="button" onClick={() => void copy().catch(() => {})} className={COPY}>
-      {copied ? <Check className="size-4 text-ok" /> : <Copy className="size-4" />}
-      <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
-    </button>
   )
 }
 
@@ -329,7 +327,7 @@ export function CopyField({ value, label, className }: { value: string; label: s
       <code aria-label={label} className="mono min-w-0 flex-1 px-3 py-2 leading-[1.5] [overflow-wrap:anywhere] max-lg:py-3">
         {value}
       </code>
-      <CopyControl text={value} />
+      <CopyButton text={value} inBox />
     </div>
   )
 }
@@ -340,7 +338,7 @@ export function CodeBlock({ code, label, className }: { code: string; label: str
     <figure className={cn('border bg-code', className)}>
       <figcaption className="flex h-9 items-stretch justify-between border-b pl-3 max-lg:h-11">
         <span className="mono flex min-w-0 items-center truncate text-muted-foreground">{label}</span>
-        <CopyControl text={code} />
+        <CopyButton text={code} inBox />
       </figcaption>
       <pre className="mono p-3 leading-[1.6] break-all whitespace-pre-wrap">{code}</pre>
     </figure>
@@ -405,8 +403,8 @@ export function RowSkeleton({ rows = 4 }: { rows?: number }) {
     <div aria-busy>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className={ROW}>
-          <span className="h-3 w-32 animate-pulse bg-muted" />
-          <span className="h-3 w-48 animate-pulse bg-muted" />
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-48" />
         </div>
       ))}
     </div>

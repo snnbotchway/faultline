@@ -16,7 +16,8 @@ import { Failure, useAccess, useChange, useOwnMember } from './access'
 import { Confirm } from './fields'
 import { Field, FoldRow, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { atLeast } from './roles'
-import { plural } from './rows'
+import { plural } from '@/lib/text'
+import { memberName, projectHasTeam, teamLabel } from './labels'
 import { teamSlugError } from './team-slug'
 import { TeamTab } from './team-tabs'
 
@@ -105,7 +106,7 @@ type RowProps = {
 
 function TeamRow(props: RowProps) {
   const { org, team, projects, me, canChange, open, onOpen } = props
-  const opens = projects.filter((project) => project.teams.some((t) => t.slug === team.slug))
+  const opens = projects.filter((project) => projectHasTeam(project, team.slug))
   const membership = useChange(team.isMember ? 'leave the team' : 'join the team', () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
     // Being on a team changes which projects the user is a member of.
     stale: [stale.teams(org), stale.projects(org)],
@@ -116,7 +117,7 @@ function TeamRow(props: RowProps) {
       <div className={cn('relative flex min-h-14 items-center gap-3 border-b px-3 hover:bg-accent md:px-4', open && 'border-b-0')}>
         <button type="button" aria-expanded={open} onClick={() => onOpen(open ? undefined : team.slug)} className="absolute inset-0 -outline-offset-2" aria-label={`Team ${team.slug}`} />
         <span className="flex min-w-0 flex-1 flex-col py-2 lg:flex-row lg:items-center lg:gap-3">
-          <span className="mono font-medium break-words lg:w-52 lg:shrink-0">#{team.slug}</span>
+          <span className="mono font-medium break-words lg:w-52 lg:shrink-0">{teamLabel(team.slug)}</span>
           <span className="text-sm whitespace-nowrap text-muted-foreground">
             {plural(team.memberCount, 'member')} · {plural(opens.length, 'project')}
           </span>
@@ -157,9 +158,9 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
         {roster?.length === 0 && <p className={cn(LINE, 'text-muted-foreground')}>Nobody yet</p>}
         {roster?.map((member) => (
           <div key={member.id} className={LINE}>
-            <Initials name={member.user?.name || member.email} hollow={member.pending} className="size-5" />
+            <Initials name={memberName(member)} hollow={member.pending} className="size-5" />
             <Link to="/$org/settings/members/$memberId" params={{ org, memberId: member.id }} className="min-w-0 flex-1 py-1 [overflow-wrap:anywhere] hover:underline">
-              {member.user?.name || member.email}
+              {memberName(member)}
             </Link>
             {/* The user's own way out is the Leave button on the row above; it is not offered twice. */}
             {member.id === me?.id ? (

@@ -11,15 +11,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ago, exact } from '@/features/issues/format'
 import { failed, notify } from '@/lib/notice'
+import { hasWords, searchWords } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { Failure, useAccess, useChange, useOwnMember } from './access'
 import { Confirm, RoleField, TeamChecklist } from './fields'
 import { InviteDialog } from './invite-dialog'
 import { CopyButton, FoldRow, FormError, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
+import { memberName, teamList } from './labels'
 import { ROLE_LABEL } from './roles'
-
-const memberName = (member: Member) => member.user?.name || member.email
 
 /**
  * Who is in the organization and who has been invited. Someone who may change members unfolds a row to do it;
@@ -44,8 +44,8 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
 
   const list = () => void navigate({ to: '/$org/settings/members', params: { org }, replace: true })
   const write = can(Scope.memberWrite)
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-  const shown = members?.filter((member) => words.every((word) => `${member.user?.name ?? ''} ${member.email}`.toLowerCase().includes(word)))
+  const words = searchWords(query)
+  const shown = members?.filter((member) => hasWords(`${member.user?.name ?? ''} ${member.email}`, words))
 
   return (
     <>
@@ -120,7 +120,7 @@ function MemberRow(props: RowProps) {
           {member.pending ? `Invited ${ago(member.dateCreated)} ago` : member.user?.name ? member.email : ''}
         </span>
       </span>
-      <span className="mono w-40 text-muted-foreground max-lg:hidden">{memberTeams?.map((team) => `#${team}`).join(' ')}</span>
+      <span className="mono w-40 text-muted-foreground max-lg:hidden">{memberTeams && teamList(memberTeams)}</span>
       <span className="w-16 shrink-0 text-sm lg:w-20">{ROLE_LABEL[member.role]}</span>
     </>
   )

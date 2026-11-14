@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 import { CodeBlock, FormDialog, Segmented } from './parts'
 import { OTHER_PLATFORM, PLATFORMS, PLATFORM_GROUPS, platformOf } from './platforms'
+import { projectHasTeam, teamLabel } from './labels'
 import { ROLES, ROLE_ADDS, ROLE_LABEL } from './roles'
 
 // A question with a yes that changes something: removing a member, deleting a key.
@@ -86,10 +87,10 @@ export function TeamChecklist({
       {teams.map((team) => (
         <label key={team.slug} className="flex min-h-10 cursor-pointer items-center gap-2 border-b px-3 py-2 last:border-b-0 hover:bg-accent max-lg:min-h-11">
           <Checkbox checked={value.includes(team.slug)} onCheckedChange={(next) => onChange(next ? [...value, team.slug] : value.filter((slug) => slug !== team.slug))} />
-          <span className="mono shrink-0 whitespace-nowrap">#{team.slug}</span>
+          <span className="mono shrink-0 whitespace-nowrap">{teamLabel(team.slug)}</span>
           <span className="mono min-w-0 flex-1 text-right text-muted-foreground">
             {projects
-              .filter((project) => project.teams.some((t) => t.slug === team.slug))
+              .filter((project) => projectHasTeam(project, team.slug))
               .map((project) => project.slug)
               .join(' ')}
           </span>

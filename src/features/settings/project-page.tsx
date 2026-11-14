@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils'
 import { Failure, useAccess, useChange } from './access'
 import { Confirm, TeamChecklist } from './fields'
 import { CopyField, DeleteDialog, Field, FoldRow, FormDialog, Group, GroupAction, InlineForm, ROW, ROW_LABEL, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
+import { teamList } from './labels'
 import { useFold } from './rows'
 import { OTHER_PLATFORM, PLATFORMS, platformName } from './platforms'
 import { ProjectSetup } from './project-setup'
@@ -152,7 +153,7 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
         <FoldRow
           label="Teams with access"
           mono={!!teams?.length}
-          value={teams && (teams.length ? teams.map((team) => `#${team}`).join('  ') : 'None')}
+          value={teams && (teams.length ? teamList(teams) : 'None')}
           open={row.is(GeneralField.teams)}
           onToggle={teams && linkTeams ? () => row.toggle(GeneralField.teams) : undefined}
         >
@@ -365,11 +366,7 @@ function Environments({ org, slug, environments, write }: { org: string; slug: s
   if (!environments) return <RowSkeleton rows={3} />
   if (!environments.length) return <Screen title="No environments yet" />
   return (
-    <section aria-label="Environments">
-      <div className="flex h-9 items-center justify-between border-b bg-muted px-3 md:px-4 lg:h-8">
-        <h2 className="label-caps">Environment</h2>
-        <span className="label-caps">Shown</span>
-      </div>
+    <Group label="Environments" action={<span className="label-caps pr-2 md:pr-3">Shown</span>}>
       {environments.map((environment) => (
         <div key={environment.name} className={ROW}>
           <span className={cn('mono min-w-0 flex-1 break-words', environment.isHidden && 'text-muted-foreground')}>{environment.name}</span>
@@ -386,6 +383,6 @@ function Environments({ org, slug, environments, write }: { org: string; slug: s
           )}
         </div>
       ))}
-    </section>
+    </Group>
   )
 }

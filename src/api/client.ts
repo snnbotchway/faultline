@@ -48,7 +48,7 @@ export class ApiError extends Error {
   readonly status: number
   readonly body: unknown
   constructor(status: number, body: unknown) {
-    super(errorMessage(body) ?? `Request failed (${status})`)
+    super(errorMessage(body) ?? 'Something went wrong. Try again.')
     this.status = status
     this.body = body
   }
@@ -62,7 +62,9 @@ function allauthErrors(body: unknown): AllauthError[] {
 }
 
 function errorMessage(body: unknown): string | undefined {
-  if (body && typeof body === 'object' && 'detail' in body && typeof body.detail === 'string') return body.detail
+  if (!body || typeof body !== 'object') return undefined
+  if ('detail' in body && typeof body.detail === 'string') return body.detail
+  if ('message' in body && typeof body.message === 'string') return body.message
   return allauthErrors(body)[0]?.message
 }
 

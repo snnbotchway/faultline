@@ -1,5 +1,5 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
-import { api, orgPath, unwrap } from './client'
+import { api, orgPath, retryUnlessMissing, unwrap } from './client'
 import { toPage, type Page } from './pagination'
 import type { components, operations } from './schema/openapi'
 
@@ -18,7 +18,7 @@ export const LogResourceType = { service: 'service', environment: 'environment',
 export type LogResourceType = (typeof LogResourceType)[keyof typeof LogResourceType]
 
 // The backend takes up to 200 logs a page.
-export const PAGE_SIZE = 200
+const PAGE_SIZE = 200
 
 export const logKeys = {
   all: (slug: string) => ['logs', slug] as const,
@@ -59,6 +59,7 @@ export const logQuery = (slug: string, id: string) =>
     queryKey: logKeys.detail(slug, id),
     queryFn: async () =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/logs/{log_id}/', { params: { path: { ...orgPath(slug), log_id: id } } })),
+    retry: retryUnlessMissing,
   })
 
 // Hourly counts per level. The text search and the host and trace filters do not apply to them.

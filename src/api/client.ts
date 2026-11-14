@@ -66,6 +66,10 @@ export class ApiError extends Error {
 // The backend answered the request with this status.
 export const hasStatus = (error: unknown, status: number) => error instanceof ApiError && error.status === status
 
+// Retries a failed read a few times, but not one the backend says does not exist: that answer will not change.
+const RETRIES = 3
+export const retryUnlessMissing = (failures: number, error: unknown) => !hasStatus(error, HttpStatus.notFound) && failures < RETRIES
+
 type AllauthError = { message?: string; param?: string }
 
 // GlitchTip answers {detail}, allauth answers {errors: [{message, param}]}.

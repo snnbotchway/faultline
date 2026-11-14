@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
-import { api, orgPath, unwrap } from './client'
+import { api, orgPath, retryUnlessMissing, unwrap } from './client'
 import { MAX_PAGE_SIZE, fetchAllPages } from './pagination'
 import type { components, operations } from './schema/openapi'
 
@@ -48,6 +48,7 @@ export const transactionGroupQuery = (slug: string, id: string) =>
     queryKey: performanceKeys.group(slug, id),
     queryFn: async () =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/transaction-groups/{id}/', { params: { path: groupPath(slug, id) } })),
+    retry: retryUnlessMissing,
   })
 
 export const transactionSpansQuery = (slug: string, id: string) =>

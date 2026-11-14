@@ -5,6 +5,7 @@ import { AlertChoice, account, accountKeys, alertsQuery, emailsQuery, notificati
 import { Feature, currentUserQuery, instanceSettingsQuery } from '@/api/organizations'
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
+import { FormAlert } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
@@ -61,7 +62,7 @@ export function ProfileSkeleton() {
   )
 }
 
-export function ProfilePage({ landing }: { landing: Landing }) {
+export function ProfilePage({ landing, connectFailed }: { landing: Landing; connectFailed?: boolean }) {
   useTitle('Profile')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -113,6 +114,7 @@ export function ProfilePage({ landing }: { landing: Landing }) {
       </PageBar>
       <main className="mx-auto w-full max-w-180 px-3 pb-16 md:px-4">
         <h1 className="sr-only">Profile</h1>
+        {connectFailed && <FormAlert className="mt-5">That account couldn't be connected. Try again.</FormAlert>}
 
         <Heading>Account</Heading>
         <Fact name="Name" value={user.name || <span className="text-muted-foreground">Not set</span>} action="Edit" onClick={open(Task.details)} />
@@ -214,7 +216,7 @@ export function ProfilePage({ landing }: { landing: Landing }) {
           id={SECTION_IDS[Landing.tokens]}
           current={landing === Landing.tokens || landing === Landing.newToken}
           action={
-            <Button size="sm" className="max-lg:h-9" onClick={() => land(Landing.newToken)}>
+            <Button size="sm" className="max-lg:h-11" onClick={() => land(Landing.newToken)}>
               New token
             </Button>
           }

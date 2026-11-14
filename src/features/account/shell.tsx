@@ -22,10 +22,10 @@ export function BareShell({ children }: { children: ReactNode }) {
         <Link to="/" aria-label="Faultline" className="mr-auto">
           <Wordmark />
         </Link>
-        <Button variant="ghost" size="sm" className="max-lg:h-9" asChild>
+        <Button variant="ghost" size="sm" className="max-lg:h-11" asChild>
           <Link to="/profile">Profile</Link>
         </Button>
-        <Button variant="ghost" size="sm" className="max-lg:h-9" onClick={() => void leave()}>
+        <Button variant="ghost" size="sm" className="max-lg:h-11" onClick={() => void leave()}>
           Sign out
         </Button>
       </header>

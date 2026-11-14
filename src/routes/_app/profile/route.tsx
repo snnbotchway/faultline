@@ -13,7 +13,11 @@ const LANDINGS: Record<string, Landing> = {
   '/profile/auth-tokens/new': Landing.newToken,
 }
 
+// The backend sends a failed provider connection back here with `?error=…&error_process=connect`.
+type ProfileSearch = { error?: string }
+
 export const Route = createFileRoute('/_app/profile')({
+  validateSearch: (search: Record<string, unknown>): ProfileSearch => ({ error: typeof search.error === 'string' ? search.error : undefined }),
   loader: ({ context: { queryClient } }) =>
     Promise.all([
       queryClient.ensureQueryData(organizationsQuery),
@@ -35,9 +39,10 @@ export const Route = createFileRoute('/_app/profile')({
 
 function Profile() {
   const pathname = useRouterState({ select: (state) => state.location.pathname.replace(/\/$/, '') })
+  const { error } = Route.useSearch()
   return (
     <AccountShell>
-      <ProfilePage landing={LANDINGS[pathname] ?? Landing.top} />
+      <ProfilePage landing={LANDINGS[pathname] ?? Landing.top} connectFailed={!!error} />
       <Outlet />
     </AccountShell>
   )

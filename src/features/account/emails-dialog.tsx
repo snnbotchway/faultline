@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { account, accountKeys, type EmailAddress } from '@/api/account'
 import { Button } from '@/components/ui/button'
-import { FormAlert } from '@/components/ui/field'
+import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { TaskDialog } from '@/components/ui/task-dialog'
 import { RowButton, Tag } from './rows'
@@ -68,13 +68,16 @@ function AddEmail() {
   const add = useAction(() => account.addEmail(email.trim()), { action: 'add that email', refresh, onDone: () => setEmail('') })
   return (
     <form noValidate className="mt-4" onSubmit={(event) => void add.submit(event)}>
-      <div className="flex gap-2">
-        <Input name="email" type="email" aria-label="Another email" placeholder="another@example.com" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required aria-invalid={!!add.fields.email} className="h-10" />
-        <Button type="submit" className="h-10 max-lg:h-11" disabled={add.busy} aria-busy={add.busy}>
-          Add email
-        </Button>
-      </div>
-      <FormAlert className="mt-2">{add.fields.email || add.error}</FormAlert>
+      <Field label="Add an email" error={add.fields.email || add.error}>
+        {(field) => (
+          <div className="flex gap-2">
+            <Input {...field} name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="h-10 max-lg:h-11" />
+            <Button type="submit" className="h-10 max-lg:h-11" disabled={add.busy} aria-busy={add.busy}>
+              Add email
+            </Button>
+          </div>
+        )}
+      </Field>
     </form>
   )
 }

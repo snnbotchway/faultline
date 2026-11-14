@@ -4,6 +4,7 @@ import { AuthProcess, redirectToProvider } from '@/api/auth'
 import type { InstanceSettings } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { TaskDialog } from '@/components/ui/task-dialog'
+import { SUBMIT } from '@/features/auth/forms'
 import { providerName } from './format'
 import { RowButton } from './rows'
 import { useAction } from './use-action'
@@ -55,7 +56,7 @@ export function LinkedDialog({ open, onClose, linked, apps }: { open: boolean; o
       {unlinked.length > 0 && (
         <div className={linked.length > 0 ? 'mt-4 space-y-2' : 'space-y-2'}>
           {unlinked.map((app) => (
-            <Button key={app.provider} className="h-10 w-full max-lg:h-11" onClick={() => redirectToProvider(app.provider, '/profile', AuthProcess.connect)}>
+            <Button key={app.provider} className={SUBMIT} onClick={() => redirectToProvider(app.provider, '/profile', AuthProcess.connect)}>
               Connect {app.name}
             </Button>
           ))}

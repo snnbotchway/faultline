@@ -34,7 +34,6 @@ function TokenRow({ token }: { token: ApiToken }) {
         open={confirming}
         onClose={() => setConfirming(false)}
         title={`Revoke ${token.label || 'this token'}?`}
-        description="Anything that uses this token stops working."
         action="Revoke token"
         busy={revoke.busy}
         error={revoke.error}

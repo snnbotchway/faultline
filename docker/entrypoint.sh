@@ -1,6 +1,6 @@
 #!/bin/sh
-# Serves the build under BASE_PATH (empty for the root). The build carries a placeholder base, so each start
-# copies it and writes the real path in, and Caddy mounts the app and the backend paths at the same prefix.
+# /srv holds the build for the root, ready at build time, so a read-only container needs nothing writable.
+# Under a BASE_PATH the placeholder build in /app/dist is copied below /tmp and the path written in.
 set -eu
 
 base=$(printf %s "${BASE_PATH:-}" | sed 's#^/*##; s#/*$##')
@@ -10,9 +10,16 @@ esac
 [ -n "$base" ] && base="/$base"
 export BASE_PATH="$base"
 
-rm -rf /tmp/srv
-cp -r /app/dist /tmp/srv
-find /tmp/srv -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.svg' -o -name '*.json' -o -name '*.txt' \) \
-  -exec sed -i "s#/__FAULTLINE_BASE__/#${base}/#g" {} +
+if [ -z "$base" ]; then
+  export SITE_ROOT=/srv
+else
+  export SITE_ROOT=/tmp/faultline
+  rm -rf "$SITE_ROOT"
+  if ! cp -r /app/dist "$SITE_ROOT" 2>/dev/null; then
+    echo "BASE_PATH needs a writable /tmp; on a read-only root filesystem, mount a tmpfs there" >&2
+    exit 1
+  fi
+  /app/set-base.sh "$SITE_ROOT" "$base"
+fi
 
 exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile

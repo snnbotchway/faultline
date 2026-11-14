@@ -1,8 +1,12 @@
 import { expect, test } from '@playwright/test'
 
+// The image runs with a read-only root filesystem (dev/compose.yml), as a hardened deployment would.
 test('serves the app and reaches the backend on the same origin', async ({ page }) => {
-  await page.goto('/')
+  const response = await page.goto('/')
+  expect(response?.status()).toBe(200)
+  expect(response?.headers()['cache-control']).toBe('no-cache')
   await expect(page).toHaveTitle(/Faultline$/)
   const settings = await page.request.get('/api/settings/')
   expect((await settings.json()).version).toBeTruthy()
+  expect((await page.request.get('/assets/missing.js')).status()).toBe(404)
 })

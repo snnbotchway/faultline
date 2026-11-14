@@ -14,26 +14,43 @@
 		respond "ok"
 	}
 
-	# BASE_PATH is empty or `/some/path`; docker/entrypoint.sh normalises it and writes it into the build.
+	# docker/entrypoint.sh normalises BASE_PATH to empty or `/some/path`, and picks SITE_ROOT.
 	@bare expression `{env.BASE_PATH} != '' && {path} == {env.BASE_PATH}`
-	redir @bare {env.BASE_PATH}/ 308
+	redir @bare {env.BASE_PATH}/{?query} 308
 
 	handle_path {$BASE_PATH}/* {
-		# Backend paths, mirrored from src/api/backend-paths.ts.
+		# Backend paths, mirrored from src/api/backend-paths.ts. GlitchTip expects them without the prefix even when it
+		# runs with the same BASE_PATH, which it then puts on the addresses it builds.
 		@backend path /api /api/* /_allauth /_allauth/* /accounts /accounts/* /oauth /oauth/* /mcp /mcp/* /.well-known /.well-known/* /admin /admin/* /static /static/* /media /media/* /status-pages /status-pages/* /v1/logs /v1/logs/* /_health /_health/*
 		handle @backend {
 			reverse_proxy {$BACKEND_URL} {
-				# The backend knows nothing of the prefix, so its redirects point at the root.
-				header_down Location ^/([^/].*)?$ {env.BASE_PATH}/$1
+				# Its redirects to fixed root paths (LOGIN_URL, allauth's frontend pages on this host, or all of them when
+				# it runs without BASE_PATH) need the prefix; the ones that already carry it stay as they are.
+				@redirect header Location *
+				handle_response @redirect {
+					@here expression `{rp.header.Location}.startsWith('http://' + {hostport} + '/') || {rp.header.Location}.startsWith('https://' + {hostport} + '/')`
+					header >Location ^(?:{$BASE_PATH})?(?:/([^/].*)?)?$ {$BASE_PATH}/$1
+					header @here >Location ^(https?://[^/]+)(?:{$BASE_PATH})?(?:/([^/].*)?)?$ $1{$BASE_PATH}/$2
+					copy_response_headers
+					copy_response
+				}
 			}
 		}
 
 		handle {
-			root * /tmp/srv
-			header /assets/* Cache-Control "public, max-age=31536000, immutable"
-			header /index.html Cache-Control "no-cache"
-			try_files {path} /index.html
-			file_server
+			root * {$SITE_ROOT}
+			@asset path /assets/*
+			handle @asset {
+				# A missing hashed file is a 404, never the page in its place, and only a file found is kept for good.
+				@found file
+				header @found Cache-Control "public, max-age=31536000, immutable"
+				file_server
+			}
+			handle {
+				header Cache-Control "no-cache"
+				try_files {path} /index.html
+				file_server
+			}
 		}
 	}
 

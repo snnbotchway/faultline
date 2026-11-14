@@ -10,6 +10,9 @@ x-env: &env
   ENABLE_USER_REGISTRATION: "true"
   ENABLE_ORGANIZATION_CREATION: "true"
   EMAIL_URL: consolemail://
+  # Span breakdowns, repeated queries, span groups and transaction trends are read from cold storage.
+  GLITCHTIP_ENABLE_DUCKDB: "true"
+  GLITCHTIP_COLD_STORAGE_DIR: /tmp/cold-storage
 services:
   postgres:
     image: postgres:17
@@ -28,6 +31,9 @@ services:
     environment:
       <<: *env
       VALKEY_URL: redis://valkey:6379/0
+    # Kept on a volume so the spans outlive the container. Mounted on /tmp, which the image makes
+    # writable for its user; a new directory would belong to root.
+    volumes: [cold-storage:/tmp]
     ports: ["127.0.0.1:${GLITCHTIP_PORT:-8600}:8000"]
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/settings/')"]
@@ -42,3 +48,5 @@ services:
     environment:
       BACKEND_URL: http://web:8000
     ports: ["127.0.0.1:${FAULTLINE_PORT:-8620}:8080"]
+volumes:
+  cold-storage:

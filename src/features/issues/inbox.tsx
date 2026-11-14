@@ -136,16 +136,16 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     if (next) setCursor(next)
   }
 
-  const { toggle } = selection
+  const { toggle, extendTo } = selection
   const { setStatus: changeStatus } = actions
   const handlers: RowHandlers = useMemo(
     () => ({
-      toggle,
+      toggle: (id, range) => (range ? extendTo(id, loadedIds) : toggle(id)),
       unfold: (id) => setUnfolded((open) => (open === id ? undefined : id)),
       assign: (id) => setAssigning(oneIssue(id)),
       setStatus: (id, status) => void changeStatus(oneIssue(id), status),
     }),
-    [toggle, changeStatus, setAssigning, setUnfolded],
+    [toggle, extendTo, loadedIds, changeStatus, setAssigning, setUnfolded],
   )
 
   useHotkeys({

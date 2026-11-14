@@ -6,9 +6,17 @@ import type { Target } from './actions'
 import type { Row } from './inbox-row'
 import { statusActions, type StatusView } from './status'
 
-type Stored = { scope: string; ids: ReadonlySet<string>; all: boolean }
+type Stored = { scope: string; ids: ReadonlySet<string>; all: boolean; anchor?: string }
 
 const NONE: ReadonlySet<string> = new Set()
+
+// The ids from one row to another, both included, whichever comes first. Empty when either is not in the list.
+export function idsBetween(order: readonly string[], from: string, to: string) {
+  const start = order.indexOf(from)
+  const end = order.indexOf(to)
+  if (start === -1 || end === -1) return []
+  return order.slice(Math.min(start, end), Math.max(start, end) + 1)
+}
 
 /**
  * The inbox selection. It belongs to the filters it was made under (`scope`): once they
@@ -26,7 +34,22 @@ export function useSelection(scope: string) {
       setStored((previous) => {
         const next = new Set(previous.scope === scope ? previous.ids : NONE)
         if (!next.delete(id)) next.add(id)
-        return { scope, ids: next, all: false }
+        return { scope, ids: next, all: false, anchor: id }
+      }),
+    [scope],
+  )
+  // Shift-click: ticks every row from the last one ticked or unticked down to this one.
+  const extendTo = useCallback(
+    (id: string, order: readonly string[]) =>
+      setStored((previous) => {
+        const ids = previous.scope === scope ? previous.ids : NONE
+        const range = previous.scope === scope && previous.anchor ? idsBetween(order, previous.anchor, id) : []
+        if (range.length === 0) {
+          const next = new Set(ids)
+          if (!next.delete(id)) next.add(id)
+          return { scope, ids: next, all: false, anchor: id }
+        }
+        return { scope, ids: new Set([...ids, ...range]), all: false, anchor: id }
       }),
     [scope],
   )
@@ -36,7 +59,7 @@ export function useSelection(scope: string) {
   // so rows that load later are part of it.
   const selectAllMatching = useCallback(() => setStored((previous) => (previous.scope === scope ? { ...previous, all: true } : previous)), [scope])
 
-  return useMemo(() => ({ ids, all, toggle, set, clear, selectAllMatching }), [ids, all, toggle, set, clear, selectAllMatching])
+  return useMemo(() => ({ ids, all, toggle, extendTo, set, clear, selectAllMatching }), [ids, all, toggle, extendTo, set, clear, selectAllMatching])
 }
 
 export type Selection = ReturnType<typeof useSelection>

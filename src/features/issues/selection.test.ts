@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { IssueStatus, type Issue } from '@/api/issues'
 import type { Row } from './inbox-row'
-import { selectionOffer } from './selection'
+import { idsBetween, selectionOffer } from './selection'
 import { Trend } from './trend'
 
 const row = (id: string, project = '1'): Row => ({ issue: { id, project: { id: project } } as Issue, buckets: [], trend: Trend.ongoing })
@@ -22,4 +22,11 @@ test('merging is offered for two or more issues of one project, and the newest i
   expect(offer.canMerge).toBe(true)
   expect(offer.survivor?.issue.id).toBe('12')
   expect(selectionOffer({ ...base, rows: [row('7'), row('12', '2')], selection }).canMerge).toBe(false)
+})
+
+test('shift-click covers the rows between two clicks, in either direction, and nothing for an unknown row', () => {
+  const order = ['a', 'b', 'c', 'd', 'e']
+  expect(idsBetween(order, 'b', 'd')).toEqual(['b', 'c', 'd'])
+  expect(idsBetween(order, 'e', 'c')).toEqual(['c', 'd', 'e'])
+  expect(idsBetween(order, 'a', 'zzz')).toEqual([])
 })

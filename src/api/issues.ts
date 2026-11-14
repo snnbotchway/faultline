@@ -16,6 +16,9 @@ export type IssueFilters = Pick<ListQuery, 'query' | 'sort' | 'project' | 'envir
 export const IssueStatus = { unresolved: 'unresolved', resolved: 'resolved', ignored: 'ignored' } as const
 export type IssueStatus = (typeof IssueStatus)[keyof typeof IssueStatus]
 
+export const IssueKind = { default: 'default', error: 'error', csp: 'csp' } as const
+export type IssueKind = (typeof IssueKind)[keyof typeof IssueKind]
+
 export const IssueLevel = { fatal: 'fatal', error: 'error', warning: 'warning', info: 'info', debug: 'debug' } as const
 export type IssueLevel = (typeof IssueLevel)[keyof typeof IssueLevel]
 

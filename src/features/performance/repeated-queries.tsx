@@ -1,9 +1,10 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useCanGoBack, useRouter } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { compact } from '@/features/issues/format'
-import { openBeside } from '@/lib/layout'
+import { useHotkeys } from '@/lib/hotkeys'
+import { isDesktop, openBeside, useIsDesktop } from '@/lib/layout'
 import { cn } from '@/lib/utils'
 import type { Repeat } from './data'
 import { formatMs, formatPercent, formatTimes } from './format'
@@ -27,7 +28,7 @@ function Where({ repeat }: { repeat: Repeat }) {
 }
 
 // One query that repeats: what it is, and how much of a request it takes.
-function RepeatPane({ org, repeat, onOpen }: { org: string; repeat: Repeat; onOpen: (groupId: string) => void }) {
+function RepeatPane({ org, repeat, onOpen }: { org: string; repeat: Repeat; onOpen: (groupId: number) => void }) {
   const group = repeat.transaction?.group
   return (
     <article className="px-3 py-4 md:px-5" aria-labelledby="repeat-runs">
@@ -69,7 +70,7 @@ function RepeatPane({ org, repeat, onOpen }: { org: string; repeat: Repeat; onOp
           <Link
             to="/$org/performance/transaction-groups/$groupId"
             params={{ org, groupId: String(group.id) }}
-            onClick={(event) => openBeside(event, () => onOpen(String(group.id)))}
+            onClick={(event) => openBeside(event, () => onOpen(group.id))}
           >
             Open transaction
             <ChevronRight />
@@ -81,7 +82,7 @@ function RepeatPane({ org, repeat, onOpen }: { org: string; repeat: Repeat; onOp
 }
 
 // One row per query that repeats, as the backend reports them, with the picked one beside the list.
-// On a phone the list and the picked query take turns.
+// On a phone the list and the picked query take turns, each a step in the history, so Back returns to the list.
 export function RepeatedQueries({
   org,
   search,
@@ -97,6 +98,14 @@ export function RepeatedQueries({
 }) {
   const picked = repeats.find((repeat) => repeat.key === search.pattern)
   const open = picked ?? repeats[0]
+  const desktop = useIsDesktop()
+  const router = useRouter()
+  const canGoBack = useCanGoBack()
+  const move = (step: number) => {
+    const next = repeats[Math.max(0, Math.min(repeats.length - 1, repeats.findIndex((repeat) => repeat === open) + step))]
+    if (next && isDesktop()) go({ pattern: next.key })
+  }
+  useHotkeys({ j: () => move(1), k: () => move(-1) })
   if (!open) {
     if (search.query)
       return (
@@ -117,7 +126,7 @@ export function RepeatedQueries({
       <div className={cn('min-w-0 flex-1 lg:max-w-list lg:border-r', picked && 'max-lg:hidden')}>
         <div className="flex items-end justify-between gap-3 border-b px-3 py-2 md:px-4">
           <span className="label-caps">Runs per request, 7 days</span>
-          <span className="label-caps shrink-0 text-right">Per request</span>
+          <span className="label-caps shrink-0 text-right">Time per request</span>
         </div>
         <ul aria-label="Repeated queries">
           {repeats.map((repeat) => {
@@ -128,7 +137,7 @@ export function RepeatedQueries({
                   to="/$org/performance/transaction-groups"
                   params={{ org }}
                   search={{ ...search, pattern: repeat.key }}
-                  replace
+                  replace={desktop}
                   aria-current={current ? 'true' : undefined}
                   className={cn('grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-x-3 px-3 py-3 md:px-4', current ? 'lg:bg-selected' : 'hover:bg-accent/60')}
                 >
@@ -154,7 +163,11 @@ export function RepeatedQueries({
           to="/$org/performance/transaction-groups"
           params={{ org }}
           search={{ ...search, pattern: undefined }}
-          replace
+          onClick={(event) => {
+            if (!canGoBack) return
+            event.preventDefault()
+            router.history.back()
+          }}
           className="flex h-11 items-center gap-1 border-b px-3 text-sm font-medium text-muted-foreground hover:text-foreground lg:hidden"
         >
           <ChevronLeft className="size-4" />

@@ -70,7 +70,8 @@ export function useTransactions(org: string, search: Pick<PerformanceSearch, 'or
   const { project } = search
   const list = useQuery(transactionGroupsQuery(org, { sort: transactionSort(search), query: search.query, project }))
   // Every transaction, to tell which names are shared. The same request as the list when it is unfiltered.
-  const everything = useQuery(transactionGroupsQuery(org, {})).data
+  const all = useQuery(transactionGroupsQuery(org, {}))
+  const everything = all.data
   const patterns = useQuery(nPlusOneQuery(org, { project }))
   const projects = useQuery(projectsQuery(org)).data
   const { axis, marks } = useWeek(org, list.dataUpdatedAt)
@@ -128,13 +129,16 @@ export function useTransactions(org: string, search: Pick<PerformanceSearch, 'or
     transactions,
     repeats,
     loading: list.isPending,
-    // Still counting the repeated queries, and the transactions that got slower.
-    // Repeats wait for every transaction, so a shared name never shows a share and a link it then loses.
-    countingRepeats: patterns.isPending || !everything,
-    countingSlower: !everything || settled < trendIds.length,
+    // Still counting the repeated queries, and the transactions that got slower. Both wait for every
+    // transaction, so a shared name never shows a share, a link or a regression it then loses; when that
+    // or the repeats fail, they cannot be counted.
+    countingRepeats: patterns.isPending || all.isPending,
+    countingSlower: all.isPending || settled < trendIds.length,
+    repeatsFailed: patterns.isError || all.isError,
+    slowerFailed: all.isError,
     failed: list.isError,
     denied: hasStatus(list.error, HttpStatus.forbidden),
-    retry: () => void list.refetch(),
+    retry: () => void Promise.all([list.refetch(), all.refetch(), patterns.refetch()]),
     // Spans are read from the backend's cold storage. With transactions listed and not one day of span
     // data among the trends that loaded, that storage is most likely turned off.
     noSpanData: trendIds.length > 0 && settled === trendIds.length && trends.size > 0 && [...trends.values()].every((trend) => trend.length === 0),

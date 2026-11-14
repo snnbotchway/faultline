@@ -1,5 +1,5 @@
 import type { TransactionSort } from '@/api/performance'
-import { projectIds, searchText as text } from '@/lib/search'
+import { projectIds, searchId, searchText as text } from '@/lib/search'
 
 export const View = { all: 'all', repeated: 'repeated', slower: 'slower', failing: 'failing' } as const
 export type View = (typeof View)[keyof typeof View]
@@ -28,7 +28,7 @@ export type PerformanceSearch = {
   order?: TransactionSort | RepeatOrder
   project?: number[]
   // The transaction open beside the list.
-  group?: string
+  group?: number
   // The repeated query open beside the list.
   pattern?: string
 }
@@ -41,7 +41,7 @@ export function validatePerformanceSearch(search: Record<string, unknown>): Perf
     query: text(search.query),
     order: SORTS.find((sort) => sort.value === order)?.value ?? REPEAT_ORDERS.find((item) => item.value === order)?.value,
     project: projectIds(search.project),
-    group: text(search.group),
+    group: searchId(search.group),
     pattern: text(search.pattern),
   }
 }

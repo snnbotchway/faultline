@@ -8,9 +8,9 @@ import { ListPageBar } from '@/components/list-page-bar'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Skeleton } from '@/components/ui/skeleton'
+import { CountLabel } from '@/components/count-label'
 import { compact } from '@/features/issues/format'
-import { plural } from '@/lib/format'
+import { LOADING, UNAVAILABLE, counted, plural, type Count } from '@/lib/format'
 import { useHotkeys } from '@/lib/hotkeys'
 import { isDesktop, openBeside } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
@@ -103,7 +103,7 @@ type Go = (patch: Partial<PerformanceSearch>) => void
 
 // What to look at: everything, the queries that repeat, or the transactions with a problem. One row
 // that scrolls sideways when it does not fit.
-function Views({ org, search, counts, go }: { org: string; search: PerformanceSearch; counts: Record<View, number | undefined>; go: Go }) {
+function Views({ org, search, counts }: { org: string; search: PerformanceSearch; counts: Record<View, Count> }) {
   const current = search.view ?? View.all
   return (
     <div className="scroll-row flex items-center gap-1 border-b px-3 py-2 md:px-4">
@@ -122,12 +122,13 @@ function Views({ org, search, counts, go }: { org: string; search: PerformanceSe
               className={cn('flex h-7 shrink-0 items-center gap-2 border px-3 text-sm max-lg:h-11', on ? 'border-foreground bg-foreground text-background' : 'bg-card hover:bg-accent')}
             >
               {label}
-              {counts[view] === undefined ? <Skeleton className="h-3 w-4" /> : <span className={cn('mono', !on && 'text-muted-foreground')}>{counts[view]}</span>}
+              <span className={cn('mono', !on && 'text-muted-foreground')}>
+                <CountLabel count={counts[view]} />
+              </span>
             </Link>
           )
         })}
       </nav>
-      <ProjectMenu org={org} value={search.project} onChange={(project) => go({ project, group: undefined, pattern: undefined })} className="lg:ml-auto" />
     </div>
   )
 }
@@ -136,7 +137,7 @@ function SortMenu({ orders, order, onChange }: { orders: { value: string; label:
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="ml-auto min-w-0 max-lg:h-11" aria-label="Sort">
+        <Button variant="ghost" size="sm" className="min-w-0 max-lg:h-11" aria-label="Sort">
           <ArrowDownWideNarrow />
           <span className="truncate">{orders.find((item) => item.value === (order ?? DEFAULT_ORDER))?.label}</span>
         </Button>
@@ -193,12 +194,12 @@ function TransactionRow({ org, transaction, measure, peak, current, onOpen }: { 
 
 function TransactionList({ org, search, data, rows, go }: { org: string; search: PerformanceSearch; data: Transactions; rows: Transaction[]; go: Go }) {
   const measure = MEASURES[measureOf(transactionSort(search))]
-  const open = rows.find((row) => String(row.group.id) === search.group) ?? rows[0]
+  const open = rows.find((row) => row.group.id === search.group) ?? rows[0]
   const { size } = measure
   const peak = size ? Math.max(...data.transactions.map(size), Number.EPSILON) : 1
   const move = (step: number) => {
     const next = rows[Math.max(0, Math.min(rows.length - 1, rows.findIndex((row) => row === open) + step))]
-    if (next && isDesktop()) go({ group: String(next.group.id) })
+    if (next && isDesktop()) go({ group: next.group.id })
   }
   useHotkeys({ j: () => move(1), k: () => move(-1) })
 
@@ -242,7 +243,7 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
               measure={measure}
               peak={peak}
               current={transaction === open}
-              onOpen={() => go({ group: String(transaction.group.id) })}
+              onOpen={() => go({ group: transaction.group.id })}
             />
           ))}
         </ul>
@@ -273,12 +274,14 @@ export function Performance({ org, search }: { org: string; search: PerformanceS
     data.repeats.filter((repeat) => matches(repeat, search.query)),
     repeatOrder(search),
   )
-  const counts: Record<View, number | undefined> = {
-    [View.all]: data.transactions.length,
-    [View.repeated]: data.countingRepeats ? undefined : repeats.length,
-    [View.slower]: data.countingSlower ? undefined : data.transactions.filter((item) => item.slower).length,
-    [View.failing]: data.transactions.filter((item) => item.failing).length,
+  const number = (n: number) => counted({ n, capped: false })
+  const counts: Record<View, Count> = {
+    [View.all]: number(data.transactions.length),
+    [View.repeated]: data.repeatsFailed ? UNAVAILABLE : data.countingRepeats ? LOADING : number(repeats.length),
+    [View.slower]: data.slowerFailed ? UNAVAILABLE : data.countingSlower ? LOADING : number(data.transactions.filter((item) => item.slower).length),
+    [View.failing]: number(data.transactions.filter((item) => item.failing).length),
   }
+  const partFailed = repeated ? data.repeatsFailed : view === View.slower && data.slowerFailed
   const order = repeated ? repeatOrder(search) : transactionSort(search)
   useCommands(
     VIEWS.filter((item) => item.view !== view).map((item) => ({
@@ -299,13 +302,14 @@ export function Performance({ org, search }: { org: string; search: PerformanceS
           onSubmit={(query) => go({ query, group: undefined, pattern: undefined })}
           className="max-lg:order-last max-lg:basis-full lg:max-w-md"
         />
+        <ProjectMenu org={org} value={search.project} onChange={(project) => go({ project, group: undefined, pattern: undefined })} className="ml-auto" />
         <SortMenu
           orders={repeated ? REPEATED_ORDERS : TRANSACTION_ORDERS}
           order={order}
           onChange={(value) => go({ order: [...SORTS, ...REPEAT_ORDERS].find((item) => item.value === value)?.value, group: undefined, pattern: undefined })}
         />
       </ListPageBar>
-      <Views org={org} search={search} counts={counts} go={go} />
+      <Views org={org} search={search} counts={counts} />
       {data.loading ? (
         <SkeletonRows />
       ) : data.denied ? (
@@ -314,6 +318,12 @@ export function Performance({ org, search }: { org: string; search: PerformanceS
         <Screen title="The transactions didn't load">
           <Button onClick={data.retry}>Try again</Button>
         </Screen>
+      ) : partFailed ? (
+        <Screen title={repeated ? "The repeated queries didn't load" : "Slower transactions didn't load"}>
+          <Button onClick={data.retry}>Try again</Button>
+        </Screen>
+      ) : repeated && data.countingRepeats ? (
+        <SkeletonRows />
       ) : repeated ? (
         <RepeatedQueries org={org} search={search} repeats={repeats} noSpanData={data.noSpanData} go={go} />
       ) : (

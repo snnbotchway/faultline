@@ -170,7 +170,7 @@ export function TransactionPage({ org, groupId }: { org: string; groupId: string
         <Link
           to="/$org/performance/transaction-groups"
           params={{ org }}
-          search={{ group: groupId }}
+          search={{ group: Number(groupId) }}
           className="flex h-11 items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="size-4" />

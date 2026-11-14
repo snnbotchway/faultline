@@ -5,11 +5,14 @@ export type PlatformGroup = (typeof PlatformGroup)[keyof typeof PlatformGroup]
 
 export type Platform = { id: string; name: string; group: PlatformGroup; install: string; file: string; code: (dsn: string) => string }
 
+// The share of transactions the snippets send, low enough that tracing costs little until someone raises it.
+const TRACES_SAMPLE_RATE = 0.01
+
 const js = (pkg: string, extra = '') => (dsn: string) =>
-  `import * as Sentry from "${pkg}";\n\nSentry.init({\n  dsn: "${dsn}",${extra}\n  tracesSampleRate: 0.01,\n});`
+  `import * as Sentry from "${pkg}";\n\nSentry.init({\n  dsn: "${dsn}",${extra}\n  tracesSampleRate: ${TRACES_SAMPLE_RATE},\n});`
 
 const py = (integration = '') => (dsn: string) =>
-  `import sentry_sdk\n\nsentry_sdk.init(\n    dsn="${dsn}",${integration}\n    traces_sample_rate=0.01,\n)`
+  `import sentry_sdk\n\nsentry_sdk.init(\n    dsn="${dsn}",${integration}\n    traces_sample_rate=${TRACES_SAMPLE_RATE},\n)`
 
 // For a platform not on the list: the DSN on its own.
 const OTHER: Platform = { id: 'other', name: 'Other', group: PlatformGroup.other, install: '', file: 'DSN', code: (dsn) => dsn }
@@ -33,7 +36,7 @@ export const PLATFORMS: Platform[] = [
     group: PlatformGroup.server,
     install: 'go get github.com/getsentry/sentry-go',
     file: 'main.go',
-    code: (dsn) => `err := sentry.Init(sentry.ClientOptions{\n\tDsn:              "${dsn}",\n\tTracesSampleRate: 0.01,\n})\nif err != nil {\n\tlog.Fatalf("sentry.Init: %s", err)\n}\ndefer sentry.Flush(2 * time.Second)`,
+    code: (dsn) => `err := sentry.Init(sentry.ClientOptions{\n\tDsn:              "${dsn}",\n\tTracesSampleRate: ${TRACES_SAMPLE_RATE},\n})\nif err != nil {\n\tlog.Fatalf("sentry.Init: %s", err)\n}\ndefer sentry.Flush(2 * time.Second)`,
   },
   {
     id: 'ruby-rails',
@@ -41,7 +44,7 @@ export const PLATFORMS: Platform[] = [
     group: PlatformGroup.server,
     install: 'bundle add sentry-ruby sentry-rails',
     file: 'config/initializers/sentry.rb',
-    code: (dsn) => `Sentry.init do |config|\n  config.dsn = "${dsn}"\n  config.traces_sample_rate = 0.01\nend`,
+    code: (dsn) => `Sentry.init do |config|\n  config.dsn = "${dsn}"\n  config.traces_sample_rate = ${TRACES_SAMPLE_RATE}\nend`,
   },
   {
     id: 'php-laravel',
@@ -49,7 +52,7 @@ export const PLATFORMS: Platform[] = [
     group: PlatformGroup.server,
     install: 'composer require sentry/sentry-laravel',
     file: '.env',
-    code: (dsn) => `SENTRY_LARAVEL_DSN=${dsn}\nSENTRY_TRACES_SAMPLE_RATE=0.01`,
+    code: (dsn) => `SENTRY_LARAVEL_DSN=${dsn}\nSENTRY_TRACES_SAMPLE_RATE=${TRACES_SAMPLE_RATE}`,
   },
   {
     id: 'java-spring-boot',
@@ -57,7 +60,7 @@ export const PLATFORMS: Platform[] = [
     group: PlatformGroup.server,
     install: 'implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.0.0")',
     file: 'application.properties',
-    code: (dsn) => `sentry.dsn=${dsn}\nsentry.traces-sample-rate=0.01`,
+    code: (dsn) => `sentry.dsn=${dsn}\nsentry.traces-sample-rate=${TRACES_SAMPLE_RATE}`,
   },
   {
     id: 'csharp-aspnetcore',
@@ -65,7 +68,7 @@ export const PLATFORMS: Platform[] = [
     group: PlatformGroup.server,
     install: 'dotnet add package Sentry.AspNetCore',
     file: 'Program.cs',
-    code: (dsn) => `builder.WebHost.UseSentry(options =>\n{\n    options.Dsn = "${dsn}";\n    options.TracesSampleRate = 0.01;\n});`,
+    code: (dsn) => `builder.WebHost.UseSentry(options =>\n{\n    options.Dsn = "${dsn}";\n    options.TracesSampleRate = ${TRACES_SAMPLE_RATE};\n});`,
   },
   {
     id: 'rust',
@@ -106,7 +109,7 @@ export const PLATFORMS: Platform[] = [
     group: PlatformGroup.mobile,
     install: '.package(url: "https://github.com/getsentry/sentry-cocoa", from: "9.0.0")',
     file: 'AppDelegate.swift',
-    code: (dsn) => `SentrySDK.start { options in\n    options.dsn = "${dsn}"\n    options.tracesSampleRate = 0.01\n}`,
+    code: (dsn) => `SentrySDK.start { options in\n    options.dsn = "${dsn}"\n    options.tracesSampleRate = ${TRACES_SAMPLE_RATE}\n}`,
   },
   OTHER,
 ]

@@ -6,7 +6,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { cn } from '@/lib/utils'
 import { palette, registry, usePaletteOpen, type Command } from './commands'
 
-const GROUP_ORDER = ['selection', 'issue', 'go to', 'organization', 'theme', 'account']
+const GROUP_ORDER = ['selection', 'issue', 'show', 'go to', 'organization', 'theme', 'account']
 
 export function Palette({ onSearch }: { onSearch?: (text: string) => void }) {
   const open = usePaletteOpen()

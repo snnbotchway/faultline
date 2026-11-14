@@ -71,6 +71,7 @@ const DETAIL_TEXT: Record<string, string> = {
   'Token not found': 'That link has expired. Run the wizard again for a new one.',
   'Email already exists': 'That email is already on an account.',
   'User is organization owner. Delete organization or transfer ownership first.': 'You own an organization. Transfer it or delete it first.',
+  'User is the only member of an organization. Delete the organization or add another member first.': "You're the only member of an organization. Add someone, or delete it, first.",
 }
 
 type AllauthError = { code?: string; param?: string }

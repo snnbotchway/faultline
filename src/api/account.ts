@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { MfaType } from './auth'
-import { ApiError, allauthAccount, api, unwrap } from './client'
+import { ApiError, allauthAccount, api, orgPath, unwrap } from './client'
 import { MAX_PAGE_SIZE, fetchAllPages } from './pagination'
 import type { components as AllauthComponents } from './schema/allauth'
 import type { components } from './schema/openapi'
@@ -32,6 +32,7 @@ export const accountKeys = {
   projects: ['users', 'me', 'projects'] as const,
   // Outside the user's keys on purpose: every read makes a new set, so nothing may refresh it while it is shown.
   recoveryPreview: ['recovery-codes-preview'] as const,
+  deleteBlockers: ['users', 'me', 'delete-blockers'] as const,
   invite: (memberId: string, token: string) => ['invite', memberId, token] as const,
 }
 
@@ -41,6 +42,31 @@ export const emailsQuery = queryOptions({
   queryKey: accountKeys.emails,
   queryFn: async () => unwrap(await api.GET('/api/0/users/{user_id}/emails/', me)),
 })
+
+// What stops the account being deleted. The backend refuses an owner of any organization, and anyone whose
+// leaving would empty an organization (pending invitations count as members). Names, by organization.
+export type DeleteBlockers = { owned: string[]; alone: string[] }
+
+export const deleteBlockersQuery = (userId: string) =>
+  queryOptions({
+    queryKey: accountKeys.deleteBlockers,
+    queryFn: async (): Promise<DeleteBlockers> => {
+      const organizations = await fetchAllPages((cursor) => api.GET('/api/0/organizations/', { params: { query: { cursor, limit: MAX_PAGE_SIZE } } }))
+      const memberships = await Promise.all(
+        organizations.map(async (organization) => ({
+          name: organization.name,
+          members: await fetchAllPages((cursor) =>
+            api.GET('/api/0/organizations/{organization_id_or_slug}/members/', { params: { path: orgPath(organization.slug), query: { cursor, limit: MAX_PAGE_SIZE } } }),
+          ),
+        })),
+      )
+      return {
+        owned: memberships.filter(({ members }) => members.some((member) => member.isOwner && member.user?.id === userId)).map(({ name }) => name),
+        alone: memberships.filter(({ members }) => members.length === 1).map(({ name }) => name),
+      }
+    },
+    staleTime: 0,
+  })
 
 export const account = {
   update: async (body: Schemas['UserIn']) => unwrap(await api.PUT('/api/0/users/{user_id}/', { ...me, body })),

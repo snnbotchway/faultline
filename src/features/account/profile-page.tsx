@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { AlertChoice, account, accountKeys, alertsQuery, emailsQuery, notificationsQuery, tokensQuery, twoStep, twoStepQuery, type ApiToken } from '@/api/account'
+import { AlertChoice, accountKeys, alertsQuery, emailsQuery, notificationsQuery, tokensQuery, twoStep, twoStepQuery, type ApiToken } from '@/api/account'
 import { Feature, currentUserQuery, instanceSettingsQuery } from '@/api/organizations'
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
@@ -9,9 +9,9 @@ import { FormAlert } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
-import { forgetSession } from '@/lib/session'
 import { Theme, setTheme, useTheme } from '@/lib/theme'
 import { useTitle } from '@/lib/title'
+import { DeleteAccountDialog } from './delete-dialog'
 import { DetailsDialog } from './details-dialog'
 import { EmailsDialog } from './emails-dialog'
 import { day, providerName } from './format'
@@ -65,7 +65,6 @@ export function ProfileSkeleton() {
 export function ProfilePage({ landing, connectFailed }: { landing: Landing; connectFailed?: boolean }) {
   useTitle('Profile')
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const user = useQuery(currentUserQuery).data
   const emails = useQuery(emailsQuery).data
   const factors = useQuery(twoStepQuery).data
@@ -81,13 +80,6 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
   const land = (next: Landing) => void navigate({ to: LANDING_PATHS[next], replace: true })
 
   const turnOff = useAction(twoStep.deactivateTotp, { action: 'turn off the authenticator app', refresh: [accountKeys.authenticators], onDone: close })
-  const remove = useAction(account.delete, {
-    action: 'delete your account',
-    onDone: () => {
-      forgetSession(queryClient)
-      void navigate({ to: '/login' })
-    },
-  })
 
   const section = landing === Landing.twoStep || landing === Landing.tokens ? SECTION_IDS[landing] : undefined
   useEffect(() => {
@@ -248,16 +240,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
         error={turnOff.message}
         onConfirm={() => void turnOff.run()}
       />
-      <ConfirmDialog
-        open={task === Task.delete}
-        onClose={close}
-        title="Delete your account?"
-        description="This can't be undone. Your API tokens stop working."
-        action="Delete account"
-        busy={remove.busy}
-        error={remove.message}
-        onConfirm={() => void remove.run()}
-      />
+      <DeleteAccountDialog open={task === Task.delete} onClose={close} userId={user.id} />
 
       <NotificationsDialog open={landing === Landing.notifications} onClose={() => land(Landing.top)} />
       <NewTokenDialog

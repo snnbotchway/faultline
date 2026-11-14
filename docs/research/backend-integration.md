@@ -116,7 +116,9 @@ Faultline never shows the backend's sentences. It words each error by allauth's 
 | `POST .../auth/email/verify` | 400 `invalid_or_expired_key` (param `key`) |
 | `POST .../account/authenticators/totp` | 400 `unverified_email` (param `code`) while **any** of the user's addresses is unverified, not only the primary |
 | `POST /api/0/users/me/emails/` | 400 `Email already exists` when the user already has it. An address that belongs to another account is accepted (unverified). 422 Ninja `detail` list for a malformed address |
-| `DELETE /api/0/users/me/` | 400 `User is organization owner. Delete organization or transfer ownership first.` |
+| `DELETE /api/0/users/me/` | Asks for no password. 400 `User is organization owner. Delete organization or transfer ownership first.` for an owner of any organization; 400 `User is the only member of an organization. Delete the organization or add another member first.` when leaving would empty one (a database trigger counts every membership row, pending invitations included). Faultline reads both from `/organizations/` and each one's `/members/` before offering the delete (`apps/users/api.py` `delete_user`) |
+| `POST .../account/authenticators/totp` | Turns the app on and, when the user has no recovery codes, makes a set at once that nobody is shown (`allauth/mfa/totp/internal/flows.py` `activate_totp` → `auto_generate_recovery_codes`; adding the first security key does the same). Faultline's step 2 therefore cannot be skipped |
+| `POST .../auth/password/request` | Limited to 20 a minute per IP and 5 a minute per address (`ACCOUNT_RATE_LIMITS` default `reset_password`), with no wait time in the 429. Off only when `DEBUG` and `ENABLE_TEST_API` are both on |
 | `POST /api/0/generate-recovery-codes/` | 400 `Invalid code`, or `No recovery codes set, use GET first` |
 | `POST /api/0/wizard-set-token/` | 422 when `hash` is not 64 characters; 400 `Token not found` for an unknown or used hash |
 | `POST /api/0/api-tokens/` | Accepts an empty `label` and an empty `scopes` list; Faultline requires both |

@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
-import { ApiError, allauth, csrfToken, unwrap } from './client'
+import { ApiError, HttpStatus, allauth, csrfToken, unwrap, type ApiResult } from './client'
 import type { components } from './schema/allauth'
 
 type Schemas = components['schemas']
@@ -23,23 +23,21 @@ export type Session =
 
 type AuthBody = { data?: { user?: AuthUser; flows?: Partial<Schemas['Flow']>[] } }
 
-const UNAUTHENTICATED = 401
-const SESSION_GONE = 410
+const AuthFlow = { mfaAuthenticate: 'mfa_authenticate', providerSignup: 'provider_signup' } as const
 
-// allauth reports sign-in state through the status code: 200 signed in, 401 not (yet),
-// with a pending flow when sign-in needs another step.
+// Every allauth call answers with the session state; a 401 can still carry a pending step.
 export function toSession(response: Response, body: AuthBody | undefined): Session {
   if (response.ok && body?.data?.user) return { status: SessionStatus.authenticated, user: body.data.user }
-  if (response.status === UNAUTHENTICATED || response.status === SESSION_GONE) {
+  if (response.status === HttpStatus.unauthenticated || response.status === HttpStatus.sessionGone) {
     const pending = body?.data?.flows?.find((flow) => flow.is_pending)
-    if (pending?.id === 'mfa_authenticate') return { status: SessionStatus.mfaPending, mfaTypes: pending.types ?? [] }
-    if (pending?.id === 'provider_signup') return { status: SessionStatus.providerSignup }
+    if (pending?.id === AuthFlow.mfaAuthenticate) return { status: SessionStatus.mfaPending, mfaTypes: pending.types ?? [] }
+    if (pending?.id === AuthFlow.providerSignup) return { status: SessionStatus.providerSignup }
     return { status: SessionStatus.anonymous }
   }
   throw new ApiError(response.status, body)
 }
 
-async function settle(request: Promise<{ data?: unknown; error?: unknown; response: Response }>) {
+async function settle(request: Promise<ApiResult<unknown>>) {
   const { data, error, response } = await request
   return toSession(response, (data ?? error) as AuthBody | undefined)
 }
@@ -67,8 +65,13 @@ export const auth = {
   // Pass the options to navigator.credentials.get(), then send back the credential's toJSON().
   webauthnOptions: async () =>
     unwrap(await allauth.GET('/_allauth/browser/v1/auth/webauthn/authenticate')).data.request_options,
-  webauthnAuthenticate: (credential: unknown) =>
-    settle(allauth.POST('/_allauth/browser/v1/auth/webauthn/authenticate', { body: { credential } as never })),
+  // allauth's schema types the credential as an empty object; it is the browser's PublicKeyCredential JSON.
+  webauthnAuthenticate: (credential: AuthenticationResponseJSON) =>
+    settle(
+      allauth.POST('/_allauth/browser/v1/auth/webauthn/authenticate', {
+        body: { credential: credential as unknown as Schemas['WebAuthnCredential'] },
+      }),
+    ),
   providerSignup: (email: string) =>
     settle(allauth.POST('/_allauth/browser/v1/auth/provider/signup', { body: { email } })),
   requestPasswordReset: async (email: string) => {

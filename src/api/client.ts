@@ -2,6 +2,8 @@ import createClient, { type Middleware } from 'openapi-fetch'
 import type { paths as AllauthPaths } from './schema/allauth'
 import type { paths } from './schema/openapi'
 
+export const HttpStatus = { unauthenticated: 401, sessionGone: 410 } as const
+
 const CSRF_COOKIE = 'csrftoken'
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
@@ -32,13 +34,13 @@ const csrf: Middleware = {
 
 // Set once by the app shell.
 let onSignedOut = () => {}
-export function handleSignedOut(callback: () => void) {
+export function setSignedOutHandler(callback: () => void) {
   onSignedOut = callback
 }
 
 const signedOut: Middleware = {
   onResponse({ response }) {
-    if (response.status === 401) onSignedOut()
+    if (response.status === HttpStatus.unauthenticated) onSignedOut()
   },
 }
 
@@ -73,9 +75,9 @@ export function fieldErrors(error: unknown): Record<string, string> {
 
 export const orgPath = (slug: string) => ({ organization_id_or_slug: slug })
 
-type Result<T> = { data?: T; error?: unknown; response: Response }
+export type ApiResult<T> = { data?: T; error?: unknown; response: Response }
 
-export function unwrap<T>({ data, error, response }: Result<T>): T {
+export function unwrap<T>({ data, error, response }: ApiResult<T>): T {
   if (!response.ok) throw new ApiError(response.status, error)
   return data as T
 }

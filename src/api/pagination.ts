@@ -1,4 +1,4 @@
-import { unwrap } from './client'
+import { unwrap, type ApiResult } from './client'
 
 // GlitchTip clamps larger page sizes to this.
 export const MAX_PAGE_SIZE = 100
@@ -21,28 +21,29 @@ export function parseLinkHeader(header: string | null): Cursors {
 export type Page<T> = { items: T[]; cursors: Cursors; hits?: number; maxHits?: number }
 
 export function toPage<T>(items: T[], response: Response): Page<T> {
-  const number = (name: string) => {
+  const header = (name: string) => {
     const value = response.headers.get(name)
     return value === null ? undefined : Number(value)
   }
   return {
     items,
     cursors: parseLinkHeader(response.headers.get('link')),
-    hits: number('x-hits'),
-    maxHits: number('x-max-hits'),
+    hits: header('x-hits'),
+    maxHits: header('x-max-hits'),
   }
 }
 
-type PageResult<T> = { data?: T[]; error?: unknown; response: Response }
-
 // For lists a screen shows whole (comments, hashes, members…): follow cursors to the end.
-export async function fetchAllPages<T>(fetchPage: (cursor?: string) => Promise<PageResult<T>>): Promise<T[]> {
+export async function fetchAllPages<T>(fetchPage: (cursor?: string) => Promise<ApiResult<T[]>>): Promise<T[]> {
   const items: T[] = []
+  const seen = new Set<string>()
   let cursor: string | undefined
   do {
     const result = await fetchPage(cursor)
     items.push(...unwrap(result))
     cursor = parseLinkHeader(result.response.headers.get('link')).next
+    if (cursor && seen.has(cursor)) break
+    if (cursor) seen.add(cursor)
   } while (cursor)
   return items
 }

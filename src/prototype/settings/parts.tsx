@@ -71,12 +71,12 @@ export function KeyDialog({ open, onClose, keyItem }: { open: boolean; onClose: 
 }
 
 // The two things to paste: the install command and the init code with the DSN already in it.
-export function Snippets({ platform, dsn, className }: { platform: Platform | undefined; dsn: string; className?: string }) {
+export function Snippets({ platform, dsn, wrap, className }: { platform: Platform | undefined; dsn: string; wrap?: boolean; className?: string }) {
   const chosen = platform ?? platformOf('other')!
   return (
     <div className={cn('flex min-w-0 flex-col gap-3', className)}>
-      {chosen.install && <CodeBlock label="Install" code={chosen.install} />}
-      <CodeBlock label={chosen.file} code={chosen.code(dsn)} />
+      {chosen.install && <CodeBlock label="Install" code={chosen.install} wrap={wrap} />}
+      <CodeBlock label={chosen.file} code={chosen.code(dsn)} wrap={wrap} />
     </div>
   )
 }

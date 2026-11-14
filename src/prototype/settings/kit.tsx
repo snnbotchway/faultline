@@ -13,9 +13,9 @@ import { Theme, setTheme, useTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { ORGS, OrgRole, ROLES, SCOPES, TEAMS, inviteLink, roleLabel, type Member, type Scope } from './data'
 
-export const Variant = { a: 'a', b: 'b', c: 'c' } as const
+export const Variant = { a: 'a', b: 'b', c: 'c', d: 'd' } as const
 export type Variant = (typeof Variant)[keyof typeof Variant]
-export const VARIANT_NAMES: Record<Variant, string> = { a: 'Rail', b: 'Ledger', c: 'Places' }
+export const VARIANT_NAMES: Record<Variant, string> = { a: 'Rail', b: 'Ledger', c: 'Places', d: 'Ledger, revised' }
 
 export type ProtoSearch = {
   variant: Variant
@@ -348,7 +348,8 @@ function useCutOff() {
 
 const CUT_EDGE = 'pointer-events-none absolute inset-y-0 right-0 w-3 border-r-2 border-dashed border-foreground/60 bg-code/70'
 
-export function CodeBlock({ code, label, copyLabel, className }: { code: string; label?: string; copyLabel?: string; className?: string }) {
+// `wrap` breaks long lines instead of scrolling, for snippets whose one long line is the DSN.
+export function CodeBlock({ code, label, copyLabel, wrap, className }: { code: string; label?: string; copyLabel?: string; wrap?: boolean; className?: string }) {
   const { ref, cut } = useCutOff()
   return (
     <div className={cn('border bg-code', className)}>
@@ -357,7 +358,7 @@ export function CodeBlock({ code, label, copyLabel, className }: { code: string;
         <CopyLink text={code} label={copyLabel} />
       </div>
       <div className="relative">
-        <pre ref={ref} className="mono overflow-x-auto py-3 pl-3 leading-[1.6]">
+        <pre ref={ref} className={cn('mono py-3 pl-3 leading-[1.6]', wrap ? 'pr-3 whitespace-pre-wrap [overflow-wrap:anywhere]' : 'overflow-x-auto')}>
           {code}
         </pre>
         {cut && <span className={CUT_EDGE} aria-hidden />}

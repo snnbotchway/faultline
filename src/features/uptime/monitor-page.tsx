@@ -159,7 +159,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
                 <span className="mono">
                   {monitor.monitorType} {targetText(monitor)}
                 </span>{' '}
-                every {every(monitor.interval)}
+                <span className="whitespace-nowrap">every {every(monitor.interval)}</span>
               </>
             )}
           </p>

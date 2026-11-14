@@ -298,7 +298,7 @@ These are not required for parity. Tick only if Faultline chooses to ship them.
 | Copy-link invites | `inviteLink` in the invite response | Works with email disabled (`enabledFeatures` lacks `email`). Stock frontend ignores it | [x] |
 | Short-ID jump | `GET /organizations/{org}/issues/?shortIdLookup=1&query=PROJECT-1A`; `GET .../shortids/{short_id}/` | Stock UI does not send `shortIdLookup` | [+] |
 | Assign issue | `PUT` with `assignedTo` (`user:<id>`, `team:<slug>`, email, or empty) | Field is rendered nowhere in stock | [+] |
-| DSN key management | `POST /projects/{org}/{slug}/keys/`; `GET`/`PUT`/`DELETE .../keys/{id}/` (name, rate limit) | Stock lists keys only | [x] |
+| DSN key management | `POST /projects/{org}/{slug}/keys/`; `GET`/`PUT`/`DELETE .../keys/{id}/` (name, rate limit) | Stock lists keys only. In 7.0.0 `PUT` changes nothing and rate limits are stored but not enforced **Faultline:** create with a name, and delete; no editing and no rate limit | [x] |
 | Project rate limit / `eventThrottleRate`, org `isAcceptingEvents`, `require2fa`, `openMembership` | org and project `PUT` | Not editable in stock UI (read for the over-limit snackbar and team-join rule only) **Faultline:** the project rate is editable; the organization fields are not, the backend ignores them on `PUT`. | [+] |
 | Release create/deploys/commits/files delete, source-map upload | `/organizations/{org}/releases/...`, `/chunk-upload/`, `/artifactbundle/assemble/`, difs, dsyms | CLI-oriented | [+] |
 | Passkey login, reauthentication, email-code login | allauth `webauthn/login`, `auth/reauthenticate`, `code/confirm` | `reauthenticate` exists in the stock service but nothing calls it | [+] |

@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
 import {
+  PROJECT_KEY_NAME_MAX,
   PROJECT_NAME_MAX,
   projectActions,
   projectEnvironmentsQuery,
@@ -274,24 +275,12 @@ function DeleteProject({ org, slug, onClose }: { org: string; slug: string; onCl
 
 /* ---------- client keys ---------- */
 
-const WINDOWS = [
-  { seconds: 60, label: 'minute' },
-  { seconds: 3600, label: 'hour' },
-  { seconds: 86400, label: 'day' },
-]
-
-const rateLimitText = (key: ProjectKey) => {
-  if (!key.rateLimit) return 'No limit'
-  const window = WINDOWS.find((w) => w.seconds === key.rateLimit?.window)?.label ?? `${key.rateLimit.window}s`
-  return `${key.rateLimit.count} / ${window}`
-}
-
 const keyName = (key: ProjectKey) => key.name || key.label || 'Unnamed key'
 
+// GlitchTip 7.0.0 ignores changes to a key and does not enforce a key's rate limit, so a key is only made, read and deleted.
 function Keys({ org, slug, keys, write }: { org: string; slug: string; keys?: ProjectKey[]; write: boolean }) {
   const row = useFold(keys?.length === 1 ? keys[0]!.id : undefined)
-  // 'new', or the id of the key being edited.
-  const [editing, setEditing] = useState<string>()
+  const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<ProjectKey>()
   const remove = useChange(org, 'delete the key', (key: ProjectKey) => projectActions.removeKey(org, slug, key.id), { onDone: () => setDeleting(undefined) })
   return (
@@ -300,7 +289,7 @@ function Keys({ org, slug, keys, write }: { org: string; slug: string; keys?: Pr
         label="Client keys"
         action={
           write && (
-            <GroupAction onClick={() => setEditing('new')}>
+            <GroupAction onClick={() => setCreating(true)}>
               <Plus />
               New key
             </GroupAction>
@@ -310,23 +299,18 @@ function Keys({ org, slug, keys, write }: { org: string; slug: string; keys?: Pr
         {!keys && <RowSkeleton rows={2} />}
         {keys?.length === 0 && <Row label="No client keys" />}
         {keys?.map((key) => (
-          <FoldRow key={key.id} label={keyName(key)} mono value={row.is(key.id) ? rateLimitText(key) : key.dsn.public} open={row.is(key.id)} onToggle={() => row.toggle(key.id)}>
+          <FoldRow key={key.id} label={keyName(key)} mono value={key.dsn.public} open={row.is(key.id)} onToggle={() => row.toggle(key.id)}>
             <Field label="DSN">{() => <CopyField value={key.dsn.public ?? ''} label={`DSN of ${keyName(key)}`} />}</Field>
             {key.dsn.security && <Field label="Security report address">{() => <CopyField value={key.dsn.security!} label="Security report address" />}</Field>}
             {write && (
-              <div className="flex gap-2">
-                <Button className="max-lg:h-11" onClick={() => setEditing(key.id)}>
-                  Rename or limit
-                </Button>
-                <Button variant="destructive" className="max-lg:h-11" onClick={() => setDeleting(key)}>
-                  Delete key
-                </Button>
-              </div>
+              <Button variant="destructive" className="self-start max-lg:h-11" onClick={() => setDeleting(key)}>
+                Delete key
+              </Button>
             )}
           </FoldRow>
         ))}
       </Group>
-      {editing && <KeyDialog org={org} slug={slug} keyItem={keys?.find((key) => key.id === editing)} onClose={() => setEditing(undefined)} />}
+      {creating && <NewKeyDialog org={org} slug={slug} onClose={() => setCreating(false)} />}
       <Confirm
         open={!!deleting}
         onClose={() => {
@@ -346,60 +330,19 @@ function Keys({ org, slug, keys, write }: { org: string; slug: string; keys?: Pr
   )
 }
 
-// Create or edit a client key: its name and how many events it accepts.
-function KeyDialog({ org, slug, keyItem, onClose }: { org: string; slug: string; keyItem?: ProjectKey; onClose: () => void }) {
-  const [name, setName] = useState(keyItem ? keyName(keyItem) : '')
-  const [limited, setLimited] = useState(!!keyItem?.rateLimit)
-  const [count, setCount] = useState(String(keyItem?.rateLimit?.count ?? 1000))
-  const [window, setWindow] = useState(keyItem?.rateLimit?.window ?? 60)
+function NewKeyDialog({ org, slug, onClose }: { org: string; slug: string; onClose: () => void }) {
+  const [name, setName] = useState('')
   const [checked, setChecked] = useState(false)
-  const countValid = /^[1-9]\d*$/.test(count.trim())
-  const save = useChange(
-    org,
-    keyItem ? 'change the key' : 'create the key',
-    () => {
-      const body = { name: name.trim(), rateLimit: limited ? { count: Number(count), window } : null }
-      return keyItem ? projectActions.updateKey(org, slug, keyItem.id, body) : projectActions.createKey(org, slug, body)
-    },
-    { onDone: onClose },
-  )
+  const save = useChange(org, 'create the key', () => projectActions.createKey(org, slug, name.trim()), { onDone: onClose })
   const submit = () => {
     setChecked(true)
-    if (name.trim() && (!limited || countValid)) save.run()
+    if (name.trim()) save.run()
   }
-  // A window the backend holds that is not one of the three stays choosable.
-  const windows = WINDOWS.some((w) => w.seconds === window) ? WINDOWS : [...WINDOWS, { seconds: window, label: `${window} seconds` }]
   return (
-    <FormDialog open onClose={onClose} title={keyItem ? 'Client key' : 'New client key'} submit={keyItem ? 'Save' : 'Create key'} onSubmit={submit} pending={save.pending} error={save.error}>
+    <FormDialog open onClose={onClose} title="New client key" submit="Create key" onSubmit={submit} pending={save.pending} error={save.error}>
       <Field label="Name" error={checked && !name.trim() ? 'Give the key a name.' : undefined}>
-        {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={64} autoComplete="off" />}
+        {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={PROJECT_KEY_NAME_MAX} autoComplete="off" />}
       </Field>
-      <Field label="Rate limit">
-        {(field) => (
-          <Select {...field} value={limited ? 'on' : 'off'} onChange={(event) => setLimited(event.target.value === 'on')}>
-            <option value="off">No limit</option>
-            <option value="on">Limit events</option>
-          </Select>
-        )}
-      </Field>
-      {limited && (
-        <div className="flex items-start gap-2">
-          <Field label="Events" className="flex-1" error={checked && !countValid ? 'A whole number above 0.' : undefined}>
-            {(field) => <Input {...field} value={count} onChange={(event) => setCount(event.target.value)} inputMode="numeric" className="font-mono" />}
-          </Field>
-          <Field label="Per" className="flex-1">
-            {(field) => (
-              <Select {...field} value={window} onChange={(event) => setWindow(Number(event.target.value))}>
-                {windows.map((w) => (
-                  <option key={w.seconds} value={w.seconds}>
-                    {w.label}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-        </div>
-      )}
     </FormDialog>
   )
 }

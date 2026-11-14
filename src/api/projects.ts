@@ -8,10 +8,10 @@ type Schemas = components['schemas']
 export type Project = Schemas['ProjectTeamSchema']
 export type ProjectDetail = Schemas['ProjectOrganizationSchema']
 export type ProjectKey = Schemas['ProjectKeySchema']
-export type KeyRateLimit = Schemas['KeyRateLimit']
 export type ProjectEnvironment = Schemas['EnvironmentProjectSchema']
 
 export const PROJECT_NAME_MAX = 64
+export const PROJECT_KEY_NAME_MAX = 64
 
 const projectPath = (org: string, project: string) => ({ ...orgPath(org), project_slug: project })
 
@@ -161,15 +161,9 @@ export const projectActions = {
         params: { path: { ...projectPath(org, project), team_slug: team } },
       }),
     ),
-  createKey: async (org: string, project: string, body: Schemas['ProjectKeyIn']) =>
-    unwrap(await api.POST('/api/0/projects/{organization_id_or_slug}/{project_slug}/keys/', { params: { path: projectPath(org, project) }, body })),
-  updateKey: async (org: string, project: string, keyId: string, body: Schemas['ProjectKeyIn']) =>
-    unwrap(
-      await api.PUT('/api/0/projects/{organization_id_or_slug}/{project_slug}/keys/{key_id}/', {
-        params: { path: { ...projectPath(org, project), key_id: keyId } },
-        body,
-      }),
-    ),
+  // A key's rate limit is left unset: GlitchTip 7.0.0 stores it but does not enforce it.
+  createKey: async (org: string, project: string, name: string) =>
+    unwrap(await api.POST('/api/0/projects/{organization_id_or_slug}/{project_slug}/keys/', { params: { path: projectPath(org, project) }, body: { name } })),
   removeKey: async (org: string, project: string, keyId: string) =>
     unwrap(
       await api.DELETE('/api/0/projects/{organization_id_or_slug}/{project_slug}/keys/{key_id}/', {

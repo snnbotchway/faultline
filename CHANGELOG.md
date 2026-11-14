@@ -15,7 +15,7 @@ All notable changes to Faultline are listed here. The format follows
 - Old GlitchTip links to the profile, API tokens, the command-line wizard and an organization's own sign-in page keep working.
 - Projects home at `/` and `/:org/projects`: every project with its open issues, errors over the last 14 days, when it last broke and how many alerts it has.
 - Organization settings on one searchable page, with sign-in apps (single sign-on through OpenID Connect or Google), members (invite, copy an invite link, send it again, change role and teams, remove, transfer ownership) and teams (create, rename, delete, join, leave, members, projects).
-- Project settings: name, platform, teams with access, share of events to drop, client keys with rate limits, environments, delete.
+- Project settings: name, platform, teams with access, share of events to drop, client keys (new, copy, delete), environments, delete.
 - New project with the SDK code for its platform, and a set-up step that shows when the first event arrives.
 - Create an organization, and a system info page.
 

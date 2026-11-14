@@ -4,20 +4,20 @@ import { useState } from 'react'
 import { ApiError } from '@/api/client'
 import type { Issue } from '@/api/issues'
 import { canManageReleases, organizationQuery } from '@/api/organizations'
-import { isNewIn, releaseActions, releaseCommitsQuery, releaseDeploysQuery, releaseFilesQuery, releaseIssuesQuery, releaseKeys, releaseQuery, type ReleaseFile } from '@/api/releases'
+import { canOpenRelease, isNewIn, releaseActions, releaseCommitsQuery, releaseDeploysQuery, releaseFilesQuery, releaseIssuesQuery, releaseKeys, releaseQuery, type ReleaseFile } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
+import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Section } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { errorParts } from '@/features/issues/event'
-import { ago, compact, exact } from '@/features/issues/format'
+import { ago, brief, compact, exact, noun } from '@/features/issues/format'
 import { LevelGlyph } from '@/features/issues/level'
-import { stampTime } from '@/features/uptime/format'
-import { CRUMB_LINK } from '@/features/uptime/describe'
-import { Crumbs, Section } from '@/features/uptime/parts'
+import { shortName } from '@/features/issues/trend'
 import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { shortName } from './marks'
 
 const COMMITS_SHOWN = 3
 const SHA_SHOWN = 7
@@ -26,7 +26,8 @@ const bytes = (size: number) => (size >= 1_000_000 ? `${(size / 1_000_000).toFix
 
 /** One release: the issues it brought and the ones still happening in it, where it was deployed, its commits and its files. */
 export function ReleasePage({ org, version }: { org: string; version: string }) {
-  const release = useQuery(releaseQuery(org, version))
+  const openable = canOpenRelease(version)
+  const release = useQuery({ ...releaseQuery(org, version), enabled: openable })
   useTitle(shortName(version), 'Releases')
 
   const bar = (
@@ -42,6 +43,20 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
       </Crumbs>
     </PageBar>
   )
+  if (!openable)
+    return (
+      <>
+        {bar}
+        <Screen title="This release can't be opened">
+          <p className="text-muted-foreground">GlitchTip can't look up a release whose version has a slash in it, so its issues, deploys and files can't be shown here.</p>
+          <Button asChild>
+            <Link to="/$org/releases" params={{ org }}>
+              Go to releases
+            </Link>
+          </Button>
+        </Screen>
+      </>
+    )
   if (release.isError) {
     const missing = release.error instanceof ApiError && release.error.status === 404
     return (
@@ -71,7 +86,7 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
             <h1 className="font-mono text-xl font-semibold break-all lg:text-2xl">{version}</h1>
             {release.data ? (
               <p className="mono mt-2 text-muted-foreground">
-                {release.data.projects.map((project) => project.slug).join(', ')} · <time dateTime={release.data.dateCreated}>{stampTime(release.data.dateCreated)}</time>
+                {release.data.projects.map((project) => project.slug).join(', ')} · <time dateTime={release.data.dateCreated}>{brief(release.data.dateCreated)}</time>
               </p>
             ) : (
               <Skeleton className="mt-2 h-4 w-48" />
@@ -90,28 +105,36 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
 }
 
 function ReleaseIssues({ org, version }: { org: string; version: string }) {
-  const issues = useQuery(releaseIssuesQuery(org, version))
+  const issues = useInfiniteQuery(releaseIssuesQuery(org, version))
   if (issues.isPending) return <Skeleton className="h-40" />
   if (issues.isError) return <p className="border-t py-4 text-muted-foreground">The issues in this release didn't load.</p>
-  const fresh = issues.data.items.filter((issue) => isNewIn(issue, version))
-  const known = issues.data.items.filter((issue) => !isNewIn(issue, version))
-  if (!issues.data.items.length) return <p className="border-t py-4 text-muted-foreground">No open issues have events in this release.</p>
+  const items = issues.data.pages.flatMap((page) => page.items)
+  if (!items.length) return <p className="border-t py-4 text-muted-foreground">No open issues have events in this release.</p>
+  const fresh = items.filter((issue) => isNewIn(issue, version))
+  const known = items.filter((issue) => !isNewIn(issue, version))
+  // Counts are of the issues loaded so far; more pages may add to either list.
+  const more = issues.hasNextPage ? '+' : ''
   return (
     <>
-      {fresh.length > 0 && <IssueList org={org} label="First seen in this release" issues={fresh} fresh />}
-      {known.length > 0 && <IssueList org={org} label="Seen before, still happening" issues={known} className={fresh.length ? 'mt-6' : undefined} />}
+      {fresh.length > 0 && <IssueList org={org} label="First seen in this release" count={`${fresh.length}${more}`} issues={fresh} fresh />}
+      {known.length > 0 && <IssueList org={org} label="Seen before, still happening" count={`${known.length}${more}`} issues={known} className={fresh.length ? 'mt-6' : undefined} />}
+      {issues.hasNextPage && (
+        <Button size="sm" className="mt-3 max-lg:h-11" aria-busy={issues.isFetchingNextPage} disabled={issues.isFetchingNextPage} onClick={() => void issues.fetchNextPage()}>
+          More issues
+        </Button>
+      )}
     </>
   )
 }
 
 const ISSUE_COLUMNS = 'grid-cols-[minmax(0,1fr)_56px_80px] lg:grid-cols-[minmax(0,1fr)_64px_88px]'
 
-function IssueList({ org, label, issues, fresh = false, className }: { org: string; label: string; issues: Issue[]; fresh?: boolean; className?: string }) {
+function IssueList({ org, label, count, issues, fresh = false, className }: { org: string; label: string; count: string; issues: Issue[]; fresh?: boolean; className?: string }) {
   return (
     <section aria-label={label} className={className}>
       <h2 className={cn('label-caps flex h-9 items-center gap-2 border-b', fresh && 'font-semibold text-trend-new')}>
         {label}
-        <span className="font-normal text-muted-foreground">{issues.length}</span>
+        <span className="font-normal text-muted-foreground">{count}</span>
       </h2>
       <div aria-hidden className={cn('grid h-8 items-center gap-x-4 border-b whitespace-nowrap', ISSUE_COLUMNS)}>
         <span />
@@ -164,7 +187,7 @@ function Deploys({ org, version }: { org: string; version: string }) {
               <span className="flex justify-between gap-3">
                 <span className="mono font-semibold">{deploy.environment}</span>
                 <time className="mono text-muted-foreground" dateTime={deploy.dateFinished ?? deploy.dateCreated}>
-                  {stampTime(deploy.dateFinished ?? deploy.dateCreated)}
+                  {brief(deploy.dateFinished ?? deploy.dateCreated)}
                 </time>
               </span>
               {deploy.url && <span className="mono block truncate text-muted-foreground">{deploy.url}</span>}
@@ -237,7 +260,7 @@ function Files({ org, version }: { org: string; version: string }) {
         <p className="py-3 text-muted-foreground">No source maps uploaded.</p>
       ) : !shown ? (
         <p className="mono py-3 text-muted-foreground">
-          {count} {items.length === 1 ? 'file' : 'files'}, {bytes(items.reduce((sum, file) => sum + file.size, 0))}
+          {count} {noun(items.length, 'file')}, {bytes(items.reduce((sum, file) => sum + file.size, 0))}
         </p>
       ) : (
         <>
@@ -259,30 +282,33 @@ function Files({ org, version }: { org: string; version: string }) {
 
 function FileRow({ org, version, file, canDelete }: { org: string; version: string; file: ReleaseFile; canDelete: boolean }) {
   const queryClient = useQueryClient()
-  // Deleting asks once more, on the same button.
   const [confirming, setConfirming] = useState(false)
   const remove = useMutation({
     mutationFn: () => releaseActions.removeFile(org, version, file.id),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: releaseKeys.files(org, version) }),
     onError: (error) => failed(error, 'delete the file'),
   })
+  const name = file.name.replace(/^~\//, '')
   return (
     <li className="grid min-h-9 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b max-lg:min-h-11">
       <span className="mono truncate" title={file.name}>
-        {file.name.replace(/^~\//, '')}
+        {name}
       </span>
       <span className="mono text-muted-foreground">{bytes(file.size)}</span>
       {canDelete && (
-        <button
-          type="button"
-          onClick={() => (confirming ? remove.mutate() : setConfirming(true))}
-          onBlur={() => setConfirming(false)}
-          disabled={remove.isPending}
-          className="cursor-pointer text-sm text-destructive hover:underline max-lg:min-h-11"
-        >
-          {confirming ? 'Delete file' : 'Delete'}
+        <button type="button" onClick={() => setConfirming(true)} disabled={remove.isPending} className="cursor-pointer text-sm text-destructive hover:underline max-lg:min-h-11">
+          Delete
         </button>
       )}
+      <ConfirmDialog
+        open={confirming}
+        destructive
+        title={`Delete ${name}?`}
+        detail="New errors in this release that need this file won't be matched to your source. This can't be undone."
+        confirm="Delete file"
+        onConfirm={() => remove.mutate()}
+        onClose={() => setConfirming(false)}
+      />
     </li>
   )
 }

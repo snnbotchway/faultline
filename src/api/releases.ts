@@ -1,4 +1,5 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
+import { DAY } from '@/lib/time'
 import { api, orgPath, unwrap } from './client'
 import type { Issue } from './issues'
 import { MAX_PAGE_SIZE, toPage, type Page } from './pagination'
@@ -25,8 +26,15 @@ export const releaseKeys = {
   events: (slug: string, days: number) => [...releaseKeys.all(slug), 'events', days] as const,
 }
 
-// openapi-fetch encodes the version, which can contain `/` and `@`.
+/**
+ * openapi-fetch encodes the version, so `@` and `+` arrive intact. A `/` does not: the server decodes
+ * `%2F` before routing, and the backend's `{str:version}` segment never matches a slash, so every
+ * path under such a release answers 404. The list still returns these releases.
+ */
 const releasePath = (slug: string, version: string) => ({ ...orgPath(slug), version })
+
+// Whether the backend can answer for a release on its own paths (see `releasePath`).
+export const canOpenRelease = (version: string) => !version.includes('/')
 
 // The newest releases, enough to mark the last two weeks on a time axis.
 export const recentReleasesQuery = (slug: string) =>
@@ -90,19 +98,21 @@ export const releaseFilesQuery = (slug: string, version: string) =>
   })
 
 /**
- * The unresolved issues that had events in a release, most recently seen first. An issue is new in
- * the release when its `firstRelease` is this one; the backend has no search for that.
+ * The unresolved issues that had events in a release, most recently seen first, a page at a time. An
+ * issue is new in the release when its `firstRelease` is this one; the backend has no search for that.
  */
 export const releaseIssuesQuery = (slug: string, version: string) =>
-  queryOptions({
+  infiniteQueryOptions({
     queryKey: releaseKeys.issues(slug, version),
     staleTime: 5 * 60_000,
-    queryFn: async (): Promise<Page<Issue>> => {
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam }): Promise<Page<Issue>> => {
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/', {
-        params: { path: orgPath(slug), query: { query: `is:unresolved release:"${version.replaceAll('"', '\\"')}"`, limit: MAX_PAGE_SIZE } },
+        params: { path: orgPath(slug), query: { query: `is:unresolved release:"${version.replaceAll('"', '\\"')}"`, limit: MAX_PAGE_SIZE, cursor: pageParam } },
       })
       return toPage(unwrap(result), result.response)
     },
+    getNextPageParam: (page) => page.cursors.next,
   })
 
 export const isNewIn = (issue: Pick<Issue, 'firstRelease'>, version: string) => issue.firstRelease?.version === version
@@ -140,25 +150,45 @@ export const newIssuesByReleaseQuery = (slug: string) =>
 // What the backend answers for event stats. The schema declares no response body for this path.
 type EventStats = { intervals: string[]; groups: { series: Record<string, (number | null)[]> }[] }
 const EVENTS_FIELD = 'sum(quantity)'
-const DAY_SECONDS = 86_400
 
-// Error events per day across the organization, for the `days` days up to today, as [day start in seconds, count] points.
+// Events per day, oldest first, from midnight `start` (milliseconds, the viewer's time zone).
+export type DailyEvents = { start: number; counts: number[] }
+
+/**
+ * Error events per day across the organization, for the `days` days up to today in the viewer's
+ * time zone. The backend's `1d` interval counts only the first hour of each day, so hours are
+ * fetched and added up here.
+ */
 export const dailyEventsQuery = (slug: string, days: number) =>
   queryOptions({
     queryKey: releaseKeys.events(slug, days),
     staleTime: 5 * 60_000,
-    queryFn: async (): Promise<number[][]> => {
-      const today = Math.floor(Date.now() / 1000 / DAY_SECONDS) * DAY_SECONDS
-      const start = new Date((today - (days - 1) * DAY_SECONDS) * 1000).toISOString()
+    queryFn: async (): Promise<DailyEvents> => {
+      const midnight = new Date()
+      midnight.setHours(0, 0, 0, 0)
+      midnight.setDate(midnight.getDate() - (days - 1))
+      const start = midnight.getTime()
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/stats_v2/', {
-        params: { path: orgPath(slug), query: { category: 'error', interval: '1d', field: EVENTS_FIELD, start, end: new Date().toISOString() } },
+        params: { path: orgPath(slug), query: { category: 'error', interval: '1h', field: EVENTS_FIELD, start: new Date(start).toISOString(), end: new Date().toISOString() } },
       })
       // The body is parsed as JSON at runtime; only its type is missing from the schema.
       const stats = unwrap(result) as unknown as EventStats
-      const counts = stats.groups[0]?.series[EVENTS_FIELD] ?? []
-      return stats.intervals.map((time, index) => [Date.parse(time) / 1000, counts[index] ?? 0])
+      return { start, counts: eventsPerDay(stats.intervals, stats.groups[0]?.series[EVENTS_FIELD] ?? [], start, days) }
     },
   })
+
+// Hourly counts added up into the days from `start`, each day starting at the viewer's midnight.
+export function eventsPerDay(hours: string[], counts: (number | null)[], start: number, days: number): number[] {
+  const totals = Array.from({ length: days }, () => 0)
+  const first = new Date(start)
+  hours.forEach((hour, index) => {
+    const at = new Date(hour)
+    // Whole calendar days since `start`, so a day that is 23 or 25 hours long still counts as one.
+    const day = Math.round((Date.UTC(at.getFullYear(), at.getMonth(), at.getDate()) - Date.UTC(first.getFullYear(), first.getMonth(), first.getDate())) / DAY)
+    if (day >= 0 && day < days) totals[day]! += counts[index] ?? 0
+  })
+  return totals
+}
 
 export const releaseActions = {
   removeFile: async (slug: string, version: string, id: string) =>

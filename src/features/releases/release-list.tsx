@@ -1,18 +1,15 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
-import { StatsPeriod } from '@/api/issues'
+import { useMemo } from 'react'
 import { dailyEventsQuery, newIssuesByReleaseQuery, releaseListQuery, type NewIssueCounts, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { compact, dayLabel, plural } from '@/features/issues/format'
-import { Trace } from '@/features/issues/trace'
-import { axisFor, fillBuckets } from '@/features/issues/trend'
-import { ReleaseLabels } from '@/features/uptime/parts'
-import { clockTime, dayName } from '@/features/uptime/format'
+import { clock, compact, dayLabel, dayName, noun, plural } from '@/features/issues/format'
+import { ReleaseTrace } from '@/features/issues/trace'
+import { releaseMarks, spanAxis } from '@/features/issues/trend'
+import { DAY } from '@/lib/time'
 import { useTitle } from '@/lib/title'
-import { releaseMarksOn } from './marks'
 
 const DAYS = 14
 
@@ -33,7 +30,7 @@ export function ReleaseList({ org }: { org: string }) {
   const days = useMemo(() => {
     const groups = new Map<string, Release[]>()
     for (const release of releases) {
-      const day = dayName(Date.parse(release.dateCreated), now)
+      const day = dayName(new Date(release.dateCreated), new Date(now))
       groups.set(day, [...(groups.get(day) ?? []), release])
     }
     return [...groups]
@@ -92,7 +89,7 @@ export function ReleaseList({ org }: { org: string }) {
                         className="grid grid-cols-[48px_minmax(0,1fr)] gap-x-3 px-3 py-3 transition-colors duration-100 hover:bg-accent/60 lg:grid-cols-[56px_minmax(0,1fr)] lg:px-4"
                       >
                         <time className="mono text-muted-foreground" dateTime={release.dateCreated}>
-                          {clockTime(release.dateCreated)}
+                          {clock(release.dateCreated)}
                         </time>
                         <span className="min-w-0">
                           <span className="flex items-baseline gap-3">
@@ -101,7 +98,7 @@ export function ReleaseList({ org }: { org: string }) {
                             </span>
                             {fresh !== undefined && fresh > 0 && (
                               <span className="shrink-0 text-trend-new">
-                                <span className="mono font-semibold">{fresh}</span> new {fresh === 1 ? 'issue' : 'issues'}
+                                <span className="mono font-semibold">{fresh}</span> new {noun(fresh, 'issue')}
                               </span>
                             )}
                           </span>
@@ -131,19 +128,22 @@ export function ReleaseList({ org }: { org: string }) {
   )
 }
 
+// The organization's error events per day, with each release marked where it was made.
 function EventsChart({ org, releases }: { org: string; releases: Release[] }) {
   const events = useQuery(dailyEventsQuery(org, DAYS))
-  const [opened] = useState(Date.now)
-  const axis = useMemo(() => axisFor(StatsPeriod.fortnight, new Date(events.dataUpdatedAt || opened)), [events.dataUpdatedAt, opened])
-  const buckets = fillBuckets(events.data, axis)
-  const from = axis.start * 1000
-  const marks = releaseMarksOn(releases, from, from + axis.size * axis.count * 1000)
+  if (!events.data)
+    return (
+      <div className="border-b px-3 pt-4 pb-3 lg:px-4">
+        {events.isError ? <p className="flex h-25 items-center text-muted-foreground">The events per day didn't load.</p> : <Skeleton className="h-25" />}
+      </div>
+    )
+  const { start, counts } = events.data
+  const marks = releaseMarks(releases, spanAxis(start, start + DAYS * DAY))
   return (
     <div className="border-b px-3 pt-4 pb-3 lg:px-4">
-      <ReleaseLabels marks={marks} />
-      {events.isPending ? <Skeleton className="h-14" /> : <Trace buckets={buckets} marks={marks} height={56} />}
+      <ReleaseTrace buckets={counts} marks={marks} height={56} />
       <p className="label-caps mt-2 flex justify-between">
-        <span>{dayLabel(axis.start)}</span>
+        <span>{dayLabel(start / 1000)}</span>
         <span>Events / day</span>
         <span>Today</span>
       </p>

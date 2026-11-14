@@ -52,8 +52,10 @@ function ResetPassword() {
     } catch (error) {
       const limited = error instanceof ApiError && error.status === HttpStatus.tooManyRequests
       setStep(limited ? Step.limited : Step.form)
-      if (limited) return
-      throw error
+      if (!limited) throw error
+      // allauth counts reset requests per minute and sends no wait time, so a minute is the wait.
+      startWait(RESEND_AFTER)
+      return
     }
     setStep(Step.sent)
     startWait(RESEND_AFTER)
@@ -82,18 +84,14 @@ function ResetPassword() {
   const limited = step === Step.limited
   return (
     <AuthFrame title={limited ? 'Too many reset emails' : 'Check your email'}>
-      <p className="prose-text mb-4 text-muted-foreground">
-        {limited ? (
-          'Wait a few minutes, then send it again.'
-        ) : (
-          <>
-            If <span className="mono [overflow-wrap:anywhere] text-foreground">{email}</span> has an account, a reset link is on its way.
-          </>
-        )}
-      </p>
+      {!limited && (
+        <p className="prose-text mb-4 text-muted-foreground">
+          If <span className="mono [overflow-wrap:anywhere] text-foreground">{email}</span> has an account, a reset link is on its way.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
-        <Button className="max-lg:h-11" disabled={request.busy || (!limited && wait > 0)} aria-busy={request.busy} onClick={() => void request.send(sendLink)}>
-          {!limited && wait > 0 ? (
+        <Button className="max-lg:h-11" disabled={request.busy || wait > 0} aria-busy={request.busy} onClick={() => void request.send(sendLink)}>
+          {wait > 0 ? (
             <>
               Send again in <span className="mono">{wait}s</span>
             </>

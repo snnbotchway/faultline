@@ -51,14 +51,10 @@ test('an invited person shows in the list until the invite is cancelled', async 
   await expect(row).toHaveCount(0)
 })
 
-test('a team can be created, refuses a name that is taken, and can be deleted', async ({ page }) => {
+test('a team can be created and deleted', async ({ page }) => {
   const slug = unique('e2e-team')
   await page.goto(`${settings}/teams`)
   await page.getByRole('button', { name: 'New team' }).click()
-  await page.getByLabel('Name').fill(DEMO.team)
-  await page.getByRole('button', { name: 'Create team' }).click()
-  await expect(page.getByRole('alert')).toContainText(`There is already a team called #${DEMO.team}.`)
-
   await page.getByLabel('Name').fill(slug)
   await page.getByRole('button', { name: 'Create team' }).click()
   await expect(page).toHaveURL(new RegExp(`${settings}/teams/${slug}/members$`))

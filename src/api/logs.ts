@@ -18,7 +18,7 @@ export const LogResourceType = { service: 'service', environment: 'environment',
 export type LogResourceType = (typeof LogResourceType)[keyof typeof LogResourceType]
 
 // The backend takes up to 200 logs a page.
-const PAGE_SIZE = 200
+export const PAGE_SIZE = 200
 
 export const logKeys = {
   all: (slug: string) => ['logs', slug] as const,

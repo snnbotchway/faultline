@@ -15,7 +15,7 @@ import { hitsText, plural } from '@/lib/format'
 import { isDesktop, useIsDesktop } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { useCounts, useLogs } from './data'
+import { SPAN_LIMIT, useCounts, useLogs } from './data'
 import { ActiveFilters, Facets } from './filters'
 import { clockTime, dayOf, fullTime, preview } from './format'
 import { LogHistogram } from './histogram'
@@ -144,6 +144,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
             <LogHistogram buckets={logs.buckets} height={HISTOGRAM_HEIGHT} hour={search.hour} onPick={(hour) => set({ hour, log: undefined })} />
           </div>
           <ActiveFilters logs={logs} search={search} set={set} />
+          {logs.spanCapped && <p className="border-b px-3 py-2 text-muted-foreground md:px-4">Searched the first {SPAN_LIMIT} logs of this trace for this span.</p>}
           {list.isPending ? (
             <SkeletonRows />
           ) : hasStatus(list.error, HttpStatus.forbidden) ? (

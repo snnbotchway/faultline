@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hourly } from './data'
+import { CountState, hourly, projectCount, totalOf } from './data'
 
 const now = Date.parse('2026-11-14T12:30:00Z')
 
@@ -25,5 +25,51 @@ describe('logs per hour', () => {
       [1, 3, 4],
     ])
     expect(buckets[2]!.start).toBe(Date.parse('2026-11-14T12:00:00Z') / 1000)
+  })
+})
+
+describe('a project count', () => {
+  const counted = { state: CountState.counted, hits: { n: 7, capped: false } } as const
+  const zero = { state: CountState.counted, hits: { n: 0, capped: false } }
+  const unavailable = { state: CountState.unavailable }
+
+  it('is its own count when it is among the projects counted', () => {
+    expect(projectCount({ stats: counted, withLogs: true, filtered: false, complete: true })).toEqual(counted)
+  })
+
+  it('is not known for a project with logs past the ones counted', () => {
+    expect(projectCount({ stats: undefined, withLogs: true, filtered: false, complete: true })).toEqual(unavailable)
+  })
+
+  it('is not known for a project that a project filter leaves out', () => {
+    expect(projectCount({ stats: undefined, withLogs: false, filtered: true, complete: true })).toEqual(unavailable)
+  })
+
+  it('is zero only once the whole list is loaded with no project filter and none of its logs', () => {
+    expect(projectCount({ stats: undefined, withLogs: false, filtered: false, complete: true })).toEqual(zero)
+    expect(projectCount({ stats: undefined, withLogs: false, filtered: false, complete: false })).toEqual(unavailable)
+  })
+})
+
+describe('the total above the logs', () => {
+  const hits = { n: 1000, capped: true }
+  const base = { hits, buckets: undefined, spanLogs: 0, spanLoading: false, spanCapped: false }
+
+  it("counts a span's logs once its trace's have loaded, and says there may be more past the limit", () => {
+    const span = { traceId: 't', spanId: 's' }
+    expect(totalOf({ ...base, search: span, spanLogs: 3, spanLoading: true })).toBeUndefined()
+    expect(totalOf({ ...base, search: span, spanLogs: 3 })).toEqual({ n: 3, capped: false })
+    expect(totalOf({ ...base, search: span, spanLogs: 3, spanCapped: true })).toEqual({ n: 3, capped: true })
+  })
+
+  it('takes the hourly statistics when they can answer, and the list count when they cannot', () => {
+    const buckets = [
+      { start: 0, errors: 1, warnings: 2, other: 3 },
+      { start: 3600, errors: 0, warnings: 0, other: 4 },
+    ]
+    expect(totalOf({ ...base, search: {}, buckets })).toEqual({ n: 10, capped: false })
+    expect(totalOf({ ...base, search: { hour: 3600 }, buckets })).toEqual({ n: 4, capped: false })
+    expect(totalOf({ ...base, search: { query: 'timeout' }, buckets })).toEqual(hits)
+    expect(totalOf({ ...base, search: {} })).toEqual(hits)
   })
 })

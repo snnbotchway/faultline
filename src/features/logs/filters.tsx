@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { hourLabel } from '@/features/issues/format'
 import { hitsText } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { Uncounted, type Count, type Counts, type Logs } from './data'
+import { CountState, type Count, type Counts, type Logs } from './data'
 import { LogLevelGlyph } from './level'
 import { LEVELS, hourEnd, toggleLevel, type LogSearch, type SetSearch } from './search'
 
@@ -12,14 +12,14 @@ const ROW = 'mono flex h-8 w-full items-center gap-2 px-2 text-left hover:bg-acc
 
 // A filter value's count: a placeholder while it loads, a dash where it cannot be counted.
 function CountLabel({ count }: { count: Count }) {
-  if (count === undefined) return <Skeleton className="h-3 w-6" />
-  if (count === Uncounted.unavailable)
-    return (
-      <span title="Not counted" aria-label="not counted">
-        –
-      </span>
+  if (count.state === CountState.loading) return <Skeleton className="h-3 w-6" />
+  if (count.state === CountState.unavailable) return (
+      <>
+        <span aria-hidden>–</span>
+        <span className="sr-only">not counted</span>
+      </>
     )
-  return hitsText(count)
+  return hitsText(count.hits)
 }
 
 function FilterValue({ role, on, count, onClick, children }: { role: 'checkbox' | 'radio'; on: boolean; count: Count; onClick: () => void; children: ReactNode }) {
@@ -45,7 +45,7 @@ function Facet({ label, items, counts, current, onPick }: { label: string; items
         {items.map((item) => {
           const on = item.value === current
           return (
-            <FilterValue key={item.value} role="radio" on={on} count={counts[item.value]} onClick={() => onPick(on ? undefined : item.value)}>
+            <FilterValue key={item.value} role="radio" on={on} count={counts[item.value] ?? { state: CountState.loading }} onClick={() => onPick(on ? undefined : item.value)}>
               <span className="truncate">{item.label}</span>
             </FilterValue>
           )
@@ -108,7 +108,7 @@ export function ActiveFilters({ logs, search, set }: { logs: Logs; search: LogSe
   ]
   if (chips.length === 0) return null
   return (
-    <ul className={cn('flex gap-2 overflow-x-auto border-b px-3 py-2 [scrollbar-width:none] md:px-4', chips.every((chip) => chip.inRail) && 'lg:hidden')} aria-label="Filters in force">
+    <ul className={cn('scroll-row flex gap-2 border-b px-3 py-2 md:px-4', chips.every((chip) => chip.inRail) && 'lg:hidden')} aria-label="Filters in force">
       {chips.map((chip) => (
         <li key={`${chip.label} ${chip.value}`} className={cn('shrink-0', chip.inRail && 'lg:hidden')}>
           <button

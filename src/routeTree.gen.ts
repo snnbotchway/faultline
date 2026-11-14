@@ -19,9 +19,13 @@ import { Route as AppOrgIndexRouteImport } from './routes/_app/$org/index'
 import { Route as AppOrgSectionRouteRouteImport } from './routes/_app/$org/$section/route'
 import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$section/$'
 import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
+import { Route as AppOrgPrototypeLogsRouteImport } from './routes/_app/$org/prototype.logs'
 import { Route as AppOrgProjectIssuesIssueIdRouteImport } from './routes/_app/$org/$project/issues/$issueId'
 import { Route as AppOrgIssuesIssueIdIndexRouteImport } from './routes/_app/$org/issues/$issueId/index'
 import { Route as AppOrgIssuesIssueIdTabRouteImport } from './routes/_app/$org/issues/$issueId/$tab'
+import { Route as AppOrgPrototypePerformanceIndexRouteImport } from './routes/_app/$org/prototype.performance.index'
+import { Route as AppOrgPrototypePerformanceGroupIdRouteImport } from './routes/_app/$org/prototype.performance.$groupId'
+import { Route as AppOrgPrototypePerformanceNPlusOneRouteImport } from './routes/_app/$org/prototype.performance.n-plus-one'
 import { Route as AppOrgIssuesIssueIdEventsEventIdRouteImport } from './routes/_app/$org/issues/$issueId/events/$eventId'
 
 const AppRouteRoute = AppRouteRouteImport.update({
@@ -73,6 +77,11 @@ const AppOrgIssuesIndexRoute = AppOrgIssuesIndexRouteImport.update({
   path: '/issues/',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppOrgPrototypeLogsRoute = AppOrgPrototypeLogsRouteImport.update({
+  id: '/prototype/logs',
+  path: '/prototype/logs',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
 const AppOrgProjectIssuesIssueIdRoute =
   AppOrgProjectIssuesIssueIdRouteImport.update({
     id: '/$project/issues/$issueId',
@@ -90,6 +99,24 @@ const AppOrgIssuesIssueIdTabRoute = AppOrgIssuesIssueIdTabRouteImport.update({
   path: '/issues/$issueId/$tab',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppOrgPrototypePerformanceIndexRoute =
+  AppOrgPrototypePerformanceIndexRouteImport.update({
+    id: '/prototype/performance/',
+    path: '/prototype/performance/',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgPrototypePerformanceGroupIdRoute =
+  AppOrgPrototypePerformanceGroupIdRouteImport.update({
+    id: '/prototype/performance/$groupId',
+    path: '/prototype/performance/$groupId',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgPrototypePerformanceNPlusOneRoute =
+  AppOrgPrototypePerformanceNPlusOneRouteImport.update({
+    id: '/prototype/performance/n-plus-one',
+    path: '/prototype/performance/n-plus-one',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
 const AppOrgIssuesIssueIdEventsEventIdRoute =
   AppOrgIssuesIssueIdEventsEventIdRouteImport.update({
     id: '/issues/$issueId/events/$eventId',
@@ -106,10 +133,14 @@ export interface FileRoutesByFullPath {
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
   '/$org/': typeof AppOrgIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/$org/prototype/logs': typeof AppOrgPrototypeLogsRoute
   '/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/$org/prototype/performance/$groupId': typeof AppOrgPrototypePerformanceGroupIdRoute
+  '/$org/prototype/performance/n-plus-one': typeof AppOrgPrototypePerformanceNPlusOneRoute
   '/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/prototype/performance/': typeof AppOrgPrototypePerformanceIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 export interface FileRoutesByTo {
@@ -120,10 +151,14 @@ export interface FileRoutesByTo {
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
   '/$org': typeof AppOrgIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/$org/prototype/logs': typeof AppOrgPrototypeLogsRoute
   '/$org/issues': typeof AppOrgIssuesIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/$org/prototype/performance/$groupId': typeof AppOrgPrototypePerformanceGroupIdRoute
+  '/$org/prototype/performance/n-plus-one': typeof AppOrgPrototypePerformanceNPlusOneRoute
   '/$org/issues/$issueId': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/prototype/performance': typeof AppOrgPrototypePerformanceIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 export interface FileRoutesById {
@@ -137,10 +172,14 @@ export interface FileRoutesById {
   '/_app/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
   '/_app/$org/': typeof AppOrgIndexRoute
   '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/_app/$org/prototype/logs': typeof AppOrgPrototypeLogsRoute
   '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/_app/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/_app/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/_app/$org/prototype/performance/$groupId': typeof AppOrgPrototypePerformanceGroupIdRoute
+  '/_app/$org/prototype/performance/n-plus-one': typeof AppOrgPrototypePerformanceNPlusOneRoute
   '/_app/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/_app/$org/prototype/performance/': typeof AppOrgPrototypePerformanceIndexRoute
   '/_app/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 export interface FileRouteTypes {
@@ -154,10 +193,14 @@ export interface FileRouteTypes {
     | '/$org/$section'
     | '/$org/'
     | '/$org/$section/$'
+    | '/$org/prototype/logs'
     | '/$org/issues/'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/$org/prototype/performance/$groupId'
+    | '/$org/prototype/performance/n-plus-one'
     | '/$org/issues/$issueId/'
+    | '/$org/prototype/performance/'
     | '/$org/issues/$issueId/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -168,10 +211,14 @@ export interface FileRouteTypes {
     | '/$org/$section'
     | '/$org'
     | '/$org/$section/$'
+    | '/$org/prototype/logs'
     | '/$org/issues'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/$org/prototype/performance/$groupId'
+    | '/$org/prototype/performance/n-plus-one'
     | '/$org/issues/$issueId'
+    | '/$org/prototype/performance'
     | '/$org/issues/$issueId/events/$eventId'
   id:
     | '__root__'
@@ -184,10 +231,14 @@ export interface FileRouteTypes {
     | '/_app/$org/$section'
     | '/_app/$org/'
     | '/_app/$org/$section/$'
+    | '/_app/$org/prototype/logs'
     | '/_app/$org/issues/'
     | '/_app/$org/$project/issues/$issueId'
     | '/_app/$org/issues/$issueId/$tab'
+    | '/_app/$org/prototype/performance/$groupId'
+    | '/_app/$org/prototype/performance/n-plus-one'
     | '/_app/$org/issues/$issueId/'
+    | '/_app/$org/prototype/performance/'
     | '/_app/$org/issues/$issueId/events/$eventId'
   fileRoutesById: FileRoutesById
 }
@@ -270,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgIssuesIndexRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/prototype/logs': {
+      id: '/_app/$org/prototype/logs'
+      path: '/prototype/logs'
+      fullPath: '/$org/prototype/logs'
+      preLoaderRoute: typeof AppOrgPrototypeLogsRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
     '/_app/$org/$project/issues/$issueId': {
       id: '/_app/$org/$project/issues/$issueId'
       path: '/$project/issues/$issueId'
@@ -289,6 +347,27 @@ declare module '@tanstack/react-router' {
       path: '/issues/$issueId/$tab'
       fullPath: '/$org/issues/$issueId/$tab'
       preLoaderRoute: typeof AppOrgIssuesIssueIdTabRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/prototype/performance/': {
+      id: '/_app/$org/prototype/performance/'
+      path: '/prototype/performance'
+      fullPath: '/$org/prototype/performance/'
+      preLoaderRoute: typeof AppOrgPrototypePerformanceIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/prototype/performance/$groupId': {
+      id: '/_app/$org/prototype/performance/$groupId'
+      path: '/prototype/performance/$groupId'
+      fullPath: '/$org/prototype/performance/$groupId'
+      preLoaderRoute: typeof AppOrgPrototypePerformanceGroupIdRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/prototype/performance/n-plus-one': {
+      id: '/_app/$org/prototype/performance/n-plus-one'
+      path: '/prototype/performance/n-plus-one'
+      fullPath: '/$org/prototype/performance/n-plus-one'
+      preLoaderRoute: typeof AppOrgPrototypePerformanceNPlusOneRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
     '/_app/$org/issues/$issueId/events/$eventId': {
@@ -315,20 +394,30 @@ const AppOrgSectionRouteRouteWithChildren =
 interface AppOrgRouteRouteChildren {
   AppOrgSectionRouteRoute: typeof AppOrgSectionRouteRouteWithChildren
   AppOrgIndexRoute: typeof AppOrgIndexRoute
+  AppOrgPrototypeLogsRoute: typeof AppOrgPrototypeLogsRoute
   AppOrgIssuesIndexRoute: typeof AppOrgIssuesIndexRoute
   AppOrgProjectIssuesIssueIdRoute: typeof AppOrgProjectIssuesIssueIdRoute
   AppOrgIssuesIssueIdTabRoute: typeof AppOrgIssuesIssueIdTabRoute
+  AppOrgPrototypePerformanceGroupIdRoute: typeof AppOrgPrototypePerformanceGroupIdRoute
+  AppOrgPrototypePerformanceNPlusOneRoute: typeof AppOrgPrototypePerformanceNPlusOneRoute
   AppOrgIssuesIssueIdIndexRoute: typeof AppOrgIssuesIssueIdIndexRoute
+  AppOrgPrototypePerformanceIndexRoute: typeof AppOrgPrototypePerformanceIndexRoute
   AppOrgIssuesIssueIdEventsEventIdRoute: typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 
 const AppOrgRouteRouteChildren: AppOrgRouteRouteChildren = {
   AppOrgSectionRouteRoute: AppOrgSectionRouteRouteWithChildren,
   AppOrgIndexRoute: AppOrgIndexRoute,
+  AppOrgPrototypeLogsRoute: AppOrgPrototypeLogsRoute,
   AppOrgIssuesIndexRoute: AppOrgIssuesIndexRoute,
   AppOrgProjectIssuesIssueIdRoute: AppOrgProjectIssuesIssueIdRoute,
   AppOrgIssuesIssueIdTabRoute: AppOrgIssuesIssueIdTabRoute,
+  AppOrgPrototypePerformanceGroupIdRoute:
+    AppOrgPrototypePerformanceGroupIdRoute,
+  AppOrgPrototypePerformanceNPlusOneRoute:
+    AppOrgPrototypePerformanceNPlusOneRoute,
   AppOrgIssuesIssueIdIndexRoute: AppOrgIssuesIssueIdIndexRoute,
+  AppOrgPrototypePerformanceIndexRoute: AppOrgPrototypePerformanceIndexRoute,
   AppOrgIssuesIssueIdEventsEventIdRoute: AppOrgIssuesIssueIdEventsEventIdRoute,
 }
 

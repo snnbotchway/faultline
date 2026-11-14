@@ -1,6 +1,8 @@
 import createClient, { type Middleware } from 'openapi-fetch'
-import type { paths as AllauthPaths } from './schema/allauth'
+import type { components as AllauthComponents, paths as AllauthPaths } from './schema/allauth'
 import type { paths } from './schema/openapi'
+
+type AllauthSchemas = AllauthComponents['schemas']
 
 export const HttpStatus = { unauthenticated: 401, sessionGone: 410, tooManyRequests: 429 } as const
 
@@ -87,22 +89,28 @@ export function unwrap<T>({ data, error, response }: ApiResult<T>): T {
 export const api = createClient<paths>({ baseUrl: '/', credentials: 'same-origin' })
 api.use(csrf, signedOut, unreachable)
 
-// allauth's own 401s describe sign-in state, so they skip the signed-out handler.
-export const allauth = createClient<AllauthPaths>({ baseUrl: '/', credentials: 'same-origin' })
-allauth.use(csrf, unreachable)
+const allauthClient = (...middleware: Middleware[]) => {
+  const client = createClient<AllauthPaths>({ baseUrl: '/', credentials: 'same-origin' })
+  client.use(csrf, ...middleware, unreachable)
+  return client
+}
 
-// On allauth's account endpoints a 401 with no step pending means the session ended.
+// allauth's own 401s describe sign-in state, so they skip the signed-out handler.
+export const allauth = allauthClient()
+
+type AllauthAuthResponse = Pick<AllauthSchemas['AuthenticationResponse'] | AllauthSchemas['ReauthenticationResponse'], 'meta'>
+
+// On allauth's account endpoints a 401 means the session ended, unless it asks a signed-in user to reauthenticate.
 const accountSignedOut: Middleware = {
   async onResponse({ response }) {
     if (response.status !== HttpStatus.unauthenticated) return
-    const body = (await response
+    const body: AllauthAuthResponse | undefined = await response
       .clone()
       .json()
-      .catch(() => undefined)) as { data?: { flows?: { is_pending?: boolean }[] } } | undefined
-    if (!body?.data?.flows?.some((flow) => flow.is_pending)) onSignedOut()
+      .catch(() => undefined)
+    if (body?.meta?.is_authenticated !== true) onSignedOut()
   },
 }
 
 // For the signed-in account's own settings (password, authenticators, linked accounts), never for signing in.
-export const allauthAccount = createClient<AllauthPaths>({ baseUrl: '/', credentials: 'same-origin' })
-allauthAccount.use(csrf, accountSignedOut, unreachable)
+export const allauthAccount = allauthClient(accountSignedOut)

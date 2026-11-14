@@ -42,3 +42,8 @@ test('a field the API rejects as too long says the limit', () => {
   const error = new ApiError(422, { detail: [{ type: 'string_too_long', loc: ['body', 'payload', 'name'], msg: 'String should have at most 255 characters', ctx: { max_length: 255 } }] })
   expect(formProblems(error, 'save your details', ['name']).fields).toEqual({ name: 'Use 255 characters or fewer.' })
 })
+
+test('a change that needs the user to sign in again says so', () => {
+  const error = new ApiError(401, { status: 401, data: { flows: [{ id: 'reauthenticate' }] }, meta: { is_authenticated: true } })
+  expect(formProblems(error, 'change your password')).toEqual({ fields: {}, message: 'Sign in again to make this change.' })
+})

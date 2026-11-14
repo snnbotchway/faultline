@@ -123,7 +123,9 @@ Faultline never shows the backend's sentences. It words each error by allauth's 
 | `PUT /api/0/users/me/` | Needs `options` in the body (422 `missing` otherwise); `name` is at most 255 characters |
 | `DELETE .../account/providers` | 400 `no_password`, `no_verified_email` or `disconnect_last` when disconnecting would leave no way to sign in; `account_not_found` |
 | `POST .../auth/provider/redirect` with `process=connect` | A failed connection comes back to the `callback_url` with `?error=…&error_process=connect` |
-| Any `.../account/*` endpoint after the session ended | 401 whose `flows` has nothing `is_pending`. Faultline treats that as signed out; sign-in endpoints keep their own 401 handling. `ACCOUNT_REAUTHENTICATION_TIMEOUT` equals the session age, so no `reauthenticate` flow appears in practice |
+| Any `.../account/*` endpoint after the session ended | 401 with `meta.is_authenticated` not `true`. Faultline treats that as signed out; sign-in endpoints keep their own 401 handling |
+| Any `.../account/*` endpoint that needs a fresh sign-in | 401 with `meta.is_authenticated: true` and a `reauthenticate` (or `mfa_reauthenticate`) flow, not pending (`allauth/headless/base/views.py` `ReauthenticationResponse`). Faultline says "Sign in again to make this change." `ACCOUNT_REAUTHENTICATION_TIMEOUT` equals the session age, so it does not appear in practice |
+| Every allauth text input, passwords included | Stripped before validation (Django `CharField`, `strip=True`): a password of only spaces is `required`, outer spaces do not count towards the 8 characters, and the stored password has none |
 | `POST .../auth/2fa/authenticate` after the pending sign-in expired | 401 with no pending flow, the same as signed out |
 
 ---

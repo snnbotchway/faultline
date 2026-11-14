@@ -35,6 +35,7 @@ export const FormText = {
   tooLong: (length: number) => `Use ${length} characters or fewer.`,
   // The backend says how long to wait in neither the body nor a header, so no time is promised.
   tooMany: 'Too many tries. Wait a few minutes, then try again.',
+  reauthenticate: 'Sign in again to make this change.',
 } as const
 
 const WRONG_CODE = "That code isn't right. Check it, then try again."
@@ -73,6 +74,14 @@ const DETAIL_TEXT: Record<string, string> = {
 }
 
 type AllauthError = { code?: string; param?: string }
+
+// allauth asks a signed-in user to prove it is them again: a 401 that still says the session is signed in.
+const needsReauthentication = (error: ApiError) =>
+  error.status === HttpStatus.unauthenticated &&
+  !!error.body &&
+  typeof error.body === 'object' &&
+  'meta' in error.body &&
+  (error.body as { meta?: { is_authenticated?: boolean } }).meta?.is_authenticated === true
 type InvalidInput = { type?: string; loc?: unknown[]; ctx?: { max_length?: number } }
 type Found = { field?: string; text?: string }
 
@@ -103,6 +112,7 @@ function inputText({ type, loc, ctx }: InvalidInput): Found {
 export function formProblems(error: unknown, action: string, shown: readonly string[] = []): FormProblems {
   if (!(error instanceof ApiError)) return { fields: {}, message: explain(error, action) }
   if (error.status === HttpStatus.tooManyRequests) return { fields: {}, message: FormText.tooMany }
+  if (needsReauthentication(error)) return { fields: {}, message: FormText.reauthenticate }
   const problems: FormProblems = { fields: {} }
   const found = [...listOf<AllauthError>(error.body, 'errors').map(allauthText), ...listOf<InvalidInput>(error.body, 'detail').map(inputText)]
   for (const { field, text } of found) {

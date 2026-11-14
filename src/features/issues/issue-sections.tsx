@@ -147,7 +147,6 @@ export function RequestSection({ event }: { event: IssueEvent }) {
   )
 }
 
-// The report a browser sent about what its content security policy blocked.
 export function CspSection({ event }: { event: IssueEvent }) {
   const report = cspOf(event)
   const pairs = Object.entries(report ?? {}).filter(([, value]) => value != null && value !== '')
@@ -163,7 +162,6 @@ export function CspSection({ event }: { event: IssueEvent }) {
   )
 }
 
-// What the SDK attached to the event as extra data.
 export function AdditionalData({ event }: { event: IssueEvent }) {
   const pairs = Object.entries(event.context ?? {}).filter(([, value]) => value != null && value !== '')
   if (pairs.length === 0) return null
@@ -285,19 +283,21 @@ export function UserReports({ org, issueId }: { org: string; issueId: string }) 
     <Section title="User reports" count={reports.length}>
       <ul className="space-y-4">
         {reports.map((report) => (
-          <li key={report.eventID + report.dateCreated} className="border-l pl-3">
+          <li key={report.eventID + report.dateCreated}>
             <Link
               to="/$org/issues/$issueId/events/$eventId"
               params={{ org, issueId, eventId: report.eventID }}
-              className="mono flex flex-wrap items-center gap-x-3 text-muted-foreground hover:bg-accent max-lg:min-h-11"
+              className="block border-l pl-3 hover:bg-accent max-lg:min-h-11"
             >
-              <span className="text-foreground">{report.name || report.email}</span>
-              {report.name && <span>{report.email}</span>}
-              <time dateTime={report.dateCreated} title={exact(report.dateCreated)}>
-                {ago(report.dateCreated)}
-              </time>
+              <span className="mono flex flex-wrap items-center gap-x-3 text-muted-foreground">
+                <span className="text-foreground">{report.name || report.email}</span>
+                {report.name && <span>{report.email}</span>}
+                <time dateTime={report.dateCreated} title={exact(report.dateCreated)}>
+                  {ago(report.dateCreated)}
+                </time>
+              </span>
+              <span className="prose-text mt-1 block whitespace-pre-wrap">{report.comments}</span>
             </Link>
-            <p className="prose-text mt-1 whitespace-pre-wrap">{report.comments}</p>
           </li>
         ))}
       </ul>

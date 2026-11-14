@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { organizationsQuery } from '@/api/organizations'
 import { Screen } from '@/components/shell/app-shell'
+import { BareShell } from '@/features/account/shell'
 import { LAST_ORG_KEY } from '@/lib/session'
 import { useTitle } from '@/lib/title'
 
@@ -17,10 +18,10 @@ export const Route = createFileRoute('/_app/')({
 function NoOrganization() {
   useTitle()
   return (
-    <div className="flex min-h-dvh">
+    <BareShell>
       <Screen title="No organization yet">
         <p className="prose-text text-muted-foreground">Ask an owner to invite you to theirs.</p>
       </Screen>
-    </div>
+    </BareShell>
   )
 }

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ChevronsUpDown, Ellipsis, LogOut, Monitor, Moon, Search, Sun } from 'lucide-react'
+import { ChevronsUpDown, Ellipsis, LogOut, Monitor, Moon, Search, Sun, UserRound } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { SessionStatus, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, organizationsQuery, type Feature } from '@/api/organizations'
@@ -153,6 +153,12 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
           <DropdownMenuContent align="end">
             <DropdownMenuLabel className="mono normal-case tracking-normal">{email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/profile">
+                <UserRound />
+                Profile
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => void leave()}>
               <LogOut />
               Sign out
@@ -197,6 +203,12 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
           <DropdownMenuLabel>Theme</DropdownMenuLabel>
           <ThemeItems />
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/profile">
+              <UserRound />
+              Profile
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => void leave()}>
             <LogOut />
             Sign out
@@ -233,6 +245,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
         run: () => void navigate({ to: '/$org/issues', params: { org: organization.slug } }),
       })),
     ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => setTheme(t.value) })),
+    { id: 'profile', group: CommandGroup.account, label: 'Profile', run: () => void navigate({ to: '/profile' }) },
     { id: 'sign-out', group: CommandGroup.account, label: 'Sign out', run: () => void leave() },
   ]
   useCommands(commands)
@@ -249,7 +262,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
   )
 }
 
-function Notice() {
+export function Notice() {
   const notice = useNotice()
   return (
     <div role="status" className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 max-lg:bottom-32">

@@ -15,13 +15,27 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppOrgRouteRouteImport } from './routes/_app/$org/route'
+import { Route as AppProfileRouteRouteImport } from './routes/_app/profile/route'
+import { Route as LoginOrgRouteImport } from './routes/login_.$org'
+import { Route as LoginFinalizeRouteImport } from './routes/login_.finalize'
 import { Route as AppOrgIndexRouteImport } from './routes/_app/$org/index'
 import { Route as AppOrgSectionRouteRouteImport } from './routes/_app/$org/$section/route'
+import { Route as AppProfileIndexRouteImport } from './routes/_app/profile/index'
+import { Route as AppProfileAuthTokensRouteImport } from './routes/_app/profile/auth-tokens'
+import { Route as AppProfileMultiFactorAuthRouteImport } from './routes/_app/profile/multi-factor-auth'
+import { Route as AppProfileNotificationsRouteImport } from './routes/_app/profile/notifications'
+import { Route as AcceptMemberIdTokenRouteImport } from './routes/accept.$memberId.$token'
+import { Route as ResetPasswordSetNewPasswordKeyRouteImport } from './routes/reset-password_.set-new-password.$key'
 import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$section/$'
 import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
+import { Route as AppProfileAuthTokensNewRouteImport } from './routes/_app/profile/auth-tokens_.new'
+import { Route as AppProfileConfirmEmailKeyRouteImport } from './routes/_app/profile_.confirm-email.$key'
+import { Route as AppProfileWizardHashRouteImport } from './routes/_app/profile_.wizard.$hash'
+import { Route as AccountSettingsWizardHashRouteImport } from './routes/account.settings.wizard.$hash'
 import { Route as AppOrgProjectIssuesIssueIdRouteImport } from './routes/_app/$org/$project/issues/$issueId'
 import { Route as AppOrgIssuesIssueIdIndexRouteImport } from './routes/_app/$org/issues/$issueId/index'
 import { Route as AppOrgIssuesIssueIdTabRouteImport } from './routes/_app/$org/issues/$issueId/$tab'
+import { Route as OrgredirectOrganizationsOrgSettingsAuthTokensRouteImport } from './routes/orgredirect.organizations.$org.settings.auth-tokens'
 import { Route as AppOrgIssuesIssueIdEventsEventIdRouteImport } from './routes/_app/$org/issues/$issueId/events/$eventId'
 
 const AppRouteRoute = AppRouteRouteImport.update({
@@ -53,6 +67,21 @@ const AppOrgRouteRoute = AppOrgRouteRouteImport.update({
   path: '/$org',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppProfileRouteRoute = AppProfileRouteRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const LoginOrgRoute = LoginOrgRouteImport.update({
+  id: '/login_/$org',
+  path: '/login/$org',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginFinalizeRoute = LoginFinalizeRouteImport.update({
+  id: '/login_/finalize',
+  path: '/login/finalize',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppOrgIndexRoute = AppOrgIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -63,6 +92,38 @@ const AppOrgSectionRouteRoute = AppOrgSectionRouteRouteImport.update({
   path: '/$section',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppProfileIndexRoute = AppProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppProfileRouteRoute,
+} as any)
+const AppProfileAuthTokensRoute = AppProfileAuthTokensRouteImport.update({
+  id: '/auth-tokens',
+  path: '/auth-tokens',
+  getParentRoute: () => AppProfileRouteRoute,
+} as any)
+const AppProfileMultiFactorAuthRoute =
+  AppProfileMultiFactorAuthRouteImport.update({
+    id: '/multi-factor-auth',
+    path: '/multi-factor-auth',
+    getParentRoute: () => AppProfileRouteRoute,
+  } as any)
+const AppProfileNotificationsRoute = AppProfileNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppProfileRouteRoute,
+} as any)
+const AcceptMemberIdTokenRoute = AcceptMemberIdTokenRouteImport.update({
+  id: '/accept/$memberId/$token',
+  path: '/accept/$memberId/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordSetNewPasswordKeyRoute =
+  ResetPasswordSetNewPasswordKeyRouteImport.update({
+    id: '/reset-password_/set-new-password/$key',
+    path: '/reset-password/set-new-password/$key',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppOrgSectionSplatRoute = AppOrgSectionSplatRouteImport.update({
   id: '/$',
   path: '/$',
@@ -73,6 +134,28 @@ const AppOrgIssuesIndexRoute = AppOrgIssuesIndexRouteImport.update({
   path: '/issues/',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppProfileAuthTokensNewRoute = AppProfileAuthTokensNewRouteImport.update({
+  id: '/auth-tokens_/new',
+  path: '/auth-tokens/new',
+  getParentRoute: () => AppProfileRouteRoute,
+} as any)
+const AppProfileConfirmEmailKeyRoute =
+  AppProfileConfirmEmailKeyRouteImport.update({
+    id: '/profile_/confirm-email/$key',
+    path: '/profile/confirm-email/$key',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
+const AppProfileWizardHashRoute = AppProfileWizardHashRouteImport.update({
+  id: '/profile_/wizard/$hash',
+  path: '/profile/wizard/$hash',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AccountSettingsWizardHashRoute =
+  AccountSettingsWizardHashRouteImport.update({
+    id: '/account/settings/wizard/$hash',
+    path: '/account/settings/wizard/$hash',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppOrgProjectIssuesIssueIdRoute =
   AppOrgProjectIssuesIssueIdRouteImport.update({
     id: '/$project/issues/$issueId',
@@ -90,6 +173,12 @@ const AppOrgIssuesIssueIdTabRoute = AppOrgIssuesIssueIdTabRouteImport.update({
   path: '/issues/$issueId/$tab',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const OrgredirectOrganizationsOrgSettingsAuthTokensRoute =
+  OrgredirectOrganizationsOrgSettingsAuthTokensRouteImport.update({
+    id: '/orgredirect/organizations/$org/settings/auth-tokens',
+    path: '/orgredirect/organizations/$org/settings/auth-tokens',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppOrgIssuesIssueIdEventsEventIdRoute =
   AppOrgIssuesIssueIdEventsEventIdRouteImport.update({
     id: '/issues/$issueId/events/$eventId',
@@ -103,12 +192,26 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/$org': typeof AppOrgRouteRouteWithChildren
+  '/profile': typeof AppProfileRouteRouteWithChildren
+  '/login/$org': typeof LoginOrgRoute
+  '/login/finalize': typeof LoginFinalizeRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/profile/auth-tokens': typeof AppProfileAuthTokensRoute
+  '/profile/multi-factor-auth': typeof AppProfileMultiFactorAuthRoute
+  '/profile/notifications': typeof AppProfileNotificationsRoute
+  '/accept/$memberId/$token': typeof AcceptMemberIdTokenRoute
+  '/reset-password/set-new-password/$key': typeof ResetPasswordSetNewPasswordKeyRoute
   '/$org/': typeof AppOrgIndexRoute
+  '/profile/': typeof AppProfileIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/profile/auth-tokens/new': typeof AppProfileAuthTokensNewRoute
+  '/profile/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
+  '/profile/wizard/$hash': typeof AppProfileWizardHashRoute
+  '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -116,13 +219,26 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/login/$org': typeof LoginOrgRoute
+  '/login/finalize': typeof LoginFinalizeRoute
   '/': typeof AppIndexRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/profile/auth-tokens': typeof AppProfileAuthTokensRoute
+  '/profile/multi-factor-auth': typeof AppProfileMultiFactorAuthRoute
+  '/profile/notifications': typeof AppProfileNotificationsRoute
+  '/accept/$memberId/$token': typeof AcceptMemberIdTokenRoute
+  '/reset-password/set-new-password/$key': typeof ResetPasswordSetNewPasswordKeyRoute
   '/$org': typeof AppOrgIndexRoute
+  '/profile': typeof AppProfileIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/profile/auth-tokens/new': typeof AppProfileAuthTokensNewRoute
+  '/profile/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
+  '/profile/wizard/$hash': typeof AppProfileWizardHashRoute
+  '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/$org/issues': typeof AppOrgIssuesIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId': typeof AppOrgIssuesIssueIdIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -133,13 +249,27 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/$org': typeof AppOrgRouteRouteWithChildren
+  '/_app/profile': typeof AppProfileRouteRouteWithChildren
+  '/login_/$org': typeof LoginOrgRoute
+  '/login_/finalize': typeof LoginFinalizeRoute
   '/_app/': typeof AppIndexRoute
   '/_app/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/_app/profile/auth-tokens': typeof AppProfileAuthTokensRoute
+  '/_app/profile/multi-factor-auth': typeof AppProfileMultiFactorAuthRoute
+  '/_app/profile/notifications': typeof AppProfileNotificationsRoute
+  '/accept/$memberId/$token': typeof AcceptMemberIdTokenRoute
+  '/reset-password_/set-new-password/$key': typeof ResetPasswordSetNewPasswordKeyRoute
   '/_app/$org/': typeof AppOrgIndexRoute
+  '/_app/profile/': typeof AppProfileIndexRoute
   '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/_app/profile/auth-tokens_/new': typeof AppProfileAuthTokensNewRoute
+  '/_app/profile_/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
+  '/_app/profile_/wizard/$hash': typeof AppProfileWizardHashRoute
+  '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/_app/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/_app/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/_app/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
   '/_app/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -151,12 +281,26 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/$org'
+    | '/profile'
+    | '/login/$org'
+    | '/login/finalize'
     | '/$org/$section'
+    | '/profile/auth-tokens'
+    | '/profile/multi-factor-auth'
+    | '/profile/notifications'
+    | '/accept/$memberId/$token'
+    | '/reset-password/set-new-password/$key'
     | '/$org/'
+    | '/profile/'
     | '/$org/$section/$'
+    | '/profile/auth-tokens/new'
+    | '/profile/confirm-email/$key'
+    | '/profile/wizard/$hash'
+    | '/account/settings/wizard/$hash'
     | '/$org/issues/'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId/'
     | '/$org/issues/$issueId/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
@@ -164,13 +308,26 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/login/$org'
+    | '/login/finalize'
     | '/'
     | '/$org/$section'
+    | '/profile/auth-tokens'
+    | '/profile/multi-factor-auth'
+    | '/profile/notifications'
+    | '/accept/$memberId/$token'
+    | '/reset-password/set-new-password/$key'
     | '/$org'
+    | '/profile'
     | '/$org/$section/$'
+    | '/profile/auth-tokens/new'
+    | '/profile/confirm-email/$key'
+    | '/profile/wizard/$hash'
+    | '/account/settings/wizard/$hash'
     | '/$org/issues'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId'
     | '/$org/issues/$issueId/events/$eventId'
   id:
@@ -180,13 +337,27 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_app/$org'
+    | '/_app/profile'
+    | '/login_/$org'
+    | '/login_/finalize'
     | '/_app/'
     | '/_app/$org/$section'
+    | '/_app/profile/auth-tokens'
+    | '/_app/profile/multi-factor-auth'
+    | '/_app/profile/notifications'
+    | '/accept/$memberId/$token'
+    | '/reset-password_/set-new-password/$key'
     | '/_app/$org/'
+    | '/_app/profile/'
     | '/_app/$org/$section/$'
+    | '/_app/profile/auth-tokens_/new'
+    | '/_app/profile_/confirm-email/$key'
+    | '/_app/profile_/wizard/$hash'
+    | '/account/settings/wizard/$hash'
     | '/_app/$org/issues/'
     | '/_app/$org/$project/issues/$issueId'
     | '/_app/$org/issues/$issueId/$tab'
+    | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/_app/$org/issues/$issueId/'
     | '/_app/$org/issues/$issueId/events/$eventId'
   fileRoutesById: FileRoutesById
@@ -196,6 +367,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  LoginOrgRoute: typeof LoginOrgRoute
+  LoginFinalizeRoute: typeof LoginFinalizeRoute
+  AcceptMemberIdTokenRoute: typeof AcceptMemberIdTokenRoute
+  ResetPasswordSetNewPasswordKeyRoute: typeof ResetPasswordSetNewPasswordKeyRoute
+  AccountSettingsWizardHashRoute: typeof AccountSettingsWizardHashRoute
+  OrgredirectOrganizationsOrgSettingsAuthTokensRoute: typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -242,6 +419,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/login_/$org': {
+      id: '/login_/$org'
+      path: '/login/$org'
+      fullPath: '/login/$org'
+      preLoaderRoute: typeof LoginOrgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login_/finalize': {
+      id: '/login_/finalize'
+      path: '/login/finalize'
+      fullPath: '/login/finalize'
+      preLoaderRoute: typeof LoginFinalizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/$org/': {
       id: '/_app/$org/'
       path: '/'
@@ -256,6 +454,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSectionRouteRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/profile/': {
+      id: '/_app/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof AppProfileIndexRouteImport
+      parentRoute: typeof AppProfileRouteRoute
+    }
+    '/_app/profile/auth-tokens': {
+      id: '/_app/profile/auth-tokens'
+      path: '/auth-tokens'
+      fullPath: '/profile/auth-tokens'
+      preLoaderRoute: typeof AppProfileAuthTokensRouteImport
+      parentRoute: typeof AppProfileRouteRoute
+    }
+    '/_app/profile/multi-factor-auth': {
+      id: '/_app/profile/multi-factor-auth'
+      path: '/multi-factor-auth'
+      fullPath: '/profile/multi-factor-auth'
+      preLoaderRoute: typeof AppProfileMultiFactorAuthRouteImport
+      parentRoute: typeof AppProfileRouteRoute
+    }
+    '/_app/profile/notifications': {
+      id: '/_app/profile/notifications'
+      path: '/notifications'
+      fullPath: '/profile/notifications'
+      preLoaderRoute: typeof AppProfileNotificationsRouteImport
+      parentRoute: typeof AppProfileRouteRoute
+    }
+    '/accept/$memberId/$token': {
+      id: '/accept/$memberId/$token'
+      path: '/accept/$memberId/$token'
+      fullPath: '/accept/$memberId/$token'
+      preLoaderRoute: typeof AcceptMemberIdTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password_/set-new-password/$key': {
+      id: '/reset-password_/set-new-password/$key'
+      path: '/reset-password/set-new-password/$key'
+      fullPath: '/reset-password/set-new-password/$key'
+      preLoaderRoute: typeof ResetPasswordSetNewPasswordKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/$org/$section/$': {
       id: '/_app/$org/$section/$'
       path: '/$'
@@ -269,6 +509,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/$org/issues/'
       preLoaderRoute: typeof AppOrgIssuesIndexRouteImport
       parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/profile/auth-tokens_/new': {
+      id: '/_app/profile/auth-tokens_/new'
+      path: '/auth-tokens/new'
+      fullPath: '/profile/auth-tokens/new'
+      preLoaderRoute: typeof AppProfileAuthTokensNewRouteImport
+      parentRoute: typeof AppProfileRouteRoute
+    }
+    '/_app/profile_/confirm-email/$key': {
+      id: '/_app/profile_/confirm-email/$key'
+      path: '/profile/confirm-email/$key'
+      fullPath: '/profile/confirm-email/$key'
+      preLoaderRoute: typeof AppProfileConfirmEmailKeyRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/profile_/wizard/$hash': {
+      id: '/_app/profile_/wizard/$hash'
+      path: '/profile/wizard/$hash'
+      fullPath: '/profile/wizard/$hash'
+      preLoaderRoute: typeof AppProfileWizardHashRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/account/settings/wizard/$hash': {
+      id: '/account/settings/wizard/$hash'
+      path: '/account/settings/wizard/$hash'
+      fullPath: '/account/settings/wizard/$hash'
+      preLoaderRoute: typeof AccountSettingsWizardHashRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/$org/$project/issues/$issueId': {
       id: '/_app/$org/$project/issues/$issueId'
@@ -290,6 +558,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$org/issues/$issueId/$tab'
       preLoaderRoute: typeof AppOrgIssuesIssueIdTabRouteImport
       parentRoute: typeof AppOrgRouteRoute
+    }
+    '/orgredirect/organizations/$org/settings/auth-tokens': {
+      id: '/orgredirect/organizations/$org/settings/auth-tokens'
+      path: '/orgredirect/organizations/$org/settings/auth-tokens'
+      fullPath: '/orgredirect/organizations/$org/settings/auth-tokens'
+      preLoaderRoute: typeof OrgredirectOrganizationsOrgSettingsAuthTokensRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/$org/issues/$issueId/events/$eventId': {
       id: '/_app/$org/issues/$issueId/events/$eventId'
@@ -336,14 +611,40 @@ const AppOrgRouteRouteWithChildren = AppOrgRouteRoute._addFileChildren(
   AppOrgRouteRouteChildren,
 )
 
+interface AppProfileRouteRouteChildren {
+  AppProfileAuthTokensRoute: typeof AppProfileAuthTokensRoute
+  AppProfileMultiFactorAuthRoute: typeof AppProfileMultiFactorAuthRoute
+  AppProfileNotificationsRoute: typeof AppProfileNotificationsRoute
+  AppProfileIndexRoute: typeof AppProfileIndexRoute
+  AppProfileAuthTokensNewRoute: typeof AppProfileAuthTokensNewRoute
+}
+
+const AppProfileRouteRouteChildren: AppProfileRouteRouteChildren = {
+  AppProfileAuthTokensRoute: AppProfileAuthTokensRoute,
+  AppProfileMultiFactorAuthRoute: AppProfileMultiFactorAuthRoute,
+  AppProfileNotificationsRoute: AppProfileNotificationsRoute,
+  AppProfileIndexRoute: AppProfileIndexRoute,
+  AppProfileAuthTokensNewRoute: AppProfileAuthTokensNewRoute,
+}
+
+const AppProfileRouteRouteWithChildren = AppProfileRouteRoute._addFileChildren(
+  AppProfileRouteRouteChildren,
+)
+
 interface AppRouteRouteChildren {
   AppOrgRouteRoute: typeof AppOrgRouteRouteWithChildren
+  AppProfileRouteRoute: typeof AppProfileRouteRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
+  AppProfileConfirmEmailKeyRoute: typeof AppProfileConfirmEmailKeyRoute
+  AppProfileWizardHashRoute: typeof AppProfileWizardHashRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOrgRouteRoute: AppOrgRouteRouteWithChildren,
+  AppProfileRouteRoute: AppProfileRouteRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
+  AppProfileConfirmEmailKeyRoute: AppProfileConfirmEmailKeyRoute,
+  AppProfileWizardHashRoute: AppProfileWizardHashRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
@@ -355,6 +656,13 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  LoginOrgRoute: LoginOrgRoute,
+  LoginFinalizeRoute: LoginFinalizeRoute,
+  AcceptMemberIdTokenRoute: AcceptMemberIdTokenRoute,
+  ResetPasswordSetNewPasswordKeyRoute: ResetPasswordSetNewPasswordKeyRoute,
+  AccountSettingsWizardHashRoute: AccountSettingsWizardHashRoute,
+  OrgredirectOrganizationsOrgSettingsAuthTokensRoute:
+    OrgredirectOrganizationsOrgSettingsAuthTokensRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

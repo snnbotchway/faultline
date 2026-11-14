@@ -1,19 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { HeartPulse, Globe, Plug, Radio, Send, X, type LucideIcon } from 'lucide-react'
+import { HeartPulse, Globe, Plug, Radio, Send, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { ApiError } from '@/api/client'
-import { MonitorRefusal, MonitorType, monitorActions, monitorKeys, type Monitor, type MonitorDetail, type MonitorInput } from '@/api/monitors'
+import { MonitorRefusal, MonitorType, isHttp, monitorActions, monitorKeys, monitorRefusal, type Monitor, type MonitorDetail, type MonitorInput } from '@/api/monitors'
 import { projectEnvironmentsQuery, projectsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { CopyField } from '@/components/ui/copy-field'
+import { Dialog, DialogBar, DialogContent } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input, Select } from '@/components/ui/input'
+import { ALL_ENVIRONMENTS } from '@/features/alerts/conditions'
 import { withScheme } from '@/features/alerts/recipient-kinds'
 import { failed, notify } from '@/lib/notice'
 import { cn } from '@/lib/utils'
 import { every } from './format'
-import { CopyField } from './parts'
 
+// The kinds a monitor can be made as, or switched between. An SSL monitor keeps its kind.
 const TYPES: { value: MonitorType; label: string; icon: LucideIcon }[] = [
   { value: MonitorType.get, label: 'GET', icon: Globe },
   { value: MonitorType.post, label: 'POST', icon: Send },
@@ -26,19 +27,27 @@ const THRESHOLDS = [1, 2, 3, 5]
 const MAX_TIMEOUT = 60
 const DEFAULT_TIMEOUT = 20
 
-const isHttp = (type: MonitorType) => type === MonitorType.get || type === MonitorType.post
+const isOffered = (type: string) => TYPES.some((offered) => offered.value === type)
 const ADDRESS: Partial<Record<MonitorType, { label: string; noun: string; placeholder: string }>> = {
   [MonitorType.get]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com/health' },
   [MonitorType.post]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com/health' },
   [MonitorType.ping]: { label: 'Host', noun: 'host', placeholder: 'example.com' },
   [MonitorType.port]: { label: 'Host and port', noun: 'host and port', placeholder: 'db.example.com:5432' },
+  [MonitorType.ssl]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com' },
 }
+
+// HTTP and SSL checks take a whole address; ping and port take a host without a scheme.
+const addressFor = (type: MonitorType, url: string) => (isHttp(type) || type === MonitorType.ssl ? withScheme(url) : url.replace(/^\w+:\/\//, ''))
+
+// The choices with the monitor's current value among them, when it was set to one the list lacks.
+const withCurrent = (choices: number[], current: number) => (choices.includes(current) ? choices : [...choices, current].sort((a, b) => a - b))
 
 type Draft = { name: string; type: MonitorType; url: string; status: string; body: string; interval: number; timeout: string; threshold: number; project: string; environment: string }
 
 const draftFrom = (monitor?: MonitorDetail): Draft => ({
   name: monitor?.name ?? '',
-  type: TYPES.some((type) => type.value === monitor?.monitorType) ? (monitor!.monitorType as MonitorType) : MonitorType.get,
+  // A saved monitor keeps its kind, including one the type picker does not offer.
+  type: (monitor?.monitorType as MonitorType | undefined) ?? MonitorType.get,
   url: monitor?.url ?? '',
   status: String(monitor?.expectedStatus ?? 200),
   body: monitor?.expectedBody ?? '',
@@ -62,15 +71,15 @@ function validate(draft: Draft): Partial<Record<'name' | 'url' | 'status' | 'tim
   return errors
 }
 
-const detailOf = (error: unknown) => (error instanceof ApiError && error.body && typeof error.body === 'object' && 'detail' in error.body ? error.body.detail : undefined)
-
 // The backend's refusals of an address, in the user's words.
+const ADDRESS_REFUSED: Partial<Record<MonitorRefusal, string>> = {
+  [MonitorRefusal.privateAddress]: 'This address is on a private network. Monitors can only check public addresses.',
+  [MonitorRefusal.badAddress]: 'Enter a full address, such as https://example.com/health.',
+  [MonitorRefusal.badPort]: 'Enter a host and port, such as db.example.com:5432.',
+}
 function addressError(error: unknown): string | undefined {
-  const detail = detailOf(error)
-  if (detail === MonitorRefusal.privateAddress) return 'This address is on a private network. Monitors can only check public addresses.'
-  if (detail === MonitorRefusal.badAddress) return 'Enter a full address, such as https://example.com/health.'
-  if (detail === MonitorRefusal.badPort) return 'Enter a host and port, such as db.example.com:5432.'
-  return undefined
+  const refusal = monitorRefusal(error)
+  return refusal && ADDRESS_REFUSED[refusal]
 }
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
@@ -105,7 +114,7 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
       const body: MonitorInput = {
         name: draft.name.trim(),
         monitorType: draft.type,
-        url: heartbeat ? '' : isHttp(draft.type) ? withScheme(url) : url.replace(/^\w+:\/\//, ''),
+        url: heartbeat ? '' : addressFor(draft.type, url),
         expectedStatus: isHttp(draft.type) ? Number(draft.status) : null,
         expectedBody: isHttp(draft.type) ? draft.body : '',
         interval: draft.interval,
@@ -124,29 +133,18 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
     },
     onError: (error) => {
       if (addressError(error)) return
-      const detail = detailOf(error)
-      if (typeof detail === 'string' && detail.startsWith(MonitorRefusal.limit)) notify('This organization has as many monitors as it may have. Delete one to add another.', true)
+      if (monitorRefusal(error) === MonitorRefusal.limit) notify('This organization has as many monitors as it may have. Delete one to add another.', true)
       else failed(error, 'save the monitor')
     },
   })
   const refused = addressError(save.error)
-  const intervals = INTERVALS.includes(draft.interval) ? INTERVALS : [...INTERVALS, draft.interval].sort((a, b) => a - b)
-
-  const header = (title: string) => (
-    <div className="flex h-11 shrink-0 items-center justify-between border-b pr-2 pl-4">
-      <DialogTitle className="truncate text-base">{title}</DialogTitle>
-      <DialogClose aria-label="Close" title="Close" className="grid size-8 shrink-0 cursor-pointer place-items-center hover:bg-accent max-lg:size-11">
-        <X className="size-4" />
-      </DialogClose>
-    </div>
-  )
 
   return (
     <Dialog open onOpenChange={(next) => !next && (created ? onCreated(created) : onClose())}>
-      <DialogContent aria-describedby={undefined} onOpenAutoFocus={(event) => event.preventDefault()} className="top-[4vh] flex max-h-[92vh] max-w-2xl flex-col">
+      <DialogContent tall aria-describedby={undefined} onOpenAutoFocus={(event) => event.preventDefault()} className="max-w-2xl">
         {created ? (
           <>
-            {header(`${created.name} is ready`)}
+            <DialogBar title={`${created.name} is ready`} />
             <div className="flex flex-col gap-3 p-4">
               <p>Call this address every {every(created.interval)}.</p>
               <CopyField value={created.heartbeatEndpoint ?? ''} label="Heartbeat address" />
@@ -159,7 +157,7 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
           </>
         ) : (
           <>
-            {header(monitor ? `Edit ${monitor.name}` : 'New monitor')}
+            <DialogBar title={monitor ? `Edit ${monitor.name}` : 'New monitor'} />
             <form
               noValidate
               className="flex min-h-0 flex-col"
@@ -171,24 +169,31 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
             >
               <div className="min-h-0 overflow-y-auto px-4">
                 <Group label="Check">
-                  <div role="radiogroup" aria-label="Type" className="grid grid-cols-5 border bg-card">
-                    {TYPES.map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={draft.type === type.value}
-                        onClick={() => set('type', type.value)}
-                        className={cn(
-                          'flex h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 border-r text-sm font-medium -outline-offset-2 last:border-r-0',
-                          draft.type === type.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                        )}
-                      >
-                        <type.icon className="size-4" strokeWidth={1.8} />
-                        {type.label}
-                      </button>
-                    ))}
-                  </div>
+                  {!isOffered(draft.type) ? (
+                    <p className="flex min-h-9 items-center gap-3">
+                      <span className="mono font-semibold">{draft.type}</span>
+                      <span className="text-muted-foreground">This kind of check is set up through the API and can't be changed here.</span>
+                    </p>
+                  ) : (
+                    <div role="radiogroup" aria-label="Type" className="grid grid-cols-5 border bg-card">
+                      {TYPES.map((type) => (
+                        <button
+                          key={type.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={draft.type === type.value}
+                          onClick={() => set('type', type.value)}
+                          className={cn(
+                            'flex h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 border-r text-sm font-medium -outline-offset-2 last:border-r-0',
+                            draft.type === type.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                          )}
+                        >
+                          <type.icon className="size-4" />
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {heartbeat ? (
                     monitor?.heartbeatEndpoint && (
                       <div className="flex flex-col gap-2">
@@ -234,7 +239,7 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
                     <Field label={heartbeat ? 'A heartbeat every' : 'Every'}>
                       {(props) => (
                         <Select {...props} value={draft.interval} onChange={(event) => set('interval', Number(event.target.value))}>
-                          {intervals.map((seconds) => (
+                          {withCurrent(INTERVALS, draft.interval).map((seconds) => (
                             <option key={seconds} value={seconds}>
                               {every(seconds)}
                             </option>
@@ -250,7 +255,7 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
                         <Field label="Down after">
                           {(props) => (
                             <Select {...props} value={draft.threshold} onChange={(event) => set('threshold', Number(event.target.value))}>
-                              {(THRESHOLDS.includes(draft.threshold) ? THRESHOLDS : [...THRESHOLDS, draft.threshold].sort((a, b) => a - b)).map((count) => (
+                              {withCurrent(THRESHOLDS, draft.threshold).map((count) => (
                                 <option key={count} value={count}>
                                   {count} failed
                                 </option>
@@ -279,9 +284,9 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
                     <Field label="Environment">
                       {(props) => (
                         <Select {...props} className="font-mono" value={draft.environment} disabled={!draft.project} onChange={(event) => set('environment', event.target.value)}>
-                          <option value="">Any</option>
+                          <option value="">{ALL_ENVIRONMENTS}</option>
                           {environments?.map((environment) => (
-                            <option key={environment.id} value={environment.id ?? ""}>
+                            <option key={environment.id} value={environment.id ?? ''}>
                               {environment.name}
                             </option>
                           ))}

@@ -31,8 +31,9 @@ const DETAIL_ENDINGS: [string, string][] = [
   [' is already invited', "They're already invited. Open their row to send the invite again."],
 ]
 
-const detailOf = (error: ApiError) =>
-  error.body && typeof error.body === 'object' && 'detail' in error.body && typeof error.body.detail === 'string' ? error.body.detail : undefined
+// The backend's own sentence for why it refused, when it sent one.
+export const detailOf = (error: unknown) =>
+  error instanceof ApiError && error.body && typeof error.body === 'object' && 'detail' in error.body && typeof error.body.detail === 'string' ? error.body.detail : undefined
 
 /**
  * What to tell the user when `action` failed ("resolve the issue"). The backend's own

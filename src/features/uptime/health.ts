@@ -1,4 +1,5 @@
 import type { Check } from '@/api/monitors'
+import { DAY } from '@/lib/time'
 
 // The backend knows only up and down. Slow and flapping are read off the checks it returns.
 export const Health = { down: 'down', flapping: 'flapping', slow: 'slow', up: 'up', waiting: 'waiting' } as const
@@ -8,7 +9,7 @@ export type Health = (typeof Health)[keyof typeof Health]
 export const SLOW_SHARE = 0.5
 // Flapping: up now, but down at least this many times within the window.
 export const FLAPPING_DOWNS = 3
-export const FLAPPING_WINDOW = 24 * 3_600_000
+export const FLAPPING_WINDOW = DAY
 
 export type Downtime = { from: number; to: number; reason: number | null; ongoing: boolean }
 
@@ -40,6 +41,10 @@ export const isSlow = (check: Pick<Check, 'isUp' | 'responseTime'>, timeout: num
   return check.isUp && over !== undefined && (check.responseTime ?? 0) > over
 }
 
+// What one check says: it failed, it passed but slowly, or it passed.
+export const checkHealth = (check: Pick<Check, 'isUp' | 'responseTime'>, timeout: number | null | undefined): Health =>
+  !check.isUp ? Health.down : isSlow(check, timeout) ? Health.slow : Health.up
+
 // The median response time of the checks that passed.
 export function typicalResponse(checks: Pick<Check, 'isUp' | 'responseTime'>[]): number | undefined {
   const times = checks.flatMap((check) => (check.isUp && check.responseTime != null ? [check.responseTime] : [])).sort((a, b) => a - b)
@@ -65,8 +70,7 @@ export function healthOf(
 ): HealthReport {
   const periods = downtimes(changes, now)
   const typical = typicalResponse(checks)
-  const over = slowOver(monitor.timeout)
-  const slow = typical !== undefined && over !== undefined && typical > over
+  const slow = typical !== undefined && isSlow({ isUp: true, responseTime: typical }, monitor.timeout)
   const report = { downtimes: periods, typical, slow }
   if (monitor.isUp === null) return { ...report, health: Health.waiting }
   if (!monitor.isUp) return { ...report, health: Health.down }

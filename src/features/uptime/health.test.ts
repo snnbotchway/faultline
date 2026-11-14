@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Health, downtimes, healthOf } from './health'
+import { Health, checkHealth, downtimes, healthOf } from './health'
 
 const NOW = Date.parse('2026-11-14T12:00:00Z')
 const MIN = 60_000
@@ -45,5 +45,14 @@ describe('healthOf', () => {
 
   it('is never slow without a timeout, as for a heartbeat', () => {
     expect(healthOf({ isUp: true, timeout: null }, [passed(60_000)], [], NOW).health).toBe(Health.up)
+  })
+})
+
+describe('checkHealth', () => {
+  it('reads one check as down, slow (over half the timeout) or up', () => {
+    expect(checkHealth({ isUp: false, responseTime: null }, 10)).toBe(Health.down)
+    expect(checkHealth({ isUp: true, responseTime: 6000 }, 10)).toBe(Health.slow)
+    expect(checkHealth({ isUp: true, responseTime: 5000 }, 10)).toBe(Health.up)
+    expect(checkHealth({ isUp: true, responseTime: 6000 }, null)).toBe(Health.up)
   })
 })

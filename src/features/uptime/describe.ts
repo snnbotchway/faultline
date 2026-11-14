@@ -1,13 +1,15 @@
 import { CheckReason, MonitorType, type Check, type Monitor } from '@/api/monitors'
-import { clockTime, dayTime, every, responseText, span } from './format'
+import { clock, dayTime } from '@/features/issues/format'
+import { every, responseText, span } from './format'
 import { Health, type HealthReport } from './health'
 
-export const HEALTH: Record<Health, { label: string; color: string; headline: string }> = {
-  [Health.down]: { label: 'Down', color: 'text-destructive', headline: 'is down' },
-  [Health.flapping]: { label: 'Flapping', color: 'text-trend-spiking', headline: 'is flapping' },
-  [Health.slow]: { label: 'Slow', color: 'text-level-warning', headline: 'is slow' },
-  [Health.up]: { label: 'Up', color: 'text-ok', headline: 'is up' },
-  [Health.waiting]: { label: 'Waiting', color: 'text-muted-foreground', headline: 'has not reported yet' },
+// Each health's name, its text colour, its colour as a bar in a chart of checks, and how a title says it.
+export const HEALTH: Record<Health, { label: string; color: string; bar: string; headline: string }> = {
+  [Health.down]: { label: 'Down', color: 'text-destructive', bar: 'bg-destructive', headline: 'is down' },
+  [Health.flapping]: { label: 'Flapping', color: 'text-trend-spiking', bar: 'bg-trend-spiking', headline: 'is flapping' },
+  [Health.slow]: { label: 'Slow', color: 'text-level-warning', bar: 'bg-level-warning', headline: 'is slow' },
+  [Health.up]: { label: 'Up', color: 'text-ok', bar: 'bg-foreground/45', headline: 'is up' },
+  [Health.waiting]: { label: 'Waiting', color: 'text-muted-foreground', bar: 'bg-muted', headline: 'has not reported yet' },
 }
 
 // The states that need someone's attention, in the order they are listed.
@@ -32,17 +34,22 @@ export const reasonText = (monitor: Pick<Monitor, 'monitorType'>, reason: number
 export const targetText = (monitor: Pick<Monitor, 'monitorType' | 'url' | 'interval'>) =>
   isHeartbeat(monitor) ? `a heartbeat every ${every(monitor.interval)}` : (monitor.url ?? '').replace(/^https?:\/\//, '')
 
+type Described = Pick<Monitor, 'monitorType' | 'lastChange' | 'timeout'> & { checks: Pick<Check, 'reason'>[] }
+
+// Why a monitor that is down is down: the reason its current downtime began.
+export const downReason = (monitor: Described, report: HealthReport) => reasonText(monitor, report.downtimes[0]?.ongoing ? report.downtimes[0].reason : monitor.checks[0]?.reason)
+
 // One line on what the health means for this monitor, with when it started.
-export function healthLine(monitor: Pick<Monitor, 'monitorType' | 'lastChange' | 'timeout'> & { checks: Pick<Check, 'reason'>[] }, report: HealthReport, now: number): string {
+export function healthLine(monitor: Described, report: HealthReport, now: number): string {
   const since = monitor.lastChange ? span(now - Date.parse(monitor.lastChange)) : ''
   switch (report.health) {
     case Health.waiting:
       return isHeartbeat(monitor) ? `${NO_HEARTBEAT} yet` : 'No check yet'
     case Health.down:
-      return `Down ${since} · ${reasonText(monitor, report.downtimes[0]?.ongoing ? report.downtimes[0].reason : monitor.checks[0]?.reason)}`
+      return `Down ${since} · ${downReason(monitor, report)}`
     case Health.flapping: {
-      const first = report.since!
-      const when = new Date(first).toDateString() === new Date(now).toDateString() ? clockTime(first) : dayTime(first, now)
+      const first = new Date(report.since!)
+      const when = first.toDateString() === new Date(now).toDateString() ? clock(first) : dayTime(first, new Date(now))
       return `Down ${report.downs} times since ${when}`
     }
     case Health.slow:
@@ -52,7 +59,8 @@ export function healthLine(monitor: Pick<Monitor, 'monitorType' | 'lastChange' |
   }
 }
 
-export const CRUMB_LINK = 'shrink-0 text-muted-foreground hover:text-foreground max-lg:py-3'
+// A monitor id in the address that cannot be one is not found, without asking the backend.
+export const isMonitorId = (id: number) => Number.isInteger(id) && id > 0
 
 export const UptimeTab = { monitors: 'monitors', statusPages: 'status-pages' } as const
 export type UptimeTab = (typeof UptimeTab)[keyof typeof UptimeTab]

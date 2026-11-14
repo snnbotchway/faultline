@@ -3,6 +3,7 @@ import { monitorQuery } from '@/api/monitors'
 import { canWriteProjects, organizationQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { isMonitorId } from './describe'
 import { MonitorDialog } from './monitor-dialog'
 
 // Opened at an address the user may not have the access for: say so instead of a form that would be refused.
@@ -31,7 +32,8 @@ export function NewMonitor({ org, onClose, onCreated }: { org: string; onClose: 
 
 export function EditMonitor({ org, monitorId, onClose }: { org: string; monitorId: number; onClose: () => void }) {
   const access = useQuery(organizationQuery(org)).data?.access
-  const monitor = useQuery(monitorQuery(org, monitorId)).data
+  // The page under the dialog says when the monitor isn't there.
+  const monitor = useQuery({ ...monitorQuery(org, monitorId), enabled: isMonitorId(monitorId) }).data
   if (!access || !monitor) return null
   if (!canWriteProjects(access)) return <NoAccess onClose={onClose} />
   return <MonitorDialog org={org} monitor={monitor} onClose={onClose} onCreated={onClose} />

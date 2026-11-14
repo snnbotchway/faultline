@@ -1,5 +1,6 @@
 import { infiniteQueryOptions, keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { api, orgPath, unwrap } from './client'
+import { detailOf } from './errors'
 import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
 import type { components } from './schema/openapi'
 
@@ -11,9 +12,12 @@ export type Check = Schemas['MonitorCheckResponseTimeSchema']
 export type MonitorInput = Schemas['MonitorIn']
 export type StatusPage = Schemas['StatusPageSchema']
 
-// The kinds of check the form offers. The backend also knows `SSL`, which no screen creates.
-export const MonitorType = { get: 'GET', post: 'POST', ping: 'Ping', port: 'TCP Port', heartbeat: 'Heartbeat' } as const
+// The kinds of check the backend knows. Faultline creates all but `SSL`, which only the API makes.
+export const MonitorType = { get: 'GET', post: 'POST', ping: 'Ping', port: 'TCP Port', heartbeat: 'Heartbeat', ssl: 'SSL' } as const
 export type MonitorType = (typeof MonitorType)[keyof typeof MonitorType]
+
+// Checks that make an HTTP request, and so expect a status and can look for text in the answer.
+export const isHttp = (type: string) => type === MonitorType.get || type === MonitorType.post
 
 // Why a check failed, as the backend numbers it.
 export const CheckReason = { unknown: 0, timeout: 1, status: 2, body: 3, certificate: 4, network: 5 } as const
@@ -30,6 +34,14 @@ export const MonitorRefusal = {
   // The start of the refusal when the organization has as many monitors as its plan allows.
   limit: 'This organization is limited to',
 } as const
+export type MonitorRefusal = (typeof MonitorRefusal)[keyof typeof MonitorRefusal]
+
+// Which of the known refusals an error from saving a monitor is, if any.
+export function monitorRefusal(error: unknown): MonitorRefusal | undefined {
+  const detail = detailOf(error)
+  if (detail === undefined) return undefined
+  return Object.values(MonitorRefusal).find((refusal) => (refusal === MonitorRefusal.limit ? detail.startsWith(refusal) : detail === refusal))
+}
 
 const PAGE_SIZE = 50
 // Monitors are checked once a minute at the fastest.
@@ -40,6 +52,7 @@ export const monitorKeys = {
   lists: (slug: string) => [...monitorKeys.all(slug), 'list'] as const,
   list: (slug: string, sort: MonitorSort) => [...monitorKeys.lists(slug), sort] as const,
   detail: (slug: string, id: number) => [...monitorKeys.all(slug), 'detail', id] as const,
+  monitor: (slug: string, id: number) => [...monitorKeys.detail(slug, id), 'monitor'] as const,
   changes: (slug: string, id: number) => [...monitorKeys.detail(slug, id), 'changes'] as const,
   checks: (slug: string, id: number, changesOnly: boolean) => [...monitorKeys.detail(slug, id), 'checks', changesOnly] as const,
   statusPages: (slug: string) => [...monitorKeys.all(slug), 'status-pages'] as const,
@@ -68,7 +81,7 @@ export const monitorListQuery = (slug: string, sort: MonitorSort) =>
  */
 export const monitorQuery = (slug: string, id: number, stamp?: string) =>
   queryOptions({
-    queryKey: [...monitorKeys.detail(slug, id), 'monitor', stamp ?? 'live'],
+    queryKey: [...monitorKeys.monitor(slug, id), stamp ?? 'live'],
     staleTime: stamp === undefined ? 0 : Infinity,
     refetchInterval: stamp === undefined ? REFRESH_EVERY : false,
     placeholderData: keepPreviousData,

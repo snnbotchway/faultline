@@ -4,29 +4,35 @@ import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { projectAlertsQuery } from '@/api/alerts'
 import { ApiError } from '@/api/client'
-import { monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
+import { isHttp, monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectsQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
+import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
 import { Button } from '@/components/ui/button'
+import { CopyField } from '@/components/ui/copy-field'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Section, Stat } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
+import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
-import { releaseBefore, shortName } from '@/features/releases/marks'
+import { ago, brief, clock, exact } from '@/features/issues/format'
+import { shortName } from '@/features/issues/trend'
+import { releaseBefore } from '@/features/releases/marks'
 import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { clockTime, every, responseText, span, stampTime } from './format'
-import { Health, healthOf, isSlow, slowOver } from './health'
-import { CRUMB_LINK, HEALTH, healthLine, isAlarm, isHeartbeat, reasonText } from './describe'
-import { CheckBars, CopyField, Crumbs, DowntimeGlyph, HealthGlyph, Section, Stat } from './parts'
+import { every, responseText, span } from './format'
+import { Health, checkHealth, healthOf, isSlow, slowOver } from './health'
+import { HEALTH, healthLine, isAlarm, isHeartbeat, isMonitorId, reasonText, targetText } from './describe'
+import { CheckBars, DowntimeGlyph, HealthGlyph } from './parts'
 
 const CHECKS_SHOWN = 8
-const HTTP_TYPES: string[] = ['GET', 'POST']
 
 /** One monitor: its health and since when, its newest checks, every stretch of downtime with the release before it, and who hears about it. */
 export function MonitorPage({ org, monitorId }: { org: string; monitorId: number }) {
-  const monitor = useQuery(monitorQuery(org, monitorId))
+  const valid = isMonitorId(monitorId)
+  const monitor = useQuery({ ...monitorQuery(org, monitorId), enabled: valid })
   const canWrite = canWriteProjects(useQuery(organizationQuery(org)).data?.access)
   const [confirming, setConfirming] = useState(false)
   useTitle(monitor.data?.name ?? 'Monitor', 'Uptime')
@@ -57,8 +63,8 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
     </PageBar>
   )
 
-  if (monitor.isError) {
-    const missing = monitor.error instanceof ApiError && monitor.error.status === 404
+  if (!valid || monitor.isError) {
+    const missing = !valid || (monitor.error instanceof ApiError && monitor.error.status === 404)
     return (
       <>
         {bar}
@@ -123,7 +129,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const notified = [...new Set(rules.flatMap((rule) => rule.alertRecipients.map((recipient) => recipientMeta(recipient).label)))]
   const facts: [string, string | null | undefined][] = [
     ['Check', monitor.monitorType],
-    ['Status', HTTP_TYPES.includes(monitor.monitorType) ? String(monitor.expectedStatus ?? '') : null],
+    ['Status', isHttp(monitor.monitorType) ? String(monitor.expectedStatus ?? '') : null],
     ['Text', monitor.expectedBody || null],
     ['Timeout', monitor.timeout ? `${monitor.timeout}s` : null],
     ['Down after', heartbeat ? null : `${monitor.confirmationThreshold} failed`],
@@ -141,10 +147,10 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
             <span className="[overflow-wrap:anywhere]">
               {monitor.name} {HEALTH[health].headline}
             </span>
-            {alsoSlow && <span className="label-caps text-level-warning">Slow</span>}
+            {alsoSlow && <span className={cn('label-caps', HEALTH[Health.slow].color)}>{HEALTH[Health.slow].label}</span>}
           </h1>
           {health !== Health.waiting && <p className="mt-1 font-medium">{healthLine(monitor, report, now)}</p>}
-          <p className="mono mt-2 [overflow-wrap:anywhere] text-muted-foreground">{heartbeat ? `a heartbeat every ${every(monitor.interval)}` : `${monitor.monitorType} ${monitor.url} every ${every(monitor.interval)}`}</p>
+          <p className="mono mt-2 [overflow-wrap:anywhere] text-muted-foreground">{heartbeat ? targetText(monitor) : `${monitor.monitorType} ${targetText(monitor)} every ${every(monitor.interval)}`}</p>
         </header>
 
         <div className="order-3">
@@ -160,42 +166,40 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
                 {report.downtimes.map((period) => {
                   const unfoldedHere = open === period.from
                   const before = releaseBefore(releases, period.from)
+                  const details: { label: string; value: string; title?: string }[] = [
+                    { label: 'Went down', value: brief(new Date(period.from)) },
+                    { label: 'Came back', value: period.ongoing ? 'Not yet' : brief(new Date(period.to)) },
+                    { label: 'Release before', value: before ? `${shortName(before.version)}, ${span(period.from - Date.parse(before.dateCreated))} earlier` : 'None', title: before?.version },
+                    { label: 'Notified', value: !project ? 'Nobody' : alerts.isPending ? '…' : notified.length ? notified.join(', ') : 'Nobody' },
+                  ]
                   return (
                     <li key={period.from} className="border-b">
                       <button
                         type="button"
                         aria-expanded={unfoldedHere}
                         onClick={() => setUnfolded(unfoldedHere ? null : period.from)}
-                        className={cn(
-                          'grid min-h-11 w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left lg:grid-cols-[132px_minmax(0,1fr)_auto_16px]',
-                          unfoldedHere ? 'bg-accent' : 'hover:bg-accent/60',
-                        )}
+                        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[48px_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfoldedHere ? 'bg-accent' : 'hover:bg-accent/60')}
                       >
-                        <time className="mono text-muted-foreground max-lg:col-span-3" dateTime={new Date(period.from).toISOString()}>
-                          {stampTime(period.from)}
+                        <time className="mono text-muted-foreground" dateTime={new Date(period.from).toISOString()} title={exact(new Date(period.from))}>
+                          {ago(new Date(period.from), new Date(now))}
                         </time>
                         <span className="flex min-w-0 items-center gap-2">
                           <DowntimeGlyph ongoing={period.ongoing} />
                           <span className="truncate">{reasonText(monitor, period.reason)}</span>
                         </span>
-                        <span className={cn('mono', period.ongoing && 'font-semibold text-destructive')}>
+                        <span className={cn('mono', period.ongoing && cn('font-semibold', HEALTH[Health.down].color))}>
                           {span(period.to - period.from)}
                           {period.ongoing && ' so far'}
                         </span>
                         <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', unfoldedHere && 'rotate-180')} />
                       </button>
                       {unfoldedHere && (
-                        <dl className="border-t bg-card px-3 py-2 lg:pl-36">
-                          {[
-                            ['Went down', stampTime(period.from)],
-                            ['Came back', period.ongoing ? 'Not yet' : stampTime(period.to)],
-                            ['Release before', before ? `${shortName(before.version)}, ${span(period.from - Date.parse(before.dateCreated))} earlier` : 'None'],
-                            ['Notified', !project ? 'Nobody' : alerts.isPending ? '…' : notified.length ? notified.join(', ') : 'Nobody'],
-                          ].map(([label, value]) => (
-                            <div key={label} className="flex min-h-8 items-center justify-between gap-4">
-                              <dt className="shrink-0 text-muted-foreground">{label}</dt>
-                              <dd className="mono truncate" title={label === 'Release before' ? before?.version : undefined}>
-                                {value}
+                        <dl className="border-t bg-card px-3 py-2 lg:pl-15">
+                          {details.map((detail) => (
+                            <div key={detail.label} className="flex min-h-8 items-center justify-between gap-4">
+                              <dt className="shrink-0 text-muted-foreground">{detail.label}</dt>
+                              <dd className="mono truncate" title={detail.title}>
+                                {detail.value}
                               </dd>
                             </div>
                           ))}
@@ -214,18 +218,17 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
             ) : (
               <ul>
                 {checks.slice(0, allChecks ? undefined : CHECKS_SHOWN).map((check) => {
-                  const slow = isSlow(check, monitor.timeout)
-                  const state = !check.isUp ? Health.down : slow ? Health.slow : Health.up
+                  const state = checkHealth(check, monitor.timeout)
                   return (
-                    <li key={check.startCheck} className="grid min-h-9 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_64px] items-center gap-3 border-b lg:grid-cols-[132px_minmax(0,1fr)_72px]">
-                      <time className="mono text-muted-foreground" dateTime={check.startCheck}>
-                        {stampTime(check.startCheck)}
+                    <li key={check.startCheck} className="grid min-h-9 grid-cols-[48px_minmax(0,1fr)_64px] items-center gap-3 border-b lg:grid-cols-[48px_minmax(0,1fr)_72px]">
+                      <time className="mono text-muted-foreground" dateTime={check.startCheck} title={exact(check.startCheck)}>
+                        {ago(check.startCheck, new Date(now))}
                       </time>
                       <span className="flex min-w-0 items-center gap-2">
                         <HealthGlyph health={state} />
-                        <span className={cn('truncate', !check.isUp ? 'text-destructive' : slow && 'text-level-warning')}>{!check.isUp ? reasonText(monitor, check.reason) : slow ? 'Slow' : 'Up'}</span>
+                        <span className={cn('truncate', state !== Health.up && HEALTH[state].color)}>{state === Health.down ? reasonText(monitor, check.reason) : HEALTH[state].label}</span>
                       </span>
-                      <span className={cn('mono text-right', slow && 'font-semibold text-level-warning')}>{responseText(check.responseTime)}</span>
+                      <span className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{responseText(check.responseTime)}</span>
                     </li>
                   )
                 })}
@@ -248,15 +251,15 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
             ) : (
               <>
                 <dl className="grid grid-cols-3 gap-x-4 pt-3">
-                  <Stat label="Passed" value={`${passed}/${checks.length}`} tone={health === Health.down ? 'text-destructive' : undefined} />
-                  {!heartbeat && <Stat label="Response" value={responseText(report.typical) || 'None'} tone={report.slow ? 'text-level-warning' : undefined} />}
-                  {!heartbeat && <Stat label="Slow" value={slowChecks} tone={slowChecks ? 'text-level-warning' : undefined} />}
+                  <Stat label="Passed" value={`${passed}/${checks.length}`} tone={health === Health.down ? HEALTH[Health.down].color : undefined} />
+                  {!heartbeat && <Stat label="Response" value={responseText(report.typical) || 'None'} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
+                  {!heartbeat && <Stat label="Slow" value={slowChecks} tone={slowChecks ? HEALTH[Health.slow].color : undefined} />}
                 </dl>
                 {!heartbeat && (
                   <>
                     <CheckBars checks={checks} timeout={monitor.timeout} height={64} line className="mt-4" />
                     <p className="mono mt-2 flex justify-between gap-2 text-muted-foreground">
-                      <span>{clockTime(checks.at(-1)!.startCheck)}</span>
+                      <span>{clock(checks.at(-1)!.startCheck)}</span>
                       <span className="flex items-center gap-2">
                         peak {responseText(peak)}
                         {over !== undefined && peak > over && (
@@ -310,7 +313,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
               <p className="py-3 text-muted-foreground">
                 Nobody hears when this goes down.{' '}
                 {project ? (
-                  <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project.slug!, alert: 'new' }} className="text-brand hover:underline">
+                  <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project.slug!, alert: RuleEditor.new }} className="text-brand hover:underline">
                     Add a rule
                   </Link>
                 ) : (

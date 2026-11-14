@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { ExternalLink, Globe, Lock } from 'lucide-react'
 import { useState } from 'react'
 import { MonitorSort, STATUS_PAGE_ADMIN_URL, monitorActions, monitorKeys, monitorListQuery, statusPageUrl, statusPagesQuery } from '@/api/monitors'
-import { canWriteProjects, organizationQuery } from '@/api/organizations'
+import { canWriteProjects, currentUserQuery, organizationQuery } from '@/api/organizations'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -24,20 +24,22 @@ const ADMIN_LINK = 'relative z-10 flex shrink-0 cursor-pointer items-center gap-
 
 /**
  * The organization's status pages and the monitors on each. The backend can create a page but not
- * change one; its monitors and who can see it are changed in the backend's admin.
+ * change one; its monitors and who can see it are changed in the backend's admin, which only a
+ * superuser can open, so only a superuser is shown the way there.
  */
 export function StatusPages({ org }: { org: string }) {
   useTitle('Status pages', 'Uptime')
   const pages = useQuery(statusPagesQuery(org))
   const monitors = useInfiniteQuery(monitorListQuery(org, MonitorSort.name)).data?.pages.flatMap((page) => page.items)
   const canWrite = canWriteProjects(useQuery(organizationQuery(org)).data?.access)
+  const canAdmin = useQuery(currentUserQuery).data?.isSuperuser === true
   const [creating, setCreating] = useState(false)
   const [opened] = useState(Date.now)
   const now = pages.dataUpdatedAt || opened
 
   const bar = (
     <PageBar>
-      <UptimeTabs org={org} current={UptimeTab.statusPages} counts={{ monitors: monitors?.length, 'status-pages': pages.data?.length }} />
+      <UptimeTabs org={org} current={UptimeTab.statusPages} counts={{ [UptimeTab.monitors]: monitors?.length, [UptimeTab.statusPages]: pages.data?.length }} />
       {canWrite && (
         <Button variant="default" size="sm" className="ml-auto max-lg:h-9" onClick={() => setCreating(true)}>
           New status page
@@ -111,7 +113,7 @@ export function StatusPages({ org }: { org: string }) {
                   {onPage.length === 0 && (
                     <li className="flex items-center gap-3 text-muted-foreground">
                       No monitors yet
-                      {canWrite && (
+                      {canAdmin && (
                         <a href={STATUS_PAGE_ADMIN_URL} target="_blank" rel="noreferrer" className={ADMIN_LINK}>
                           Add monitors
                         </a>
@@ -128,9 +130,9 @@ export function StatusPages({ org }: { org: string }) {
                     </li>
                   ))}
                 </ul>
-                {canWrite && (
+                {canAdmin && (
                   <a href={STATUS_PAGE_ADMIN_URL} target="_blank" rel="noreferrer" className={ADMIN_LINK}>
-                    Edit
+                    Edit page
                     <ExternalLink className="size-3" />
                   </a>
                 )}
@@ -177,7 +179,6 @@ function NewStatusPage({ org, onClose }: { org: string; onClose: () => void }) {
             <Checkbox checked={isPublic} onCheckedChange={(checked) => setIsPublic(checked === true)} />
             Anyone with the link can see it
           </label>
-          <p className="text-sm text-muted-foreground">Add monitors and change who can see it from the Edit page.</p>
           <div className="flex justify-end gap-2">
             <DialogClose asChild>
               <Button className="max-lg:h-11">Cancel</Button>

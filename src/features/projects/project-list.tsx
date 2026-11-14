@@ -13,6 +13,7 @@ import { Trace } from '@/features/issues/trace'
 import { useAccess, useLastOrganization } from '@/features/settings/access'
 import { platformName } from '@/features/settings/platforms'
 import { plural } from '@/features/settings/rows'
+import { useSeen } from '@/lib/seen'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
@@ -127,11 +128,13 @@ export function ProjectList({ org }: { org?: string }) {
 function ProjectRow({ org, project }: { org: string; project: Project }) {
   const slug = project.slug ?? ''
   const fresh = !project.firstEvent
-  const activity = useQuery({ ...projectActivityQuery(org, project.id), enabled: !fresh }).data
+  // Each row costs four requests, so a long list asks only for the rows that come on screen.
+  const [ref, seen] = useSeen<HTMLLIElement>()
+  const activity = useQuery({ ...projectActivityQuery(org, project.id), enabled: seen && !fresh }).data
   const lastSeen = activity?.lastSeen
-  const alerts = useQuery(projectAlertCountQuery(org, slug)).data
+  const alerts = useQuery({ ...projectAlertCountQuery(org, slug), enabled: seen }).data
   return (
-    <li className={cn(GRID, 'relative min-h-14 border-b hover:bg-accent')}>
+    <li ref={ref} className={cn(GRID, 'relative min-h-14 border-b hover:bg-accent')}>
       {fresh ? (
         <Link to="/$org/settings/projects/$project" params={{ org, project: slug }} className="absolute inset-0 -outline-offset-2" aria-label={`Set up ${slug}`} />
       ) : (

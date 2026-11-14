@@ -1,4 +1,4 @@
-import { plural } from '@/lib/format'
+import { plural } from '@/lib/text'
 import { DAY, HOUR, MINUTE_MS, SECOND_MS } from '@/lib/time'
 
 // `14m`, `3h 20m`, `2d 4h`, `9d`: how long something lasted, as exact as it is worth being.

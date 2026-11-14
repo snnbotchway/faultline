@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { RecipientType, TestStatus, alertActions, alertKeys, toRecipientInput, type Alert, type AlertInput, type RecipientInput } from '@/api/alerts'
-import { projectEnvironmentsQuery } from '@/api/organizations'
+import { projectEnvironmentsQuery } from '@/api/projects'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'

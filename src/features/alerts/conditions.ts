@@ -1,5 +1,5 @@
 import type { Alert } from '@/api/alerts'
-import { plural } from '@/lib/format'
+import { plural } from '@/lib/text'
 
 // "10 events in 5 minutes", "a monitor goes down", or both.
 export function conditions(alert: Pick<Alert, 'quantity' | 'timespanMinutes' | 'uptime'>): string[] {

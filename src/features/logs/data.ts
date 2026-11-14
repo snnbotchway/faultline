@@ -196,6 +196,8 @@ export function useCounts(org: string, logs: Logs, search: LogSearch, visible: b
     project: keyed(
       projects.map((project) => String(project.id)),
       (id) => {
+        // Under a search, trace or span the other filters show a dash, and so do projects, even a known 0.
+        if (!statistical) return fallback
         const index = countedProjects.findIndex((project) => String(project.id) === id)
         return projectCount({
           stats: index < 0 ? undefined : fromStats(byProject[index]?.data),

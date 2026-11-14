@@ -125,12 +125,13 @@ export function StatusMenu({ view, onChange }: { view: StatusView; onChange: (vi
 
 export function SortMenu({ sort, disabled, onChange }: { sort: IssueSort | undefined; disabled?: boolean; onChange: (sort: IssueSort | undefined) => void }) {
   const current = sort ?? DEFAULT_SORT
+  const label = SORTS.find((item) => item.value === current)?.label
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label="Sort" title="Sort" disabled={disabled}>
+        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label={`Sort: ${label}`} title="Sort" disabled={disabled}>
           <ArrowDownWideNarrow />
-          <span className="max-lg:hidden">{SORTS.find((item) => item.value === current)?.label}</span>
+          <span className="max-lg:hidden">{label}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

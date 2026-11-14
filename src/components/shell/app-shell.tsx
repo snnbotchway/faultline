@@ -117,7 +117,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
         <DropdownMenu>
           <DropdownMenuTrigger
             className="flex h-7 min-w-0 items-center gap-2 px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-11 lg:max-w-40 xl:max-w-56"
-            aria-label="Organization"
+            aria-label={`Organization: ${organizationName}`}
             title={organizationName}
           >
             <span className="truncate">{organizationName}</span>
@@ -170,7 +170,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
         ))}
       </nav>
       <div className="flex items-center gap-1 max-lg:ml-auto lg:border-l lg:pl-3">
-        <Button size="sm" className="gap-2 px-2 max-lg:size-11 max-lg:px-0" onClick={palette.open} aria-label="Commands" title="Commands">
+        <Button size="sm" className="gap-2 px-2 max-lg:size-11 max-lg:px-0" onClick={palette.open} aria-label="Commands" aria-keyshortcuts="Control+K Meta+K" title="Commands">
           <Search className="size-3 max-lg:size-4" />
           <Kbd className="border-0 px-0 opacity-100">⌘K</Kbd>
         </Button>

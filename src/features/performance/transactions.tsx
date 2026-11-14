@@ -137,12 +137,13 @@ function Views({ org, search, counts }: { org: string; search: PerformanceSearch
 }
 
 function SortMenu({ orders, order, onChange }: { orders: { value: string; label: string }[]; order: string | undefined; onChange: (order: string) => void }) {
+  const label = orders.find((item) => item.value === (order ?? DEFAULT_ORDER))?.label
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label="Sort" title="Sort">
+        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label={`Sort: ${label}`} title="Sort">
           <ArrowDownWideNarrow />
-          <span className="truncate max-lg:hidden">{orders.find((item) => item.value === (order ?? DEFAULT_ORDER))?.label}</span>
+          <span className="truncate max-lg:hidden">{label}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

@@ -31,7 +31,7 @@ function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={`Time range: ${range.label}`}>
+        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={`Time range: ${range.value}, ${range.label}`}>
           <CalendarDays />
           <span className="mono">{range.value}</span>
         </Button>

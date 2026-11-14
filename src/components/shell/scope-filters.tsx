@@ -61,7 +61,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
   return (
     <div className={cn('flex min-w-0 items-center gap-1', className)}>
       <DropdownMenu>
-        <DropdownMenuTrigger className={TRIGGER} aria-label="Projects">
+        <DropdownMenuTrigger className={TRIGGER} aria-label={`Projects: ${projectLabel}`}>
           <span className={cn('truncate', picked.length === 1 && 'mono')}>{projectLabel}</span>
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
@@ -98,7 +98,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
       </DropdownMenu>
       <span className="text-muted-foreground max-lg:hidden">/</span>
       <DropdownMenu>
-        <DropdownMenuTrigger className={TRIGGER} aria-label="Environment">
+        <DropdownMenuTrigger className={TRIGGER} aria-label={`Environment: ${search.environment ?? 'All environments'}`}>
           <span className={cn('truncate', search.environment && 'mono')}>{search.environment ?? 'All environments'}</span>
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>

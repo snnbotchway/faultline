@@ -17,7 +17,7 @@ export function ProjectMenu({ org, value, onChange, className }: { org: string; 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Project"
+        aria-label={`Project: ${label}`}
         className={cn('flex h-7 min-w-0 shrink-0 items-center gap-2 border bg-card px-3 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11', className)}
       >
         <span className={cn('truncate', current && 'mono')}>{label}</span>

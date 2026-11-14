@@ -1,13 +1,16 @@
+import { LogLevel } from '@/api/logs'
 import { hourLabel } from '@/features/issues/format'
 import { cn } from '@/lib/utils'
 import { bucketTotal, type Bucket } from './data'
 import { dayOf } from './format'
+import { LogLevelGlyph } from './level'
 
 const DAY_HOURS = 24
 const MIN_BAR = 2
 
-// Logs per hour on a zero baseline, errors and warnings stacked on the rest. An hour is as fine as the
-// backend counts. With a pointer, picking a bar narrows the list to that hour.
+// Logs per hour on a zero baseline, errors and warnings stacked on the rest in their level colours, with
+// a key in the level shapes. An hour is as fine as the backend counts. With a pointer, picking a bar
+// narrows the list to that hour.
 export function LogHistogram({ buckets, height, hour, onPick }: { buckets: Bucket[]; height: number; hour: number | undefined; onPick: (hour: number | undefined) => void }) {
   const peak = Math.max(1, ...buckets.map(bucketTotal))
   const px = (count: number) => (count <= 0 ? 0 : Math.max(MIN_BAR, Math.round((count / peak) * height)))
@@ -37,7 +40,13 @@ export function LogHistogram({ buckets, height, hour, onPick }: { buckets: Bucke
       </div>
       <div className="mono mt-1 flex justify-between text-xs text-muted-foreground" aria-hidden>
         <span>{buckets.length > DAY_HOURS ? dayOf(first * 1000) : hourLabel(first)}</span>
-        <span>peak {peak}/hour</span>
+        <span className="flex items-center gap-2">
+          <LogLevelGlyph level={LogLevel.error} />
+          error
+          <LogLevelGlyph level={LogLevel.warn} />
+          warn
+          <span className="ml-2">peak {peak}/hour</span>
+        </span>
         <span>Now</span>
       </div>
     </div>

@@ -122,6 +122,7 @@ The inbox and the issue page draw events the same way.
 Performance draws durations, not counts, on the same rules, with two additions:
 
 - **A labelled scale.** A chart of one transaction labels its peak and its zero with their unit (`2.81 s`, `0`) in a column at the left, and names every day under the bars, the last one `Today`.
+- **Logs per hour.** The log chart is about which hours went wrong, so it stacks errors (with fatal) in `level-error` and warnings in `level-warning` on the rest in the foreground at reduced strength, with a key in the level shapes beside the peak. This is the one chart where red marks a level rather than a spike.
 - **One duration scale for a list.** When a list is ordered by duration, every row's bar runs from typical (p50, light) to slow (p95, darker) on one logarithmic scale from 1 ms to 30 s, labelled once above the rows and lined up with the bars. Other orders draw each row's share as a plain bar in the foreground at reduced strength. A row's bar is never red; a problem is a word with an icon under it. As in the inbox, the latest day of a transaction that got slower uses `trend-spiking`.
 
 ## Components

@@ -9,6 +9,7 @@ Conventions
 - `{org}` in the API means `organization_id_or_slug`. The stock UI sends the numeric org id (from `GET /organizations/`), and the backend accepts either.
 - `scope:` marks the stock UI permission gate (`FE/api/organizations.service.ts`, org `access` array). Controls are hidden, not disabled, when the scope is missing.
 - Status column: tick `[x]` when Faultline reaches parity for that row. `[+]` rows are backend-only features the stock UI never exposes (see the last section).
+- `[-]` marks a row that does not apply to Faultline (reason given).
 
 Totals: **44 routed screens** and **6 redirects** in the stock router, plus 5 screens that are tabs or dialogs with no route of their own (project tabs, alert editor, monitor tabs, team dialog, platform picker).
 
@@ -39,7 +40,7 @@ Totals: **44 routed screens** and **6 redirects** in the stock router, plus 5 sc
 | `/account/settings/wizard/:hash` | `/profile/wizard/:hash` | [x] |
 | `/:org/:project-slug` | `/:org/settings/projects/:project-slug` | [x] |
 | `/:org/performance` | `/:org/performance/transaction-groups` | [x] |
-| `**` | `/` | [ ] |
+| `**` | `/` | [x] |
 
 ---
 
@@ -52,13 +53,13 @@ Shell (`FE/logged-in.component.*`, `FE/main-nav/`): `loggedInGuard` redirects to
 | Home | `/` | All projects across orgs, one row each: 14-day error trend, unresolved count, last seen, alert count, links to issues and project settings. "New project" if `canWriteProject`. Empty state "No organization yet" | `GET /organizations/` (fetch-all, limit 200 x5 pages); `GET /organizations/{org}/stats_v2/` (`category=error&interval=1h&field=sum(quantity)&project&start&end`); `GET /organizations/{org}/issues/?project&query=is:unresolved&limit=1` (X-Hits = count); same with `sort=-last_seen&limit=1`; `GET /projects/{org}/{slug}/alerts/` | [x] |
 | Org | `/organizations/new` | Create org (name, max 200). With billing on, goes to `/:slug/settings/subscription` | `POST /organizations/` | [x] |
 | Misc | `/system-info` | Read-only: server time zone, org creation, registration, version, instance name (markdown), docs link. Stock bug: "Organization creation" row reads `enableUserRegistration` **Faultline:** the instance name is plain text and there is no docs link; it adds which features are on. | `GET /api/settings/` | [x] |
-| Shell | side nav | Items: Issues, Uptime Monitors (feature `uptime`), Performance, Logs (feature `logs`), Projects, Releases. Org menu: General settings, Projects, Subscription, Teams, Members. Profile menu: Account, MFA, Notifications, Auth tokens. Org `<select>` with "create new". Collapse toggle (`localStorage glitchtip-sidenav-collapsed`). Mobile drawer + toolbar | `GET /api/settings/` (`enabledFeatures`); `GET /organizations/`; `GET /organizations/{org}/` | [ ] |
-| Shell | support menu | Docs, bug report, Liberapay link when unpaid + billing off, "Open Support Chat" when `iPaidForGlitchTip`, chatwoot widget when token set | `GET /instance-license/support-link/`; `GET /instance-license/` | [ ] |
-| Shell | banners | verify-email banner (primary email unverified, resend), terms banner (billing on only, `localStorage termsUpdate20261121Dismissed`), upgrade banner (throttled org), support banner | `GET /users/me/emails/`; `POST /users/me/emails/confirm/`; stripe overage endpoints | [ ] |
-| Shell | over-limit snackbar | Opens once per session per org when `eventThrottleRate > 0`; dismissals kept in memory only | `GET /organizations/{org}/` | [ ] |
-| Shell | theme | `userOptions.preferredTheme` (system/light/dark) with `localStorage theme` fallback; follows `prefers-color-scheme` | `PUT /users/me/` | [ ] |
+| Shell | side nav | Items: Issues, Uptime Monitors (feature `uptime`), Performance, Logs (feature `logs`), Projects, Releases. Org menu: General settings, Projects, Subscription, Teams, Members. Profile menu: Account, MFA, Notifications, Auth tokens. Org `<select>` with "create new". Collapse toggle (`localStorage glitchtip-sidenav-collapsed`). Mobile drawer + toolbar | `GET /api/settings/` (`enabledFeatures`); `GET /organizations/`; `GET /organizations/{org}/` | [x] |
+| Shell | support menu | Docs, bug report, Liberapay link when unpaid + billing off, "Open Support Chat" when `iPaidForGlitchTip`, chatwoot widget when token set | `GET /instance-license/support-link/`; `GET /instance-license/` | [ ] Faultline: No support menu: no docs or bug-report links, no Liberapay link, no support chat. |
+| Shell | banners | verify-email banner (primary email unverified, resend), terms banner (billing on only, `localStorage termsUpdate20261121Dismissed`), upgrade banner (throttled org), support banner | `GET /users/me/emails/`; `POST /users/me/emails/confirm/`; stripe overage endpoints | [ ] Faultline: No banners. Verify-email prompts exist only on the profile page (`src/features/account/profile-page.tsx:92`), none in the shell. The terms and upgrade banners need billing on. |
+| Shell | over-limit snackbar | Opens once per session per org when `eventThrottleRate > 0`; dismissals kept in memory only | `GET /organizations/{org}/` | [ ] Faultline: No over-limit snackbar; `eventThrottleRate` is read only on the project page (`src/features/settings/project-page.tsx:186`). |
+| Shell | theme | `userOptions.preferredTheme` (system/light/dark) with `localStorage theme` fallback; follows `prefers-color-scheme` | `PUT /users/me/` | [ ] Faultline: Theme is `localStorage theme` plus `prefers-color-scheme` (`src/lib/theme.ts`); `userOptions.preferredTheme` is never read or written, so the choice does not follow the user between browsers. |
 | Shell | title | `document.title` per route; default "GlitchTip" | n/a | [x] |
-| Shell | locales | en, fr, nb (`src/locale/*.xlf`) | n/a | [ ] |
+| Shell | locales | en, fr, nb (`src/locale/*.xlf`) | n/a | [ ] Faultline: English only; no i18n layer, no fr or nb. |
 
 ---
 
@@ -70,37 +71,37 @@ All under `/:org/issues`. URL state: `query` (default `is:unresolved`), `sort` (
 |---|---|---|---|---|
 | Issues | `/:org/issues` | Issue list: select, bulk actions, search, sort, env filter, project multiselect, time range, 24h/14d trend toggle, cursor paging | `GET /organizations/{org}/issues/`; `GET /organizations/{org}/issues-stats/?groups&statsPeriod`; `GET /organizations/{org}/environments/` or `GET /projects/{org}/{slug}/environments/` (when exactly one project picked); `PUT`/`DELETE /organizations/{org}/issues/` | [x] |
 | Issues | `/:org/issues/:issue-id` (default child, "Details") | Issue header (title, level, counts, first/last seen, first release, resolved-in), status dropdown, delete, latest event, tag facets sidebar | `GET /issues/{id}/`; `GET /issues/{id}/events/latest/`; `GET /issues/{id}/tags/`; `PUT /organizations/{org}/issues/{id}/`; `DELETE /issues/{id}/` | [x] |
-| Issues | `/:org/issues/:issue-id/events/:event-id` | Specific event: same body as default, Older/Newer navigation, raw JSON link, copy for AI | `GET /issues/{id}/events/{event_id}/` (carries `nextEventID` / `previousEventID`) | [ ] |
+| Issues | `/:org/issues/:issue-id/events/:event-id` | Specific event: same body as default, Older/Newer navigation, raw JSON link, copy for AI | `GET /issues/{id}/events/{event_id}/` (carries `nextEventID` / `previousEventID`) | [ ] Faultline: Event route, Older/Newer and the raw JSON link work (`src/features/issues/issue-page.tsx:319-338`). Missing: "copy for AI" and the one-time MCP hint. |
 | Issues | `/:org/issues/:issue-id/comments` | Comment list, add, edit, delete (author, manager or owner only since 7.0) | `GET`/`POST /issues/{id}/comments/` (body `{data:{text}}`); `PUT`/`DELETE /issues/{id}/comments/{cid}/` | [x] |
 | Issues | `/:org/issues/:issue-id/merged` | Hash list for the issue, select hashes and unmerge (never all of them). Hidden when only one hash | `GET /organizations/{org}/issues/{id}/hashes/`; `DELETE .../hashes/?id=<hash>&id=...` (202) | [x] |
-| Issues | `/:org/issues/:issue-id/user-reports` | Crash-report/feedback list (name, email, comments, linked event) with paging | `GET /issues/{id}/user-reports/` | [ ] |
+| Issues | `/:org/issues/:issue-id/user-reports` | Crash-report/feedback list (name, email, comments, linked event) with paging | `GET /issues/{id}/user-reports/` | [ ] Faultline: Reports (name, email, comments, time) render as a section with every page fetched (`src/features/issues/issue-sections.tsx:209`, `src/api/issues.ts:148`). Missing: the link from a report to its event. |
 
 Easy-to-miss inside Issues:
 
-- [ ] Search box with help popover: `is:` (unresolved, resolved, ignored), `level:` (fatal, error, warning, info, debug, sample), `key:value` tags, `has:key`, free text last, `*` prefix match. Tokens are AND only.
+- [ ] Search box with help popover: `is:` (unresolved, resolved, ignored), `level:` (fatal, error, warning, info, debug, sample), `key:value` tags, `has:key`, free text last, `*` prefix match. Tokens are AND only. **Faultline:** Queries are sent as typed (`src/features/issues/inbox-controls.tsx:20`). Missing: the help popover that explains the syntax.
 - [x] Default query `is:unresolved` is applied client-side when `query` is absent; submitting an empty string means "everything".
-- [ ] Event-id search: a UUID in the query returns `X-Sentry-Direct-Hit: 1` and the UI jumps straight to `/:org/issues/:id/events/:matchingEventId` (replaceUrl).
+- [x] Event-id search: a UUID in the query returns `X-Sentry-Direct-Hit: 1` and the UI jumps straight to `/:org/issues/:id/events/:matchingEventId` (replaceUrl).
 - [x] Sort options: Last Seen (`-last_seen`), First Seen (`first_seen`), Most Frequent (`-count`), Least Frequent (`count`), Highest Priority (`-priority`), Lowest Priority (`priority`). Sort control disabled when list is empty.
-- [ ] Time range select: none, last hour (`now-1h`), 24h (`now-1d`), 7d, 14d, 30d, custom (date + time pickers, sent as UTC ISO with `Z`).
-- [ ] Project multiselect (repeated `project=` ids); "add project" shortcut in the app bar.
-- [ ] Environment select (single value, sent as `environment[]`); resets URL if the env is not valid for the newly chosen project.
-- [ ] Row checkbox with shift-click range select; select-all-on-page; "Select all N issues that match this query" banner (switches bulk actions to query-based, no ids).
+- [ ] Time range select: none, last hour (`now-1h`), 24h (`now-1d`), 7d, 14d, 30d, custom (date + time pickers, sent as UTC ISO with `Z`). **Faultline:** Any time, 24 hours, 7, 14 and 30 days only (`src/features/issues/search.ts:63`, `inbox-controls.tsx:110`). Missing: last hour and custom date and time pickers; absolute `start` and `end` from a link are shown but cannot be set.
+- [ ] Project multiselect (repeated `project=` ids); "add project" shortcut in the app bar. **Faultline:** Multiselect with repeated `project=` works (`src/components/shell/scope-filters.tsx:28-62`). Missing: the "add project" shortcut in the bar.
+- [ ] Environment select (single value, sent as `environment[]`); resets URL if the env is not valid for the newly chosen project. **Faultline:** Single environment, sent as `environment[]` (`src/features/issues/search.ts:57`, `scope-filters.tsx:68-83`). The list is organisation-wide, and the choice is not reset when a project is picked that lacks that environment.
+- [ ] Row checkbox with shift-click range select; select-all-on-page; "Select all N issues that match this query" banner (switches bulk actions to query-based, no ids). **Faultline:** Select-all-on-page and "Select all N matching" work (`src/features/issues/inbox.tsx:268-276`, `selection-bar.tsx:31`). Missing: shift-click range select.
 - [x] Bulk actions: Mark resolved, Mark unresolved, Mark ignored, Merge (needs 2+ rows, one project, not in all-results mode, confirm dialog), Delete (confirm dialog with count). Mobile uses a kebab menu.
 - [x] Bulk update touches only the first 50 matches synchronously, the rest are queued server-side. List is patched in place (`status` only) rather than refetched.
-- [ ] Deleting everything on the current page resets the `cursor` so the user is not left on an empty page.
-- [ ] Trend sparkline per row, 24h hourly or 14d daily, plus event count, first/last seen ("seen X ago, N old"), CSP report label, `ignored`/`resolved` badges.
-- [ ] Status dropdown on detail: Unresolved, Resolved, Ignored, plus "Resolve in next release" (`statusDetails.inNextRelease`); snackbar says which release it pinned or that none was found.
-- [ ] Issue not found and event not found empty states.
-- [ ] Tab badges: user report count, comment count.
-- [ ] Back link to the list keeps the issue's project filter (`?project=<id>`).
-- [ ] Event header: event id, long date, "raw JSON" link, "copy for AI" (markdown payload with instance, org, issue, event URL and event JSON), one-time MCP hint when `enabledFeatures` has `mcp`.
+- [-] Deleting everything on the current page resets the `cursor` so the user is not left on an empty page. **Faultline:** n/a, the inbox loads more pages as you scroll and keeps no `cursor` in the URL, so there is no empty page to be left on.
+- [ ] Trend sparkline per row, 24h hourly or 14d daily, plus event count, first/last seen ("seen X ago, N old"), CSP report label, `ignored`/`resolved` badges. **Faultline:** Per-row trend with a 24h or 14d toggle, count and last seen are there (`src/features/issues/inbox-row.tsx`, `inbox.tsx:285`); first seen is in the unfolded row (`dossier.tsx:47`). Missing: the "N old" age, the CSP report label and the `ignored`/`resolved` badges in the "All" view.
+- [ ] Status dropdown on detail: Unresolved, Resolved, Ignored, plus "Resolve in next release" (`statusDetails.inNextRelease`); snackbar says which release it pinned or that none was found. **Faultline:** Resolved, Unresolved, Ignored and "Resolve in next release" are offered (`issue-page.tsx:171-196`, `src/features/issues/actions.ts:77`). Missing: the snackbar saying which release it pinned or that none was found.
+- [x] Issue not found and event not found empty states.
+- [x] Tab badges: user report count, comment count.
+- [ ] Back link to the list keeps the issue's project filter (`?project=<id>`). **Faultline:** The back link goes to `/$org/issues` with no search (`issue-page.tsx:156`), so the project filter is lost.
+- [ ] Event header: event id, long date, "raw JSON" link, "copy for AI" (markdown payload with instance, org, issue, event URL and event JSON), one-time MCP hint when `enabledFeatures` has `mcp`. **Faultline:** Event id, long date and raw JSON link are there (`issue-page.tsx:307-338`). Missing: "copy for AI" and the one-time MCP hint.
 - [x] Older / Newer event buttons, disabled at the ends.
-- [ ] Contexts summary (browser, OS, device, runtime, user) and full per-context tables.
-- [ ] Tag pills; each links to `/:org/issues?query=is:unresolved "key":"value"` (or `?environment=` for the `environment` tag); URL values get an external-link affordance.
-- [ ] Exception entry: Full vs Raw toggle, "most recent call first/last" flip, per-frame expand with context lines and variables, mechanism data, in-app frame styling, syntax highlighting (Prism).
-- [ ] Message entry, CSP violation entry, Request entry (method, URL, headers, query, cookies, body/data), Breadcrumbs entry (type, category, level, data, time).
-- [ ] "Additional Data" (`event.context`), SDK name/version. (`packages`, `errors`, `_meta` are returned but not rendered by stock.)
-- [ ] Issue tag facets sidebar: top 10 values per tag with percent bars and "other"; a tag with one value renders flat.
+- [x] Contexts summary (browser, OS, device, runtime, user) and full per-context tables.
+- [ ] Tag pills; each links to `/:org/issues?query=is:unresolved "key":"value"` (or `?environment=` for the `environment` tag); URL values get an external-link affordance. **Faultline:** Each value links to the inbox with `key:value` (`issue-sections.tsx:161-170`; `environment:` in a query filters correctly on 7.0.0). Missing: the external-link affordance on URL values.
+- [ ] Exception entry: Full vs Raw toggle, "most recent call first/last" flip, per-frame expand with context lines and variables, mechanism data, in-app frame styling, syntax highlighting (Prism). **Faultline:** Per-frame expand with context lines and vars, in-app styling and the "caused by" chain exist (`src/features/issues/stack-trace.tsx`). Missing: Full/Raw toggle, the most-recent-call first/last flip (always newest first), mechanism data beyond "unhandled", syntax highlighting.
+- [ ] Message entry, CSP violation entry, Request entry (method, URL, headers, query, cookies, body/data), Breadcrumbs entry (type, category, level, data, time). **Faultline:** Message (`issue-page.tsx:350`), Request without cookies (`issue-sections.tsx:111`) and Breadcrumbs (`Timeline`, `issue-sections.tsx:47`) exist. Missing: CSP violation entry, request cookies; a breadcrumb's level shows as colour only.
+- [ ] "Additional Data" (`event.context`), SDK name/version. (`packages`, `errors`, `_meta` are returned but not rendered by stock.) **Faultline:** SDK is shown (`issue-sections.tsx:200`). Missing: "Additional Data" (`event.context` is never rendered).
+- [ ] Issue tag facets sidebar: top 10 values per tag with percent bars and "other"; a tag with one value renders flat. **Faultline:** Percent bars per tag value exist (`issue-sections.tsx:148-180`). Shows the top 4 values, not 10, with an "N more" count rather than an "other" bar.
 - [x] `shortId` (e.g. `MOBILE-2`) chip on the header and in the sidebar "Issue #" field.
 
 Where Faultline differs on purpose:
@@ -208,8 +209,8 @@ Easy to miss:
 | Releases | `/:org/releases/:version` | Release detail: header with project chips, file count (plural), `dateReleased`; single-column files table (Filename, read-only), paging; per-request error list | `GET /organizations/{org}/releases/{version}/`; `GET .../releases/{version}/files/?cursor` | [x] |
 
 - [x] Version path segment must be URL-encoded (versions can contain `/`, `@`). A version with `/` can't be opened at all (the backend answers 404 for it); its page says so.
-- [ ] Project chip strips the `slug@` prefix when the version already starts with it.
-- [ ] Stock UI is read-only: no create release, deploys, commits, file delete or source-map upload (CLI/API only).
+- [-] Project chip strips the `slug@` prefix when the version already starts with it. **Faultline:** n/a, releases show version and project slugs as separate text (`src/features/releases/release-page.tsx:91`, `release-list.tsx:117`), so there is no combined chip to strip.
+- [-] Stock UI is read-only: no create release, deploys, commits, file delete or source-map upload (CLI/API only). **Faultline:** n/a, a statement about the stock UI, not a feature to match; Faultline already adds file delete (`src/api/releases.ts:199`).
 - Note: the events-per-day chart adds up the backend's hourly buckets, which start on the UTC hour, into the viewer's days. In a time zone with a half-hour offset (India, parts of Australia) each day's first or last half hour lands in the neighbouring day. Left as is.
 
 ---
@@ -221,7 +222,7 @@ Easy to miss:
 | Perf | `/:org/performance/transaction-groups` | Transaction group list: columns Title (method, transaction, op) with project + transaction count, and Average Duration; env filter, sort (Slowest `-avg_duration`, Fastest, Most Frequent `-count`, Least Frequent), search `query`, project/time range, paging | `GET /organizations/{org}/transaction-groups/?cursor&query&start&end&sort&project&environment`; `GET /organizations/{org}/environments/` | [x] |
 | Perf | `/:org/performance/transaction-groups/:id` | Group header (count, avg, p95, op chip), span breakdown table (sortable columns, op filter); "not found" state | `GET /organizations/{org}/transaction-groups/{id}/`; `GET .../transaction-groups/{id}/spans/` | [x] |
 
-- [ ] Environment filter and time range. Not built: GlitchTip 7.0.0 accepts `environment`, `start` and `end` on the list and ignores them, so every figure covers all environments and all time.
+- [-] Environment filter and time range. Not built: GlitchTip 7.0.0 accepts `environment`, `start` and `end` on the list and ignores them, so every figure covers all environments and all time. **Faultline:** n/a, GlitchTip 7.0.0 ignores `environment`, `start` and `end` on this list, so there is nothing to build; the row itself says "Not built".
 - Faultline adds the time spent per transaction, tabs for repeated queries (`/n-plus-one/`), transactions slower this week (`/trend/`, with the release they slowed down at) and failing ones, the 7-day duration chart, and the transaction beside the list on a desktop. The stock `sort` parameter is read as Faultline's `order`, so old links keep their order.
 - "Slower this week" checks the 100 transactions that took the most time in all, one trend request each. It compares time in spans per request, and the backend's trend has no count per span group: a day on which requests start running a new query counts more requests than ran, so a regression that adds a query reads smaller than it is.
 - Transactions that share a name (in two projects, or with two methods) share one trend, span breakdown and set of repeated queries, because the backend keys those by name alone. Faultline does not flag such a transaction as slower or link repeated queries to it, and its breakdown says it includes the others.
@@ -245,7 +246,7 @@ Account page details:
 - [x] Social: "Connect an account" select (only when `socialApps` exist), connected accounts list with Disconnect (blocked when it would leave no login method), shows provider name.
 - [x] Password: "Set password" variant when `hasPasswordAuth` is false (no current-password field). Min 8, confirm field.
 - [x] Delete account: 400 means the user still owns an org; paid-subscription owners are blocked.
-- [ ] Preferences schema also has `stacktraceOrder`, `clock24Hours`, `language` but the stock UI never edits them (stack order toggle is per-view local state).
+- [-] Preferences schema also has `stacktraceOrder`, `clock24Hours`, `language` but the stock UI never edits them (stack order toggle is per-view local state). **Faultline:** n/a, the stock UI never edits these preferences, so there is no behaviour to match.
 - [x] MFA: first-time TOTP enrolment needs the user to type one of the preview recovery codes to confirm they saved them; `POST /generate-recovery-codes/` returns 204 on success and the stock UI treats any non-200 as success.
 - [x] MFA: WebAuthn uses `@github/webauthn-json` (base64url JSON <-> ArrayBuffer). Passkey-only login (`mfa_login_webauthn` flow, `auth/webauthn/login`) is advertised by the backend but not used by the stock login page.
 - [x] Recovery codes list shown once with copy and "I copied them" gate.
@@ -264,8 +265,8 @@ Hosted-only (Stripe). The page switches on `settings.billingEnabled`; a self-hos
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Billing | `/:org/settings/subscription` (self-hosted variant, billing off) | Usage last 30 days (events by category), sponsor/support cards (Liberapay, GitLab, "Try Cloud"), billing email link when `iPaidForGlitchTip`, manage billing button | `GET /stripe/subscriptions/{org}/events_count/period/`; `GET /instance-license/`; `POST /stripe/organizations/{org}/create-billing-portal/` | [ ] |
-| Billing | same route (hosted variant, billing on) | Plans/checkout (`payment`), subscription status (trialing, past_due, canceled), daily + period usage charts, overage card (spend cap, enable/disable), "from Stripe" refresh polling, billing portal | `GET /stripe/products/`; `GET /stripe/subscriptions/{org}/`; `POST /stripe/subscriptions/`; `POST /stripe/organizations/{org}/create-stripe-subscription-checkout/`; `GET .../events_count/period/` and `/daily/`; `GET`/`POST` overage; `POST .../create-billing-portal/` | [ ] |
+| Billing | `/:org/settings/subscription` (self-hosted variant, billing off) | Usage last 30 days (events by category), sponsor/support cards (Liberapay, GitLab, "Try Cloud"), billing email link when `iPaidForGlitchTip`, manage billing button | `GET /stripe/subscriptions/{org}/events_count/period/`; `GET /instance-license/`; `POST /stripe/organizations/{org}/create-billing-portal/` | [ ] Faultline: No subscription page and no "Subscription" entry in the org menu (`src/components/shell/app-shell.tsx:38`); nothing calls `/stripe/subscriptions/` or `/instance-license/`. The doc decided to build this variant. |
+| Billing | same route (hosted variant, billing on) | Plans/checkout (`payment`), subscription status (trialing, past_due, canceled), daily + period usage charts, overage card (spend cap, enable/disable), "from Stripe" refresh polling, billing portal | `GET /stripe/products/`; `GET /stripe/subscriptions/{org}/`; `POST /stripe/subscriptions/`; `POST /stripe/organizations/{org}/create-stripe-subscription-checkout/`; `GET .../events_count/period/` and `/daily/`; `GET`/`POST` overage; `POST .../create-billing-portal/` | [-] n/a: hosted Stripe variant; the doc says it is out of scope unless asked, and billing is off on self-hosted installs. |
 
 Decision for Faultline: implement the self-hosted variant (usage + links); hosted/Stripe variant is out of scope unless the user asks.
 
@@ -279,18 +280,18 @@ Covered by `/profile/wizard/:hash` and the `/account/settings/wizard/:hash` redi
 
 ## 14. Cross-cutting behaviour to match
 
-- [ ] Same-origin deployment with the proxy paths in `research/backend-integration.md` section 4.
-- [ ] CSRF: send `X-CSRFToken` (from the `csrftoken` cookie) on every POST, PUT, PATCH, DELETE. Re-read it each request (login rotates it).
-- [ ] Pagination: `Link` header (rel next/previous, `results="true|false"`, `cursor="..."`), `X-Hits`, `X-Max-Hits`. Page size 50 default, hard max 100 (stock asks 200 and silently gets 100).
-- [ ] Error shapes: 422 `{detail:[{type,loc,msg,ctx}]}`; 400/403/404 `{detail:"..."}`; allauth `{status, errors:[{message,code,param}]}`. Form fields map `param` to inputs.
-- [ ] Fetch-all lists (orgs, org projects) follow cursors up to 5 pages x limit.
-- [ ] `localStorage` keys worth keeping compatible: `isAuthenticated`, `theme`, `glitchtip-sidenav-collapsed`, `termsUpdate20261121Dismissed`, `mcpCopyHintSeen`, `glitchtip-support-chat-opened`.
-- [ ] Background refresh: `/api/settings/` once after 5 s then every 30 min; `/users/me/` once after 10 s; orgs and active org once after 30 s.
-- [ ] Optional integrations driven by settings: Plausible page-view pings (`window.plausible`), chatwoot (`chatwootWebsiteToken`), frontend self-error-reporting to `sentryDSN`. Decide per feature; none are required.
-- [ ] `<base href>` / `BASE_PATH` sub-path deployment (stock SPA derives the API base URL from `<base>`).
-- [ ] Permission gating by scope, never inline role checks.
-- [ ] Accessibility: stock uses Material components; Faultline must match keyboard and screen-reader behaviour of lists, menus, dialogs and tabs.
-- [ ] Keyboard shortcuts: **none** exist in the stock UI (only the team-slug field blocks bad keystrokes). Not part of parity; Kudcrafts adds `j/k/e` as an extra.
+- [x] Same-origin deployment with the proxy paths in `research/backend-integration.md` section 4.
+- [x] CSRF: send `X-CSRFToken` (from the `csrftoken` cookie) on every POST, PUT, PATCH, DELETE. Re-read it each request (login rotates it).
+- [x] Pagination: `Link` header (rel next/previous, `results="true|false"`, `cursor="..."`), `X-Hits`, `X-Max-Hits`. Page size 50 default, hard max 100 (stock asks 200 and silently gets 100).
+- [x] Error shapes: 422 `{detail:[{type,loc,msg,ctx}]}`; 400/403/404 `{detail:"..."}`; allauth `{status, errors:[{message,code,param}]}`. Form fields map `param` to inputs.
+- [x] Fetch-all lists (orgs, org projects) follow cursors up to 5 pages x limit.
+- [ ] `localStorage` keys worth keeping compatible: `isAuthenticated`, `theme`, `glitchtip-sidenav-collapsed`, `termsUpdate20261121Dismissed`, `mcpCopyHintSeen`, `glitchtip-support-chat-opened`. **Faultline:** Only `theme` is shared (`src/lib/theme.ts`). Session state comes from the session query, not `isAuthenticated`; the side-nav, terms, MCP hint and support-chat keys are unused because those features are not built.
+- [ ] Background refresh: `/api/settings/` once after 5 s then every 30 min; `/users/me/` once after 10 s; orgs and active org once after 30 s. **Faultline:** No timed refresh: `/api/settings/` and the session use `staleTime: Infinity` (`src/api/organizations.ts:54`, `src/api/auth.ts:52`); only monitors poll (`src/api/monitors.ts:68`).
+- [-] Optional integrations driven by settings: Plausible page-view pings (`window.plausible`), chatwoot (`chatwootWebsiteToken`), frontend self-error-reporting to `sentryDSN`. Decide per feature; none are required. **Faultline:** n/a, the row itself says "Decide per feature; none are required".
+- [ ] `<base href>` / `BASE_PATH` sub-path deployment (stock SPA derives the API base URL from `<base>`). **Faultline:** No `<base href>` or BASE_PATH support: `baseUrl: '/'` (`src/api/client.ts:96`), and Vite and Caddy serve from the root.
+- [ ] Permission gating by scope, never inline role checks. **Faultline:** Gates use scopes (`src/api/organizations.ts:31`, `src/features/settings/access.ts:15`) but some use roles: `src/features/settings/teams.tsx:35`, `members.tsx:84,95,169`.
+- [ ] Accessibility: stock uses Material components; Faultline must match keyboard and screen-reader behaviour of lists, menus, dialogs and tabs. **Faultline:** Built on Radix and shadcn primitives, but no keyboard or screen-reader checks or tests (`e2e/` has no a11y coverage); parity is not verified.
+- [-] Keyboard shortcuts: **none** exist in the stock UI (only the team-slug field blocks bad keystrokes). Not part of parity; Kudcrafts adds `j/k/e` as an extra. **Faultline:** n/a, the row itself says it is not part of parity; Faultline adds its own shortcuts (`src/lib/hotkeys.ts`).
 
 ---
 

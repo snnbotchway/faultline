@@ -6,13 +6,14 @@ export const Dialog = Primitive.Root
 export const DialogTrigger = Primitive.Trigger
 export const DialogClose = Primitive.Close
 
+// A dialog sits 14vh from the top and keeps as much clear below, scrolling what does not fit.
 export function DialogContent({ className, children, ...props }: React.ComponentProps<typeof Primitive.Content>) {
   return (
     <Primitive.Portal>
       <Primitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-150" />
       <Primitive.Content
         className={cn(
-          'fixed top-[14vh] left-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-md -translate-x-1/2 border bg-popover text-popover-foreground shadow-float outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 data-[state=open]:duration-150',
+          'fixed top-[14vh] left-1/2 z-50 max-h-[72vh] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto -translate-x-1/2 border bg-popover text-popover-foreground shadow-float outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 data-[state=open]:duration-150',
           className,
         )}
         {...props}

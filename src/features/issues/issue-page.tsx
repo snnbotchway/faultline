@@ -3,7 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, Ellipsis } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ApiError } from '@/api/client'
-import { IssueStatus, StatsPeriod, issueEventQuery, issueQuery, issueStatsQuery, rawEventUrl, type IssueDetail } from '@/api/issues'
+import { IssueStatus, StatsPeriod, issueEventQuery, issueQuery, issueStatsQuery, issueTagsQuery, rawEventUrl, type IssueDetail } from '@/api/issues'
 import { organizationQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
@@ -102,6 +102,9 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const navigate = useNavigate()
   const issue = useQuery(issueQuery(org, issueId))
   const event = useQuery(issueEventQuery(org, issueId, eventId))
+  // The backend keeps no user count per issue; the distinct values of the user tag are the people affected.
+  const tags = useQuery(issueTagsQuery(org, issueId)).data
+  const users = (tags?.find((tag) => tag.key === 'user.id') ?? tags?.find((tag) => tag.key === 'user.email'))?.uniqueValues
   const access = useQuery(organizationQuery(org)).data?.access ?? []
   const canWrite = access.includes('event:write') || access.includes('event:admin')
   const canAdmin = access.includes('event:admin')
@@ -293,9 +296,9 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
             </span>
           </h1>
           {data.culprit && <p className="mono mt-1 truncate pl-[22px] text-muted-foreground">{data.culprit}</p>}
-          <dl className="mt-4 grid grid-cols-[auto_auto_1fr_1fr] gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-[22px]">
+          <dl className="mt-4 flex gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-[22px]">
             <Fact label="Events" value={compact(data.count)} />
-            <Fact label="Users" value={compact(data.userCount ?? 0)} />
+            {users !== undefined && <Fact label="Users" value={compact(users)} />}
             <Fact label="First seen" value={ago(data.firstSeen)} detail={data.firstRelease?.shortVersion} title={exact(data.firstSeen)} />
             <Fact label="Last seen" value={ago(data.lastSeen)} detail={data.lastRelease?.shortVersion} title={exact(data.lastSeen)} />
           </dl>

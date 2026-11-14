@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Scope, teamsQuery } from '@/api/organizations'
 import { PROJECT_NAME_MAX, projectActions } from '@/api/projects'
 import { TEAM_SLUG_MAX, teamActions } from '@/api/teams'
@@ -38,12 +38,13 @@ export function NewProject({ org }: { org: string }) {
   const firstTeam = teams?.length === 0
   const teamError = firstTeam ? teamSlugError(newTeam, []) : undefined
 
-  // The team stays if the project then fails, so the list is fetched again at once and a retry picks the team
-  // rather than making it twice.
+  // The team stays if the project then fails, so a retry uses the one already made, even if the team list could not
+  // be fetched again to show it.
+  const madeTeam = useRef<string>(undefined)
   const makeFirstTeam = async () => {
-    const made = await teamActions.create(org, newTeam.trim())
+    madeTeam.current ??= (await teamActions.create(org, newTeam.trim())).slug
     await queryClient.invalidateQueries(stale.teams(org))
-    return made.slug
+    return madeTeam.current
   }
   const create = useChange(
     'create the project',

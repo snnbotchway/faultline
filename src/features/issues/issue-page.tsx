@@ -368,9 +368,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                   <Timeline event={event.data} title={data.title} />
                 </div>
                 {exceptions.length > 0 ? (
-                  <Section title="Stack trace">
-                    <StackTrace exceptions={exceptions} platform={event.data.platform} />
-                  </Section>
+                  <StackTrace exceptions={exceptions} platform={event.data.platform} />
                 ) : (
                   message && (
                     <Section title="Message">

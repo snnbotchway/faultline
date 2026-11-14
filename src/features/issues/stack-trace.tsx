@@ -1,9 +1,12 @@
 import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Segmented } from '@/components/ui/segmented'
+import { CopyButton } from '@/features/settings/parts'
+import { useStoredChoice } from '@/lib/stored'
 import { cn } from '@/lib/utils'
 import { frameFile, framesOf, valueText, type ExceptionValue, type Frame } from './event'
 import { Tone, languageOf, useHighlighted } from './highlight'
+import { Pairs, Section } from './issue-sections'
 import { rawTrace } from './raw-trace'
 
 const TONE_CLASS: Record<Tone, string> = { keyword: 'font-semibold', value: 'text-level-info', comment: 'text-muted-foreground' }
@@ -107,27 +110,40 @@ function Frames({ frames, platform }: { frames: Frame[]; platform?: string | nul
   )
 }
 
+const TraceView = { full: 'full', raw: 'raw' } as const
+type TraceView = (typeof TraceView)[keyof typeof TraceView]
+const FrameOrder = { newest: 'newest', oldest: 'oldest' } as const
+type FrameOrder = (typeof FrameOrder)[keyof typeof FrameOrder]
+
 const VIEWS = [
-  { value: 'full', label: 'Full' },
-  { value: 'raw', label: 'Raw' },
+  { value: TraceView.full, label: 'Full' },
+  { value: TraceView.raw, label: 'Raw' },
 ] as const
 const ORDERS = [
-  { value: 'newest', label: 'Newest first' },
-  { value: 'oldest', label: 'Oldest first' },
+  { value: FrameOrder.newest, label: 'Newest first' },
+  { value: FrameOrder.oldest, label: 'Oldest first' },
 ] as const
 
+// Kept per browser, so a reader who prefers the raw trace or the oldest call first gets it on every issue.
+const VIEW_KEY = 'faultline-trace-view'
+const ORDER_KEY = 'faultline-frame-order'
+
 function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mechanism']> }) {
+  const [open, setOpen] = useState(false)
   const { function: caughtIn, ...data } = mechanism.data ?? {}
+  const caught = caughtIn == null ? undefined : valueText(caughtIn)
+  const extra = Object.entries(data)
+  // "onerror" says nothing that "window.onerror" does not.
+  const type = mechanism.type && !caught?.includes(mechanism.type) ? mechanism.type : undefined
   const parts = [
-    mechanism.type && { text: mechanism.type },
+    type && { text: type },
     mechanism.handled != null && { text: mechanism.handled ? 'handled' : 'unhandled', error: !mechanism.handled },
-    caughtIn != null && { text: valueText(caughtIn) },
-    ...Object.entries(data).map(([key, item]) => ({ text: `${key}=${valueText(item)}` })),
+    caught && { text: caught },
   ].filter((part): part is { text: string; error?: boolean } => !!part)
-  if (parts.length === 0 && !mechanism.description) return null
+  if (parts.length === 0 && extra.length === 0 && !mechanism.description) return null
   return (
     <div className="mb-2 text-muted-foreground">
-      {parts.length > 0 && (
+      {(parts.length > 0 || extra.length > 0) && (
         <p className="mono">
           {parts.map((part, index) => (
             <span key={index}>
@@ -135,7 +151,20 @@ function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mecha
               <span className={part.error ? 'text-level-error' : undefined}>{part.text}</span>
             </span>
           ))}
+          {extra.length > 0 && (
+            <>
+              {parts.length > 0 && ' · '}
+              <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="inline-flex items-center gap-1 font-sans text-sm underline decoration-dotted underline-offset-4 hover:text-foreground max-lg:min-h-11">
+                {extra.length} more
+              </button>
+            </>
+          )}
         </p>
+      )}
+      {open && (
+        <div className="mt-1 border-l pl-3">
+          <Pairs pairs={extra} />
+        </div>
       )}
       {mechanism.description && <p>{mechanism.description}</p>}
     </div>
@@ -143,31 +172,39 @@ function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mecha
 }
 
 export function StackTrace({ exceptions, platform }: { exceptions: ExceptionValue[]; platform?: string | null }) {
-  const [view, setView] = useState<(typeof VIEWS)[number]['value']>('full')
-  const [order, setOrder] = useState<(typeof ORDERS)[number]['value']>('newest')
+  const [view, setView] = useStoredChoice(VIEW_KEY, Object.values(TraceView), TraceView.full)
+  const [order, setOrder] = useStoredChoice(ORDER_KEY, Object.values(FrameOrder), FrameOrder.newest)
   // The raised exception first, then what caused it.
-  const ordered = [...exceptions].reverse().map((exception) => ({ exception, frames: order === 'newest' ? framesOf(exception) : (exception.stacktrace?.frames ?? []) }))
+  const ordered = [...exceptions].reverse().map((exception) => ({ exception, frames: order === FrameOrder.newest ? framesOf(exception) : (exception.stacktrace?.frames ?? []) }))
+  const raw = view === TraceView.raw ? rawTrace(ordered, platform) : undefined
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Segmented label="View" value={view} options={VIEWS} onChange={setView} />
-        <Segmented label="Frame order" value={order} options={ORDERS} onChange={setOrder} />
-      </div>
-      {view === 'raw' ? (
-        <pre className="mono overflow-x-auto border bg-code p-3 leading-code">{rawTrace(ordered, platform)}</pre>
+    <Section
+      title="Stack trace"
+      actions={
+        <>
+          {raw !== undefined && <CopyButton text={raw} />}
+          <Segmented label="View" value={view} options={VIEWS} onChange={setView} />
+          <Segmented label="Frame order" value={order} options={ORDERS} onChange={setOrder} />
+        </>
+      }
+    >
+      {raw !== undefined ? (
+        <pre className="mono overflow-x-auto border bg-code p-3 leading-code">{raw}</pre>
       ) : (
-        ordered.map(({ exception, frames }, index) => (
-          <div key={index}>
-            <p className="mb-2">
-              {index > 0 && <span className="text-muted-foreground">caused by </span>}
-              <span className="error-type">{exception.type}</span> <span>{exception.value}</span>
-            </p>
-            {exception.mechanism && <Mechanism mechanism={exception.mechanism} />}
-            {/* Which frames are open is kept by position, so a new order starts afresh. */}
-            <Frames key={order} frames={frames} platform={platform} />
-          </div>
-        ))
+        <div className="space-y-4">
+          {ordered.map(({ exception, frames }, index) => (
+            <div key={index}>
+              <p className="mb-2">
+                {index > 0 && <span className="text-muted-foreground">caused by </span>}
+                <span className="error-type">{exception.type}</span> <span>{exception.value}</span>
+              </p>
+              {exception.mechanism && <Mechanism mechanism={exception.mechanism} />}
+              {/* Which frames are open is kept by position, so a new order starts afresh. */}
+              <Frames key={order} frames={frames} platform={platform} />
+            </div>
+          ))}
+        </div>
       )}
-    </div>
+    </Section>
   )
 }

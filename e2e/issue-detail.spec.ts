@@ -32,7 +32,7 @@ const section = (page: Page, title: string) => page.locator('section', { has: pa
 
 test('an event reads as plain text, oldest call first, with how it was caught and what the SDK attached', async ({ page }) => {
   await openIssue(page, 'WEB-APP-1')
-  await expect(page.getByText('onerror · unhandled · window.onerror')).toBeVisible()
+  await expect(page.getByText('unhandled · window.onerror', { exact: true })).toBeVisible()
 
   await page.getByRole('radio', { name: 'Raw' }).click()
   const raw = page.locator('pre').filter({ hasText: 'TypeError: Cannot read properties' })

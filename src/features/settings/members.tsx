@@ -175,7 +175,11 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
     failure: Failure.asNotice,
     onDone: () => notify(`Invite sent again to ${member.email}`),
   })
-  const transfer = useChange('transfer ownership', () => memberActions.makeOwner(org, member.id), { stale: [stale.members(org)], onDone: () => setAsking(undefined) })
+  const transfer = useChange('transfer ownership', () => memberActions.makeOwner(org, member.id), {
+    // The user's own role, and with it what they may do here, changes too.
+    stale: [stale.members(org), stale.organization(org)],
+    onDone: () => setAsking(undefined),
+  })
   return (
     <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-13">
       <div className="grid max-w-2xl gap-4 lg:grid-cols-2">

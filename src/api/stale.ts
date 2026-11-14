@@ -1,4 +1,5 @@
 import type { QueryFilters } from '@tanstack/react-query'
+import { issueKeys } from './issues'
 import { organizationKeys } from './organizations'
 import { projectKeys } from './projects'
 import { signInAppKeys } from './sign-in-apps'
@@ -18,5 +19,7 @@ export const stale = {
   environments: (org: string): QueryFilters => ({ queryKey: organizationKeys.environments(org) }),
   projects: (org: string): QueryFilters => ({ queryKey: organizationKeys.projects(org) }),
   project: (org: string, project: string): QueryFilters => ({ queryKey: projectKeys.detail(org, project) }),
+  // Every list of issues, not the issues themselves.
+  issueLists: (org: string): QueryFilters => ({ queryKey: issueKeys.lists(org) }),
   signInApps: (org: string): QueryFilters => ({ queryKey: signInAppKeys.all(org) }),
 }

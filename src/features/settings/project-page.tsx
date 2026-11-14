@@ -264,7 +264,8 @@ function ThrottleForm({ org, slug, name, rate, onDone }: { org: string; slug: st
 function DeleteProject({ org, slug, onClose }: { org: string; slug: string; onClose: () => void }) {
   const navigate = useNavigate()
   const remove = useChange('delete the project', () => projectActions.remove(org, slug), {
-    stale: [stale.projects(org), stale.teams(org)],
+    // The project's environments and issues go with it.
+    stale: [stale.projects(org), stale.teams(org), stale.environments(org), stale.issueLists(org)],
     leavesPage: true,
     onDone: () => void navigate({ to: '/$org/settings', params: { org } }),
   })

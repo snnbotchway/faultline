@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { StatsPeriod } from '@/api/issues'
-import { axisFor, barHeights, classify, fillBuckets, position, releaseMarks } from './trend'
+import { axisFor, barHeights, classify, fillBuckets, markLabels, position, releaseMarks } from './trend'
 
 const now = new Date('2026-11-14T12:30:00Z')
 const seconds = (iso: string) => new Date(iso).getTime() / 1000
@@ -30,14 +30,40 @@ describe('time axis', () => {
     expect(position('2026-10-01T00:00:00Z', axis)).toBeUndefined()
   })
 
-  it('gives releases too close to tell apart one mark, labelled with the newest', () => {
+  it('marks each release on the axis, oldest first, with commit hashes cut to seven characters', () => {
     const axis = axisFor(StatsPeriod.fortnight, now)
     const release = (shortVersion: string, dateCreated: string) => ({ shortVersion, dateCreated })
     const marks = releaseMarks(
-      [release('2.4.1', '2026-11-12T09:00:00Z'), release('2.3.0', '2026-11-04T00:00:00Z'), release('2.4.0', '2026-11-12T03:00:00Z'), release('1.0.0', '2026-09-01T00:00:00Z')],
+      [
+        release('2.4.1', '2026-11-12T09:00:00Z'),
+        release('a30f4726113a06a8e2702987b4127aa0d3b4c1e5', '2026-11-04T00:00:00Z'),
+        release('1.0.0', '2026-09-01T00:00:00Z'),
+      ],
       axis,
     )
-    expect(marks.map((mark) => mark.label)).toEqual(['2.3.0', '2.4.1 +1'])
+    expect(marks.map((mark) => mark.version)).toEqual(['a30f472', '2.4.1'])
+  })
+})
+
+describe('release labels', () => {
+  const mark = (at: number, version: string) => ({ at, version })
+
+  it('names each release that has room for its label', () => {
+    expect(markLabels([mark(0.1, '2.3.0'), mark(0.5, '2.4.0')], 600).map((label) => label.text)).toEqual(['2.3.0', '2.4.0'])
+  })
+
+  it('folds releases whose labels would collide into one, named after the newest', () => {
+    const marks = [mark(0.1, '2.3.0'), mark(0.5, 'a30f472'), mark(0.52, '71b3d06'), mark(0.54, 'c2f9e10')]
+    expect(markLabels(marks, 600).map((label) => label.text)).toEqual(['2.3.0', 'c2f9e10 +2'])
+    expect(markLabels(marks, 6000).map((label) => label.text)).toEqual(['2.3.0', 'a30f472', '71b3d06', 'c2f9e10'])
+  })
+
+  it('ends a label at its mark near the right edge, so it stays on the chart', () => {
+    expect(markLabels([mark(0.95, '2.4.0')], 600)).toEqual([{ at: 0.95, text: '2.4.0', end: true }])
+  })
+
+  it('folds a label at the right edge into the one before when they would meet', () => {
+    expect(markLabels([mark(0.75, '2.4.0'), mark(0.9, '2.4.1')], 400).map((label) => label.text)).toEqual(['2.4.1 +1'])
   })
 })
 

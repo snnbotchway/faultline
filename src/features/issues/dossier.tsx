@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { issueEventQuery, type Issue, type IssueStatus } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { releaseName } from '@/lib/text'
 import { crumbKind, crumbText, crumbsOf, frameFile, throwingFrame } from './event'
 import { exact } from './format'
 import { ContextLines } from './stack-trace'
@@ -46,12 +47,12 @@ export function Dossier({ org, issue, view, canWrite, handlers }: { org: string;
           <dt className="text-muted-foreground">first seen</dt>
           <dd>
             {exact(issue.firstSeen)}
-            {issue.firstRelease && <span className="text-muted-foreground"> in {issue.firstRelease.shortVersion}</span>}
+            {issue.firstRelease && <span className="text-muted-foreground"> in {releaseName(issue.firstRelease.shortVersion)}</span>}
           </dd>
           <dt className="text-muted-foreground">last seen</dt>
           <dd>
             {exact(issue.lastSeen)}
-            {issue.lastRelease && <span className="text-muted-foreground"> in {issue.lastRelease.shortVersion}</span>}
+            {issue.lastRelease && <span className="text-muted-foreground"> in {releaseName(issue.lastRelease.shortVersion)}</span>}
           </dd>
         </dl>
       </section>

@@ -3,7 +3,7 @@ import { Fragment, type ReactNode } from 'react'
 import type { TransactionGroup } from '@/api/performance'
 import { Skeleton } from '@/components/ui/skeleton'
 import { dayLabel } from '@/features/issues/format'
-import { Trace } from '@/features/issues/trace'
+import { MarkLabels, Trace } from '@/features/issues/trace'
 import { Trend, type Axis, type Mark } from '@/features/issues/trend'
 import { cn } from '@/lib/utils'
 import type { Transaction } from './data'
@@ -127,15 +127,7 @@ export function WeekChart({ buckets, marks, axis, slower, height, className }: {
       </div>
       <div className="min-w-0 flex-1" aria-hidden>
         <div className="relative pt-5">
-          {marks.map((mark) => (
-            <span
-              key={mark.at}
-              className={cn('absolute top-0 font-mono text-xs whitespace-nowrap text-muted-foreground', mark.at > 0.8 ? '-translate-x-full pr-1' : 'pl-1')}
-              style={{ left: `${mark.at * 100}%` }}
-            >
-              {mark.label}
-            </span>
-          ))}
+          <MarkLabels marks={marks} />
           <Trace buckets={buckets} marks={marks} height={height} trend={slower ? Trend.spiking : Trend.ongoing} className="border-t border-b-border" />
         </div>
         <div className="mono mt-1 flex gap-px text-xs text-muted-foreground">

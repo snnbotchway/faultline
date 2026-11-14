@@ -1,4 +1,5 @@
 import { StatsPeriod } from '@/api/issues'
+import { releaseName } from '@/lib/text'
 import { DAY, HOUR } from '@/lib/time'
 import { dayLabel, hourLabel } from './format'
 
@@ -58,28 +59,50 @@ export function barHeights(buckets: number[], height: number, peak = Math.max(..
   return buckets.map((count) => (count <= 0 || peak <= 0 ? 0 : Math.max(MIN_BAR, Math.round((count / peak) * height))))
 }
 
-export type Mark = { at: number; label: string }
+export type Mark = { at: number; version: string }
 
-const MARK_GAP = 0.05
-
-// Releases on the axis. Ones that would overlap share a mark, labelled with the newest.
+// Releases on the axis, oldest first.
 export function releaseMarks(releases: { shortVersion: string; dateCreated: string }[], axis: Axis): Mark[] {
-  const placed = releases
+  return releases
     .flatMap((release) => {
       const at = position(release.dateCreated, axis)
-      return at === undefined ? [] : [{ at, version: release.shortVersion }]
+      return at === undefined ? [] : [{ at, version: releaseName(release.shortVersion) }]
     })
     .sort((a, b) => a.at - b.at)
-  const marks: (Mark & { count: number; version: string })[] = []
-  for (const release of placed) {
-    const last = marks.at(-1)
-    if (last && release.at - last.at < MARK_GAP) {
-      last.count += 1
-      last.version = release.version
-      last.label = `${last.version} +${last.count - 1}`
-    } else marks.push({ at: release.at, label: release.version, version: release.version, count: 1 })
+}
+
+export type MarkLabel = { at: number; text: string; end: boolean }
+
+// Labels are text-xs Plex Mono: 0.6em a character. Each keeps its padding and a gap from the next.
+const LABEL_CHAR = 7.2
+const LABEL_SPACE = 12
+// Past this point a label ends at its mark, so it stays on the chart.
+const LABEL_END = 0.8
+
+// The labels of the marks on a chart `width` pixels wide. Releases whose labels would run into each other share one,
+// placed at the oldest and named after the newest with a count of the others.
+export function markLabels(marks: Mark[], width: number): MarkLabel[] {
+  if (width <= 0) return []
+  const groups: { at: number; version: string; count: number }[] = []
+  const text = (group: (typeof groups)[number]) => (group.count > 1 ? `${group.version} +${group.count - 1}` : group.version)
+  const span = (group: (typeof groups)[number]) => {
+    const x = group.at * width
+    const size = text(group).length * LABEL_CHAR + LABEL_SPACE
+    return group.at > LABEL_END ? { from: x - size, to: x } : { from: x, to: x + size }
   }
-  return marks.map(({ at, label }) => ({ at, label }))
+  for (const mark of marks) {
+    let newer = { at: mark.at, version: mark.version, count: 1 }
+    groups.push(newer)
+    let older = groups.at(-2)
+    while (older && span(older).to > span(newer).from) {
+      older.version = newer.version
+      older.count += newer.count
+      groups.pop()
+      newer = older
+      older = groups.at(-2)
+    }
+  }
+  return groups.map((group) => ({ at: group.at, text: text(group), end: group.at > LABEL_END }))
 }
 
 export const axisStartLabel = (period: StatsPeriod, start: number) => (period === StatsPeriod.day ? hourLabel(start) : dayLabel(start))

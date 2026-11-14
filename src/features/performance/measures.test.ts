@@ -38,9 +38,9 @@ describe('slower this week', () => {
 
 describe('release behind a regression', () => {
   it('is the release that went out on the day it started or the evening before', () => {
-    expect(releaseAt([{ at: 0.7, label: '1.5.0' }], axis, 5)).toBe('1.5.0')
-    expect(releaseAt([{ at: 0.66, label: '1.5.0' }], axis, 5)).toBe('1.5.0')
-    expect(releaseAt([{ at: 0.4, label: '1.4.1' }], axis, 5)).toBeUndefined()
+    expect(releaseAt([{ at: 0.7, version: '1.5.0' }], axis, 5)).toBe('1.5.0')
+    expect(releaseAt([{ at: 0.66, version: '1.5.0' }], axis, 5)).toBe('1.5.0')
+    expect(releaseAt([{ at: 0.4, version: '1.4.1' }], axis, 5)).toBeUndefined()
   })
 })
 

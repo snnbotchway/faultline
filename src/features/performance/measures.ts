@@ -55,7 +55,7 @@ export function regression(time: number[]): Regression | undefined {
 export function releaseAt(marks: Mark[], axis: Axis, dayIndex: number): string | undefined {
   const from = (dayIndex - 0.5) / axis.count
   const to = (dayIndex + 1) / axis.count
-  return marks.findLast((mark) => mark.at >= from && mark.at < to)?.label
+  return marks.findLast((mark) => mark.at >= from && mark.at < to)?.version
 }
 
 export type SpanRow = SpanGroup & { times: number; time: number; repeats: boolean }

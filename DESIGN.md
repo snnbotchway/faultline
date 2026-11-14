@@ -116,7 +116,7 @@ The inbox and the issue page draw events the same way.
 - **A visible zero.** Every trace sits on a 1px baseline in the `grid` colour that runs the full width, so an empty bucket reads as zero and not as missing data. A bucket with any events is at least 2px tall.
 - **One shared time scale.** All rows in a list cover the same period, and the axis is labelled once, above the rows. A 24h / 14d toggle beside the axis switches the period.
 - **Height scale.** In the inbox each trace is scaled to its own peak, and the row's event count gives the magnitude. On the issue page the chart is labelled with its peak (`peak 31/day`).
-- **Releases** are vertical rules through the axis with the short version as a mono label. The same rule runs through every row. On a phone the rows' traces are too narrow for rules, so they show on the issue page only.
+- **Releases** are vertical rules through the axis with the short version as a mono label; a commit hash shows its first 7 characters. Releases whose labels would run into each other share one, named after the newest with a count of the others (`a30f472 +4`), while each keeps its own rule. The same rules run through every row. On a phone the rows' traces are too narrow for rules, so they show on the issue page only.
 - **Colour.** Bars are the foreground at reduced strength. A new issue's bars use `trend-new`; the latest bucket of a spiking issue uses `trend-spiking`.
 - Buckets are arrival times, as the backend reports them.
 

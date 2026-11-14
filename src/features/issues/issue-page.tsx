@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
 import { notify } from '@/lib/notice'
+import { releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { oneIssue, useIssueActions } from './actions'
@@ -288,8 +289,8 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           <dl className="mt-4 flex gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-6">
             <Fact label="Events" value={compact(data.count)} />
             {users !== undefined && <Fact label="Users" value={compact(users)} />}
-            <Fact label="First seen" value={ago(data.firstSeen)} detail={data.firstRelease?.shortVersion} moment={data.firstSeen} />
-            <Fact label="Last seen" value={ago(data.lastSeen)} detail={data.lastRelease?.shortVersion} moment={data.lastSeen} />
+            <Fact label="First seen" value={ago(data.firstSeen)} detail={data.firstRelease ? releaseName(data.firstRelease.shortVersion) : undefined} moment={data.firstSeen} />
+            <Fact label="Last seen" value={ago(data.lastSeen)} detail={data.lastRelease ? releaseName(data.lastRelease.shortVersion) : undefined} moment={data.lastSeen} />
           </dl>
         </div>
         <Chart org={org} issueId={issueId} />

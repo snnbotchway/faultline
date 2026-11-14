@@ -14,12 +14,13 @@ export function checkForm(form: HTMLFormElement): FormProblems {
   const fields: FormProblems['fields'] = {}
   for (const control of controls(form)) {
     const { name, minLength, maxLength } = control
+    // The backend strips every field, passwords included, before it checks them, so the form counts the same way.
     const value = control.value.trim()
     if (!name || fields[name]) continue
     if (!value) {
       if (control.required) fields[name] = FormText.required
     } else if (control.type === 'email' && control.validity.typeMismatch) fields[name] = FormText.invalidEmail
-    // The browser only flags lengths the user typed, so they are counted here.
+    // The browser only flags lengths the user typed, and counts the spaces the backend strips.
     else if (minLength > 0 && value.length < minLength) fields[name] = FormText.tooShort(minLength)
     else if (maxLength > 0 && value.length > maxLength) fields[name] = FormText.tooLong(maxLength)
   }
@@ -28,10 +29,18 @@ export function checkForm(form: HTMLFormElement): FormProblems {
 
 export const hasProblems = (problems: FormProblems) => !!problems.message || Object.keys(problems.fields).length > 0
 
-// Moves focus to the first field, in screen order, that has a problem.
+// The controls a problem can point at, in screen order: named fields, and any control marked `data-field`
+// for a problem about a group (the first checkbox of a set).
+const targets = (form: HTMLFormElement) =>
+  [...form.querySelectorAll<HTMLElement>('input[name]:not([type=hidden]):not([aria-hidden=true]), textarea[name], [data-field]')].map((element) => ({
+    element,
+    field: element.dataset.field ?? element.getAttribute('name') ?? '',
+  }))
+
+// Moves focus to the first control, in screen order, that has a problem.
 export function focusFirstProblem(form: HTMLFormElement | null, problems: FormProblems) {
   if (!form) return
-  controls(form)
-    .find((control) => control.name && problems.fields[control.name])
-    ?.focus()
+  targets(form)
+    .find(({ field }) => problems.fields[field])
+    ?.element.focus()
 }

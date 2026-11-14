@@ -1,29 +1,28 @@
 import { expect, test } from 'vitest'
 import { checkForm } from './form-check'
 
-function form(html: string) {
-  const element = document.createElement('form')
-  element.innerHTML = html
-  return element
+const check = (html: string) => {
+  const form = document.createElement('form')
+  form.innerHTML = html
+  return checkForm(form).fields
 }
 
-test("a form names each field that breaks its own rules, in the form's words", () => {
-  const filled = form(`
-    <input name="name" required value="  ">
-    <input name="email" type="email" required value="demo">
-    <input name="password" minlength="8" value="short">
-    <input name="label" maxlength="4" value="too long">
-    <input name="note" value="">
-  `)
-  expect(checkForm(filled).fields).toEqual({
-    name: 'Fill this in.',
-    email: 'Enter a valid email address.',
-    password: 'Use 8 or more characters.',
-    label: 'Use 4 characters or fewer.',
-  })
+test('a required field left empty, or only spaces, asks to be filled in', () => {
+  expect(check('<input name="name" required value="  "><input name="note" value="">')).toEqual({ name: 'Fill this in.' })
+  // The backend strips passwords too, so one made of spaces is empty to it.
+  expect(check('<input name="password" type="password" required value="     ">')).toEqual({ password: 'Fill this in.' })
 })
 
-test('a form whose fields keep their rules has nothing to say', () => {
-  const filled = form(`<input name="email" type="email" required value="demo@example.com"><input name="password" minlength="8" value="long enough">`)
-  expect(checkForm(filled).fields).toEqual({})
+test('a malformed email asks for a valid one', () => {
+  expect(check('<input name="email" type="email" value="demo">')).toEqual({ email: 'Enter a valid email address.' })
+  expect(check('<input name="email" type="email" value="demo@example.com">')).toEqual({})
+})
+
+test('a password shorter than its minimum says the minimum, not counting the spaces the backend strips', () => {
+  expect(check('<input name="password" type="password" minlength="8" value="  qh7-x2  ">')).toEqual({ password: 'Use 8 or more characters.' })
+  expect(check('<input name="password" type="password" minlength="8" value="quiet-harbour">')).toEqual({})
+})
+
+test('a value longer than its maximum says the maximum', () => {
+  expect(check('<input name="label" maxlength="4" value="too long">')).toEqual({ label: 'Use 4 characters or fewer.' })
 })

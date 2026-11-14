@@ -37,6 +37,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: docker compose -f dev/compose.yml --profile app up -d --wait --build
       - run: bunx playwright install --with-deps chromium
+      - run: bun run seed http://localhost:8620
       - run: bun run e2e
       - if: failure()
         run: docker compose -f dev/compose.yml logs web faultline

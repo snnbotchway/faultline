@@ -64,6 +64,8 @@ async function signIn(s: Session) {
   await s.ok('POST', '/_allauth/browser/v1/auth/signup', creds)
 }
 
+const DAY = 24 * 3_600_000
+
 async function ensure<T>(list: () => Promise<T[]>, match: (t: T) => boolean, create: () => Promise<unknown>) {
   if (!(await list()).some(match)) await create()
 }
@@ -71,7 +73,7 @@ async function ensure<T>(list: () => Promise<T[]>, match: (t: T) => boolean, cre
 // The step that needs the local compose backend; see dev/backdate.py for what it does and why.
 async function backdateEvents(now: number) {
   const root = join(import.meta.dir, '..')
-  const releases = Object.fromEntries(RELEASES.map((release) => [release.version, new Date(now - release.daysAgo * 24 * 3_600_000).toISOString()]))
+  const releases = Object.fromEntries(RELEASES.map((release) => [release.version, new Date(now - release.daysAgo * DAY).toISOString()]))
   const script = await Bun.file(join(root, 'dev/backdate.py')).text()
   const run = Bun.spawn(
     ['docker', 'compose', '-f', 'dev/compose.yml', 'exec', '-T', '-e', `SEED_ORG=${DEMO.org}`, '-e', `SEED_RELEASES=${JSON.stringify(releases)}`, 'web', './manage.py', 'shell', '-c', script],
@@ -106,43 +108,65 @@ export async function seed(base: string, backdate = process.env.SEED_BACKDATE !=
     const [key] = await s.ok('GET', `/api/0/projects/${o}/${p.slug}/keys/`)
     keys[p.slug] = { id: Number(project.id), key: key.public }
   }
-  const issues = () => s.ok('GET', `/api/0/organizations/${o}/issues/?query=&limit=100`) as Promise<{ id: string; title: string; status: string; count: string }[]>
-  if ((await issues()).length === 0) {
-    const now = Date.now()
-    const store = async (slug: string, error: (typeof ERRORS)[string][number], i: number, at: number) => {
-      const { id, key } = keys[slug]!
-      const res = await fetch(`${base}/api/${id}/store/`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-sentry-auth': `Sentry sentry_version=7, sentry_key=${key}, sentry_client=faultline-seed/1.0`,
-        },
-        body: JSON.stringify(makeEvent(slug, error, i, at, now)),
-      })
-      if (!res.ok) throw new Error(`store ${slug} → ${res.status} ${await res.text()}`)
+  type Seeded = { id: string; title: string; status: string; count: string; firstSeen: string; lastSeen: string }
+  const issues = () => s.ok('GET', `/api/0/organizations/${o}/issues/?query=&limit=100`) as Promise<Seeded[]>
+  const stored = (list: Seeded[]) => list.reduce((sum, issue) => sum + Number(issue.count), 0)
+  const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+  const now = Date.now()
+  const store = async (slug: string, error: (typeof ERRORS)[string][number], i: number, at: number) => {
+    const { id, key } = keys[slug]!
+    const res = await fetch(`${base}/api/${id}/store/`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-sentry-auth': `Sentry sentry_version=7, sentry_key=${key}, sentry_client=faultline-seed/1.0`,
+      },
+      body: JSON.stringify(makeEvent(slug, error, i, at, now)),
+    })
+    if (!res.ok) throw new Error(`store ${slug} → ${res.status} ${await res.text()}`)
+  }
+
+  // Events are processed after the request returns, so an interrupted run may still be landing. Wait for
+  // the count to hold still, then send only what is missing: a rerun finishes the job instead of skipping it.
+  let before = await issues()
+  for (let last = -1; stored(before) !== last; before = await issues()) {
+    last = stored(before)
+    await pause(500)
+  }
+  const all = Object.entries(ERRORS).flatMap(([slug, errors]) =>
+    errors.map((error) => {
+      const times = eventTimes(error, now)
+      const have = Math.min(times.length, Number(before.find((issue) => issue.title === titleOf(error))?.count ?? 0))
+      return { slug, error, times, have }
+    }),
+  )
+  const ingested = all.some((item) => item.have < item.times.length)
+  // Each issue's first event goes in alone and in order, so short ids come out the same on every run.
+  for (const { slug, error, times, have } of all) {
+    if (have > 0) continue
+    await store(slug, error, 0, times[0]!)
+    for (let tries = 0; !(await issues()).some((issue) => issue.title === titleOf(error)); tries++) {
+      if (tries > 300) throw new Error('The backend did not process a seeded event.')
+      await pause(100)
     }
-    const all = Object.entries(ERRORS).flatMap(([slug, errors]) => errors.map((error) => ({ slug, error, times: eventTimes(error, now) })))
-    // Each issue's first event goes in alone and in order, so short ids come out the same on every run.
-    for (const { slug, error, times } of all) {
-      await store(slug, error, 0, times[0]!)
-      for (let tries = 0; !(await issues()).some((issue) => issue.title === titleOf(error)); tries++) {
-        if (tries > 120) throw new Error('The backend did not process a seeded event.')
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      }
-    }
-    await Promise.all(
-      all.map(async ({ slug, error, times }) => {
-        for (const [i, at] of times.entries()) if (i > 0) await store(slug, error, i, at)
-      }),
-    )
-    // Events are processed after the request returns; the backdate step needs all of them stored.
-    const sent = Object.values(ERRORS).flat().reduce((sum, error) => sum + eventTimes(error, now).length, 0)
-    const stored = async () => (await issues()).reduce((sum, issue) => sum + Number(issue.count), 0)
-    for (let tries = 0; (await stored()) < sent; tries++) {
-      if (tries > 120) throw new Error('The backend did not finish processing the seeded events.')
-      await new Promise((resolve) => setTimeout(resolve, 500))
-    }
-    if (backdate) await backdateEvents(now)
+  }
+  await Promise.all(
+    all.map(async ({ slug, error, times, have }) => {
+      for (let i = Math.max(1, have); i < times.length; i++) await store(slug, error, i, times[i]!)
+    }),
+  )
+  const sent = all.reduce((sum, item) => sum + item.times.length, 0)
+  let after = await issues()
+  for (let tries = 0; stored(after) < sent; tries++, after = await issues()) {
+    if (tries > 240) throw new Error('The backend did not finish processing the seeded events.')
+    await pause(500)
+  }
+  // Not backdated yet when every issue was first seen at about the same time, whichever run sent the events.
+  const firstSeen = after.map((issue) => new Date(issue.firstSeen).getTime())
+  const flat = Math.max(...firstSeen) - Math.min(...firstSeen) < DAY
+  if (backdate && (ingested || flat)) {
+    // Release dates count back from when the events were sent.
+    await backdateEvents(ingested ? now : Math.max(...after.map((issue) => new Date(issue.lastSeen).getTime())))
   }
   const seeded = await issues()
   for (const error of Object.values(ERRORS).flat()) {

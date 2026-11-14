@@ -194,7 +194,10 @@ function Deploys({ org, version }: { org: string; version: string }) {
       ) : deploys.isError ? (
         <p className="py-3 text-muted-foreground">The deploys didn't load.</p>
       ) : deploys.data.length === 0 ? (
-        <p className="py-3 text-muted-foreground">Not deployed anywhere yet.</p>
+        <p className="py-3 text-muted-foreground">
+          No deploys recorded. A deploy shows here when your pipeline reports it, for example with{' '}
+          <code className="mono">sentry-cli releases deploys {version} new -e production</code>.
+        </p>
       ) : (
         <ul>
           {deploys.data.map((deploy) => (

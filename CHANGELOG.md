@@ -7,7 +7,7 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Fixed
 
-- Releases no longer say "Not deployed": GlitchTip only knows of deploys a pipeline reports, so the list shows a deploy count only when there is one, and a release page says how to report deploys.
+- Releases no longer say "Not deployed": GlitchTip only knows of deploys a pipeline reports, so the list shows a deploy count only when there is one, and a release page says none were recorded.
 - A release's time stays on one line, and a release with no projects leaves no gap where they would be.
 
 ## [0.2.0] - 2026-11-14

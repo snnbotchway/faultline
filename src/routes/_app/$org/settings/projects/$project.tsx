@@ -10,5 +10,6 @@ export const Route = createFileRoute('/_app/$org/settings/projects/$project')({
 
 function Project() {
   const { org, project } = Route.useParams()
-  return <ProjectPage key={project} org={org} slug={project} tab={Route.useSearch().tab} />
+  const { tab, alert } = Route.useSearch()
+  return <ProjectPage key={project} org={org} slug={project} tab={tab} alert={alert} />
 }

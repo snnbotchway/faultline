@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState, type ReactNode } from 'react'
+import { projectAlertsQuery } from '@/api/alerts'
 import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
 import { stale } from '@/api/stale'
@@ -31,12 +32,13 @@ import { ProjectSetup } from './project-setup'
 import { Environments } from './project-environments'
 import { Keys } from './project-keys'
 import { ProjectTab } from './project-tabs'
+import { ProjectAlerts } from '@/features/alerts/project-alerts'
 
 /**
  * One project's settings. Until its first event arrives the page opens on the set-up step; after that on General.
  * Each tab has an address (`?tab=`), the stock one, so links from old emails land on the right tab.
  */
-export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab?: ProjectTab }) {
+export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: string; tab?: ProjectTab; alert?: string }) {
   useTitle(slug, 'Settings')
   const can = useAccess(org)
   const navigate = useNavigate()
@@ -45,6 +47,7 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
   const listed = useQuery(projectsQuery(org)).data?.find((p) => p.slug === slug)
   const keys = useQuery(projectKeysQuery(org, slug)).data
   const environments = useQuery(projectEnvironmentsQuery(org, slug)).data
+  const rules = useQuery(projectAlertsQuery(org, slug)).data
 
   const opening = project.data && !project.data.firstEvent ? ProjectTab.setup : ProjectTab.general
   const current = tab ?? opening
@@ -67,7 +70,9 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
       </>
     )
 
-  const context: TabContext = { org, slug, can, keys, environments, teams: listed?.teams.map((team) => team.slug) }
+  const openRule = (rule?: string) =>
+    void navigate({ to: '/$org/settings/projects/$project', params: { org, project: slug }, search: rule ? { tab: ProjectTab.alerts, alert: rule } : { tab: ProjectTab.alerts } })
+  const context: TabContext = { org, slug, can, keys, environments, teams: listed?.teams.map((team) => team.slug), rules: rules?.length, alert, openRule }
   const panel = PROJECT_TABS.find((entry) => entry.value === current)
 
   return (
@@ -92,7 +97,7 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
               current={current}
               link={(value) => ({ to: '/$org/settings/projects/$project', params: { org, project: slug }, search: { tab: value } })}
             />
-            {panel ? panel.render({ ...context, project: project.data }) : <Screen title="Not built yet" />}
+            {panel?.render({ ...context, project: project.data })}
           </>
         )}
       </Sheet>
@@ -100,9 +105,20 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
   )
 }
 
-type TabContext = { org: string; slug: string; can: (scope: Scope) => boolean; keys?: ProjectKey[]; environments?: ProjectEnvironment[]; teams?: string[] }
+type TabContext = {
+  org: string
+  slug: string
+  can: (scope: Scope) => boolean
+  keys?: ProjectKey[]
+  environments?: ProjectEnvironment[]
+  teams?: string[]
+  rules?: number
+  // The alert rule whose editor is open on the Alerts tab, and how to open another or close it.
+  alert?: string
+  openRule: (alert?: string) => void
+}
 
-// The project page's tabs, in order. A `?tab=` value with no entry here has no screen yet, and its address says so.
+// The project page's tabs, in order.
 const PROJECT_TABS: { value: ProjectTab; label: string; count?: (context: TabContext) => number | undefined; render: (context: TabContext & { project: ProjectDetail }) => ReactNode }[] = [
   {
     value: ProjectTab.setup,
@@ -127,6 +143,12 @@ const PROJECT_TABS: { value: ProjectTab; label: string; count?: (context: TabCon
     label: 'Environments',
     count: ({ environments }) => environments?.length,
     render: ({ org, slug, environments, can }) => <Environments org={org} slug={slug} environments={environments} write={can(Scope.projectWrite)} />,
+  },
+  {
+    value: ProjectTab.alerts,
+    label: 'Alerts',
+    count: ({ rules }) => rules,
+    render: ({ org, slug, alert, openRule }) => <ProjectAlerts org={org} slug={slug} alert={alert} onOpen={openRule} />,
   },
 ]
 

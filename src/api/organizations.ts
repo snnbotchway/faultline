@@ -84,6 +84,10 @@ export const projectsQuery = (slug: string) =>
       ),
   })
 
+// A project's slug from the organization's projects, which ids in logs and transactions refer to.
+export const projectSlug = (projects: { id: string | number; slug?: string | null }[] | undefined, id: number | undefined) =>
+  projects?.find((project) => Number(project.id) === id)?.slug ?? undefined
+
 export const environmentsQuery = (slug: string) =>
   queryOptions({
     queryKey: organizationKeys.environments(slug),

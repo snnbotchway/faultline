@@ -1,7 +1,7 @@
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { HttpStatus, hasStatus } from '@/api/client'
-import { projectsQuery } from '@/api/organizations'
+import { projectSlug, projectsQuery } from '@/api/organizations'
 import {
   nPlusOneQuery,
   transactionGroupQuery,
@@ -103,7 +103,7 @@ export function useTransactions(org: string, search: Pick<PerformanceSearch, 'or
       const totalTime = group.count * group.avgDuration
       return {
         group,
-        project: projects?.find((item) => Number(item.id) === group.project)?.slug ?? undefined,
+        project: projectSlug(projects, group.project),
         totalTime,
         share: all > 0 ? totalTime / all : 0,
         repeats: repeatShared.has(group.transaction) ? [] : (patterns.data ?? []).filter((pattern) => pattern.transactionName === group.transaction),
@@ -164,7 +164,7 @@ export function useTransaction(org: string, id: string) {
     detail,
     axis,
     marks,
-    project: projects?.find((item) => Number(item.id) === group.data?.project)?.slug ?? undefined,
+    project: projectSlug(projects, group.data?.project),
     missing: hasStatus(group.error, HttpStatus.notFound),
     denied: hasStatus(group.error, HttpStatus.forbidden),
     failed: !!error,

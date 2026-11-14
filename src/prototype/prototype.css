@@ -1,0 +1,172 @@
+/* THROWAWAY PROTOTYPE. One token set per design direction, light and dark.
+   Each overrides the shadcn variables, so the winner maps straight onto index.css. */
+@import '@fontsource-variable/geist-mono';
+@import '@fontsource-variable/inter';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+
+.proto {
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--f-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --card-foreground: var(--foreground);
+  --accent-foreground: var(--foreground);
+  --input: var(--border);
+  --ring: var(--brand);
+}
+.proto ::selection { background: color-mix(in oklch, var(--brand) 30%, transparent); }
+.proto :focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.proto input:focus-visible { outline: none; }
+
+/* A · Ledger: warm paper, black ink, ledger-blue accent. */
+.va {
+  --f-sans: 'Geist Variable', system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+  --radius: 0.5rem;
+  --background: oklch(0.985 0.003 80);
+  --card: oklch(1 0 0);
+  --foreground: oklch(0.2 0.006 60);
+  --muted: oklch(0.955 0.004 80);
+  --muted-foreground: oklch(0.49 0.008 60);
+  --accent: oklch(0.955 0.004 80);
+  --border: oklch(0.905 0.005 80);
+  --primary: oklch(0.22 0.006 60);
+  --primary-foreground: oklch(0.985 0 0);
+  --sidebar: oklch(0.968 0.004 80);
+  --brand: oklch(0.5 0.17 262);
+  --brand-fg: oklch(1 0 0);
+  --row-on: oklch(0.955 0.02 262);
+  --code-bg: oklch(0.975 0.003 80);
+  --hit: oklch(0.955 0.03 25);
+  --lv-error: oklch(0.58 0.22 25);
+  --lv-warning: oklch(0.7 0.16 70);
+  --lv-info: oklch(0.6 0.13 240);
+  --ok: oklch(0.55 0.13 155);
+}
+.dark .va {
+  --background: oklch(0.165 0.004 60);
+  --card: oklch(0.195 0.004 60);
+  --foreground: oklch(0.94 0.004 80);
+  --muted: oklch(0.235 0.004 60);
+  --muted-foreground: oklch(0.68 0.008 70);
+  --accent: oklch(0.245 0.004 60);
+  --border: oklch(0.285 0.004 60);
+  --primary: oklch(0.94 0.004 80);
+  --primary-foreground: oklch(0.18 0.004 60);
+  --sidebar: oklch(0.145 0.004 60);
+  --brand: oklch(0.72 0.14 262);
+  --brand-fg: oklch(0.16 0.02 262);
+  --row-on: oklch(0.26 0.035 262);
+  --code-bg: oklch(0.175 0.004 60);
+  --hit: oklch(0.27 0.05 25);
+  --lv-error: oklch(0.68 0.2 25);
+  --lv-warning: oklch(0.8 0.15 80);
+  --lv-info: oklch(0.72 0.12 240);
+  --ok: oklch(0.72 0.14 155);
+}
+
+/* B · Triage: cool graphite, signal-lime accent, dark-first. */
+.vb {
+  --f-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+  --radius: 0.5rem;
+  font-feature-settings: 'cv11', 'ss01', 'tnum';
+  letter-spacing: -0.006em;
+  --background: oklch(1 0 0);
+  --card: oklch(1 0 0);
+  --foreground: oklch(0.21 0.015 260);
+  --muted: oklch(0.962 0.004 260);
+  --muted-foreground: oklch(0.5 0.015 260);
+  --accent: oklch(0.955 0.005 260);
+  --border: oklch(0.915 0.006 260);
+  --primary: oklch(0.46 0.13 138);
+  --primary-foreground: oklch(1 0 0);
+  --sidebar: oklch(0.972 0.004 260);
+  --brand: oklch(0.5 0.14 138);
+  --brand-fg: oklch(1 0 0);
+  --row-on: oklch(0.955 0.045 128);
+  --code-bg: oklch(0.975 0.004 260);
+  --hit: oklch(0.955 0.03 25);
+  --lv-error: oklch(0.6 0.22 22);
+  --lv-warning: oklch(0.72 0.16 70);
+  --lv-info: oklch(0.6 0.14 245);
+  --ok: oklch(0.5 0.14 138);
+}
+.dark .vb {
+  --background: oklch(0.185 0.008 260);
+  --card: oklch(0.215 0.009 260);
+  --foreground: oklch(0.95 0.005 260);
+  --muted: oklch(0.245 0.01 260);
+  --muted-foreground: oklch(0.67 0.015 260);
+  --accent: oklch(0.255 0.011 260);
+  --border: oklch(0.285 0.011 260);
+  --primary: oklch(0.87 0.2 128);
+  --primary-foreground: oklch(0.2 0.05 128);
+  --sidebar: oklch(0.155 0.008 260);
+  --brand: oklch(0.87 0.2 128);
+  --brand-fg: oklch(0.2 0.05 128);
+  --row-on: oklch(0.29 0.05 128);
+  --code-bg: oklch(0.165 0.008 260);
+  --hit: oklch(0.28 0.055 22);
+  --lv-error: oklch(0.7 0.19 22);
+  --lv-warning: oklch(0.82 0.15 80);
+  --lv-info: oklch(0.74 0.12 245);
+  --ok: oklch(0.87 0.2 128);
+}
+
+/* C · Seismograph: chart paper and one typewriter face; the trace is the accent. */
+.vc {
+  --f-sans: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius: 0rem;
+  font-size: 12.5px;
+  --background: oklch(0.972 0.012 85);
+  --card: oklch(0.99 0.008 85);
+  --foreground: oklch(0.23 0.012 60);
+  --muted: oklch(0.94 0.014 85);
+  --muted-foreground: oklch(0.47 0.018 70);
+  --accent: oklch(0.935 0.016 85);
+  --border: oklch(0.855 0.018 85);
+  --primary: oklch(0.23 0.012 60);
+  --primary-foreground: oklch(0.972 0.012 85);
+  --sidebar: var(--background);
+  --brand: oklch(0.56 0.2 33);
+  --brand-fg: oklch(0.99 0.008 85);
+  --row-on: oklch(0.93 0.03 60);
+  --code-bg: oklch(0.955 0.013 85);
+  --hit: oklch(0.92 0.045 33);
+  --grid: oklch(0.9 0.018 85);
+  --lv-error: oklch(0.56 0.2 33);
+  --lv-warning: oklch(0.66 0.15 75);
+  --lv-info: oklch(0.52 0.09 235);
+  --ok: oklch(0.5 0.11 150);
+}
+.dark .vc {
+  --background: oklch(0.155 0.006 70);
+  --card: oklch(0.19 0.007 70);
+  --foreground: oklch(0.9 0.025 85);
+  --muted: oklch(0.215 0.008 70);
+  --muted-foreground: oklch(0.64 0.025 80);
+  --accent: oklch(0.235 0.01 70);
+  --border: oklch(0.3 0.012 70);
+  --primary: oklch(0.9 0.025 85);
+  --primary-foreground: oklch(0.155 0.006 70);
+  --brand: oklch(0.8 0.16 68);
+  --brand-fg: oklch(0.18 0.03 68);
+  --row-on: oklch(0.25 0.03 68);
+  --code-bg: oklch(0.135 0.006 70);
+  --hit: oklch(0.27 0.06 40);
+  --grid: oklch(0.225 0.008 70);
+  --lv-error: oklch(0.72 0.18 40);
+  --lv-warning: oklch(0.82 0.15 85);
+  --lv-info: oklch(0.72 0.09 235);
+  --ok: oklch(0.75 0.13 150);
+}

@@ -27,6 +27,22 @@ export const TestStatus = { sent: 'sent', skipped: 'skipped', error: 'error' } a
 export type TestStatus = (typeof TestStatus)[keyof typeof TestStatus]
 export type TestResult = Schemas['TestAlertResultSchema']
 
+// A Zulip recipient's settings come back in `config` with snake_case keys and go in as fields of their own.
+type ZulipConfig = { bot_email?: string; api_key?: string; channel?: string; topic?: string }
+export const ZULIP_TOPIC = 'GlitchTip Alerts'
+
+// A recipient as read, in the shape a rule is saved with. Its extra tags go back unchanged.
+export function toRecipientInput(recipient: Recipient): RecipientInput {
+  const url = recipient.url ?? ''
+  const tagsToAdd = (recipient.tagsToAdd ?? []) as string[]
+  if (recipient.recipientType === RecipientType.email) return { recipientType: RecipientType.email, url: '', tagsToAdd }
+  if (recipient.recipientType === RecipientType.zulip) {
+    const config = (recipient.config ?? {}) as ZulipConfig
+    return { recipientType: RecipientType.zulip, url, botEmail: config.bot_email ?? '', apiKey: config.api_key ?? '', channel: config.channel ?? '', topic: config.topic ?? ZULIP_TOPIC, tagsToAdd }
+  }
+  return { recipientType: recipient.recipientType as Exclude<RecipientType, 'email' | 'zulip'>, url, tagsToAdd }
+}
+
 export const alertKeys = {
   all: (slug: string) => ['alerts', slug] as const,
   project: (slug: string, project: string) => [...alertKeys.all(slug), project] as const,

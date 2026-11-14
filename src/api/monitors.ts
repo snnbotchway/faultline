@@ -4,8 +4,9 @@ import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
 import type { components } from './schema/openapi'
 
 type Schemas = components['schemas']
-export type Monitor = Schemas['MonitorSchema']
-export type MonitorDetail = Schemas['MonitorDetailSchema']
+// A saved monitor always has an id, though the schema shares its type with the unsaved one.
+export type Monitor = Schemas['MonitorSchema'] & { id: number }
+export type MonitorDetail = Schemas['MonitorDetailSchema'] & { id: number }
 export type Check = Schemas['MonitorCheckResponseTimeSchema']
 export type MonitorInput = Schemas['MonitorIn']
 export type StatusPage = Schemas['StatusPageSchema']
@@ -22,7 +23,13 @@ export const MonitorSort = { status: 'status', newest: '-created', oldest: 'crea
 export type MonitorSort = (typeof MonitorSort)[keyof typeof MonitorSort]
 
 // The backend's refusals for a monitor's address.
-export const MonitorRefusal = { privateAddress: 'URLs targeting private/internal IPs are not allowed', badAddress: 'Invalid Url' } as const
+export const MonitorRefusal = {
+  privateAddress: 'URLs targeting private/internal IPs are not allowed',
+  badAddress: 'Invalid Url',
+  badPort: 'Invalid Port URL, expected hostname and port',
+  // The start of the refusal when the organization has as many monitors as its plan allows.
+  limit: 'This organization is limited to',
+} as const
 
 const PAGE_SIZE = 50
 // Monitors are checked once a minute at the fastest.
@@ -50,7 +57,7 @@ export const monitorListQuery = (slug: string, sort: MonitorSort) =>
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/', {
         params: { path: orgPath(slug), query: { sort, limit: PAGE_SIZE, cursor: pageParam } },
       })
-      return toPage(unwrap(result), result.response)
+      return toPage(unwrap(result) as Monitor[], result.response)
     },
     getNextPageParam: (page) => page.cursors.next,
   })
@@ -66,7 +73,7 @@ export const monitorQuery = (slug: string, id: number, stamp?: string) =>
     refetchInterval: stamp === undefined ? REFRESH_EVERY : false,
     placeholderData: keepPreviousData,
     queryFn: async () =>
-      unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/', { params: { path: monitorPath(slug, id) } })),
+      unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/', { params: { path: monitorPath(slug, id) } })) as MonitorDetail,
   })
 
 /**
@@ -112,9 +119,9 @@ export const statusPagesQuery = (slug: string) =>
 
 export const monitorActions = {
   create: async (slug: string, body: MonitorInput) =>
-    unwrap(await api.POST('/api/0/organizations/{organization_id_or_slug}/monitors/', { params: { path: orgPath(slug) }, body })),
+    unwrap(await api.POST('/api/0/organizations/{organization_id_or_slug}/monitors/', { params: { path: orgPath(slug) }, body })) as Monitor,
   update: async (slug: string, id: number, body: MonitorInput) =>
-    unwrap(await api.PUT('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/', { params: { path: monitorPath(slug, id) }, body })),
+    unwrap(await api.PUT('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/', { params: { path: monitorPath(slug, id) }, body })) as Monitor,
   remove: async (slug: string, id: number) =>
     unwrap(await api.DELETE('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/', { params: { path: monitorPath(slug, id) } })),
   // The backend can create a status page but not change or delete one; that is done in its admin.

@@ -58,7 +58,7 @@ export type HealthReport = {
 }
 
 export function healthOf(
-  monitor: { isUp: boolean | null; timeout: number | null | undefined },
+  monitor: { isUp: boolean | null; timeout?: number | null },
   checks: Pick<Check, 'isUp' | 'responseTime'>[],
   changes: StateChange[],
   now: number,

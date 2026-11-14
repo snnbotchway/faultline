@@ -1,3 +1,4 @@
+import { backendAddress } from './base'
 import { api, orgPath, unwrap } from './client'
 import type { components } from './schema/openapi'
 
@@ -12,13 +13,14 @@ const memberPath = (org: string, id: string) => ({ ...orgPath(org), member_id: N
 export type Invite = { email: string; role: OrgRole; teams: string[] }
 
 async function postInvite(org: string, invite: Invite, options: { sendInvite: boolean; reinvite: boolean }) {
-  return unwrap(
+  const member = unwrap(
     await api.POST('/api/0/organizations/{organization_id_or_slug}/members/', {
       params: { path: orgPath(org) },
       // The backend has no separate role inside a team; it wants one named all the same.
       body: { email: invite.email, orgRole: invite.role, teamRoles: invite.teams.map((teamSlug) => ({ teamSlug, role: invite.role })), ...options },
     }),
   )
+  return { ...member, inviteLink: member.inviteLink && backendAddress(member.inviteLink) }
 }
 
 export const memberActions = {

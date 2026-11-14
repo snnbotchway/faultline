@@ -1,4 +1,5 @@
 import { infiniteQueryOptions, keepPreviousData, queryOptions } from '@tanstack/react-query'
+import { withBase } from './base'
 import { api, orgPath, unwrap } from './client'
 import { detailOf } from './errors'
 import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
@@ -130,5 +131,5 @@ export const monitorActions = {
 }
 
 // Where a status page is shown, and where its monitors and visibility are changed.
-export const statusPageUrl = (slug: string, page: string) => `/status-pages/${slug}/${page}/`
-export const STATUS_PAGE_ADMIN_URL = '/admin/uptime/statuspage/'
+export const statusPageUrl = (slug: string, page: string) => withBase(`/status-pages/${slug}/${page}/`)
+export const STATUS_PAGE_ADMIN_URL = withBase('/admin/uptime/statuspage/')

@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { backendAddress } from './base'
 import { api, orgPath, unwrap } from './client'
 import { organizationKeys } from './organizations'
 import type { components } from './schema/openapi'
@@ -26,7 +27,12 @@ const appPath = (org: string, id: number) => ({ ...orgPath(org), social_app_id: 
 export const signInAppsQuery = (org: string) =>
   queryOptions({
     queryKey: signInAppKeys.all(org),
-    queryFn: async () => unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/social-apps/', { params: { path: orgPath(org) } })),
+    queryFn: async () =>
+      unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/social-apps/', { params: { path: orgPath(org) } })).map((app) => ({
+        ...app,
+        callbackUrl: app.callbackUrl && backendAddress(app.callbackUrl),
+        loginUrl: backendAddress(app.loginUrl),
+      })),
   })
 
 export const signInAppActions = {

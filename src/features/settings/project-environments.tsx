@@ -3,13 +3,13 @@ import { stale } from '@/api/stale'
 import { Screen } from '@/components/shell/app-shell'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import { Failure, useChange } from './change'
+import { useChange } from './change'
 import { Group, ROW, RowSkeleton } from './parts'
 
 export function Environments({ org, slug, environments, write }: { org: string; slug: string; environments?: ProjectEnvironment[]; write: boolean }) {
   const toggle = useChange('change the environment', ({ name, hidden }: { name: string; hidden: boolean }) => projectActions.setEnvironmentHidden(org, slug, name, hidden), {
     stale: [stale.project(org, slug), stale.environments(org)],
-    failure: Failure.asNotice,
+    notice: true,
   })
   if (!environments) return <RowSkeleton rows={3} />
   if (!environments.length) return <Screen title="No environments yet" />

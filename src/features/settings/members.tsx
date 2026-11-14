@@ -15,7 +15,7 @@ import { hasWords, searchWords } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useAccess, useOwnMember } from './access'
-import { Failure, useChange } from './change'
+import { useChange } from './change'
 import { Confirm, RoleField, TeamChecklist } from './fields'
 import { InviteDialog } from './invite-dialog'
 import { CopyButton, FoldChevron, FormError, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
@@ -173,7 +173,7 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
   )
   const resend = useChange('send the invite again', () => memberActions.resend(org, member), {
     stale: [stale.members(org)],
-    failure: Failure.asNotice,
+    notice: true,
     onDone: () => notify(`Invite sent again to ${member.email}`),
   })
   const transfer = useChange('transfer ownership', () => memberActions.makeOwner(org, member.id), {

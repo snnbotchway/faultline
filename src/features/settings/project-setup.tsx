@@ -7,7 +7,7 @@ import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
 import { ago } from '@/features/issues/format'
 import { LevelGlyph } from '@/features/issues/level'
-import { Failure, useChange } from './change'
+import { useChange } from './change'
 import { PlatformPicker, Snippets } from './fields'
 import { FormDialog } from './parts'
 import { OTHER_PLATFORM, platformName, shownPlatform, storedPlatform } from './platforms'
@@ -28,7 +28,7 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
   const firstEvent = useQuery({ ...projectQuery(org, slug), refetchInterval: (query) => (query.state.data?.firstEvent ? false : POLL_MS) }).data?.firstEvent
   const save = useChange('change the platform', (id: string) => projectActions.update(org, slug, { name: project.name, platform: storedPlatform(id) }), {
     stale: [stale.projects(org)],
-    failure: Failure.asNotice,
+    notice: true,
   })
   const choose = (id: string) => {
     setChanging(false)

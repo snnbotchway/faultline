@@ -13,7 +13,7 @@ import { Input, Select } from '@/components/ui/input'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useAccess, useOwnMember } from './access'
-import { Failure, useChange } from './change'
+import { useChange } from './change'
 import { Confirm } from './fields'
 import { Field, FoldChevron, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { atLeast } from './roles'
@@ -111,7 +111,7 @@ function TeamRow(props: RowProps) {
   const membership = useChange(team.isMember ? 'leave the team' : 'join the team', () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
     // Being on a team changes which projects the user is a member of.
     stale: [stale.teams(org), stale.projects(org)],
-    failure: Failure.asNotice,
+    notice: true,
   })
   return (
     <li className={cn(open && 'bg-card')}>
@@ -142,8 +142,8 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
   const everyone = useQuery(membersQuery(org)).data ?? []
   const [renaming, setRenaming] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const onRoster = { stale: [stale.teams(org)], failure: Failure.asNotice }
-  const onAccess = { stale: [stale.teams(org), stale.projects(org)], failure: Failure.asNotice }
+  const onRoster = { stale: [stale.teams(org)], notice: true }
+  const onAccess = { stale: [stale.teams(org), stale.projects(org)], notice: true }
   const addMember = useChange('add the member', (id: string) => teamActions.addMember(org, team.slug, id), onRoster)
   const removeMember = useChange('remove the member', (id: string) => teamActions.removeMember(org, team.slug, id), onRoster)
   const addProject = useChange('add the project', (slug: string) => projectActions.addTeam(org, slug, team.slug), onAccess)

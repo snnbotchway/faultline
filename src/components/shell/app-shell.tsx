@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ChevronsUpDown, Ellipsis, FolderKanban, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, UserRound, Users, UsersRound } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsUpDown, Ellipsis, FolderKanban, LifeBuoy, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, UserRound, Users, UsersRound } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { SessionStatus, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, organizationsQuery, type Feature } from '@/api/organizations'
@@ -216,6 +216,8 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
   const tabs = sections.filter((section) => TAB_PATHS.includes(section.path))
   const rest = sections.filter((section) => !TAB_PATHS.includes(section.path))
   const leave = useSignOut()
+  // Help swaps the menu for the support links in place, so the menu stays one column that fits a small phone.
+  const [help, setHelp] = useState(false)
   const tab = (active: boolean) =>
     cn('flex flex-1 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-xs [&_svg]:size-4', active ? 'border-brand font-semibold' : 'text-muted-foreground')
   return (
@@ -226,37 +228,63 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
           {section.label}
         </SectionLink>
       ))}
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={(open) => !open && setHelp(false)}>
         <DropdownMenuTrigger className={tab(rest.some((section) => section.path === current))}>
           <Ellipsis className="size-4" />
           More
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top" className="w-56">
-          {rest.map((section) => (
-            <DropdownMenuItem key={section.path} asChild>
-              <SectionLink org={org} section={section}>
-                <section.icon />
-                {section.label}
-              </SectionLink>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Theme</DropdownMenuLabel>
-          <ThemeItems />
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Support</DropdownMenuLabel>
-          <SupportItems />
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to="/profile">
-              <UserRound />
-              Profile
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => void leave()}>
-            <LogOut />
-            Sign out
-          </DropdownMenuItem>
+          {help ? (
+            <>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault()
+                  setHelp(false)
+                }}
+              >
+                <ChevronLeft />
+                Back
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Help</DropdownMenuLabel>
+              <SupportItems />
+            </>
+          ) : (
+            <>
+              {rest.map((section) => (
+                <DropdownMenuItem key={section.path} asChild>
+                  <SectionLink org={org} section={section}>
+                    <section.icon />
+                    {section.label}
+                  </SectionLink>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Theme</DropdownMenuLabel>
+              <ThemeItems />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault()
+                  setHelp(true)
+                }}
+              >
+                <LifeBuoy />
+                Help
+                <ChevronRight className="ml-auto" />
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/profile">
+                  <UserRound />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => void leave()}>
+                <LogOut />
+                Sign out
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>

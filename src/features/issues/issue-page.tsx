@@ -95,8 +95,11 @@ function Fact({ label, value, detail, moment }: { label: string; value: string; 
   )
 }
 
-function statusLabel(issue: IssueDetail) {
-  if (issue.status === IssueStatus.resolved && issue.statusDetails?.inNextRelease) return 'Resolved in next release'
+// `resolvingNext` holds the label while the backend picks the release.
+function statusLabel(issue: IssueDetail, resolvingNext: boolean) {
+  const release = issue.statusDetails?.inRelease
+  if (issue.status === IssueStatus.resolved && release) return `Resolved in ${releaseName(release)}`
+  if (issue.status === IssueStatus.resolved && resolvingNext) return 'Resolved in next release'
   return isStatus(issue.status) ? STATUS[issue.status].label : issue.status
 }
 
@@ -122,7 +125,14 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const offered = status && isStatus(status) ? statusActions(status) : []
   const setStatus = (next: IssueStatus) => canWrite && void actions.setStatus(target, next)
   // Offered only for an unresolved issue; the page bar, the phone menu and the palette all read this.
-  const resolveNext = canWrite && status === IssueStatus.unresolved ? () => void actions.resolveInNextRelease(target) : undefined
+  const [resolvingNext, setResolvingNext] = useState(false)
+  const resolveNext =
+    canWrite && status === IssueStatus.unresolved
+      ? () => {
+          setResolvingNext(true)
+          void actions.resolveInNextRelease(target).finally(() => setResolvingNext(false))
+        }
+      : undefined
   const toEvent = (id: string | null | undefined) =>
     id && void navigate({ to: '/$org/issues/$issueId/events/$eventId', params: { org, issueId, eventId: id } })
   const older = event.data?.previousEventID
@@ -172,7 +182,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
         <>
           <span className="text-muted-foreground">/</span>
           <span className="mono font-semibold">{data.shortId}</span>
-          <span className={cn('label-caps', data.status === IssueStatus.resolved && 'text-ok')}>{statusLabel(data)}</span>
+          <span className={cn('label-caps', data.status === IssueStatus.resolved && 'text-ok')}>{statusLabel(data, resolvingNext)}</span>
         </>
       )}
       {data && (

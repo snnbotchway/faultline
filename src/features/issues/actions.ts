@@ -1,6 +1,6 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { AssigneeType, IssueStatus, cachedIssueLists, issueActions, issueKeys, type Issue, type IssueSelection, type IssueUpdate } from '@/api/issues'
+import { AssigneeType, IssueStatus, cachedIssueLists, issueActions, issueKeys, type Issue, type IssueDetail, type IssueSelection, type IssueUpdate } from '@/api/issues'
 import { failed, notify } from '@/lib/notice'
 import { releaseName } from '@/lib/text'
 import { statusOf } from './search'
@@ -79,6 +79,9 @@ export function useIssueActions(org: string) {
       resolveInNextRelease: async (target: Target) => {
         const [id] = target.ids
         if (!id || target.ids.length > 1 || !('ids' in target.selection)) throw new Error('Resolve in the next release works on one issue at a time.')
+        const detail = issueKeys.detail(org, id)
+        const before = queryClient.getQueryData<IssueDetail>(detail)
+        if (before) queryClient.setQueryData<IssueDetail>(detail, { ...before, status: IssueStatus.resolved })
         let release: string | null | undefined
         const done = await runAction(
           queryClient,
@@ -87,12 +90,18 @@ export function useIssueActions(org: string) {
           { status: IssueStatus.resolved },
           async () => {
             const issue = await issueActions.updateOne(org, id, { status: IssueStatus.resolved, statusDetails: { inNextRelease: true } })
+            queryClient.setQueryData<IssueDetail>(detail, issue)
             release = issue.statusDetails?.inRelease
           },
           'resolve the issue',
         )
-        if (done) notify(release ? `Resolved as of release ${releaseName(release)}.` : 'Resolved. No release was found to tie it to.')
-        return done
+        if (!done) {
+          queryClient.setQueryData(detail, before)
+          return false
+        }
+        const undo = { label: 'Undo', run: () => void update(target, { status: IssueStatus.unresolved }, { status: IssueStatus.unresolved }, 'unresolve the issue') }
+        notify(release ? `Resolved as of release ${releaseName(release)}.` : 'Resolved. No release was found to tie it to.', false, undo)
+        return true
       },
       assign: (target: Target, assignee: Assignee | null) => update(target, { assignedTo: assignee }, { assignedTo: assigneeRef(assignee) }, `assign ${noun(target)}`),
       // The newest issue survives a merge. The lists are refetched, and so is each merged issue, whose page is gone or has grown.

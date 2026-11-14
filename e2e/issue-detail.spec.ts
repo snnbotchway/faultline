@@ -78,7 +78,8 @@ test('resolving in the next release says which release it was tied to', async ({
   await page.getByRole('button', { name: 'More ways to resolve' }).click()
   await page.getByRole('menuitem', { name: 'Resolve in next release' }).click()
   await expect(page.getByRole('status')).toContainText('Resolved as of release 1.5.0.')
-  await page.getByRole('button', { name: 'Unresolve' }).click()
+  await expect(page.getByText('Resolved in 1.5.0', { exact: true })).toBeVisible()
+  await page.getByRole('status').getByRole('button', { name: 'Undo' }).click()
   await expect(page.getByText('Unresolved', { exact: true })).toBeVisible()
 })
 

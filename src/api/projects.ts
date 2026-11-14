@@ -87,7 +87,8 @@ export const projectActivityQuery = (org: string, id: string) =>
             query: {
               category: 'error',
               field: 'sum(quantity)',
-              interval: '1d',
+              // 7.0.0 counts only the first hour of each bucket, so the days are summed from hours.
+              interval: '1h',
               project,
               start: new Date(days[0]!).toISOString(),
               end: new Date(days.at(-1)! + DAY).toISOString(),
@@ -103,7 +104,11 @@ export const projectActivityQuery = (org: string, id: string) =>
       ])
       const { intervals, groups } = unwrap(stats) as unknown as StatsResponse
       const series = groups[0]?.series['sum(quantity)'] ?? []
-      const byDay = new Map(intervals.map((interval, index) => [new Date(interval).getTime(), series[index] ?? 0]))
+      const byDay = new Map<number, number>()
+      intervals.forEach((interval, index) => {
+        const day = Math.floor(new Date(interval).getTime() / DAY) * DAY
+        byDay.set(day, (byDay.get(day) ?? 0) + (series[index] ?? 0))
+      })
       const page = toPage(unwrap(open), open.response)
       return {
         buckets: days.map((day) => byDay.get(day) ?? 0),

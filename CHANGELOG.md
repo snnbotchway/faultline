@@ -30,7 +30,8 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Fixed
 
-- Issue page: the copied issue link and the "Copy for AI" event URL include the path Faultline is served under.
+- Issue page: the copied issue link and the "Copy for AI" event URL and instance include the path Faultline is served under.
+- The projects list's 14-day error traces count every event; GlitchTip 7.0.0 counts only the first hour of each day when asked by the day, so they are summed from hours.
 - The environment filter lists only the environments of the chosen projects, and drops a choice they do not have.
 - "Resolve in next release" works on 7.0.0, names the release the issue was tied to (or says none was found) with an Undo, and the issue's status shows that release; it used to be refused by the bulk route.
 - The image tells browsers to check for a new page on every load, so a new release shows without a hard refresh, and a missing script file is a 404 instead of the page.

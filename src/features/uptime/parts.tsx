@@ -3,8 +3,12 @@ import type { Check } from '@/api/monitors'
 import { TraceFrame } from '@/features/issues/trace'
 import type { Mark } from '@/lib/axis'
 import { cn } from '@/lib/utils'
-import { HEALTH, UptimeTab } from './describe'
-import { Health, checkHealth, slowOver, type Downtime } from './health'
+import { UptimeTab } from './address'
+import { HEALTH } from './describe'
+import { Health, checkHealth, checkScale, type Downtime } from './health'
+
+// The outline of a hollow glyph, in its 10-unit box.
+const GLYPH_STROKE = 1.5
 
 // Health by shape as well as colour: square down, diamond flapping, triangle slow, disc up, ring not reported yet.
 export function HealthGlyph({ health, className }: { health: Health; className?: string }) {
@@ -19,7 +23,7 @@ export function HealthGlyph({ health, className }: { health: Health; className?:
       ) : health === Health.up ? (
         <circle cx="5" cy="5" r="4.5" fill="currentColor" />
       ) : (
-        <circle cx="5" cy="5" r="3.8" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        <circle cx="5" cy="5" r="3.75" fill="none" stroke="currentColor" strokeWidth={GLYPH_STROKE} />
       )}
     </svg>
   )
@@ -29,7 +33,7 @@ export function HealthGlyph({ health, className }: { health: Health; className?:
 export function DowntimeGlyph({ ongoing }: { ongoing: boolean }) {
   return (
     <svg viewBox="0 0 10 10" className={cn('size-3 shrink-0', HEALTH[Health.down].color)} role="img" aria-label={ongoing ? 'Down now' : 'Recovered'}>
-      {ongoing ? <rect width="10" height="10" fill="currentColor" /> : <rect x="0.75" y="0.75" width="8.5" height="8.5" fill="none" stroke="currentColor" strokeWidth="1.5" />}
+      {ongoing ? <rect width="10" height="10" fill="currentColor" /> : <rect x="0.75" y="0.75" width="8.5" height="8.5" fill="none" stroke="currentColor" strokeWidth={GLYPH_STROKE} />}
     </svg>
   )
 }
@@ -40,10 +44,7 @@ export function DowntimeGlyph({ ongoing }: { ongoing: boolean }) {
  * something; otherwise to their own peak.
  */
 export function CheckBars({ checks, timeout, height, line = false, className }: { checks: Check[]; timeout: number | null | undefined; height: number; line?: boolean; className?: string }) {
-  const over = slowOver(timeout)
-  const peak = Math.max(1, ...checks.filter((check) => check.isUp).map((check) => check.responseTime ?? 0))
-  const toLimit = over !== undefined && peak > over
-  const ceiling = toLimit ? timeout! * 1000 : peak
+  const { over, overLimit, ceiling } = checkScale(checks, timeout)
   return (
     <TraceFrame height={height} className={className}>
       {[...checks].reverse().map((check) => (
@@ -54,10 +55,13 @@ export function CheckBars({ checks, timeout, height, line = false, className }: 
         />
       ))}
       {/* Drawn in the text colour with a paper edge, so it stays visible over slow (amber) bars. */}
-      {line && toLimit && <span className="absolute inset-x-0 h-0.5 bg-foreground outline-1 outline-background" style={{ bottom: `calc(${(over / ceiling) * 100}% - 1px)` }} />}
+      {line && overLimit && <span className="absolute inset-x-0 h-0.5 bg-foreground outline-1 outline-background" style={{ bottom: `calc(${(over! / ceiling) * 100}% - 1px)` }} />}
     </TraceFrame>
   )
 }
+
+// A stretch of downtime stands this share of the strip's height, so the blocks of one row never touch the next.
+const DOWNTIME_HEIGHT = 0.8
 
 // Downtime on the shared time axis: a baseline that is always there and a block for every stretch down.
 export function DowntimeStrip({
@@ -86,7 +90,7 @@ export function DowntimeStrip({
         .map((period) => {
           const left = Math.max(0, (period.from - from) / width)
           const right = Math.min(1, (period.to - from) / width)
-          return <span key={period.from} className={cn('absolute bottom-0 min-w-0.5', HEALTH[Health.down].bar)} style={{ left: `${left * 100}%`, width: `${(right - left) * 100}%`, height: Math.round(height * 0.8) }} />
+          return <span key={period.from} className={cn('absolute bottom-0 min-w-0.5', HEALTH[Health.down].bar)} style={{ left: `${left * 100}%`, width: `${(right - left) * 100}%`, height: Math.round(height * DOWNTIME_HEIGHT) }} />
         })}
     </TraceFrame>
   )

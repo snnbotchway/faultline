@@ -1,5 +1,5 @@
 import type { Check } from '@/api/monitors'
-import { DAY_MS } from '@/lib/time'
+import { DAY_MS, SECOND_MS } from '@/lib/time'
 
 // The backend knows only up and down. Slow and flapping are read off the checks it returns.
 export const Health = { down: 'down', flapping: 'flapping', slow: 'slow', up: 'up', waiting: 'waiting' } as const
@@ -34,11 +34,22 @@ export function downtimes(changes: StateChange[], now: number): Downtime[] {
   return found.reverse()
 }
 
-export const slowOver = (timeout: number | null | undefined) => (timeout ? timeout * 1000 * SLOW_SHARE : undefined)
+export const slowOver = (timeout: number | null | undefined) => (timeout ? timeout * SECOND_MS * SLOW_SHARE : undefined)
 
 export const isSlow = (check: Pick<Check, 'isUp' | 'responseTime'>, timeout: number | null | undefined) => {
   const over = slowOver(timeout)
   return check.isUp && over !== undefined && (check.responseTime ?? 0) > over
+}
+
+/**
+ * How a chart of checks is scaled: to the timeout once the slowest passed check (`peak`) is over the
+ * slow line (`over`), so the line sits where it means something; to the peak before that.
+ */
+export function checkScale(checks: Pick<Check, 'isUp' | 'responseTime'>[], timeout: number | null | undefined) {
+  const peak = Math.max(0, ...checks.filter((check) => check.isUp).map((check) => check.responseTime ?? 0))
+  const over = slowOver(timeout)
+  const overLimit = over !== undefined && peak > over
+  return { peak, over, overLimit, ceiling: overLimit ? timeout! * SECOND_MS : Math.max(1, peak) }
 }
 
 // What one check says: it failed, it passed but slowly, or it passed.

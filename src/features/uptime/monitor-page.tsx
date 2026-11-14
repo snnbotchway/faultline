@@ -6,12 +6,12 @@ import { projectAlertsQuery } from '@/api/alerts'
 import { ApiError } from '@/api/client'
 import { isHttp, monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectsQuery } from '@/api/organizations'
-import { recentReleasesQuery } from '@/api/releases'
+import { recentReleasesQuery, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
 import { Button } from '@/components/ui/button'
 import { CopyField } from '@/components/ui/copy-field'
-import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Section, Stat } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RuleEditor } from '@/features/alerts/open-rule'
@@ -22,8 +22,9 @@ import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { every, responseText, span } from './format'
-import { Health, checkHealth, healthOf, isSlow, slowOver } from './health'
-import { HEALTH, healthLine, isAlarm, isHeartbeat, isMonitorId, reasonText, targetText } from './describe'
+import { Health, checkHealth, checkScale, healthOf, isSlow, type Downtime, type HealthReport } from './health'
+import { isMonitorId } from './address'
+import { HEALTH, healthLine, isAlarm, isHeartbeat, reasonText, targetText } from './describe'
 import { CheckBars, DowntimeGlyph, HealthGlyph } from './parts'
 
 const CHECKS_SHOWN = 8
@@ -98,7 +99,7 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
     <>
       {bar}
       <MonitorBody org={org} monitor={monitor.data} now={monitor.dataUpdatedAt} />
-      {confirming && <DeleteMonitor org={org} monitor={monitor.data} onClose={() => setConfirming(false)} />}
+      <DeleteMonitor org={org} monitor={monitor.data} open={confirming} onClose={() => setConfirming(false)} />
     </>
   )
 }
@@ -112,20 +113,15 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const rules = (alerts.data ?? []).filter((rule) => rule.uptime)
   // Which downtime is unfolded: the ongoing one until the user picks, and none once they fold it.
   const [unfolded, setUnfolded] = useState<number | null | undefined>()
-  const [allChecks, setAllChecks] = useState(false)
 
   const report = healthOf(monitor, monitor.checks, changes.data ?? [], now)
   const health = report.health
   const heartbeat = isHeartbeat(monitor)
-  const checks = monitor.checks
-  const passed = checks.filter((check) => check.isUp).length
-  const slowChecks = checks.filter((check) => isSlow(check, monitor.timeout)).length
-  const peak = Math.max(0, ...checks.filter((check) => check.isUp).map((check) => check.responseTime ?? 0))
-  const over = slowOver(monitor.timeout)
   const loud = isAlarm(health)
   const alsoSlow = health === Health.flapping && report.slow
   const open = unfolded === undefined ? report.downtimes.find((period) => period.ongoing)?.from : unfolded
-  const notified = [...new Set(rules.flatMap((rule) => rule.alertRecipients.map((recipient) => recipientMeta(recipient).label)))]
+  const recipients = [...new Set(rules.flatMap((rule) => rule.alertRecipients.map((recipient) => recipientMeta(recipient).label)))]
+  const notified = !project ? 'Nobody' : alerts.isPending ? '…' : recipients.length ? recipients.join(', ') : 'Nobody'
   const facts: [string, string | null | undefined][] = [
     ['Check', monitor.monitorType],
     ['Status', isHttp(monitor.monitorType) ? String(monitor.expectedStatus ?? '') : null],
@@ -162,119 +158,29 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
               <p className="py-4 text-muted-foreground">{health === Health.waiting ? 'Nothing to show until the first check.' : 'No downtime recorded.'}</p>
             ) : (
               <ul>
-                {report.downtimes.map((period) => {
-                  const unfoldedHere = open === period.from
-                  const before = releaseBefore(releases, period.from)
-                  const details: { label: string; value: string; title?: string }[] = [
-                    { label: 'Went down', value: brief(new Date(period.from)) },
-                    { label: 'Came back', value: period.ongoing ? 'Not yet' : brief(new Date(period.to)) },
-                    { label: 'Release before', value: before ? `${shortName(before.version)}, ${span(period.from - Date.parse(before.dateCreated))} earlier` : 'None', title: before?.version },
-                    { label: 'Notified', value: !project ? 'Nobody' : alerts.isPending ? '…' : notified.length ? notified.join(', ') : 'Nobody' },
-                  ]
-                  return (
-                    <li key={period.from} className="border-b">
-                      <button
-                        type="button"
-                        aria-expanded={unfoldedHere}
-                        onClick={() => setUnfolded(unfoldedHere ? null : period.from)}
-                        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[48px_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfoldedHere ? 'bg-accent' : 'hover:bg-accent/60')}
-                      >
-                        <time className="mono text-muted-foreground" dateTime={new Date(period.from).toISOString()} title={exact(new Date(period.from))}>
-                          {ago(new Date(period.from), new Date(now))}
-                        </time>
-                        <span className="flex min-w-0 items-center gap-2">
-                          <DowntimeGlyph ongoing={period.ongoing} />
-                          <span className="truncate">{reasonText(monitor, period.reason)}</span>
-                        </span>
-                        <span className={cn('mono', period.ongoing && cn('font-semibold', HEALTH[Health.down].color))}>
-                          {span(period.to - period.from)}
-                          {period.ongoing && ' so far'}
-                        </span>
-                        <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', unfoldedHere && 'rotate-180')} />
-                      </button>
-                      {unfoldedHere && (
-                        <dl className="border-t bg-card px-3 py-2 lg:pl-15">
-                          {details.map((detail) => (
-                            <div key={detail.label} className="flex min-h-8 items-center justify-between gap-4">
-                              <dt className="shrink-0 text-muted-foreground">{detail.label}</dt>
-                              <dd className="mono truncate" title={detail.title}>
-                                {detail.value}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      )}
-                    </li>
-                  )
-                })}
+                {report.downtimes.map((period) => (
+                  <DowntimeRow
+                    key={period.from}
+                    monitor={monitor}
+                    period={period}
+                    now={now}
+                    unfolded={open === period.from}
+                    onToggle={() => setUnfolded(open === period.from ? null : period.from)}
+                    before={releaseBefore(releases, period.from)}
+                    notified={notified}
+                  />
+                ))}
               </ul>
             )}
           </Section>
 
-          <Section label="Latest checks" className="mt-8">
-            {checks.length === 0 ? (
-              <p className="py-4 text-muted-foreground">No checks yet.</p>
-            ) : (
-              <ul>
-                {checks.slice(0, allChecks ? undefined : CHECKS_SHOWN).map((check) => {
-                  const state = checkHealth(check, monitor.timeout)
-                  return (
-                    <li key={check.startCheck} className="grid min-h-9 grid-cols-[48px_minmax(0,1fr)_64px] items-center gap-3 border-b lg:grid-cols-[48px_minmax(0,1fr)_72px]">
-                      <time className="mono text-muted-foreground" dateTime={check.startCheck} title={exact(check.startCheck)}>
-                        {ago(check.startCheck, new Date(now))}
-                      </time>
-                      <span className="flex min-w-0 items-center gap-2">
-                        <HealthGlyph health={state} />
-                        <span className={cn('truncate', state !== Health.up && HEALTH[state].color)}>{state === Health.down ? reasonText(monitor, check.reason) : HEALTH[state].label}</span>
-                      </span>
-                      <span className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{responseText(check.responseTime)}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-            {!allChecks && checks.length > CHECKS_SHOWN && (
-              <Button size="sm" className="mt-3 max-lg:h-11" onClick={() => setAllChecks(true)}>
-                All {checks.length} checks
-              </Button>
-            )}
-          </Section>
+          <LatestChecks monitor={monitor} now={now} />
         </div>
       </div>
 
       <aside className="contents lg:flex lg:flex-col lg:gap-8 lg:border-l lg:pt-5 lg:pl-6">
         <div className="order-2 pb-8 lg:pb-0">
-          <Section label={checks.length ? `Last ${checks.length} checks` : 'Checks'}>
-            {checks.length === 0 ? (
-              <p className="py-3 text-muted-foreground">None yet.</p>
-            ) : (
-              <>
-                <dl className="grid grid-cols-3 gap-x-4 pt-3">
-                  <Stat label="Passed" value={`${passed}/${checks.length}`} tone={health === Health.down ? HEALTH[Health.down].color : undefined} />
-                  {!heartbeat && <Stat label="Response" value={responseText(report.typical) || 'None'} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
-                  {!heartbeat && <Stat label="Slow" value={slowChecks} tone={slowChecks ? HEALTH[Health.slow].color : undefined} />}
-                </dl>
-                {!heartbeat && (
-                  <>
-                    <CheckBars checks={checks} timeout={monitor.timeout} height={64} line className="mt-4" />
-                    <p className="mono mt-2 flex justify-between gap-2 text-muted-foreground">
-                      <span>{clock(checks.at(-1)!.startCheck)}</span>
-                      <span className="flex items-center gap-2">
-                        peak {responseText(peak)}
-                        {over !== undefined && peak > over && (
-                          <span className="flex items-center gap-1">
-                            <span aria-hidden className="h-0.5 w-3 bg-foreground" />
-                            slow over {responseText(over)}
-                          </span>
-                        )}
-                      </span>
-                      <span>Now</span>
-                    </p>
-                  </>
-                )}
-              </>
-            )}
-          </Section>
+          <CheckSummary monitor={monitor} report={report} />
         </div>
         <div className="order-4 mt-8 flex flex-col gap-8 lg:mt-0">
           {heartbeat && monitor.heartbeatEndpoint && (
@@ -329,7 +235,131 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   )
 }
 
-function DeleteMonitor({ org, monitor, onClose }: { org: string; monitor: MonitorDetail; onClose: () => void }) {
+// The newest checks at a glance: how many passed, the typical response, how many were slow, and each as a bar.
+function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: HealthReport }) {
+  const checks = monitor.checks
+  const heartbeat = isHeartbeat(monitor)
+  const health = report.health
+  const passed = checks.filter((check) => check.isUp).length
+  const slowChecks = checks.filter((check) => isSlow(check, monitor.timeout)).length
+  const { peak, over, overLimit } = checkScale(checks, monitor.timeout)
+  return (
+    <Section label={checks.length ? `Last ${checks.length} checks` : 'Checks'}>
+      {checks.length === 0 ? (
+        <p className="py-3 text-muted-foreground">None yet.</p>
+      ) : (
+        <>
+          <dl className="grid grid-cols-3 gap-x-4 pt-3">
+            <Stat label="Passed" value={`${passed}/${checks.length}`} tone={health === Health.down ? HEALTH[Health.down].color : undefined} />
+            {!heartbeat && <Stat label="Response" value={responseText(report.typical) || 'None'} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
+            {!heartbeat && <Stat label="Slow" value={slowChecks} tone={slowChecks ? HEALTH[Health.slow].color : undefined} />}
+          </dl>
+          {!heartbeat && (
+            <>
+              <CheckBars checks={checks} timeout={monitor.timeout} height={64} line className="mt-4" />
+              <p className="mono mt-2 flex justify-between gap-2 text-muted-foreground">
+                <span>{clock(checks.at(-1)!.startCheck)}</span>
+                <span className="flex items-center gap-2">
+                  peak {responseText(peak)}
+                  {overLimit && (
+                    <span className="flex items-center gap-1">
+                      <span aria-hidden className="h-0.5 w-3 bg-foreground" />
+                      slow over {responseText(over!)}
+                    </span>
+                  )}
+                </span>
+                <span>Now</span>
+              </p>
+            </>
+          )}
+        </>
+      )}
+    </Section>
+  )
+}
+
+// One stretch of downtime: when it began, why, and how long it lasted; unfolded, the moments, the release before it and who was told.
+function DowntimeRow({ monitor, period, now, unfolded, onToggle, before, notified }: { monitor: MonitorDetail; period: Downtime; now: number; unfolded: boolean; onToggle: () => void; before?: Release; notified: string }) {
+  const details: { label: string; value: string; title?: string }[] = [
+    { label: 'Went down', value: brief(new Date(period.from)) },
+    { label: 'Came back', value: period.ongoing ? 'Not yet' : brief(new Date(period.to)) },
+    { label: 'Release before', value: before ? `${shortName(before.version)}, ${span(period.from - Date.parse(before.dateCreated))} earlier` : 'None', title: before?.version },
+    { label: 'Notified', value: notified },
+  ]
+  return (
+    <li className="border-b">
+      <button
+        type="button"
+        aria-expanded={unfolded}
+        onClick={onToggle}
+        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[48px_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfolded ? 'bg-accent' : 'hover:bg-accent/60')}
+      >
+        <time className="mono text-muted-foreground" dateTime={new Date(period.from).toISOString()} title={exact(new Date(period.from))}>
+          {ago(new Date(period.from), new Date(now))}
+        </time>
+        <span className="flex min-w-0 items-center gap-2">
+          <DowntimeGlyph ongoing={period.ongoing} />
+          <span className="truncate">{reasonText(monitor, period.reason)}</span>
+        </span>
+        <span className={cn('mono', period.ongoing && cn('font-semibold', HEALTH[Health.down].color))}>
+          {span(period.to - period.from)}
+          {period.ongoing && ' so far'}
+        </span>
+        <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', unfolded && 'rotate-180')} />
+      </button>
+      {unfolded && (
+        <dl className="border-t bg-card px-3 py-2 lg:pl-15">
+          {details.map((detail) => (
+            <div key={detail.label} className="flex min-h-8 items-center justify-between gap-4">
+              <dt className="shrink-0 text-muted-foreground">{detail.label}</dt>
+              <dd className="mono truncate" title={detail.title}>
+                {detail.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </li>
+  )
+}
+
+// The newest checks, a few at first and all 60 on request.
+function LatestChecks({ monitor, now }: { monitor: MonitorDetail; now: number }) {
+  const [allChecks, setAllChecks] = useState(false)
+  const checks = monitor.checks
+  return (
+    <Section label="Latest checks" className="mt-8">
+      {checks.length === 0 ? (
+        <p className="py-4 text-muted-foreground">No checks yet.</p>
+      ) : (
+        <ul>
+          {checks.slice(0, allChecks ? undefined : CHECKS_SHOWN).map((check) => {
+            const state = checkHealth(check, monitor.timeout)
+            return (
+              <li key={check.startCheck} className="grid min-h-9 grid-cols-[48px_minmax(0,1fr)_64px] items-center gap-3 border-b lg:grid-cols-[48px_minmax(0,1fr)_72px]">
+                <time className="mono text-muted-foreground" dateTime={check.startCheck} title={exact(check.startCheck)}>
+                  {ago(check.startCheck, new Date(now))}
+                </time>
+                <span className="flex min-w-0 items-center gap-2">
+                  <HealthGlyph health={state} />
+                  <span className={cn('truncate', state !== Health.up && HEALTH[state].color)}>{state === Health.down ? reasonText(monitor, check.reason) : HEALTH[state].label}</span>
+                </span>
+                <span className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{responseText(check.responseTime)}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {!allChecks && checks.length > CHECKS_SHOWN && (
+        <Button size="sm" className="mt-3 max-lg:h-11" onClick={() => setAllChecks(true)}>
+          All {checks.length} checks
+        </Button>
+      )}
+    </Section>
+  )
+}
+
+function DeleteMonitor({ org, monitor, open, onClose }: { org: string; monitor: MonitorDetail; open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const remove = useMutation({
@@ -341,20 +371,5 @@ function DeleteMonitor({ org, monitor, onClose }: { org: string; monitor: Monito
     },
     onError: (error) => failed(error, 'delete the monitor'),
   })
-  return (
-    <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent aria-describedby={undefined} className="p-4">
-        <DialogTitle>Delete {monitor.name}?</DialogTitle>
-        <p className="mt-2 text-muted-foreground">Its check history is deleted with it.</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button className="max-lg:h-11">Cancel</Button>
-          </DialogClose>
-          <Button variant="destructive" className="max-lg:h-11" aria-busy={remove.isPending} disabled={remove.isPending} onClick={() => remove.mutate()}>
-            Delete monitor
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
+  return <ConfirmDialog open={open} destructive title={`Delete ${monitor.name}?`} detail="Its check history is deleted with it." confirm="Delete monitor" onConfirm={() => remove.mutate()} onClose={onClose} />
 }

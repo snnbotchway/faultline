@@ -12,7 +12,10 @@ export const HEALTH: Record<Health, { label: string; color: string; bar: string;
   [Health.waiting]: { label: 'Waiting', color: 'text-muted-foreground', bar: 'bg-muted', headline: 'has not reported yet' },
 }
 
-// The states that need someone's attention, in the order they are listed.
+// Every health in the order monitors are listed: what needs attention first.
+export const HEALTH_ORDER: Health[] = [Health.down, Health.flapping, Health.slow, Health.up, Health.waiting]
+
+// The states that need someone's attention.
 export const ALARMS: Health[] = [Health.down, Health.flapping, Health.slow]
 export const isAlarm = (health: Health) => ALARMS.includes(health)
 
@@ -58,10 +61,3 @@ export function healthLine(monitor: Described, report: HealthReport, now: number
       return since ? `Up ${since}` : 'Up'
   }
 }
-
-// A monitor id in the address that cannot be one is not found, without asking the backend.
-export const isMonitorId = (id: number) => Number.isInteger(id) && id > 0
-
-export const UptimeTab = { monitors: 'monitors', statusPages: 'status-pages' } as const
-export type UptimeTab = (typeof UptimeTab)[keyof typeof UptimeTab]
-

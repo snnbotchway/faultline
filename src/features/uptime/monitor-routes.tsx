@@ -3,7 +3,7 @@ import { monitorQuery } from '@/api/monitors'
 import { canWriteProjects, organizationQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { isMonitorId } from './describe'
+import { isMonitorId } from './address'
 import { MonitorDialog } from './monitor-dialog'
 
 // Opened at an address the user may not have the access for: say so instead of a form that would be refused.
@@ -36,5 +36,6 @@ export function EditMonitor({ org, monitorId, onClose }: { org: string; monitorI
   const monitor = useQuery({ ...monitorQuery(org, monitorId), enabled: isMonitorId(monitorId) }).data
   if (!access || !monitor) return null
   if (!canWriteProjects(access)) return <NoAccess onClose={onClose} />
-  return <MonitorDialog org={org} monitor={monitor} onClose={onClose} onCreated={onClose} />
+  // Keyed on the id, so moving to another monitor starts its own draft.
+  return <MonitorDialog key={monitor.id} org={org} monitor={monitor} onClose={onClose} onCreated={onClose} />
 }

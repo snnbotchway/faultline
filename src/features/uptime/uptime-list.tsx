@@ -17,7 +17,8 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { responseText } from './format'
 import { Health } from './health'
-import { HEALTH, downReason, healthLine, isAlarm, isHeartbeat, targetText, UptimeTab } from './describe'
+import { UptimeTab } from './address'
+import { HEALTH, HEALTH_ORDER, downReason, healthLine, isAlarm, isHeartbeat, targetText } from './describe'
 import { CheckBars, DowntimeStrip, HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth, type MonitorHealth } from './use-health'
 
@@ -25,14 +26,8 @@ import { useMonitorHealth, type MonitorHealth } from './use-health'
 const periodLength = (period: StatsPeriod) => periodInfo(period).size * periodInfo(period).count * SECOND_MS
 
 const COLUMNS = 'lg:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_232px_80px]'
-const GROUPS: Health[] = [Health.down, Health.flapping, Health.slow, Health.up, Health.waiting]
-const GROUP_LABEL: Record<Health, string> = {
-  [Health.down]: 'Down',
-  [Health.flapping]: 'Flapping',
-  [Health.slow]: 'Slow',
-  [Health.up]: 'Up',
-  [Health.waiting]: 'Waiting for a first check',
-}
+// A group is named as its health, except the monitors that have not been checked yet.
+const groupLabel = (state: Health) => (state === Health.waiting ? 'Waiting for a first check' : HEALTH[state].label)
 
 /** The monitors, grouped by what needs attention first, each with its downtime on one shared time axis. */
 export function UptimeList({ org, period = StatsPeriod.day }: { org: string; period?: StatsPeriod }) {
@@ -57,6 +52,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
   const pending = monitors.filter((monitor) => !ready(monitor))
   const count = (state: Health) => monitors.filter((monitor) => ready(monitor) && health.get(monitor.id)!.report.health === state).length
   const toggle = <PeriodToggle period={period} onChange={setPeriod} />
+  const since = dayTime(new Date(from), new Date(now))
 
   const bar = (
     <PageBar>
@@ -99,7 +95,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
       </>
     )
 
-  const alarms = GROUPS.filter(isAlarm).filter((state) => count(state) > 0)
+  const alarms = HEALTH_ORDER.filter(isAlarm).filter((state) => count(state) > 0)
   return (
     <>
       {bar}
@@ -124,7 +120,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
       {/* The shared time axis: where the period starts, the releases inside it, and now. */}
       <div className={cn('sticky top-11 z-10 grid items-center gap-x-3 border-b bg-background px-3 max-lg:h-11 max-lg:grid-cols-[minmax(0,1fr)_auto] lg:h-12 lg:gap-x-0 lg:px-4', COLUMNS)}>
         <span className="label-caps max-lg:hidden">Monitor</span>
-        <span className="label-caps lg:hidden">Downtime since {dayTime(new Date(from), new Date(now))}</span>
+        <span className="label-caps lg:hidden">Downtime since {since}</span>
         <div className="lg:hidden">{toggle}</div>
         <div className="relative mx-4 max-lg:hidden">
           <ReleaseLabels marks={marks} />
@@ -132,7 +128,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
             <ReleaseRules marks={marks} />
           </div>
           <span className="label-caps flex justify-between">
-            <span>{dayTime(new Date(from), new Date(now))}</span>
+            <span>{since}</span>
             <span>Now</span>
           </span>
         </div>
@@ -143,13 +139,13 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
       {!shown ? (
         <ListSkeleton />
       ) : (
-        GROUPS.map((state) => {
+        HEALTH_ORDER.map((state) => {
           const rows = monitors.filter((monitor) => ready(monitor) && health.get(monitor.id)!.report.health === state)
           if (!rows.length) return null
           return (
-            <section key={state} aria-label={GROUP_LABEL[state]}>
+            <section key={state} aria-label={groupLabel(state)}>
               <h2 className={cn('label-caps flex h-8 items-center gap-2 border-b bg-muted/60 px-3 font-semibold lg:px-4', isAlarm(state) && HEALTH[state].color)}>
-                {GROUP_LABEL[state]}
+                {groupLabel(state)}
                 <span className="font-normal text-muted-foreground">{rows.length}</span>
               </h2>
               <ul>

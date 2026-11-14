@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Health, checkHealth, downtimes, healthOf } from './health'
+import { Health, checkHealth, checkScale, downtimes, healthOf } from './health'
 
 const NOW = Date.parse('2026-11-14T12:00:00Z')
 const MIN = 60_000
@@ -54,5 +54,17 @@ describe('checkHealth', () => {
     expect(checkHealth({ isUp: true, responseTime: 6000 }, 10)).toBe(Health.slow)
     expect(checkHealth({ isUp: true, responseTime: 5000 }, 10)).toBe(Health.up)
     expect(checkHealth({ isUp: true, responseTime: 6000 }, null)).toBe(Health.up)
+  })
+})
+
+describe('checkScale', () => {
+  it('scales to the timeout once a passed check is over the slow line, and to the peak before that', () => {
+    const fast = [passed(400), passed(900), { ...passed(30_000), isUp: false }]
+    expect(checkScale(fast, 10)).toEqual({ peak: 900, over: 5000, overLimit: false, ceiling: 900 })
+    expect(checkScale([passed(6000), passed(1000)], 10)).toEqual({ peak: 6000, over: 5000, overLimit: true, ceiling: 10_000 })
+  })
+
+  it('has no slow line without a timeout, and never a zero ceiling', () => {
+    expect(checkScale([], null)).toEqual({ peak: 0, over: undefined, overLimit: false, ceiling: 1 })
   })
 })

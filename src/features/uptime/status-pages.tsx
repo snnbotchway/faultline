@@ -15,10 +15,10 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { span } from './format'
 import { Health, healthOf } from './health'
-import { HEALTH, UptimeTab } from './describe'
+import { UptimeTab } from './address'
+import { HEALTH, HEALTH_ORDER } from './describe'
 import { HealthGlyph, UptimeTabs } from './parts'
 
-const ORDER: Health[] = [Health.down, Health.up, Health.waiting]
 // Links that sit above the row's own link, so they can be tapped on their own.
 const ADMIN_LINK = 'relative z-10 flex shrink-0 cursor-pointer items-center gap-1 text-sm font-medium text-brand hover:underline max-lg:min-h-11'
 
@@ -90,7 +90,7 @@ export function StatusPages({ org }: { org: string }) {
           {pages.data.map((page) => {
             const onPage = page.monitors
               .map((monitor) => ({ monitor, health: healthOf(monitor, [], [], now).health }))
-              .sort((a, b) => ORDER.indexOf(a.health) - ORDER.indexOf(b.health))
+              .sort((a, b) => HEALTH_ORDER.indexOf(a.health) - HEALTH_ORDER.indexOf(b.health))
             const Visibility = page.isPublic ? Globe : Lock
             const url = statusPageUrl(org, page.slug ?? '')
             return (

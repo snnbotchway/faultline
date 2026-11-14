@@ -16,7 +16,7 @@ export default defineConfig({
     port: 5190,
     proxy: Object.fromEntries(
       // Anchored, so `/api` does not also catch an SPA route such as `/apiary`.
-      BACKEND_PATHS.map((path) => [`^${path.replace('.', '\\.')}([/?]|$)`, { target: backend, xfwd: true }]),
+      BACKEND_PATHS.map((path) => [`^${path.replaceAll('.', '\\.')}([/?]|$)`, { target: backend, xfwd: true }]),
     ),
   },
 })

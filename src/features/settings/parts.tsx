@@ -372,10 +372,6 @@ export function Initials({ name, hollow, className }: { name: string; hollow?: b
   )
 }
 
-export function Tag({ children }: { children: ReactNode }) {
-  return <span className="mono shrink-0 border px-1 text-xs whitespace-nowrap text-muted-foreground">{children}</span>
-}
-
 export function RowSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <div aria-busy>

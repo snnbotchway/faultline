@@ -4,6 +4,7 @@ import { memo, useEffect, useRef } from 'react'
 import { IssueKind, IssueStatus, type Issue } from '@/api/issues'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tag } from '@/components/ui/tag'
 import { plural } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { AssigneeBadge } from './assignee'
@@ -29,8 +30,6 @@ function IssueTitle({ issue }: { issue: Issue }) {
     </span>
   )
 }
-
-const TAG = 'shrink-0 border px-1 text-xs leading-4 uppercase'
 
 type Props = {
   org: string
@@ -85,11 +84,11 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
           </Link>
           <div className="mono mt-1 flex items-center gap-x-2 pl-5 text-muted-foreground max-lg:flex-wrap">
             <span className="shrink-0">{issue.shortId}</span>
-            {issue.type === IssueKind.csp && <span className={TAG}>CSP report</span>}
-            {issue.status !== IssueStatus.unresolved && issue.status !== view && <span className={TAG}>{STATUS[issue.status].label}</span>}
+            {issue.type === IssueKind.csp && <Tag>CSP report</Tag>}
+            {issue.status !== IssueStatus.unresolved && issue.status !== view && <Tag ok={issue.status === IssueStatus.resolved}>{STATUS[issue.status].label}</Tag>}
             <span className="truncate max-lg:hidden">{issue.culprit}</span>
             <span className="shrink-0 lg:hidden">
-              {ago(issue.lastSeen)} · {ago(issue.firstSeen)} old · {plural(compact(issue.count), 'event')}
+              seen {ago(issue.lastSeen)} · {ago(issue.firstSeen)} old · {plural(compact(issue.count), 'event')}
             </span>
             {issue.numComments > 0 && (
               <span className="flex shrink-0 items-center gap-1">
@@ -101,11 +100,15 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
         </div>
         <Trace buckets={buckets} trend={trend} marks={marks} height={22} className="lg:mx-4 max-lg:[&>[data-mark]]:hidden" />
         <span className="mono text-right max-lg:hidden">{compact(issue.count)}</span>
-        <div className="mono text-right text-muted-foreground max-lg:hidden" title={`First seen ${exact(issue.firstSeen)}`}>
+        <div className="mono text-right text-muted-foreground max-lg:hidden">
           <time dateTime={issue.lastSeen} title={`Last seen ${exact(issue.lastSeen)}`}>
             {ago(issue.lastSeen)}
           </time>
-          <div className="text-xs">{ago(issue.firstSeen)} old</div>
+          <div className="text-xs">
+            <time dateTime={issue.firstSeen} title={`First seen ${exact(issue.firstSeen)}`}>
+              {ago(issue.firstSeen)} old
+            </time>
+          </div>
         </div>
         <span className="flex justify-end max-lg:hidden">
           {canWrite ? (

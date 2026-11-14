@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 import { oneIssue, useIssueActions } from './actions'
 import { AssignDialog, AssigneeBadge } from './assignee'
 import { Comments } from './comments'
-import { copyForAi } from './copy-for-ai'
+import { copyForAi, issueAddress } from './copy-for-ai'
 import { DeleteIssuesDialog } from './dialogs'
 import { cspOf, errorParts, exceptionsOf, messageOf } from './event'
 import { ago, brief, compact, exact } from './format'
@@ -141,7 +141,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const copyAi = () => {
     if (event.data) copyForAi(event.data, { instanceName: settings?.glitchtipInstanceName, org, issueId }, settings?.enabledFeatures).catch((error: unknown) => failed(error, 'copy the event'))
   }
-  const copyLink = () => void navigator.clipboard.writeText(`${window.location.origin}/${org}/issues/${issueId}`).then(() => notify('Link copied'))
+  const copyLink = () => void navigator.clipboard.writeText(issueAddress(window.location.origin, org, issueId)).then(() => notify('Link copied'))
 
   useHotkeys({
     ...Object.fromEntries(offered.map((action) => [action.key, () => setStatus(action.status)])),

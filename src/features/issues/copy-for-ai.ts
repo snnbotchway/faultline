@@ -1,11 +1,16 @@
 import { type IssueEvent } from '@/api/issues'
 import { Feature } from '@/api/organizations'
+import { BASE_PATH } from '@/api/base'
 import { notify } from '@/lib/notice'
 
 // Set once the hint has been shown. The stock interface uses the same key, so the hint is not shown twice.
 export const MCP_HINT_KEY = 'mcpCopyHintSeen'
 
 const MCP_GUIDE = 'https://glitchtip.com/documentation/mcp'
+
+// An issue's address as a person opens it, under the base Faultline is served from.
+export const issueAddress = (origin: string, org: string, issueId: string, eventId?: string, base = BASE_PATH) =>
+  `${origin}${base}/${org}/issues/${issueId}${eventId ? `/events/${eventId}` : ''}`
 
 type Where = { instance: string; instanceName?: string | null; org: string; issueId: string; eventUrl: string }
 
@@ -30,7 +35,7 @@ export function aiPayload(event: IssueEvent, where: Where): string {
 export async function copyForAi(event: IssueEvent, where: Omit<Where, 'instance' | 'eventUrl'>, features: readonly string[] | undefined) {
   const instance = window.location.origin
   // The event's own address: on the issue's first tab the page shows whichever event is newest.
-  const eventUrl = `${instance}/${where.org}/issues/${where.issueId}/events/${event.id}`
+  const eventUrl = issueAddress(instance, where.org, where.issueId, event.id)
   await navigator.clipboard.writeText(aiPayload(event, { ...where, instance, eventUrl }))
   if (!features?.includes(Feature.mcp) || localStorage.getItem(MCP_HINT_KEY) === 'true') {
     notify('Copied for AI')

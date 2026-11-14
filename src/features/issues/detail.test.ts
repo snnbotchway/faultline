@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { IssueEvent } from '@/api/issues'
-import { aiPayload } from './copy-for-ai'
+import { aiPayload, issueAddress } from './copy-for-ai'
 import { cookiesOf } from './event'
 import { languageOf, piecesOf } from './highlight'
 import { rawTrace } from './raw-trace'
@@ -68,6 +68,11 @@ test('the copied event names the instance, falling back to its address', () => {
   const where = { instance: 'https://gt.example.com', org: 'demo-co', issueId: '7', eventUrl: 'https://gt.example.com/demo-co/issues/7/events/e1' }
   expect(aiPayload(event, { ...where, instanceName: 'Acme errors' })).toContain('Source: Acme errors\n')
   expect(aiPayload(event, where)).toContain('Source: https://gt.example.com\n')
+})
+
+test('a copied address carries the base path Faultline is served under', () => {
+  expect(issueAddress('https://gt.example.com', 'demo-co', '7', 'e1', '/faultline')).toBe('https://gt.example.com/faultline/demo-co/issues/7/events/e1')
+  expect(issueAddress('https://gt.example.com', 'demo-co', '7', undefined, '')).toBe('https://gt.example.com/demo-co/issues/7')
 })
 
 test('a platform named after an object property is no language', () => {

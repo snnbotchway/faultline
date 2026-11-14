@@ -82,8 +82,9 @@ function Arrived({ org, slug, projectId, firstEvent }: { org: string; slug: stri
   // so this asks again for a while, then stops.
   const queryClient = useQueryClient()
   const options = latestIssueQuery(org, projectId)
-  const issue = useQuery({ ...options, refetchInterval: (query) => (query.state.data || query.state.dataUpdateCount >= ISSUE_TRIES ? false : POLL_MS) }).data
-  const gaveUp = issue === null && (queryClient.getQueryState(options.queryKey)?.dataUpdateCount ?? 0) >= ISSUE_TRIES
+  // Reading when it last answered re-renders this on every answer, even an unchanged "none yet", so the count is current.
+  const { data: issue, dataUpdatedAt } = useQuery({ ...options, refetchInterval: (query) => (query.state.data || query.state.dataUpdateCount >= ISSUE_TRIES ? false : POLL_MS) })
+  const gaveUp = issue === null && dataUpdatedAt > 0 && (queryClient.getQueryState(options.queryKey)?.dataUpdateCount ?? 0) >= ISSUE_TRIES
   // Whether the issue was missing while this was open, so it arrived just now rather than long ago.
   const [waited, setWaited] = useState(false)
   if (issue === null && !waited) setWaited(true)

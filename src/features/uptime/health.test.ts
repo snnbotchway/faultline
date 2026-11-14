@@ -77,14 +77,18 @@ describe('uptimeShare', () => {
   it('is the share of the window not spent down, counting only the part of a downtime inside it', () => {
     // Down 6h-3h ago, and from 30h ago until 20h ago, of which the last 4h are in the window.
     const changes = [change(3 * H, true), change(6 * H, false), change(20 * H, true), change(30 * H, false), change(50 * H, true)]
-    expect(uptimeShare({ changes, toFirst: false }, NOW, DAY)).toEqual({ share: expect.closeTo(1 - 7 / 24), sinceFirst: false })
+    expect(uptimeShare({ changes, toFirst: false }, at(60 * H), NOW, DAY)).toEqual({ share: expect.closeTo(1 - 7 / 24), sinceFirst: false })
   })
   it('counts a monitor younger than the window from its first check, down as it may have been', () => {
     const changes = [change(5 * H, true), change(10 * H, false)]
-    expect(uptimeShare({ changes, toFirst: true }, NOW, DAY)).toEqual({ share: 0.5, sinceFirst: true })
+    expect(uptimeShare({ changes, toFirst: true }, at(9 * H), NOW, DAY)).toEqual({ share: 0.5, sinceFirst: true })
   })
   it('has no figure when the changes stop short of the window and the first check', () => {
-    expect(uptimeShare({ changes: [change(3 * H, true), change(6 * H, false)], toFirst: false }, NOW, DAY)).toBeUndefined()
+    expect(uptimeShare({ changes: [change(3 * H, true), change(6 * H, false)], toFirst: false }, at(60 * H), NOW, DAY)).toBeUndefined()
+  })
+  it('has no figure for a monitor older than the window whose first checks the backend no longer keeps', () => {
+    const changes = [change(5 * H, true), change(10 * H, false)]
+    expect(uptimeShare({ changes, toFirst: true }, at(30 * 24 * H), NOW, DAY)).toBeUndefined()
   })
 })
 

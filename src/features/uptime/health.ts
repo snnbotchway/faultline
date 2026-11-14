@@ -94,18 +94,19 @@ export type Uptime = { share: number; sinceFirst: boolean }
 
 /**
  * The share of the last `window` milliseconds the monitor was up, from the checks where it changed
- * state (newest first). A monitor younger than the window counts from its first check (`sinceFirst`),
+ * state (newest first). A monitor created inside the window counts from its first check (`sinceFirst`),
  * which can predate its creation date and is never after its first downtime. There is no figure when
  * the changes stop short of the window's start, as the state before them is unknown, or until some
- * time has passed.
+ * time has passed. An older monitor's changes can stop short even when the backend has no more, as it
+ * drops checks after its retention period.
  */
-export function uptimeShare(history: { changes: StateChange[]; toFirst: boolean }, now: number, window: number): Uptime | undefined {
+export function uptimeShare(history: { changes: StateChange[]; toFirst: boolean }, created: string, now: number, window: number): Uptime | undefined {
   const oldest = history.changes.at(-1)
   if (!oldest) return undefined
   const first = Date.parse(oldest.startCheck)
   const start = now - window
-  if (first > start && !history.toFirst) return undefined
   const sinceFirst = first > start
+  if (sinceFirst && !(history.toFirst && Date.parse(created) > start)) return undefined
   const from = sinceFirst ? first : start
   if (now <= from) return undefined
   const down = downtimes(history.changes, now).reduce((total, period) => total + Math.max(0, Math.min(period.to, now) - Math.max(period.from, from)), 0)

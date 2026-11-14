@@ -128,7 +128,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
 
   const report = healthOf(monitor, monitor.checks, changes.data?.changes ?? [], now)
   const health = report.health
-  const uptime = changes.data && health !== Health.waiting ? uptimeShare(changes.data, now, periodMs) : undefined
+  const uptime = changes.data && health !== Health.waiting ? uptimeShare(changes.data, monitor.created, now, periodMs) : undefined
   const heartbeat = isHeartbeat(monitor)
   const loud = isAlarm(health)
   const alsoSlow = health === Health.flapping && report.slow

@@ -459,8 +459,8 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
               return (
                 <tr key={check.startCheck} className="h-9 border-t">
                   <td>
-                    <time className="mono text-muted-foreground" dateTime={check.startCheck} title={`${ago(check.startCheck, new Date(now))} ago`}>
-                      {brief(check.startCheck)}
+                    <time className="mono text-muted-foreground" dateTime={check.startCheck} title={exact(check.startCheck)}>
+                      {ago(check.startCheck, new Date(now))}
                     </time>
                   </td>
                   <td>

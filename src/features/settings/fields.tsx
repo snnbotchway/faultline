@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import type { OrgRole } from '@/api/members'
+import { OrgRole } from '@/api/members'
 import type { Project } from '@/api/projects'
 import type { Team } from '@/api/teams'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -42,7 +42,7 @@ export function Confirm({
 
 // The role control, with what each role may do one click away. `allowOwner` is false for anyone but an owner.
 export function RoleField({ value, onChange, allowOwner }: { value: OrgRole; onChange: (next: OrgRole) => void; allowOwner: boolean }) {
-  const options = ROLES.filter((role) => allowOwner || role !== 'owner').map((role) => ({ value: role, label: ROLE_LABEL[role] }))
+  const options = ROLES.filter((role) => allowOwner || role !== OrgRole.owner).map((role) => ({ value: role, label: ROLE_LABEL[role] }))
   return (
     <div className="flex flex-col gap-2">
       <div className="flex h-5 items-center justify-between">

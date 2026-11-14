@@ -16,6 +16,7 @@ import { Confirm } from './fields'
 import { Field, FoldRow, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { plural } from './rows'
 import { teamSlugError } from './team-slug'
+import { TeamTab } from './team-tabs'
 
 /**
  * The organization's teams. A row unfolds to show who is on the team and which projects it opens.
@@ -32,7 +33,7 @@ export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
   const [creating, setCreating] = useState(false)
   const write = can(Scope.teamWrite)
   const open = (slug?: string) =>
-    void navigate(slug ? { to: '/$org/settings/teams/$team/$tab', params: { org, team: slug, tab: 'members' }, replace: true } : { to: '/$org/settings/teams', params: { org }, replace: true })
+    void navigate(slug ? { to: '/$org/settings/teams/$team/$tab', params: { org, team: slug, tab: TeamTab.members }, replace: true } : { to: '/$org/settings/teams', params: { org }, replace: true })
   const create = write && (
     <Button variant="default" size="sm" className="max-lg:h-9 touch-hit" onClick={() => setCreating(true)}>
       <Plus />

@@ -7,6 +7,7 @@ import { platformName } from './platforms'
 import { ProjectTab } from './project-tabs'
 import { ROLE_LABEL } from './roles'
 
+import { TeamTab } from './team-tabs'
 // One thing the settings search can land on: where it sits, what it is set to, and the page that changes it.
 export type Entry = { path: string[]; value: string; link: LinkProps }
 
@@ -38,7 +39,7 @@ export function settingsEntries({
     ...teams.map((team) => ({
       path: ['Teams', `#${team.slug}`],
       value: `${team.memberCount} ${team.memberCount === 1 ? 'member' : 'members'}`,
-      link: { to: '/$org/settings/teams/$team/$tab', params: { org, team: team.slug, tab: 'members' } } as LinkProps,
+      link: { to: '/$org/settings/teams/$team/$tab', params: { org, team: team.slug, tab: TeamTab.members } } as LinkProps,
     })),
     ...projects.flatMap((project) => {
       const slug = project.slug ?? ''

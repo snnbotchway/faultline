@@ -8,7 +8,7 @@ import { signInAppKeys } from './sign-in-apps'
  * history (errors per day, open issues, alerts) is never among them.
  */
 export const stale = {
-  organizations: { queryKey: organizationKeys.all, exact: true } satisfies QueryFilters,
+  organizations: (): QueryFilters => ({ queryKey: organizationKeys.all, exact: true }),
   organization: (org: string): QueryFilters => ({ queryKey: organizationKeys.detail(org), exact: true }),
   members: (org: string): QueryFilters => ({ queryKey: organizationKeys.members(org) }),
   // The list of teams and each team's members.

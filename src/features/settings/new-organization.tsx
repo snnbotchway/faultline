@@ -13,7 +13,7 @@ export function NewOrganization() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const create = useChange('create the organization', (value: string) => organizationActions.create(value), {
-    stale: [stale.organizations],
+    stale: [stale.organizations()],
     // A new organization has nothing in it; its first project is the next thing to make.
     onDone: (organization) => void navigate({ to: '/$org/settings/projects/new', params: { org: organization.slug } }),
   })

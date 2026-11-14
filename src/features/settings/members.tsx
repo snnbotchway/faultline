@@ -241,7 +241,7 @@ function RemoveMember({ org, member, mine, onClose, onDone }: { org: string; mem
   const { what, title, confirm, loses } = removal(org, member, mine)
   const remove = useChange(what, () => memberActions.remove(org, member.id), {
     // Leaving takes the organization out of the user's list, so there is nothing here to go back to.
-    stale: mine ? [stale.organizations] : [stale.members(org), stale.teams(org)],
+    stale: mine ? [stale.organizations()] : [stale.members(org), stale.teams(org)],
     leavesPage: mine,
     onDone: () => (mine ? void navigate({ to: '/' }) : onDone?.()),
   })

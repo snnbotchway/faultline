@@ -198,7 +198,7 @@ export function SettingsIndex({ org }: { org: string }) {
 
 function RenameOrganization({ org, name, onDone }: { org: string; name: string; onDone: () => void }) {
   const [value, setValue] = useState(name)
-  const rename = useChange('rename the organization', () => organizationActions.rename(org, value.trim()), { stale: [stale.organizations, stale.organization(org)], onDone })
+  const rename = useChange('rename the organization', () => organizationActions.rename(org, value.trim()), { stale: [stale.organizations(), stale.organization(org)], onDone })
   return (
     <InlineForm onSubmit={() => rename.run()} onCancel={onDone} pending={rename.pending} error={rename.error} disabled={!value.trim() || value.trim() === name}>
       <Field label="Name" className="max-w-sm">
@@ -211,7 +211,7 @@ function RenameOrganization({ org, name, onDone }: { org: string; name: string; 
 function DeleteOrganization({ org, loses, onClose }: { org: string; loses: string; onClose: () => void }) {
   const navigate = useNavigate()
   const remove = useChange('delete the organization', () => organizationActions.remove(org), {
-    stale: [stale.organizations],
+    stale: [stale.organizations()],
     leavesPage: true,
     onDone: () => void navigate({ to: '/' }),
   })

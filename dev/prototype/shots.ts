@@ -5,7 +5,7 @@ import { chromium, type Page } from 'playwright'
 const OUT = `${process.env.HOME}/shots/faultline`
 const BASE = process.env.BASE ?? 'http://localhost:5195'
 const only = process.argv.slice(2)
-const variants = (['a', 'b', 'c'] as const).filter((v) => only.length === 0 || only.includes(v))
+const variants = (['a', 'b', 'c', 'd'] as const).filter((v) => only.length === 0 || only.includes(v))
 const sizes = { 1440: { width: 1440, height: 900 }, 390: { width: 390, height: 844 } }
 const url = (screen: string, v: string, theme: string) => `${BASE}/prototype/${screen}?variant=${v}&theme=${theme}&bar=0&id=1`
 
@@ -27,7 +27,7 @@ async function open(width: 1440 | 390, target: string): Promise<Page> {
 for (const v of variants) {
   for (const theme of ['light', 'dark']) {
     for (const width of [1440, 390] as const) {
-      for (const screen of ['inbox', 'issue']) {
+      for (const screen of v === 'd' ? ['inbox', 'issue', 'settings'] : ['inbox', 'issue']) {
         const page = await open(width, url(screen, v, theme))
         await page.screenshot({ path: `${OUT}/${v}-${screen}-${width}-${theme}.png` })
         await page.context().close()
@@ -45,7 +45,7 @@ for (const v of variants) {
     await page.waitForTimeout(200)
     await page.screenshot({ path: `${OUT}/${v}-palette-1440-${theme}.png` })
     await page.keyboard.press('Escape')
-    if (v === 'c') {
+    if (v === 'c' || (v === 'd' && theme === 'light')) {
       await page.keyboard.press('Enter')
       await page.waitForTimeout(200)
       await page.screenshot({ path: `${OUT}/${v}-unfold-1440-${theme}.png` })

@@ -32,6 +32,8 @@ async function saveLatest(queryClient: QueryClient) {
       user = await account.update({ name: user.name, options: { ...user.options, preferredTheme: theme } })
     }
     // Only the last answer is cached, so useThemeSync never applies a pick that was already replaced.
+    // A refresh sent before the save would bring the old theme back.
+    await queryClient.cancelQueries({ queryKey: currentUserQuery.queryKey })
     queryClient.setQueryData(currentUserQuery.queryKey, user)
   } catch {
     waiting = undefined

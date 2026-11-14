@@ -33,7 +33,6 @@ export type PerformanceSearch = {
   pattern?: string
 }
 
-
 // `sort` is what the stock UI calls `order`, so its links keep their sorting.
 export function validatePerformanceSearch(search: Record<string, unknown>): PerformanceSearch {
   const order = search.order ?? search.sort

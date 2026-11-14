@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { IssueFilters } from '@/api/issues'
-import type { Target } from './actions'
+import { hitsText, type Hits } from '@/lib/format'
 import { plural } from '@/lib/text'
-import { hitsText, type Hits } from './format'
+import type { Target } from './actions'
 import type { Row } from './inbox-row'
 import { statusActions, type StatusView } from './status'
 

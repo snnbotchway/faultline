@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 
 // The width from which a list has room for what a row opens beside it (Tailwind's `lg`).
 const DESKTOP = '(min-width: 1024px)'
+// Read it with `isDesktop()` in handlers, which run once; render with `useIsDesktop`, which follows resizes.
 export const isDesktop = () => window.matchMedia(DESKTOP).matches
 
 // `isDesktop` that re-renders when the window crosses the width.

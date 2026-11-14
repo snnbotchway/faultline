@@ -31,4 +31,3 @@ const hourFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute:
 export const dayLabel = (seconds: number) => dayFormat.format(new Date(seconds * 1000))
 export const hourLabel = (seconds: number) => hourFormat.format(new Date(seconds * 1000))
 
-export { hitsText, type Hits } from '@/lib/format'

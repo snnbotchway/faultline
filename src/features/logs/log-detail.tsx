@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 import { attributes } from './format'
 import { NO_FILTERS, type LogSearch, type SetSearch } from './search'
 
-
 const TRANSACTION = 'transaction'
 const shown = (value: unknown) => (typeof value === 'string' ? value : JSON.stringify(value))
 const LINK = 'text-brand underline-offset-4 hover:underline'

@@ -2,7 +2,6 @@ import { StatsPeriod } from '@/api/issues'
 import { DAY, HOUR } from '@/lib/time'
 import { dayLabel, hourLabel } from './format'
 
-
 // Each period the traces can show: its buckets, and how it is named on screen.
 export const PERIODS = [
   { value: StatsPeriod.day, size: HOUR, count: 24, label: '24h', unit: 'hour', now: 'Now' },

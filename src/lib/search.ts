@@ -3,3 +3,6 @@ export function projectIds(value: unknown): number[] | undefined {
   const ids = (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(Number).filter(Number.isInteger)
   return ids.length > 0 ? ids : undefined
 }
+
+// A search parameter as text: the router reads `?q=12` as a number.
+export const searchText = (value: unknown) => (typeof value === 'string' && value ? value : typeof value === 'number' ? String(value) : undefined)

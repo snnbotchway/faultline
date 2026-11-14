@@ -23,13 +23,14 @@ import { AssignDialog, AssigneeBadge } from './assignee'
 import { Comments } from './comments'
 import { DeleteIssuesDialog } from './dialogs'
 import { errorParts, exceptionsOf, messageOf } from './event'
-import { ago, brief, compact, exact } from './format'
+import { ago, brief, compact, exact } from '@/lib/format'
 import { ContextRail, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
 import { LevelGlyph } from './level'
 import { StackTrace } from './stack-trace'
 import { ACTION, STATUS, isStatus, statusActions } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
-import { axisFor, axisStartLabel, fillBuckets, periodInfo, releaseMarks } from './trend'
+import { releaseMarks } from '@/lib/axis'
+import { axisFor, axisStartLabel, fillBuckets, periodInfo } from './trend'
 
 // Enough of an event id to tell two apart; the full id is in the title and the raw event.
 const EVENT_ID_SHOWN = 8

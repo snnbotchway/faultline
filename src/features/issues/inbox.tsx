@@ -26,7 +26,8 @@ import { useSelection, useSelectionOffer } from './selection'
 import { SelectionBar, SelectionSheet, type SelectionActions } from './selection-bar'
 import { ACTION, STATUS_VIEWS, type StatusView } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
-import { Trend, axisFor, axisStartLabel, classify, fillBuckets, periodInfo, releaseMarks } from './trend'
+import { releaseMarks } from '@/lib/axis'
+import { Trend, axisFor, axisStartLabel, classify, fillBuckets, periodInfo } from './trend'
 
 const GROUPS = [
   { trend: Trend.new, label: 'New', color: 'text-trend-new' },

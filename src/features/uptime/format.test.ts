@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { DAY, HOUR, MINUTE } from '@/lib/time'
+import { DAY_MS, HOUR_MS, MINUTE_MS } from '@/lib/time'
 import { every, span } from './format'
 
 describe('span', () => {
   it('rounds to the minute and never says less than one', () => {
     expect(span(10_000)).toBe('1m')
-    expect(span(14 * MINUTE)).toBe('14m')
+    expect(span(14 * MINUTE_MS)).toBe('14m')
   })
 
   it('adds minutes to hours, and hours to days only while there are few days', () => {
-    expect(span(3 * HOUR)).toBe('3h')
-    expect(span(3 * HOUR + 20 * MINUTE)).toBe('3h 20m')
-    expect(span(2 * DAY + 4 * HOUR)).toBe('2d 4h')
-    expect(span(9 * DAY + 4 * HOUR)).toBe('9d')
+    expect(span(3 * HOUR_MS)).toBe('3h')
+    expect(span(3 * HOUR_MS + 20 * MINUTE_MS)).toBe('3h 20m')
+    expect(span(2 * DAY_MS + 4 * HOUR_MS)).toBe('2d 4h')
+    expect(span(9 * DAY_MS + 4 * HOUR_MS)).toBe('9d')
   })
 })
 

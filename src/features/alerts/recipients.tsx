@@ -6,7 +6,8 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { RECIPIENTS, isAddress, recipientMeta, recipientTarget, withScheme } from './recipient-kinds'
+import { withScheme } from '@/lib/url'
+import { RECIPIENTS, isAddress, recipientMeta, recipientTarget } from './recipient-kinds'
 
 // A recipient on a rule's row: its kind, with where it goes on hover. A webhook address is a secret, so only its host is shown.
 export function RecipientChip({ recipient }: { recipient: { recipientType: string; url?: string | null } }) {

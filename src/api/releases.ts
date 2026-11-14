@@ -1,5 +1,5 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
-import { DAY } from '@/lib/time'
+import { DAY_MS } from '@/lib/time'
 import { api, orgPath, unwrap } from './client'
 import type { Issue } from './issues'
 import { MAX_PAGE_SIZE, toPage, type Page } from './pagination'
@@ -184,7 +184,7 @@ export function eventsPerDay(hours: string[], counts: (number | null)[], start: 
   hours.forEach((hour, index) => {
     const at = new Date(hour)
     // Whole calendar days since `start`, so a day that is 23 or 25 hours long still counts as one.
-    const day = Math.round((Date.UTC(at.getFullYear(), at.getMonth(), at.getDate()) - Date.UTC(first.getFullYear(), first.getMonth(), first.getDate())) / DAY)
+    const day = Math.round((Date.UTC(at.getFullYear(), at.getMonth(), at.getDate()) - Date.UTC(first.getFullYear(), first.getMonth(), first.getDate())) / DAY_MS)
     if (day >= 0 && day < days) totals[day]! += counts[index] ?? 0
   })
   return totals

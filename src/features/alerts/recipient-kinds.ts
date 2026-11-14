@@ -1,5 +1,6 @@
 import { BellRing, Mail, MessagesSquare, Webhook, type LucideIcon } from 'lucide-react'
 import { RecipientType } from '@/api/alerts'
+import { withScheme } from '@/lib/url'
 
 export const RECIPIENTS: Record<RecipientType, { label: string; icon: LucideIcon; placeholder: string }> = {
   [RecipientType.email]: { label: 'Email', icon: Mail, placeholder: '' },
@@ -27,8 +28,6 @@ export function recipientTarget(recipient: { recipientType: string; url?: string
   }
 }
 
-// The address bar treats a host without a scheme as https; so do these fields.
-export const withScheme = (url: string) => (/^[a-z][a-z0-9+.-]*:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`)
 
 export const isAddress = (url: string) => {
   try {

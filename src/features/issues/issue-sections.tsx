@@ -18,7 +18,7 @@ import { failed } from '@/lib/notice'
 import { cn } from '@/lib/utils'
 import { crumbKind, crumbText, crumbsOf, requestOf, valueText, type Crumb } from './event'
 import { levelColor } from './levels'
-import { ago, exact, hourLabel } from './format'
+import { ago, exact, hourLabel } from '@/lib/format'
 import { DEFAULT_QUERY, withFilter } from './search'
 
 export function Section({ title, count, className, children }: { title: string; count?: number; className?: string; children: ReactNode }) {

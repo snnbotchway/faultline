@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { Check } from '@/api/monitors'
 import { TraceFrame } from '@/features/issues/trace'
-import type { Mark } from '@/features/issues/trend'
+import type { Mark } from '@/lib/axis'
 import { cn } from '@/lib/utils'
 import { HEALTH, UptimeTab } from './describe'
 import { Health, checkHealth, slowOver, type Downtime } from './health'

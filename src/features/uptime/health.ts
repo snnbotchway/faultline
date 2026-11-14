@@ -1,5 +1,5 @@
 import type { Check } from '@/api/monitors'
-import { DAY } from '@/lib/time'
+import { DAY_MS } from '@/lib/time'
 
 // The backend knows only up and down. Slow and flapping are read off the checks it returns.
 export const Health = { down: 'down', flapping: 'flapping', slow: 'slow', up: 'up', waiting: 'waiting' } as const
@@ -9,7 +9,7 @@ export type Health = (typeof Health)[keyof typeof Health]
 export const SLOW_SHARE = 0.5
 // Flapping: up now, but down at least this many times within the window.
 export const FLAPPING_DOWNS = 3
-export const FLAPPING_WINDOW = DAY
+export const FLAPPING_WINDOW = DAY_MS
 
 export type Downtime = { from: number; to: number; reason: number | null; ongoing: boolean }
 

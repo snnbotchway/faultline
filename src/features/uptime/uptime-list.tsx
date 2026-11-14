@@ -8,10 +8,11 @@ import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ago, dayTime, exact, noun } from '@/features/issues/format'
 import { PeriodToggle, ReleaseLabels, ReleaseRules } from '@/features/issues/trace'
-import { periodInfo, releaseMarks, spanAxis, type Mark } from '@/features/issues/trend'
-import { SECOND } from '@/lib/time'
+import { periodInfo } from '@/features/issues/trend'
+import { releaseMarks, spanAxis, type Mark } from '@/lib/axis'
+import { ago, dayTime, exact, noun } from '@/lib/format'
+import { SECOND_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { responseText } from './format'
@@ -21,7 +22,7 @@ import { CheckBars, DowntimeStrip, HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth, type MonitorHealth } from './use-health'
 
 // How far back the shared time axis reaches, in milliseconds.
-const periodLength = (period: StatsPeriod) => periodInfo(period).size * periodInfo(period).count * SECOND
+const periodLength = (period: StatsPeriod) => periodInfo(period).size * periodInfo(period).count * SECOND_MS
 
 const COLUMNS = 'lg:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_232px_80px]'
 const GROUPS: Health[] = [Health.down, Health.flapping, Health.slow, Health.up, Health.waiting]

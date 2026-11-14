@@ -1,5 +1,5 @@
 import { CheckReason, MonitorType, type Check, type Monitor } from '@/api/monitors'
-import { clock, dayTime } from '@/features/issues/format'
+import { clock, dayTime } from '@/lib/format'
 import { every, responseText, span } from './format'
 import { Health, type HealthReport } from './health'
 

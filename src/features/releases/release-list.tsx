@@ -5,10 +5,10 @@ import { dailyEventsQuery, newIssuesByReleaseQuery, releaseListQuery, type NewIs
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { clock, compact, dayLabel, dayName, noun, plural } from '@/features/issues/format'
+import { releaseMarks, spanAxis } from '@/lib/axis'
+import { clock, compact, dayLabel, dayName, noun, plural } from '@/lib/format'
 import { ReleaseTrace } from '@/features/issues/trace'
-import { releaseMarks, spanAxis } from '@/features/issues/trend'
-import { DAY } from '@/lib/time'
+import { DAY_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
 
 const DAYS = 14
@@ -138,7 +138,7 @@ function EventsChart({ org, releases }: { org: string; releases: Release[] }) {
       </div>
     )
   const { start, counts } = events.data
-  const marks = releaseMarks(releases, spanAxis(start, start + DAYS * DAY))
+  const marks = releaseMarks(releases, spanAxis(start, start + DAYS * DAY_MS))
   return (
     <div className="border-b px-3 pt-4 pb-3 lg:px-4">
       <ReleaseTrace buckets={counts} marks={marks} height={56} />

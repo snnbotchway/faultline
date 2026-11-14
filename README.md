@@ -70,7 +70,7 @@ Faultline is tested in CI against real GlitchTip backends. See [docs/compatibili
 
 | Faultline | GlitchTip |
 |---|---|
-| `main` | 7.0.0 |
+| 0.1.0 | 7.0.0 |
 
 ## Status
 

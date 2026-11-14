@@ -141,6 +141,9 @@ export function RequestSection({ event }: { event: IssueEvent }) {
 
 const TOP_VALUES = 4
 
+// The backend builds the `browser` tag as "name version" and writes "None" when the SDK sent no version.
+const tagLabel = (key: string, value: string) => (key === 'browser' ? value.replace(/ None$/, '') : value)
+
 // Clicking a value opens the inbox filtered to it.
 export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
   const tags = useQuery(issueTagsQuery(org, issueId))
@@ -164,7 +167,7 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
                   >
                     <span className="absolute inset-y-0.5 left-[46px] bg-foreground/10" style={{ width: `calc((100% - 46px) * ${top.count / Math.max(1, tag.totalValues)})` }} aria-hidden />
                     <span className="relative w-9 shrink-0 text-right text-muted-foreground">{Math.round((top.count / Math.max(1, tag.totalValues)) * 100)}%</span>
-                    <span className="relative min-w-0 flex-1 truncate">{top.name || top.value}</span>
+                    <span className="relative min-w-0 flex-1 truncate">{tagLabel(tag.key, top.name || top.value)}</span>
                   </Link>
                 </li>
               ))}

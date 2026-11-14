@@ -67,7 +67,7 @@ export function ProjectList({ org }: { org?: string }) {
   return (
     <>
       <PageBar>
-        <h1 className="font-semibold">Projects</h1>
+        <h1 className="text-2xl font-semibold">Projects</h1>
         {org && <span className="mono text-muted-foreground">{org}</span>}
         {!empty && (
           <>

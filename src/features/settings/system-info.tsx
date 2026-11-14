@@ -23,7 +23,7 @@ export function SystemInfo() {
         <SettingsBar org={org} title="System info" />
       ) : (
         <PageBar>
-          <h1 className="font-semibold">System info</h1>
+          <h1 className="text-2xl font-semibold">System info</h1>
         </PageBar>
       )}
       <Sheet>

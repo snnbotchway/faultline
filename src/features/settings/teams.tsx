@@ -165,7 +165,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
   return (
     <div className="grid gap-x-8 gap-y-4 border-b px-3 pt-1 pb-4 md:px-4 lg:grid-cols-2">
       <section aria-label={`Members of ${team.slug}`}>
-        <h3 className="label-caps border-b pb-2">Members</h3>
+        <h2 className="label-caps border-b pb-2">Members</h2>
         {!roster && <RowSkeleton rows={2} />}
         {roster?.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>Nobody yet</p>}
         {roster?.map((member) => (
@@ -200,7 +200,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
         )}
       </section>
       <section aria-label={`Projects of ${team.slug}`}>
-        <h3 className="label-caps border-b pb-2">Projects</h3>
+        <h2 className="label-caps border-b pb-2">Projects</h2>
         {opens.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>None yet</p>}
         {opens.map((project) => (
           <div key={project.id} className={DETAIL_ROW}>

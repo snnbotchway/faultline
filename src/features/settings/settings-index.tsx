@@ -55,7 +55,7 @@ export function SettingsIndex({ org }: { org: string }) {
   return (
     <>
       <PageBar className="max-lg:h-auto max-lg:flex-wrap max-lg:gap-y-0 max-lg:pb-2">
-        <h1 className="font-semibold max-lg:flex max-lg:h-11 max-lg:w-full max-lg:items-center">Settings</h1>
+        <h1 className="text-2xl font-semibold max-lg:flex max-lg:h-11 max-lg:w-full max-lg:items-center">Settings</h1>
         <div className="relative w-full lg:ml-3 lg:max-w-md">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

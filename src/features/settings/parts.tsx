@@ -22,7 +22,7 @@ export function SettingsBar({ org, title, mono, children }: { org: string; title
         <ChevronLeft className="size-4" />
         <span className="max-lg:hidden">Settings</span>
       </Link>
-      <h1 className={cn('min-w-0 truncate font-semibold', mono && 'font-mono')}>{title}</h1>
+      <h1 className={cn('min-w-0 truncate text-2xl font-semibold', mono && 'font-mono')}>{title}</h1>
       <span className="ml-auto flex shrink-0 items-center gap-2">{children}</span>
     </PageBar>
   )

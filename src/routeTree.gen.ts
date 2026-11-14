@@ -13,13 +13,16 @@ import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppOrgRouteRouteImport } from './routes/_app/$org/route'
+import { Route as AppHomeRouteRouteImport } from './routes/_app/_home/route'
 import { Route as AppProfileRouteRouteImport } from './routes/_app/profile/route'
 import { Route as LoginOrgRouteImport } from './routes/login_.$org'
 import { Route as LoginFinalizeRouteImport } from './routes/login_.finalize'
 import { Route as AppOrgIndexRouteImport } from './routes/_app/$org/index'
 import { Route as AppOrgSectionRouteRouteImport } from './routes/_app/$org/$section/route'
+import { Route as AppOrgProjectsRouteImport } from './routes/_app/$org/projects'
+import { Route as AppHomeIndexRouteImport } from './routes/_app/_home/index'
+import { Route as AppHomeSystemInfoRouteImport } from './routes/_app/_home/system-info'
 import { Route as AppProfileIndexRouteImport } from './routes/_app/profile/index'
 import { Route as AppProfileAuthTokensRouteImport } from './routes/_app/profile/auth-tokens'
 import { Route as AppProfileMultiFactorAuthRouteImport } from './routes/_app/profile/multi-factor-auth'
@@ -28,6 +31,10 @@ import { Route as AcceptMemberIdTokenRouteImport } from './routes/accept.$member
 import { Route as ResetPasswordSetNewPasswordKeyRouteImport } from './routes/reset-password_.set-new-password.$key'
 import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$section/$'
 import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
+import { Route as AppOrgSettingsIndexRouteImport } from './routes/_app/$org/settings/index'
+import { Route as AppOrgSettingsMembersRouteRouteImport } from './routes/_app/$org/settings/members/route'
+import { Route as AppOrgSettingsTeamsRouteRouteImport } from './routes/_app/$org/settings/teams/route'
+import { Route as AppHomeOrganizationsNewRouteImport } from './routes/_app/_home/organizations/new'
 import { Route as AppProfileAuthTokensNewRouteImport } from './routes/_app/profile/auth-tokens_.new'
 import { Route as AppProfileConfirmEmailKeyRouteImport } from './routes/_app/profile_.confirm-email.$key'
 import { Route as AppProfileWizardHashRouteImport } from './routes/_app/profile_.wizard.$hash'
@@ -35,8 +42,17 @@ import { Route as AccountSettingsWizardHashRouteImport } from './routes/account.
 import { Route as AppOrgProjectIssuesIssueIdRouteImport } from './routes/_app/$org/$project/issues/$issueId'
 import { Route as AppOrgIssuesIssueIdIndexRouteImport } from './routes/_app/$org/issues/$issueId/index'
 import { Route as AppOrgIssuesIssueIdTabRouteImport } from './routes/_app/$org/issues/$issueId/$tab'
+import { Route as AppOrgSettingsMembersIndexRouteImport } from './routes/_app/$org/settings/members/index'
+import { Route as AppOrgSettingsMembersMemberIdRouteImport } from './routes/_app/$org/settings/members/$memberId'
+import { Route as AppOrgSettingsMembersNewRouteImport } from './routes/_app/$org/settings/members/new'
+import { Route as AppOrgSettingsProjectsIndexRouteImport } from './routes/_app/$org/settings/projects/index'
+import { Route as AppOrgSettingsProjectsProjectRouteImport } from './routes/_app/$org/settings/projects/$project'
+import { Route as AppOrgSettingsProjectsNewRouteImport } from './routes/_app/$org/settings/projects/new'
+import { Route as AppOrgSettingsTeamsIndexRouteImport } from './routes/_app/$org/settings/teams/index'
 import { Route as OrgredirectOrganizationsOrgSettingsAuthTokensRouteImport } from './routes/orgredirect.organizations.$org.settings.auth-tokens'
 import { Route as AppOrgIssuesIssueIdEventsEventIdRouteImport } from './routes/_app/$org/issues/$issueId/events/$eventId'
+import { Route as AppOrgSettingsTeamsTeamIndexRouteImport } from './routes/_app/$org/settings/teams/$team/index'
+import { Route as AppOrgSettingsTeamsTeamTabRouteImport } from './routes/_app/$org/settings/teams/$team/$tab'
 
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
@@ -57,14 +73,13 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppOrgRouteRoute = AppOrgRouteRouteImport.update({
   id: '/$org',
   path: '/$org',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppHomeRouteRoute = AppHomeRouteRouteImport.update({
+  id: '/_home',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppProfileRouteRoute = AppProfileRouteRouteImport.update({
@@ -91,6 +106,21 @@ const AppOrgSectionRouteRoute = AppOrgSectionRouteRouteImport.update({
   id: '/$section',
   path: '/$section',
   getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgProjectsRoute = AppOrgProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppHomeIndexRoute = AppHomeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppHomeRouteRoute,
+} as any)
+const AppHomeSystemInfoRoute = AppHomeSystemInfoRouteImport.update({
+  id: '/system-info',
+  path: '/system-info',
+  getParentRoute: () => AppHomeRouteRoute,
 } as any)
 const AppProfileIndexRoute = AppProfileIndexRouteImport.update({
   id: '/',
@@ -134,6 +164,28 @@ const AppOrgIssuesIndexRoute = AppOrgIssuesIndexRouteImport.update({
   path: '/issues/',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppOrgSettingsIndexRoute = AppOrgSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgSettingsMembersRouteRoute =
+  AppOrgSettingsMembersRouteRouteImport.update({
+    id: '/settings/members',
+    path: '/settings/members',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgSettingsTeamsRouteRoute =
+  AppOrgSettingsTeamsRouteRouteImport.update({
+    id: '/settings/teams',
+    path: '/settings/teams',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppHomeOrganizationsNewRoute = AppHomeOrganizationsNewRouteImport.update({
+  id: '/organizations/new',
+  path: '/organizations/new',
+  getParentRoute: () => AppHomeRouteRoute,
+} as any)
 const AppProfileAuthTokensNewRoute = AppProfileAuthTokensNewRouteImport.update({
   id: '/auth-tokens_/new',
   path: '/auth-tokens/new',
@@ -173,6 +225,48 @@ const AppOrgIssuesIssueIdTabRoute = AppOrgIssuesIssueIdTabRouteImport.update({
   path: '/issues/$issueId/$tab',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppOrgSettingsMembersIndexRoute =
+  AppOrgSettingsMembersIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppOrgSettingsMembersRouteRoute,
+  } as any)
+const AppOrgSettingsMembersMemberIdRoute =
+  AppOrgSettingsMembersMemberIdRouteImport.update({
+    id: '/$memberId',
+    path: '/$memberId',
+    getParentRoute: () => AppOrgSettingsMembersRouteRoute,
+  } as any)
+const AppOrgSettingsMembersNewRoute =
+  AppOrgSettingsMembersNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AppOrgSettingsMembersRouteRoute,
+  } as any)
+const AppOrgSettingsProjectsIndexRoute =
+  AppOrgSettingsProjectsIndexRouteImport.update({
+    id: '/settings/projects/',
+    path: '/settings/projects/',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgSettingsProjectsProjectRoute =
+  AppOrgSettingsProjectsProjectRouteImport.update({
+    id: '/settings/projects/$project',
+    path: '/settings/projects/$project',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgSettingsProjectsNewRoute =
+  AppOrgSettingsProjectsNewRouteImport.update({
+    id: '/settings/projects/new',
+    path: '/settings/projects/new',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgSettingsTeamsIndexRoute =
+  AppOrgSettingsTeamsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppOrgSettingsTeamsRouteRoute,
+  } as any)
 const OrgredirectOrganizationsOrgSettingsAuthTokensRoute =
   OrgredirectOrganizationsOrgSettingsAuthTokensRouteImport.update({
     id: '/orgredirect/organizations/$org/settings/auth-tokens',
@@ -185,9 +279,21 @@ const AppOrgIssuesIssueIdEventsEventIdRoute =
     path: '/issues/$issueId/events/$eventId',
     getParentRoute: () => AppOrgRouteRoute,
   } as any)
+const AppOrgSettingsTeamsTeamIndexRoute =
+  AppOrgSettingsTeamsTeamIndexRouteImport.update({
+    id: '/$team/',
+    path: '/$team/',
+    getParentRoute: () => AppOrgSettingsTeamsRouteRoute,
+  } as any)
+const AppOrgSettingsTeamsTeamTabRoute =
+  AppOrgSettingsTeamsTeamTabRouteImport.update({
+    id: '/$team/$tab',
+    path: '/$team/$tab',
+    getParentRoute: () => AppOrgSettingsTeamsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
+  '/': typeof AppHomeIndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -196,6 +302,8 @@ export interface FileRoutesByFullPath {
   '/login/$org': typeof LoginOrgRoute
   '/login/finalize': typeof LoginFinalizeRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/$org/projects': typeof AppOrgProjectsRoute
+  '/system-info': typeof AppHomeSystemInfoRoute
   '/profile/auth-tokens': typeof AppProfileAuthTokensRoute
   '/profile/multi-factor-auth': typeof AppProfileMultiFactorAuthRoute
   '/profile/notifications': typeof AppProfileNotificationsRoute
@@ -203,26 +311,41 @@ export interface FileRoutesByFullPath {
   '/reset-password/set-new-password/$key': typeof ResetPasswordSetNewPasswordKeyRoute
   '/$org/': typeof AppOrgIndexRoute
   '/profile/': typeof AppProfileIndexRoute
+  '/$org/settings/members': typeof AppOrgSettingsMembersRouteRouteWithChildren
+  '/$org/settings/teams': typeof AppOrgSettingsTeamsRouteRouteWithChildren
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/organizations/new': typeof AppHomeOrganizationsNewRoute
   '/profile/auth-tokens/new': typeof AppProfileAuthTokensNewRoute
   '/profile/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
   '/profile/wizard/$hash': typeof AppProfileWizardHashRoute
   '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/$org/issues/': typeof AppOrgIssuesIndexRoute
+  '/$org/settings/': typeof AppOrgSettingsIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/$org/settings/members/$memberId': typeof AppOrgSettingsMembersMemberIdRoute
+  '/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
+  '/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
+  '/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/settings/members/': typeof AppOrgSettingsMembersIndexRoute
+  '/$org/settings/projects/': typeof AppOrgSettingsProjectsIndexRoute
+  '/$org/settings/teams/': typeof AppOrgSettingsTeamsIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
+  '/$org/settings/teams/$team/$tab': typeof AppOrgSettingsTeamsTeamTabRoute
+  '/$org/settings/teams/$team/': typeof AppOrgSettingsTeamsTeamIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof AppHomeIndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/login/$org': typeof LoginOrgRoute
   '/login/finalize': typeof LoginFinalizeRoute
-  '/': typeof AppIndexRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/$org/projects': typeof AppOrgProjectsRoute
+  '/system-info': typeof AppHomeSystemInfoRoute
   '/profile/auth-tokens': typeof AppProfileAuthTokensRoute
   '/profile/multi-factor-auth': typeof AppProfileMultiFactorAuthRoute
   '/profile/notifications': typeof AppProfileNotificationsRoute
@@ -231,16 +354,27 @@ export interface FileRoutesByTo {
   '/$org': typeof AppOrgIndexRoute
   '/profile': typeof AppProfileIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/organizations/new': typeof AppHomeOrganizationsNewRoute
   '/profile/auth-tokens/new': typeof AppProfileAuthTokensNewRoute
   '/profile/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
   '/profile/wizard/$hash': typeof AppProfileWizardHashRoute
   '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/$org/issues': typeof AppOrgIssuesIndexRoute
+  '/$org/settings': typeof AppOrgSettingsIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/$org/settings/members/$memberId': typeof AppOrgSettingsMembersMemberIdRoute
+  '/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
+  '/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
+  '/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/settings/members': typeof AppOrgSettingsMembersIndexRoute
+  '/$org/settings/projects': typeof AppOrgSettingsProjectsIndexRoute
+  '/$org/settings/teams': typeof AppOrgSettingsTeamsIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
+  '/$org/settings/teams/$team/$tab': typeof AppOrgSettingsTeamsTeamTabRoute
+  '/$org/settings/teams/$team': typeof AppOrgSettingsTeamsTeamIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -249,29 +383,45 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/$org': typeof AppOrgRouteRouteWithChildren
+  '/_app/_home': typeof AppHomeRouteRouteWithChildren
   '/_app/profile': typeof AppProfileRouteRouteWithChildren
   '/login_/$org': typeof LoginOrgRoute
   '/login_/finalize': typeof LoginFinalizeRoute
-  '/_app/': typeof AppIndexRoute
   '/_app/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/_app/$org/projects': typeof AppOrgProjectsRoute
+  '/_app/_home/system-info': typeof AppHomeSystemInfoRoute
   '/_app/profile/auth-tokens': typeof AppProfileAuthTokensRoute
   '/_app/profile/multi-factor-auth': typeof AppProfileMultiFactorAuthRoute
   '/_app/profile/notifications': typeof AppProfileNotificationsRoute
   '/accept/$memberId/$token': typeof AcceptMemberIdTokenRoute
   '/reset-password_/set-new-password/$key': typeof ResetPasswordSetNewPasswordKeyRoute
   '/_app/$org/': typeof AppOrgIndexRoute
+  '/_app/_home/': typeof AppHomeIndexRoute
   '/_app/profile/': typeof AppProfileIndexRoute
+  '/_app/$org/settings/members': typeof AppOrgSettingsMembersRouteRouteWithChildren
+  '/_app/$org/settings/teams': typeof AppOrgSettingsTeamsRouteRouteWithChildren
   '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/_app/_home/organizations/new': typeof AppHomeOrganizationsNewRoute
   '/_app/profile/auth-tokens_/new': typeof AppProfileAuthTokensNewRoute
   '/_app/profile_/confirm-email/$key': typeof AppProfileConfirmEmailKeyRoute
   '/_app/profile_/wizard/$hash': typeof AppProfileWizardHashRoute
   '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
+  '/_app/$org/settings/': typeof AppOrgSettingsIndexRoute
   '/_app/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/_app/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/_app/$org/settings/members/$memberId': typeof AppOrgSettingsMembersMemberIdRoute
+  '/_app/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
+  '/_app/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
+  '/_app/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/_app/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/_app/$org/settings/members/': typeof AppOrgSettingsMembersIndexRoute
+  '/_app/$org/settings/projects/': typeof AppOrgSettingsProjectsIndexRoute
+  '/_app/$org/settings/teams/': typeof AppOrgSettingsTeamsIndexRoute
   '/_app/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
+  '/_app/$org/settings/teams/$team/$tab': typeof AppOrgSettingsTeamsTeamTabRoute
+  '/_app/$org/settings/teams/$team/': typeof AppOrgSettingsTeamsTeamIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -285,6 +435,8 @@ export interface FileRouteTypes {
     | '/login/$org'
     | '/login/finalize'
     | '/$org/$section'
+    | '/$org/projects'
+    | '/system-info'
     | '/profile/auth-tokens'
     | '/profile/multi-factor-auth'
     | '/profile/notifications'
@@ -292,26 +444,41 @@ export interface FileRouteTypes {
     | '/reset-password/set-new-password/$key'
     | '/$org/'
     | '/profile/'
+    | '/$org/settings/members'
+    | '/$org/settings/teams'
     | '/$org/$section/$'
+    | '/organizations/new'
     | '/profile/auth-tokens/new'
     | '/profile/confirm-email/$key'
     | '/profile/wizard/$hash'
     | '/account/settings/wizard/$hash'
     | '/$org/issues/'
+    | '/$org/settings/'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/$org/settings/members/$memberId'
+    | '/$org/settings/members/new'
+    | '/$org/settings/projects/$project'
+    | '/$org/settings/projects/new'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId/'
+    | '/$org/settings/members/'
+    | '/$org/settings/projects/'
+    | '/$org/settings/teams/'
     | '/$org/issues/$issueId/events/$eventId'
+    | '/$org/settings/teams/$team/$tab'
+    | '/$org/settings/teams/$team/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/login'
     | '/register'
     | '/reset-password'
     | '/login/$org'
     | '/login/finalize'
-    | '/'
     | '/$org/$section'
+    | '/$org/projects'
+    | '/system-info'
     | '/profile/auth-tokens'
     | '/profile/multi-factor-auth'
     | '/profile/notifications'
@@ -320,16 +487,27 @@ export interface FileRouteTypes {
     | '/$org'
     | '/profile'
     | '/$org/$section/$'
+    | '/organizations/new'
     | '/profile/auth-tokens/new'
     | '/profile/confirm-email/$key'
     | '/profile/wizard/$hash'
     | '/account/settings/wizard/$hash'
     | '/$org/issues'
+    | '/$org/settings'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/$org/settings/members/$memberId'
+    | '/$org/settings/members/new'
+    | '/$org/settings/projects/$project'
+    | '/$org/settings/projects/new'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId'
+    | '/$org/settings/members'
+    | '/$org/settings/projects'
+    | '/$org/settings/teams'
     | '/$org/issues/$issueId/events/$eventId'
+    | '/$org/settings/teams/$team/$tab'
+    | '/$org/settings/teams/$team'
   id:
     | '__root__'
     | '/_app'
@@ -337,29 +515,45 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_app/$org'
+    | '/_app/_home'
     | '/_app/profile'
     | '/login_/$org'
     | '/login_/finalize'
-    | '/_app/'
     | '/_app/$org/$section'
+    | '/_app/$org/projects'
+    | '/_app/_home/system-info'
     | '/_app/profile/auth-tokens'
     | '/_app/profile/multi-factor-auth'
     | '/_app/profile/notifications'
     | '/accept/$memberId/$token'
     | '/reset-password_/set-new-password/$key'
     | '/_app/$org/'
+    | '/_app/_home/'
     | '/_app/profile/'
+    | '/_app/$org/settings/members'
+    | '/_app/$org/settings/teams'
     | '/_app/$org/$section/$'
+    | '/_app/_home/organizations/new'
     | '/_app/profile/auth-tokens_/new'
     | '/_app/profile_/confirm-email/$key'
     | '/_app/profile_/wizard/$hash'
     | '/account/settings/wizard/$hash'
     | '/_app/$org/issues/'
+    | '/_app/$org/settings/'
     | '/_app/$org/$project/issues/$issueId'
     | '/_app/$org/issues/$issueId/$tab'
+    | '/_app/$org/settings/members/$memberId'
+    | '/_app/$org/settings/members/new'
+    | '/_app/$org/settings/projects/$project'
+    | '/_app/$org/settings/projects/new'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/_app/$org/issues/$issueId/'
+    | '/_app/$org/settings/members/'
+    | '/_app/$org/settings/projects/'
+    | '/_app/$org/settings/teams/'
     | '/_app/$org/issues/$issueId/events/$eventId'
+    | '/_app/$org/settings/teams/$team/$tab'
+    | '/_app/$org/settings/teams/$team/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -405,18 +599,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/': {
-      id: '/_app/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/_app/$org': {
       id: '/_app/$org'
       path: '/$org'
       fullPath: '/$org'
       preLoaderRoute: typeof AppOrgRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/_home': {
+      id: '/_app/_home'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppHomeRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/profile': {
@@ -453,6 +647,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/$org/$section'
       preLoaderRoute: typeof AppOrgSectionRouteRouteImport
       parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/projects': {
+      id: '/_app/$org/projects'
+      path: '/projects'
+      fullPath: '/$org/projects'
+      preLoaderRoute: typeof AppOrgProjectsRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/_home/': {
+      id: '/_app/_home/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AppHomeIndexRouteImport
+      parentRoute: typeof AppHomeRouteRoute
+    }
+    '/_app/_home/system-info': {
+      id: '/_app/_home/system-info'
+      path: '/system-info'
+      fullPath: '/system-info'
+      preLoaderRoute: typeof AppHomeSystemInfoRouteImport
+      parentRoute: typeof AppHomeRouteRoute
     }
     '/_app/profile/': {
       id: '/_app/profile/'
@@ -510,6 +725,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgIssuesIndexRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/settings/': {
+      id: '/_app/$org/settings/'
+      path: '/settings'
+      fullPath: '/$org/settings/'
+      preLoaderRoute: typeof AppOrgSettingsIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/settings/members': {
+      id: '/_app/$org/settings/members'
+      path: '/settings/members'
+      fullPath: '/$org/settings/members'
+      preLoaderRoute: typeof AppOrgSettingsMembersRouteRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/settings/teams': {
+      id: '/_app/$org/settings/teams'
+      path: '/settings/teams'
+      fullPath: '/$org/settings/teams'
+      preLoaderRoute: typeof AppOrgSettingsTeamsRouteRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/_home/organizations/new': {
+      id: '/_app/_home/organizations/new'
+      path: '/organizations/new'
+      fullPath: '/organizations/new'
+      preLoaderRoute: typeof AppHomeOrganizationsNewRouteImport
+      parentRoute: typeof AppHomeRouteRoute
+    }
     '/_app/profile/auth-tokens_/new': {
       id: '/_app/profile/auth-tokens_/new'
       path: '/auth-tokens/new'
@@ -559,6 +802,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgIssuesIssueIdTabRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/settings/members/': {
+      id: '/_app/$org/settings/members/'
+      path: '/'
+      fullPath: '/$org/settings/members/'
+      preLoaderRoute: typeof AppOrgSettingsMembersIndexRouteImport
+      parentRoute: typeof AppOrgSettingsMembersRouteRoute
+    }
+    '/_app/$org/settings/members/$memberId': {
+      id: '/_app/$org/settings/members/$memberId'
+      path: '/$memberId'
+      fullPath: '/$org/settings/members/$memberId'
+      preLoaderRoute: typeof AppOrgSettingsMembersMemberIdRouteImport
+      parentRoute: typeof AppOrgSettingsMembersRouteRoute
+    }
+    '/_app/$org/settings/members/new': {
+      id: '/_app/$org/settings/members/new'
+      path: '/new'
+      fullPath: '/$org/settings/members/new'
+      preLoaderRoute: typeof AppOrgSettingsMembersNewRouteImport
+      parentRoute: typeof AppOrgSettingsMembersRouteRoute
+    }
+    '/_app/$org/settings/projects/': {
+      id: '/_app/$org/settings/projects/'
+      path: '/settings/projects'
+      fullPath: '/$org/settings/projects/'
+      preLoaderRoute: typeof AppOrgSettingsProjectsIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/settings/projects/$project': {
+      id: '/_app/$org/settings/projects/$project'
+      path: '/settings/projects/$project'
+      fullPath: '/$org/settings/projects/$project'
+      preLoaderRoute: typeof AppOrgSettingsProjectsProjectRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/settings/projects/new': {
+      id: '/_app/$org/settings/projects/new'
+      path: '/settings/projects/new'
+      fullPath: '/$org/settings/projects/new'
+      preLoaderRoute: typeof AppOrgSettingsProjectsNewRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/settings/teams/': {
+      id: '/_app/$org/settings/teams/'
+      path: '/'
+      fullPath: '/$org/settings/teams/'
+      preLoaderRoute: typeof AppOrgSettingsTeamsIndexRouteImport
+      parentRoute: typeof AppOrgSettingsTeamsRouteRoute
+    }
     '/orgredirect/organizations/$org/settings/auth-tokens': {
       id: '/orgredirect/organizations/$org/settings/auth-tokens'
       path: '/orgredirect/organizations/$org/settings/auth-tokens'
@@ -572,6 +864,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/$org/issues/$issueId/events/$eventId'
       preLoaderRoute: typeof AppOrgIssuesIssueIdEventsEventIdRouteImport
       parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/settings/teams/$team/': {
+      id: '/_app/$org/settings/teams/$team/'
+      path: '/$team'
+      fullPath: '/$org/settings/teams/$team/'
+      preLoaderRoute: typeof AppOrgSettingsTeamsTeamIndexRouteImport
+      parentRoute: typeof AppOrgSettingsTeamsRouteRoute
+    }
+    '/_app/$org/settings/teams/$team/$tab': {
+      id: '/_app/$org/settings/teams/$team/$tab'
+      path: '/$team/$tab'
+      fullPath: '/$org/settings/teams/$team/$tab'
+      preLoaderRoute: typeof AppOrgSettingsTeamsTeamTabRouteImport
+      parentRoute: typeof AppOrgSettingsTeamsRouteRoute
     }
   }
 }
@@ -587,28 +893,94 @@ const AppOrgSectionRouteRouteChildren: AppOrgSectionRouteRouteChildren = {
 const AppOrgSectionRouteRouteWithChildren =
   AppOrgSectionRouteRoute._addFileChildren(AppOrgSectionRouteRouteChildren)
 
+interface AppOrgSettingsMembersRouteRouteChildren {
+  AppOrgSettingsMembersMemberIdRoute: typeof AppOrgSettingsMembersMemberIdRoute
+  AppOrgSettingsMembersNewRoute: typeof AppOrgSettingsMembersNewRoute
+  AppOrgSettingsMembersIndexRoute: typeof AppOrgSettingsMembersIndexRoute
+}
+
+const AppOrgSettingsMembersRouteRouteChildren: AppOrgSettingsMembersRouteRouteChildren =
+  {
+    AppOrgSettingsMembersMemberIdRoute: AppOrgSettingsMembersMemberIdRoute,
+    AppOrgSettingsMembersNewRoute: AppOrgSettingsMembersNewRoute,
+    AppOrgSettingsMembersIndexRoute: AppOrgSettingsMembersIndexRoute,
+  }
+
+const AppOrgSettingsMembersRouteRouteWithChildren =
+  AppOrgSettingsMembersRouteRoute._addFileChildren(
+    AppOrgSettingsMembersRouteRouteChildren,
+  )
+
+interface AppOrgSettingsTeamsRouteRouteChildren {
+  AppOrgSettingsTeamsIndexRoute: typeof AppOrgSettingsTeamsIndexRoute
+  AppOrgSettingsTeamsTeamTabRoute: typeof AppOrgSettingsTeamsTeamTabRoute
+  AppOrgSettingsTeamsTeamIndexRoute: typeof AppOrgSettingsTeamsTeamIndexRoute
+}
+
+const AppOrgSettingsTeamsRouteRouteChildren: AppOrgSettingsTeamsRouteRouteChildren =
+  {
+    AppOrgSettingsTeamsIndexRoute: AppOrgSettingsTeamsIndexRoute,
+    AppOrgSettingsTeamsTeamTabRoute: AppOrgSettingsTeamsTeamTabRoute,
+    AppOrgSettingsTeamsTeamIndexRoute: AppOrgSettingsTeamsTeamIndexRoute,
+  }
+
+const AppOrgSettingsTeamsRouteRouteWithChildren =
+  AppOrgSettingsTeamsRouteRoute._addFileChildren(
+    AppOrgSettingsTeamsRouteRouteChildren,
+  )
+
 interface AppOrgRouteRouteChildren {
   AppOrgSectionRouteRoute: typeof AppOrgSectionRouteRouteWithChildren
+  AppOrgProjectsRoute: typeof AppOrgProjectsRoute
   AppOrgIndexRoute: typeof AppOrgIndexRoute
+  AppOrgSettingsMembersRouteRoute: typeof AppOrgSettingsMembersRouteRouteWithChildren
+  AppOrgSettingsTeamsRouteRoute: typeof AppOrgSettingsTeamsRouteRouteWithChildren
   AppOrgIssuesIndexRoute: typeof AppOrgIssuesIndexRoute
+  AppOrgSettingsIndexRoute: typeof AppOrgSettingsIndexRoute
   AppOrgProjectIssuesIssueIdRoute: typeof AppOrgProjectIssuesIssueIdRoute
   AppOrgIssuesIssueIdTabRoute: typeof AppOrgIssuesIssueIdTabRoute
+  AppOrgSettingsProjectsProjectRoute: typeof AppOrgSettingsProjectsProjectRoute
+  AppOrgSettingsProjectsNewRoute: typeof AppOrgSettingsProjectsNewRoute
   AppOrgIssuesIssueIdIndexRoute: typeof AppOrgIssuesIssueIdIndexRoute
+  AppOrgSettingsProjectsIndexRoute: typeof AppOrgSettingsProjectsIndexRoute
   AppOrgIssuesIssueIdEventsEventIdRoute: typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 
 const AppOrgRouteRouteChildren: AppOrgRouteRouteChildren = {
   AppOrgSectionRouteRoute: AppOrgSectionRouteRouteWithChildren,
+  AppOrgProjectsRoute: AppOrgProjectsRoute,
   AppOrgIndexRoute: AppOrgIndexRoute,
+  AppOrgSettingsMembersRouteRoute: AppOrgSettingsMembersRouteRouteWithChildren,
+  AppOrgSettingsTeamsRouteRoute: AppOrgSettingsTeamsRouteRouteWithChildren,
   AppOrgIssuesIndexRoute: AppOrgIssuesIndexRoute,
+  AppOrgSettingsIndexRoute: AppOrgSettingsIndexRoute,
   AppOrgProjectIssuesIssueIdRoute: AppOrgProjectIssuesIssueIdRoute,
   AppOrgIssuesIssueIdTabRoute: AppOrgIssuesIssueIdTabRoute,
+  AppOrgSettingsProjectsProjectRoute: AppOrgSettingsProjectsProjectRoute,
+  AppOrgSettingsProjectsNewRoute: AppOrgSettingsProjectsNewRoute,
   AppOrgIssuesIssueIdIndexRoute: AppOrgIssuesIssueIdIndexRoute,
+  AppOrgSettingsProjectsIndexRoute: AppOrgSettingsProjectsIndexRoute,
   AppOrgIssuesIssueIdEventsEventIdRoute: AppOrgIssuesIssueIdEventsEventIdRoute,
 }
 
 const AppOrgRouteRouteWithChildren = AppOrgRouteRoute._addFileChildren(
   AppOrgRouteRouteChildren,
+)
+
+interface AppHomeRouteRouteChildren {
+  AppHomeSystemInfoRoute: typeof AppHomeSystemInfoRoute
+  AppHomeIndexRoute: typeof AppHomeIndexRoute
+  AppHomeOrganizationsNewRoute: typeof AppHomeOrganizationsNewRoute
+}
+
+const AppHomeRouteRouteChildren: AppHomeRouteRouteChildren = {
+  AppHomeSystemInfoRoute: AppHomeSystemInfoRoute,
+  AppHomeIndexRoute: AppHomeIndexRoute,
+  AppHomeOrganizationsNewRoute: AppHomeOrganizationsNewRoute,
+}
+
+const AppHomeRouteRouteWithChildren = AppHomeRouteRoute._addFileChildren(
+  AppHomeRouteRouteChildren,
 )
 
 interface AppProfileRouteRouteChildren {
@@ -633,16 +1005,16 @@ const AppProfileRouteRouteWithChildren = AppProfileRouteRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppOrgRouteRoute: typeof AppOrgRouteRouteWithChildren
+  AppHomeRouteRoute: typeof AppHomeRouteRouteWithChildren
   AppProfileRouteRoute: typeof AppProfileRouteRouteWithChildren
-  AppIndexRoute: typeof AppIndexRoute
   AppProfileConfirmEmailKeyRoute: typeof AppProfileConfirmEmailKeyRoute
   AppProfileWizardHashRoute: typeof AppProfileWizardHashRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOrgRouteRoute: AppOrgRouteRouteWithChildren,
+  AppHomeRouteRoute: AppHomeRouteRouteWithChildren,
   AppProfileRouteRoute: AppProfileRouteRouteWithChildren,
-  AppIndexRoute: AppIndexRoute,
   AppProfileConfirmEmailKeyRoute: AppProfileConfirmEmailKeyRoute,
   AppProfileWizardHashRoute: AppProfileWizardHashRoute,
 }

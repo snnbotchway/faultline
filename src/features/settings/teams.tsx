@@ -1,0 +1,255 @@
+import { useQuery } from '@tanstack/react-query'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import type { Member } from '@/api/members'
+import { Scope, membersQuery, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
+import { projectActions, type Project } from '@/api/projects'
+import { TEAM_SLUG_MAX, teamActions, teamMembersQuery, type Team } from '@/api/teams'
+import { Screen } from '@/components/shell/app-shell'
+import { Button } from '@/components/ui/button'
+import { Input, Select } from '@/components/ui/input'
+import { useTitle } from '@/lib/title'
+import { cn } from '@/lib/utils'
+import { useAccess, useChange, useOwnMember } from './access'
+import { Confirm } from './fields'
+import { Field, FoldRow, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
+import { plural } from './rows'
+import { teamSlugError } from './team-slug'
+
+/**
+ * The organization's teams. A row unfolds to show who is on the team and which projects it opens.
+ * The stock paths `/teams/:team/members`, `/projects` and `/settings` are this page with that row unfolded.
+ */
+export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
+  useTitle('Teams', org)
+  const can = useAccess(org)
+  const navigate = useNavigate()
+  const teams = useQuery(teamsQuery(org)).data
+  const projects = useQuery(projectsQuery(org)).data ?? []
+  const organization = useQuery(organizationQuery(org)).data
+  const me = useOwnMember(org)
+  const [creating, setCreating] = useState(false)
+  const write = can(Scope.teamWrite)
+  const open = (slug?: string) =>
+    void navigate(slug ? { to: '/$org/settings/teams/$team/$tab', params: { org, team: slug, tab: 'members' }, replace: true } : { to: '/$org/settings/teams', params: { org }, replace: true })
+  const create = write && (
+    <Button variant="default" size="sm" className="max-lg:h-9" onClick={() => setCreating(true)}>
+      <Plus />
+      New team
+    </Button>
+  )
+  return (
+    <>
+      <SettingsBar org={org} title="Teams">
+        {teams && teams.length > 0 && create}
+      </SettingsBar>
+      <Sheet>
+        {!teams ? (
+          <RowSkeleton />
+        ) : teams.length === 0 ? (
+          <Screen title="No teams yet">{create}</Screen>
+        ) : (
+          <ul>
+            {teams.map((team) => (
+              <TeamRow
+                key={team.slug}
+                org={org}
+                team={team}
+                taken={teams.map((t) => t.slug)}
+                projects={projects}
+                me={me}
+                write={write}
+                admin={can(Scope.teamAdmin)}
+                // Anyone may join when the organization lets them; otherwise only those who run teams.
+                canJoin={!!organization?.openMembership || write}
+                open={team.slug === openSlug}
+                onOpen={open}
+              />
+            ))}
+          </ul>
+        )}
+      </Sheet>
+      {creating && teams && <SlugDialog org={org} taken={teams.map((team) => team.slug)} onClose={() => setCreating(false)} onDone={(team) => open(team.slug)} />}
+    </>
+  )
+}
+
+type RowProps = {
+  org: string
+  team: Team
+  taken: string[]
+  projects: Project[]
+  me?: Member
+  write: boolean
+  admin: boolean
+  canJoin: boolean
+  open: boolean
+  onOpen: (slug?: string) => void
+}
+
+function TeamRow(props: RowProps) {
+  const { org, team, projects, me, canJoin, open, onOpen } = props
+  const opens = projects.filter((project) => project.teams.some((t) => t.slug === team.slug))
+  const membership = useChange(org, team.isMember ? 'leave the team' : 'join the team', () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
+    notice: true,
+  })
+  return (
+    <li className={cn(open && 'bg-card')}>
+      <div className={cn('relative flex min-h-14 items-center gap-3 border-b px-3 hover:bg-accent md:px-4', open && 'border-b-0')}>
+        <button type="button" aria-expanded={open} onClick={() => onOpen(open ? undefined : team.slug)} className="absolute inset-0 -outline-offset-2" aria-label={`Team ${team.slug}`} />
+        <span className="flex min-w-0 flex-1 flex-col py-2 lg:flex-row lg:items-center lg:gap-3">
+          <span className="mono font-medium break-words lg:w-52 lg:shrink-0">#{team.slug}</span>
+          <span className="text-sm whitespace-nowrap text-muted-foreground">
+            {plural(team.memberCount, 'member')} · {plural(opens.length, 'project')}
+          </span>
+        </span>
+        {me && (team.isMember || canJoin) && (
+          <Button size="sm" className="relative z-10 w-16 max-lg:h-9" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
+            {team.isMember ? 'Leave' : 'Join'}
+          </Button>
+        )}
+        <FoldRow.Chevron open={open} />
+      </div>
+      {open && <TeamDetail {...props} opens={opens} />}
+    </li>
+  )
+}
+
+const LINE = 'flex min-h-10 items-center gap-2.5 border-b max-lg:min-h-11'
+
+function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpen }: RowProps & { opens: Project[] }) {
+  const roster = useQuery(teamMembersQuery(org, team.slug)).data
+  const everyone = useQuery(membersQuery(org)).data ?? []
+  const [renaming, setRenaming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const quiet = { notice: true }
+  const addMember = useChange(org, 'add the member', (id: string) => teamActions.addMember(org, team.slug, id), quiet)
+  const removeMember = useChange(org, 'remove the member', (id: string) => teamActions.removeMember(org, team.slug, id), quiet)
+  const addProject = useChange(org, 'add the project', (slug: string) => projectActions.addTeam(org, slug, team.slug), quiet)
+  const removeProject = useChange(org, 'remove the project', (slug: string) => projectActions.removeTeam(org, slug, team.slug), quiet)
+  const remove = useChange(org, 'delete the team', () => teamActions.remove(org, team.slug), { gone: true, onDone: () => onOpen() })
+  const outside = everyone.filter((member) => !roster?.some((m) => m.id === member.id))
+  const closed = projects.filter((project) => !opens.includes(project))
+  return (
+    <div className="grid gap-x-8 gap-y-4 border-b px-3 pt-1 pb-4 md:px-4 lg:grid-cols-2">
+      <section aria-label={`Members of ${team.slug}`}>
+        <h3 className="label-caps border-b pb-1.5">Members</h3>
+        {!roster && <RowSkeleton rows={2} />}
+        {roster?.length === 0 && <p className={cn(LINE, 'text-muted-foreground')}>Nobody yet</p>}
+        {roster?.map((member) => (
+          <div key={member.id} className={LINE}>
+            <Initials name={member.user?.name || member.email} hollow={member.pending} className="size-5 text-[0.625rem]" />
+            <Link to="/$org/settings/members/$memberId" params={{ org, memberId: member.id }} className="min-w-0 flex-1 py-1 [overflow-wrap:anywhere] hover:underline">
+              {member.user?.name || member.email}
+            </Link>
+            {/* The user's own way out is the Leave button on the row above; it is not offered twice. */}
+            {member.id === me?.id ? (
+              <Tag>You</Tag>
+            ) : (
+              write && (
+                <Button size="sm" variant="ghost" className="max-lg:h-11" disabled={removeMember.pending} onClick={() => removeMember.run(member.id)}>
+                  Remove
+                </Button>
+              )
+            )}
+          </div>
+        ))}
+        {write && outside.length > 0 && (
+          <Select value="" aria-label={`Add a member to ${team.slug}`} className="mt-2" disabled={addMember.pending} onChange={(event) => addMember.run(event.target.value)}>
+            <option value="" disabled>
+              Add a member
+            </option>
+            {outside.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.user?.name ? `${member.user.name} (${member.email})` : member.email}
+              </option>
+            ))}
+          </Select>
+        )}
+      </section>
+      <section aria-label={`Projects of ${team.slug}`}>
+        <h3 className="label-caps border-b pb-1.5">Projects</h3>
+        {opens.length === 0 && <p className={cn(LINE, 'text-muted-foreground')}>None yet</p>}
+        {opens.map((project) => (
+          <div key={project.id} className={LINE}>
+            <Link to="/$org/settings/projects/$project" params={{ org, project: project.slug ?? '' }} className="mono min-w-0 flex-1 py-1 break-words hover:underline">
+              {project.slug}
+            </Link>
+            {write && (
+              <Button size="sm" variant="ghost" className="max-lg:h-11" disabled={removeProject.pending} onClick={() => removeProject.run(project.slug ?? '')}>
+                Remove
+              </Button>
+            )}
+          </div>
+        ))}
+        {write && closed.length > 0 && (
+          <Select value="" aria-label={`Add a project to ${team.slug}`} className="mt-2" disabled={addProject.pending} onChange={(event) => addProject.run(event.target.value)}>
+            <option value="" disabled>
+              Add a project
+            </option>
+            {closed.map((project) => (
+              <option key={project.id} value={project.slug ?? ''}>
+                {project.slug}
+              </option>
+            ))}
+          </Select>
+        )}
+      </section>
+      {write && (
+        <div className="flex gap-2 lg:col-span-2">
+          <Button className="max-lg:h-11" onClick={() => setRenaming(true)}>
+            Rename
+          </Button>
+          {admin && (
+            <Button variant="destructive" className="max-lg:h-11" onClick={() => setDeleting(true)}>
+              Delete team
+            </Button>
+          )}
+        </div>
+      )}
+      {renaming && <SlugDialog org={org} team={team.slug} taken={taken.filter((slug) => slug !== team.slug)} onClose={() => setRenaming(false)} onDone={(renamed) => onOpen(renamed.slug)} />}
+      <Confirm
+        open={deleting}
+        onClose={() => {
+          setDeleting(false)
+          remove.clear()
+        }}
+        title={`Delete #${team.slug}?`}
+        confirm="Delete team"
+        destructive
+        onConfirm={() => remove.run()}
+        pending={remove.pending}
+        error={remove.error}
+      >
+        {opens.length ? `Its members lose the access it gave them to ${plural(opens.length, 'project')}. The projects stay.` : 'Its members stay in the organization.'}
+      </Confirm>
+    </div>
+  )
+}
+
+// A team is only its name, so creating one and renaming one are the same short form.
+function SlugDialog({ org, team, taken, onClose, onDone }: { org: string; team?: string; taken: string[]; onClose: () => void; onDone: (team: Team) => void }) {
+  const [slug, setSlug] = useState(team ?? '')
+  const [checked, setChecked] = useState(false)
+  const problem = teamSlugError(slug, taken)
+  const save = useChange(org, team ? 'rename the team' : 'create the team', () => (team ? teamActions.rename(org, team, slug.trim()) : teamActions.create(org, slug.trim())), {
+    onDone: (saved) => {
+      onClose()
+      onDone(saved)
+    },
+  })
+  const submit = () => {
+    setChecked(true)
+    if (!problem) save.run()
+  }
+  return (
+    <FormDialog open onClose={onClose} title={team ? `Rename #${team}` : 'New team'} submit={team ? 'Rename' : 'Create team'} onSubmit={submit} pending={save.pending} error={save.error} disabled={slug.trim() === team}>
+      <Field label="Name" error={checked ? problem : undefined}>
+        {(field) => (
+          <Input {...field} autoFocus value={slug} onChange={(event) => setSlug(event.target.value)} maxLength={TEAM_SLUG_MAX} className="font-mono" autoComplete="off" autoCapitalize="off" spellCheck={false} />
+        )}
+      </Field>
+    </FormDialog>
+  )
+}

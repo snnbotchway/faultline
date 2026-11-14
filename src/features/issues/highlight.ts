@@ -53,15 +53,16 @@ const EXTENSIONS: Record<string, Language> = {
 // Event platforms whose name is not the language's own.
 const PLATFORMS: Record<string, Language> = { node: Language.javascript, 'javascript-react': Language.javascript }
 
-const isLanguage = (name: string): name is Language => name in GRAMMARS
+// Own keys only: an event may name its platform `__proto__`.
+const isLanguage = (name: string): name is Language => Object.hasOwn(GRAMMARS, name)
 
 // The file's extension says more than the event's platform (a `.ts` frame in a `javascript` event), so it goes first.
 export function languageOf(filename: string | null | undefined, platform: string | null | undefined): Language | undefined {
   const extension = filename?.split(/[?#]/)[0]?.split('.').at(-1)?.toLowerCase()
-  const byFile = extension ? EXTENSIONS[extension] : undefined
+  const byFile = extension && Object.hasOwn(EXTENSIONS, extension) ? EXTENSIONS[extension] : undefined
   if (byFile) return byFile
   if (!platform) return undefined
-  return PLATFORMS[platform] ?? (isLanguage(platform) ? platform : undefined)
+  return (Object.hasOwn(PLATFORMS, platform) ? PLATFORMS[platform] : undefined) ?? (isLanguage(platform) ? platform : undefined)
 }
 
 export const Tone = { keyword: 'keyword', value: 'value', comment: 'comment' } as const
@@ -124,10 +125,13 @@ export function useHighlighted(lines: string[], language: Language | undefined):
   useEffect(() => {
     if (!language) return
     let current = true
-    void highlighter(language).then((hljs) => {
-      if (!current || !hljs) return
-      setDone({ source, pieces: piecesOf(hljs.highlight(lines.join('\n'), { language, ignoreIllegals: true }).value) })
-    })
+    // A chunk that fails to load leaves the code plain.
+    highlighter(language)
+      .then((hljs) => {
+        if (!current || !hljs) return
+        setDone({ source, pieces: piecesOf(hljs.highlight(lines.join('\n'), { language, ignoreIllegals: true }).value) })
+      })
+      .catch(() => {})
     return () => {
       current = false
     }

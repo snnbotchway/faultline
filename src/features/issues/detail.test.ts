@@ -63,3 +63,9 @@ test('the copied event names the instance, falling back to its address', () => {
   expect(aiPayload(event, { ...where, instanceName: 'Acme errors' })).toContain('Source: Acme errors\n')
   expect(aiPayload(event, where)).toContain('Source: https://gt.example.com\n')
 })
+
+test('a platform named after an object property is no language', () => {
+  expect(languageOf(undefined, '__proto__')).toBeUndefined()
+  expect(languageOf('a.constructor', 'hasOwnProperty')).toBeUndefined()
+  expect(languageOf('app.py', undefined)).toBe('python')
+})

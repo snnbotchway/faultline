@@ -60,28 +60,38 @@ export function toFilters(search: InboxSearch): IssueFilters {
   }
 }
 
+// The choices of the time menu, each as the `start` the backend takes.
 export const TIME_RANGES = [
-  { days: 1, label: 'Last 24 hours' },
-  { days: 7, label: 'Last 7 days' },
-  { days: 14, label: 'Last 14 days' },
-  { days: 30, label: 'Last 30 days' },
+  { start: 'now-1h', label: 'Last hour' },
+  { start: 'now-1d', label: 'Last 24 hours' },
+  { start: 'now-7d', label: 'Last 7 days' },
+  { start: 'now-14d', label: 'Last 14 days' },
+  { start: 'now-30d', label: 'Last 30 days' },
 ]
 
-export const rangeStart = (days: number) => `now-${days}d`
+const dateTimeFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
-
-// The range in words. `days` is set when it is one of the choices; absolute dates are shown as they are.
-export function timeRange(search: Pick<InboxSearch, 'start' | 'end'>): { days?: number; label: string } {
+// The range in words. `start` is set when it is one of the choices; other ranges are shown as they are.
+export function timeRange(search: Pick<InboxSearch, 'start' | 'end'>): { start?: string; label: string } {
   if (!search.start && !search.end) return { label: 'Any time' }
   const relative = !search.end && search.start?.match(RELATIVE)
   if (relative) {
     const count = Number(relative[1])
     const unit = UNIT[relative[2] as keyof typeof UNIT]
-    return TIME_RANGES.find((range) => range.days === count / unit.perDay) ?? { label: `Last ${plural(count, unit.word)}` }
+    const preset = TIME_RANGES.find((range) => range.start === search.start)
+    return preset ?? TIME_RANGES.find((range) => range.start === `now-${count / unit.perDay}d`) ?? { label: `Last ${plural(count, unit.word)}` }
   }
-  const words = (value: string | undefined, missing: string) => (!value ? missing : RELATIVE.test(value) ? value : dateFormat.format(new Date(value)))
+  const words = (value: string | undefined, missing: string) => (!value ? missing : RELATIVE.test(value) ? value : dateTimeFormat.format(new Date(value)))
   return { label: `${words(search.start, 'Start')} – ${words(search.end, 'now')}` }
+}
+
+// A `datetime-local` field holds the viewer's wall-clock time; the backend takes UTC with a `Z`.
+export const localToUtc = (local: string) => new Date(local).toISOString().replace(/\.000Z$/, 'Z')
+
+const two = (value: number) => String(value).padStart(2, '0')
+export function utcToLocal(time: string) {
+  const at = new Date(time)
+  return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}T${two(at.getHours())}:${two(at.getMinutes())}`
 }
 
 // Whether the inbox shows anything other than its default view.

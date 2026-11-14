@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { statusOf, timeRange, toFilters, validateInboxSearch, withFilter, withStatus } from './search'
+import { localToUtc, statusOf, timeRange, toFilters, utcToLocal, validateInboxSearch, withFilter, withStatus } from './search'
 
 describe('inbox search', () => {
   it('shows unresolved issues by default and every issue for an empty query', () => {
@@ -34,9 +34,16 @@ describe('inbox search', () => {
 
   it('names a range by the choice it matches, and shows any other range as it is', () => {
     expect(timeRange({}).label).toBe('Any time')
-    expect(timeRange({ start: 'now-7d' })).toEqual({ days: 7, label: 'Last 7 days' })
-    expect(timeRange({ start: 'now-1h' })).toEqual({ label: 'Last 1 hour' })
+    expect(timeRange({ start: 'now-7d' })).toEqual({ start: 'now-7d', label: 'Last 7 days' })
+    expect(timeRange({ start: 'now-1h' })).toEqual({ start: 'now-1h', label: 'Last hour' })
     expect(timeRange(validateInboxSearch({ start: 'now-30m' }))).toEqual({ label: 'Last 30 minutes' })
-    expect(timeRange({ start: '2026-11-03T12:00:00Z', end: '2026-11-05T12:00:00Z' }).days).toBeUndefined()
+    expect(timeRange({ start: '2026-11-03T12:00:00Z', end: '2026-11-05T12:00:00Z' }).start).toBeUndefined()
+  })
+
+  it('sends a picked date and time as UTC with a Z, and shows it back as the viewer typed it', () => {
+    const utc = localToUtc('2026-11-14T10:30')
+    expect(utc).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00Z$/)
+    expect(new Date(utc).getTime()).toBe(new Date(2026, 10, 14, 10, 30).getTime())
+    expect(utcToLocal(utc)).toBe('2026-11-14T10:30')
   })
 })

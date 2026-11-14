@@ -1,18 +1,24 @@
-import { ArrowDownWideNarrow, CalendarDays, ChevronDown, Search } from 'lucide-react'
+import { ArrowDownWideNarrow, CalendarDays, ChevronDown, CircleHelp, Search } from 'lucide-react'
 import { useState, type FormEvent, type RefObject } from 'react'
 import type { IssueSort } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Field } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { cn } from '@/lib/utils'
-import { DEFAULT_SORT, SORTS, TIME_RANGES, rangeStart, timeRange, type InboxSearch } from './search'
+import { DEFAULT_SORT, SORTS, TIME_RANGES, localToUtc, timeRange, utcToLocal, type InboxSearch } from './search'
 import { STATUS_VIEWS, isView, type StatusView } from './status'
 
 const isSort = (value: string): value is IssueSort => SORTS.some((sort) => sort.value === value)
@@ -35,8 +41,42 @@ export function SearchBox({ query, inputRef, onSubmit }: { query: string; inputR
         autoCapitalize="off"
         className="mono h-full min-w-0 flex-1 bg-transparent touch-input outline-none focus-visible:outline-none"
       />
-      <Kbd>/</Kbd>
+      <SearchHelp />
+      <Kbd className="max-lg:hidden">/</Kbd>
     </form>
+  )
+}
+
+const SYNTAX: { token: string; meaning: string }[] = [
+  { token: 'is:unresolved', meaning: 'or resolved, ignored' },
+  { token: 'level:error', meaning: 'fatal, error, warning, info, debug, sample' },
+  { token: 'browser:Chrome', meaning: 'any tag as key:value' },
+  { token: 'has:release', meaning: 'issues with that tag set' },
+  { token: 'timeout*', meaning: 'text starting with the word' },
+]
+
+function SearchHelp() {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" aria-label="Search syntax" title="Search syntax" className="grid size-6 shrink-0 place-items-center text-muted-foreground hover:text-foreground max-lg:size-9">
+          <CircleHelp className="size-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 max-lg:w-[calc(100vw-1.5rem)]">
+        <dl className="mono grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+          {SYNTAX.map((item) => (
+            <div key={item.token} className="contents">
+              <dt className="font-semibold">{item.token}</dt>
+              <dd className="text-muted-foreground">{item.meaning}</dd>
+            </div>
+          ))}
+          <dt className="font-semibold">words</dt>
+          <dd className="text-muted-foreground">last, after the filters</dd>
+        </dl>
+        <p className="mt-3 border-t pt-3 text-muted-foreground">Every part must match. There is no OR or NOT.</p>
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -104,7 +144,8 @@ export function SortMenu({ sort, disabled, onChange }: { sort: IssueSort | undef
   )
 }
 
-const ANY_TIME = '0'
+const ANY_TIME = 'any'
+const CUSTOM = 'custom'
 
 // Picks how far back to look. Dates that came with the link and fit none of the choices are shown as they are.
 export function TimeRangeMenu({
@@ -116,39 +157,88 @@ export function TimeRangeMenu({
   chip?: boolean
   onChange: (range: Pick<InboxSearch, 'start' | 'end'>) => void
 }) {
+  const [picking, setPicking] = useState(false)
   const range = timeRange(search)
   // The backend filters the range on when an issue was first seen, not on recent activity.
   const label = `First seen: ${range.label}`
-  const custom = range.days === undefined && (search.start !== undefined || search.end !== undefined)
+  const custom = range.start === undefined && (search.start !== undefined || search.end !== undefined)
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild={!chip} className={chip ? CHIP : undefined} aria-label={label}>
-        {chip ? (
-          <>
-            {label}
-            <ChevronDown className="size-3 text-muted-foreground" />
-          </>
-        ) : (
-          <Button variant="ghost" size="sm">
-            <CalendarDays />
-            {label}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild={!chip} className={chip ? CHIP : undefined} aria-label={label}>
+          {chip ? (
+            <>
+              {label}
+              <ChevronDown className="size-3 text-muted-foreground" />
+            </>
+          ) : (
+            <Button variant="ghost" size="sm">
+              <CalendarDays />
+              {label}
+            </Button>
+          )}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>First seen</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={custom ? CUSTOM : (range.start ?? ANY_TIME)}
+            onValueChange={(value) => value !== CUSTOM && onChange({ start: value === ANY_TIME ? undefined : value, end: undefined })}
+          >
+            <DropdownMenuRadioItem value={ANY_TIME}>Any time</DropdownMenuRadioItem>
+            {TIME_RANGES.map((item) => (
+              <DropdownMenuRadioItem key={item.start} value={item.start}>
+                {item.label}
+              </DropdownMenuRadioItem>
+            ))}
+            {custom && <DropdownMenuRadioItem value={CUSTOM}>{range.label}</DropdownMenuRadioItem>}
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setPicking(true)}>Custom range</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {picking && (
+        <CustomRange
+          search={search}
+          onClose={() => setPicking(false)}
+          onApply={(next) => {
+            onChange(next)
+            setPicking(false)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+const ABSOLUTE = /^\d{4}-\d{2}-\d{2}T/
+
+function CustomRange({ search, onClose, onApply }: { search: Pick<InboxSearch, 'start' | 'end'>; onClose: () => void; onApply: (range: Pick<InboxSearch, 'start' | 'end'>) => void }) {
+  const initial = (value: string | undefined) => (value && ABSOLUTE.test(value) ? utcToLocal(value) : '')
+  const [from, setFrom] = useState(initial(search.start))
+  const [to, setTo] = useState(initial(search.end))
+  const [error, setError] = useState<string>()
+  const apply = (event: FormEvent) => {
+    event.preventDefault()
+    if (!from && !to) return setError('Pick a start or an end.')
+    if (from && to && new Date(from) >= new Date(to)) return setError('The end must come after the start.')
+    onApply({ start: from ? localToUtc(from) : undefined, end: to ? localToUtc(to) : undefined })
+  }
+  return (
+    <TaskDialog open onClose={onClose} title="First seen between">
+      <form onSubmit={apply} noValidate className="space-y-4">
+        <Field label="From">{(props) => <Input {...props} type="datetime-local" value={from} onChange={(event) => setFrom(event.target.value)} />}</Field>
+        <Field label="To" error={error}>
+          {(props) => <Input {...props} type="datetime-local" value={to} onChange={(event) => setTo(event.target.value)} />}
+        </Field>
+        <TaskActions className="sm:justify-end">
+          <Button type="submit" variant="default" className="sm:order-2">
+            Apply
           </Button>
-        )}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>First seen</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={custom ? '' : String(range.days ?? ANY_TIME)}
-          onValueChange={(value) => onChange({ start: value === ANY_TIME ? undefined : rangeStart(Number(value)), end: undefined })}
-        >
-          <DropdownMenuRadioItem value={ANY_TIME}>Any time</DropdownMenuRadioItem>
-          {TIME_RANGES.map((item) => (
-            <DropdownMenuRadioItem key={item.days} value={String(item.days)}>
-              {item.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <Button type="button" onClick={onClose}>
+            Cancel
+          </Button>
+        </TaskActions>
+      </form>
+    </TaskDialog>
   )
 }

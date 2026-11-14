@@ -22,7 +22,7 @@ import { useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
 import { Theme, setTheme, useTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
-import { palette, useCommands, type Command } from './commands'
+import { palette, CommandGroup, useCommands, type Command } from './commands'
 import { Palette } from './palette'
 import { ScopeFilters } from './scope-filters'
 import { SECTIONS, TAB_PATHS, sectionLink, type Section } from './sections'
@@ -93,12 +93,12 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b px-3 md:px-4">
-      <Link to="/$org/issues" params={{ org }} aria-label="Faultline">
+      <Link to="/$org/issues" params={{ org }} aria-label="Faultline" className="flex h-11 items-center">
         <Wordmark />
       </Link>
       <div className="flex min-w-0 items-center gap-1">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex h-7 min-w-0 items-center gap-1.5 px-1.5 text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-9" aria-label="Organization">
+          <DropdownMenuTrigger className="flex h-7 min-w-0 items-center gap-2 px-2 text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-11" aria-label="Organization">
             <span className="mono truncate">{org}</span>
             <ChevronsUpDown className="size-3 shrink-0" />
           </DropdownMenuTrigger>
@@ -130,8 +130,8 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
         ))}
       </nav>
       <div className="flex items-center gap-1 max-lg:ml-auto lg:border-l lg:pl-3">
-        <Button size="sm" className="gap-1.5 px-2 max-lg:size-9 max-lg:px-0" onClick={palette.open} aria-label="Commands">
-          <Search className="size-3.5 max-lg:size-4" />
+        <Button size="sm" className="gap-2 px-2 max-lg:size-11 max-lg:px-0" onClick={palette.open} aria-label="Commands" title="Commands">
+          <Search className="size-3 max-lg:size-4" />
           <Kbd className="border-0 px-0 opacity-100">⌘K</Kbd>
         </Button>
         <DropdownMenu>
@@ -170,18 +170,18 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
   const rest = sections.filter((section) => !TAB_PATHS.includes(section.path))
   const leave = useSignOut()
   const tab = (active: boolean) =>
-    cn('flex flex-1 flex-col items-center justify-center gap-0.5 border-t-2 border-transparent text-xs', active ? 'border-brand font-semibold' : 'text-muted-foreground')
+    cn('flex flex-1 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-xs [&_svg]:size-4', active ? 'border-brand font-semibold' : 'text-muted-foreground')
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-stretch border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Sections">
       {tabs.map((section) => (
         <SectionLink key={section.path} org={org} section={section} className={tab(section.path === current)}>
-          <section.icon className="size-5" strokeWidth={1.6} />
+          <section.icon />
           {section.label}
         </SectionLink>
       ))}
       <DropdownMenu>
         <DropdownMenuTrigger className={tab(rest.some((section) => section.path === current))}>
-          <Ellipsis className="size-5" strokeWidth={1.6} />
+          <Ellipsis className="size-4" />
           More
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top" className="w-56">
@@ -212,27 +212,28 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
   const [, , current, ...deeper] = pathname.split('/')
   const sections = useSections()
   const organizations = useQuery(organizationsQuery).data ?? []
-  const theme = useTheme()
   const navigate = useNavigate()
   const leave = useSignOut()
 
   const commands: Command[] = [
-    ...sections.map((section) => ({
-      id: `go:${section.path}`,
-      group: 'go to',
-      label: section.label,
-      run: () => void navigate(sectionLink(org, section)),
-    })),
+    ...sections
+      .filter((section) => section.path !== current || deeper.length > 0)
+      .map((section) => ({
+        id: `go:${section.path}`,
+        group: CommandGroup.goTo,
+        label: section.label,
+        run: () => void navigate(sectionLink(org, section)),
+      })),
     ...organizations
       .filter((organization) => organization.slug !== org)
       .map((organization) => ({
         id: `org:${organization.slug}`,
-        group: 'organization',
+        group: CommandGroup.organization,
         label: `Switch to ${organization.slug}`,
         run: () => void navigate({ to: '/$org/issues', params: { org: organization.slug } }),
       })),
-    ...THEMES.filter((t) => t.value !== theme).map((t) => ({ id: `theme:${t.value}`, group: 'theme', label: `${t.label} theme`, run: () => setTheme(t.value) })),
-    { id: 'sign-out', group: 'account', label: 'Sign out', run: () => void leave() },
+    ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => setTheme(t.value) })),
+    { id: 'sign-out', group: CommandGroup.account, label: 'Sign out', run: () => void leave() },
   ]
   useCommands(commands)
   useHotkeys({ 'mod+k': palette.toggle })

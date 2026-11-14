@@ -1,6 +1,19 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
-export type Command = { id: string; group: string; label: string; keys?: string; run: () => void }
+// The palette's groups, in the order they are listed.
+export const CommandGroup = {
+  selection: 'selection',
+  issue: 'issue',
+  show: 'show',
+  goTo: 'go to',
+  organization: 'organization',
+  theme: 'theme',
+  account: 'account',
+  search: 'search',
+} as const
+export type CommandGroup = (typeof CommandGroup)[keyof typeof CommandGroup]
+
+export type Command = { id: string; group: CommandGroup; label: string; keys?: string; run: () => void }
 
 // Screens register the commands that apply right now; a command that does not apply is simply absent.
 export const registry = new Map<symbol, Command[]>()

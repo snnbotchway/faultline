@@ -5,6 +5,18 @@ All notable changes to Faultline are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The issue list's search box has a syntax popover (`is:`, `level:`, `key:value`, `has:`, `*`).
+- The first-seen range offers "Last hour" and a custom range with date and time pickers, sent to GlitchTip in UTC.
+- A `+` beside the project filter starts a new project, for people who can create one.
+- Shift-click ticks every issue between two clicks.
+- Issue rows show how old the issue is, tag CSP reports, and show `Resolved` or `Ignored` in the "All" view.
+
+### Fixed
+
+- The environment filter lists only the environments of the chosen projects, and drops a choice they do not have.
+
 ## [0.2.1] - 2026-11-14
 
 Release rows that tell only what GlitchTip knows. Tested against GlitchTip 7.0.0.

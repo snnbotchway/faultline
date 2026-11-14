@@ -112,7 +112,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
                   {active > 0 && <span className="mono font-semibold">{active}</span>}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-3">
+              <DialogContent className="dialog-scroll p-3">
                 <DialogTitle className="px-2 pb-3">Filters</DialogTitle>
                 <Facets logs={logs} search={search} counts={counts} set={set} />
               </DialogContent>

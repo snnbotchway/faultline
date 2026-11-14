@@ -264,3 +264,9 @@
 @utility dimmed {
   opacity: 30%;
 }
+
+/* A dialog whose content can outgrow the screen: it scrolls inside, keeping below it the 14vh it sits from the top. */
+@utility dialog-scroll {
+  max-height: 72dvh;
+  overflow-y: auto;
+}

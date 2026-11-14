@@ -47,9 +47,8 @@ function RepeatPane({ org, repeat, onOpen }: { org: string; repeat: Repeat; onOp
           {repeat.request !== undefined && ` of ${formatMs(repeat.request)}`}
         </span>
       </div>
-      {repeat.share === undefined ? (
-        <p className="mt-2 text-sm text-muted-foreground">More than one transaction has this name, so its share of a request is unknown.</p>
-      ) : (
+      {repeat.shared && <p className="mt-2 text-sm text-muted-foreground">More than one transaction has this name, so its share of a request is unknown.</p>}
+      {repeat.share !== undefined && (
         <div className="mt-2 flex h-7 border" aria-hidden>
           <span className="flex gap-px" style={{ width: `${repeat.share * 100}%` }}>
             {Array.from({ length: Math.min(MAX_TICKS, Math.round(repeat.spansPerTxn)) }, (_, index) => (

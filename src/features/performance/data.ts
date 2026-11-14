@@ -37,7 +37,8 @@ export type Transaction = {
   failing: boolean
 }
 
-export type Repeat = NPlusOnePattern & { key: string; transaction?: Transaction; perRequest: number; request?: number; share?: number }
+// `shared` says its name belongs to more than one transaction, so none of them is joined to it.
+export type Repeat = NPlusOnePattern & { key: string; transaction?: Transaction; shared: boolean; perRequest: number; request?: number; share?: number }
 
 // The trends that have loaded, and how many requests have finished either way.
 const collect = (ids: number[]) => (results: UseQueryResult<TrendDay[]>[]) => {
@@ -116,8 +117,9 @@ export function useTransactions(org: string, search: Pick<PerformanceSearch, 'or
   const repeats = useMemo(
     () =>
       (patterns.data ?? []).map((pattern): Repeat => {
-        const transaction = repeatShared.has(pattern.transactionName) ? undefined : transactions.find((item) => item.group.transaction === pattern.transactionName)
-        return { ...pattern, key: patternKey(pattern), transaction, ...shareOfRequest(pattern, transaction?.group.avgDuration) }
+        const shared = repeatShared.has(pattern.transactionName)
+        const transaction = shared ? undefined : transactions.find((item) => item.group.transaction === pattern.transactionName)
+        return { ...pattern, key: patternKey(pattern), transaction, shared, ...shareOfRequest(pattern, transaction?.group.avgDuration) }
       }),
     [patterns.data, transactions, repeatShared],
   )
@@ -127,7 +129,8 @@ export function useTransactions(org: string, search: Pick<PerformanceSearch, 'or
     repeats,
     loading: list.isPending,
     // Still counting the repeated queries, and the transactions that got slower.
-    countingRepeats: patterns.isPending,
+    // Repeats wait for every transaction, so a shared name never shows a share and a link it then loses.
+    countingRepeats: patterns.isPending || !everything,
     countingSlower: !everything || settled < trendIds.length,
     failed: list.isError,
     denied: hasStatus(list.error, HttpStatus.forbidden),

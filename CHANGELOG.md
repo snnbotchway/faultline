@@ -25,7 +25,7 @@ All notable changes to Faultline are listed here. The format follows
 ### Changed
 
 - Instance settings, your account, your organizations and the open organization refresh in the background while the tab is in view.
-- A monitor's page lists every check, newest first, a page at a time, with an "Incidents only" switch for the checks where it went down or came back, and says what share of the last 24 hours or 14 days it was up.
+- A monitor's page lists every check, newest first, a page at a time, with an "Incidents only" switch for the checks where it went down or came back, and says what share of the last 24 hours or 14 days it was up, or of the time since its first check for a younger monitor.
 
 ### Fixed
 

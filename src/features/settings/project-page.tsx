@@ -130,31 +130,35 @@ const PROJECT_TABS: { value: ProjectTab; label: string; count?: (context: TabCon
 
 /* ---------- general ---------- */
 
+// The rows of General that unfold to be changed.
+const GeneralField = { name: 'name', platform: 'platform', teams: 'teams', throttle: 'throttle' } as const
+type GeneralField = (typeof GeneralField)[keyof typeof GeneralField]
+
 // `linkTeams`: giving a team access to the project, or taking it away, is for managers and owners.
 function General({ org, project, teams, write, admin, linkTeams }: { org: string; project: ProjectDetail; teams?: string[]; write: boolean; admin: boolean; linkTeams: boolean }) {
   const slug = project.slug ?? ''
   const row = useFold()
   const [deleting, setDeleting] = useState(false)
-  const edit = (id: string) => (write ? () => row.toggle(id) : undefined)
+  const edit = (field: GeneralField) => (write ? () => row.toggle(field) : undefined)
   return (
     <>
       <Group label="General">
-        <FoldRow label="Name" value={project.name} open={row.is('name')} onToggle={edit('name')}>
+        <FoldRow label="Name" value={project.name} open={row.is(GeneralField.name)} onToggle={edit(GeneralField.name)}>
           <NameForm org={org} slug={slug} name={project.name} onDone={row.close} />
         </FoldRow>
-        <FoldRow label="Platform" value={platformName(project.platform)} open={row.is('platform')} onToggle={edit('platform')}>
+        <FoldRow label="Platform" value={platformName(project.platform)} open={row.is(GeneralField.platform)} onToggle={edit(GeneralField.platform)}>
           <PlatformForm org={org} slug={slug} name={project.name} platform={project.platform} onDone={row.close} />
         </FoldRow>
         <FoldRow
           label="Teams with access"
           mono={!!teams?.length}
           value={teams && (teams.length ? teams.map((team) => `#${team}`).join('  ') : 'None')}
-          open={row.is('teams')}
-          onToggle={teams && linkTeams ? () => row.toggle('teams') : undefined}
+          open={row.is(GeneralField.teams)}
+          onToggle={teams && linkTeams ? () => row.toggle(GeneralField.teams) : undefined}
         >
           {teams && <TeamsForm org={org} slug={slug} teams={teams} onDone={row.close} />}
         </FoldRow>
-        <FoldRow label="Events to drop" mono value={`${project.eventThrottleRate}%`} open={row.is('throttle')} onToggle={edit('throttle')}>
+        <FoldRow label="Events to drop" mono value={`${project.eventThrottleRate}%`} open={row.is(GeneralField.throttle)} onToggle={edit(GeneralField.throttle)}>
           <ThrottleForm org={org} slug={slug} name={project.name} rate={project.eventThrottleRate} onDone={row.close} />
         </FoldRow>
       </Group>

@@ -265,7 +265,8 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
         label: section.label,
         run: () => void navigate(sectionLink(org, section)),
       })),
-    ...ORG_PAGES.filter((page) => page.label !== 'Settings').map((page) => ({
+    // A page that is also a section is already listed above.
+    ...ORG_PAGES.filter((page) => !SECTIONS.some((section) => page.to === `/$org/${section.path}`)).map((page) => ({
       id: `go:${page.to}`,
       group: CommandGroup.goTo,
       label: page.label,

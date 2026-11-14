@@ -22,8 +22,8 @@ const KEY_MAX = 191
 export function SignInApps({ org }: { org: string }) {
   const apps = useQuery(signInAppsQuery(org)).data
   const row = useFold()
-  // 'new', or the id of the app being edited.
-  const [editing, setEditing] = useState<number | 'new'>()
+  const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState<SignInApp>()
   const [deleting, setDeleting] = useState<SignInApp>()
   const remove = useChange('delete the sign-in app', (app: SignInApp) => signInAppActions.remove(org, app.id!), { stale: [stale.signInApps(org)], onDone: () => setDeleting(undefined) })
   const full = (apps?.length ?? 0) >= SIGN_IN_APPS_MAX
@@ -34,7 +34,7 @@ export function SignInApps({ org }: { org: string }) {
         action={
           apps &&
           !full && (
-            <GroupAction onClick={() => setEditing('new')}>
+            <GroupAction onClick={() => setCreating(true)}>
               <Plus />
               New sign-in app
             </GroupAction>
@@ -58,7 +58,7 @@ export function SignInApps({ org }: { org: string }) {
               <dd className="mono [overflow-wrap:anywhere]">{app.clientID}</dd>
             </dl>
             <div className="flex gap-2">
-              <Button className="max-lg:h-11" onClick={() => setEditing(app.id!)}>
+              <Button className="max-lg:h-11" onClick={() => setEditing(app)}>
                 Edit
               </Button>
               <Button variant="destructive" className="max-lg:h-11" onClick={() => setDeleting(app)}>
@@ -68,14 +68,8 @@ export function SignInApps({ org }: { org: string }) {
           </FoldRow>
         ))}
       </Group>
-      {editing !== undefined && (
-        <SignInAppDialog
-          org={org}
-          app={apps?.find((app) => app.id === editing)}
-          onClose={() => setEditing(undefined)}
-          onCreated={(app) => row.toggle(String(app.id))}
-        />
-      )}
+      {creating && <SignInAppDialog org={org} onClose={() => setCreating(false)} onCreated={(app) => row.toggle(String(app.id))} />}
+      {editing && <SignInAppDialog org={org} app={editing} onClose={() => setEditing(undefined)} />}
       <Confirm
         open={!!deleting}
         onClose={() => {
@@ -96,7 +90,7 @@ export function SignInApps({ org }: { org: string }) {
 }
 
 // Create a sign-in app, or edit one. The provider is fixed once the app exists, because the redirect address depends on it.
-function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: SignInApp; onClose: () => void; onCreated: (app: SignInApp) => void }) {
+function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: SignInApp; onClose: () => void; onCreated?: (app: SignInApp) => void }) {
   const [provider, setProvider] = useState<SignInProvider>(SignInProvider.openIdConnect)
   const [name, setName] = useState(app?.name ?? '')
   const [serverUrl, setServerUrl] = useState(app?.serverUrl ?? '')
@@ -121,7 +115,7 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
       stale: [stale.signInApps(org)],
       onDone: (saved) => {
         onClose()
-        if (!app) onCreated(saved)
+        onCreated?.(saved)
       },
     },
   )

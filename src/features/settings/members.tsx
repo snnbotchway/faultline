@@ -150,10 +150,14 @@ function MemberRow(props: RowProps) {
   )
 }
 
+// What an open member row is asking to confirm.
+const Question = { remove: 'remove', transfer: 'transfer' } as const
+type Question = (typeof Question)[keyof typeof Question]
+
 function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, mine, onClose }: RowProps & { memberTeams: string[]; mine: boolean }) {
   const [role, setRole] = useState(member.role)
   const [chosen, setChosen] = useState(memberTeams)
-  const [asking, setAsking] = useState<'remove' | 'owner'>()
+  const [asking, setAsking] = useState<Question>()
   const added = chosen.filter((team) => !memberTeams.includes(team))
   const removed = memberTeams.filter((team) => !chosen.includes(team))
   const owner = me?.role === OrgRole.owner
@@ -194,19 +198,19 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
           </Button>
         )}
         {owner && !member.pending && !mine && (
-          <Button className="max-lg:h-11" onClick={() => setAsking('owner')}>
+          <Button className="max-lg:h-11" onClick={() => setAsking(Question.transfer)}>
             Transfer ownership
           </Button>
         )}
         {(!mine || member.role !== OrgRole.owner) && (
-          <Button variant="destructive" className="max-lg:h-11 lg:ml-auto" onClick={() => setAsking('remove')}>
+          <Button variant="destructive" className="max-lg:h-11 lg:ml-auto" onClick={() => setAsking(Question.remove)}>
             {mine ? 'Leave organization' : member.pending ? 'Cancel invite' : 'Remove'}
           </Button>
         )}
       </div>
-      {asking === 'remove' && <RemoveMember org={org} member={member} mine={mine} onClose={() => setAsking(undefined)} onDone={onClose} />}
+      {asking === Question.remove && <RemoveMember org={org} member={member} mine={mine} onClose={() => setAsking(undefined)} onDone={onClose} />}
       <Confirm
-        open={asking === 'owner'}
+        open={asking === Question.transfer}
         onClose={() => {
           setAsking(undefined)
           transfer.clear()

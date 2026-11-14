@@ -64,6 +64,7 @@ export function CheckBars({ checks, timeout, height, line = false, className }: 
 const DOWNTIME_HEIGHT = 0.8
 
 // Downtime on the shared time axis: a baseline that is always there and a block for every stretch down.
+// The baseline is dashed where the monitor was not checked yet: all of it while waiting, or up to `firstCheck`.
 export function DowntimeStrip({
   downtimes,
   from,
@@ -71,6 +72,7 @@ export function DowntimeStrip({
   marks = [],
   phoneMarks = false,
   waiting = false,
+  firstCheck,
   height = 20,
   className,
 }: {
@@ -81,12 +83,16 @@ export function DowntimeStrip({
   // A phone's row strips are too narrow for release rules; a strip across the page is not.
   phoneMarks?: boolean
   waiting?: boolean
+  firstCheck?: number
   height?: number
   className?: string
 }) {
   const width = to - from
+  const unchecked = firstCheck === undefined ? 0 : Math.min(1, Math.max(0, (firstCheck - from) / width))
   return (
     <TraceFrame height={height} marks={marks} phoneMarks={phoneMarks} className={cn(waiting && 'border-dashed border-foreground/30', className)}>
+      {/* Laid over the solid baseline, with the page colour in the gaps between its dashes. */}
+      {!waiting && unchecked > 0 && <span className="absolute -bottom-px left-0 h-px border-b border-dashed border-foreground/30 bg-background" style={{ width: `${unchecked * 100}%` }} />}
       {downtimes
         .filter((period) => period.to > from)
         .map((period) => {

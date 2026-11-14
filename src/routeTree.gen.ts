@@ -21,6 +21,7 @@ import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$sect
 import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
 import { Route as AppOrgProjectIssuesIssueIdRouteImport } from './routes/_app/$org/$project/issues/$issueId'
 import { Route as AppOrgIssuesIssueIdIndexRouteImport } from './routes/_app/$org/issues/$issueId/index'
+import { Route as AppOrgIssuesIssueIdTabRouteImport } from './routes/_app/$org/issues/$issueId/$tab'
 import { Route as AppOrgIssuesIssueIdEventsEventIdRouteImport } from './routes/_app/$org/issues/$issueId/events/$eventId'
 
 const AppRouteRoute = AppRouteRouteImport.update({
@@ -84,6 +85,11 @@ const AppOrgIssuesIssueIdIndexRoute =
     path: '/issues/$issueId/',
     getParentRoute: () => AppOrgRouteRoute,
   } as any)
+const AppOrgIssuesIssueIdTabRoute = AppOrgIssuesIssueIdTabRouteImport.update({
+  id: '/issues/$issueId/$tab',
+  path: '/issues/$issueId/$tab',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
 const AppOrgIssuesIssueIdEventsEventIdRoute =
   AppOrgIssuesIssueIdEventsEventIdRouteImport.update({
     id: '/issues/$issueId/events/$eventId',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
+  '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
   '/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/$org/issues': typeof AppOrgIssuesIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
+  '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
   '/$org/issues/$issueId': typeof AppOrgIssuesIssueIdIndexRoute
   '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
   '/_app/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
+  '/_app/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
   '/_app/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
   '/_app/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/$org/$section/$'
     | '/$org/issues/'
     | '/$org/$project/issues/$issueId'
+    | '/$org/issues/$issueId/$tab'
     | '/$org/issues/$issueId/'
     | '/$org/issues/$issueId/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/$org/$section/$'
     | '/$org/issues'
     | '/$org/$project/issues/$issueId'
+    | '/$org/issues/$issueId/$tab'
     | '/$org/issues/$issueId'
     | '/$org/issues/$issueId/events/$eventId'
   id:
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/_app/$org/$section/$'
     | '/_app/$org/issues/'
     | '/_app/$org/$project/issues/$issueId'
+    | '/_app/$org/issues/$issueId/$tab'
     | '/_app/$org/issues/$issueId/'
     | '/_app/$org/issues/$issueId/events/$eventId'
   fileRoutesById: FileRoutesById
@@ -272,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgIssuesIssueIdIndexRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/issues/$issueId/$tab': {
+      id: '/_app/$org/issues/$issueId/$tab'
+      path: '/issues/$issueId/$tab'
+      fullPath: '/$org/issues/$issueId/$tab'
+      preLoaderRoute: typeof AppOrgIssuesIssueIdTabRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
     '/_app/$org/issues/$issueId/events/$eventId': {
       id: '/_app/$org/issues/$issueId/events/$eventId'
       path: '/issues/$issueId/events/$eventId'
@@ -298,6 +317,7 @@ interface AppOrgRouteRouteChildren {
   AppOrgIndexRoute: typeof AppOrgIndexRoute
   AppOrgIssuesIndexRoute: typeof AppOrgIssuesIndexRoute
   AppOrgProjectIssuesIssueIdRoute: typeof AppOrgProjectIssuesIssueIdRoute
+  AppOrgIssuesIssueIdTabRoute: typeof AppOrgIssuesIssueIdTabRoute
   AppOrgIssuesIssueIdIndexRoute: typeof AppOrgIssuesIssueIdIndexRoute
   AppOrgIssuesIssueIdEventsEventIdRoute: typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -307,6 +327,7 @@ const AppOrgRouteRouteChildren: AppOrgRouteRouteChildren = {
   AppOrgIndexRoute: AppOrgIndexRoute,
   AppOrgIssuesIndexRoute: AppOrgIssuesIndexRoute,
   AppOrgProjectIssuesIssueIdRoute: AppOrgProjectIssuesIssueIdRoute,
+  AppOrgIssuesIssueIdTabRoute: AppOrgIssuesIssueIdTabRoute,
   AppOrgIssuesIssueIdIndexRoute: AppOrgIssuesIssueIdIndexRoute,
   AppOrgIssuesIssueIdEventsEventIdRoute: AppOrgIssuesIssueIdEventsEventIdRoute,
 }

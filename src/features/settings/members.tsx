@@ -246,7 +246,7 @@ function RemoveMember({ org, member, mine, onClose, onDone }: { org: string; mem
       pending={remove.pending}
       error={remove.error}
     >
-      {mine ? 'You lose access to its projects and issues until someone invites you again.' : member.pending ? 'The link they were sent stops working.' : 'They lose access to this organization’s projects and issues.'}
+      {mine ? 'You lose access to its projects and issues until someone invites you again.' : member.pending ? 'The link they were sent stops working.' : "They lose access to this organization's projects and issues."}
     </Confirm>
   )
 }

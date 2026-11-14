@@ -93,7 +93,7 @@ export function InviteDialog({
     <FormDialog open onClose={onClose} title="Invite members" submit={label} onSubmit={submit} pending={invite.pending} error={invite.error}>
       <Field label="Email addresses" error={emailError}>
         {(field) => (
-          <Input {...field} autoFocus value={text} onChange={(event) => setText(event.target.value)} placeholder="ada@example.com, kwame@example.com" inputMode="email" autoComplete="off" autoCapitalize="off" spellCheck={false} />
+          <Input {...field} autoFocus value={text} onChange={(event) => setText(event.target.value)} inputMode="email" autoComplete="off" autoCapitalize="off" spellCheck={false} />
         )}
       </Field>
       {refused.map((outcome) => (

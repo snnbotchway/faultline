@@ -18,11 +18,11 @@ const DETAIL_TEXT: Record<string, string> = {
   'User is organization owner. Transfer ownership first.': 'The owner can only leave after transferring ownership to someone else.',
   'Server URL must be an https:// URL': 'Use a provider address that starts with https://.',
   'Server URL must not contain credentials': 'Take the user name and password out of the provider address.',
-  'Server URL must be a public hostname': 'Use the provider’s public address, one that can be reached from the internet.',
-  'Server URL must be a public address': 'Use the provider’s public address, one that can be reached from the internet.',
-  'Server URL is required': 'Enter the provider’s address.',
+  'Server URL must be a public hostname': "Use the provider's public address, one that can be reached from the internet.",
+  'Server URL must be a public address': "Use the provider's public address, one that can be reached from the internet.",
+  'Server URL is required': "Enter the provider's address.",
   'Maximum number of SSO providers reached': 'This organization has as many sign-in apps as it can hold. Delete one first.',
-  'Custom SSO is not included in your plan': 'Your plan doesn’t include sign-in apps.',
+  'Custom SSO is not included in your plan': "Your plan doesn't include sign-in apps.",
 }
 
 // Details that name a person or thing, matched by their ending.

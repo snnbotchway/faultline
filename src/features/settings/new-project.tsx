@@ -83,7 +83,7 @@ export function NewProject({ org }: { org: string }) {
           {firstTeam ? (
             <Field label="Team" error={checked ? teamError : undefined}>
               {(field) => (
-                <Input {...field} value={newTeam} onChange={(event) => setNewTeam(event.target.value)} maxLength={TEAM_SLUG_MAX} placeholder="backend" className="font-mono" autoComplete="off" autoCapitalize="off" spellCheck={false} />
+                <Input {...field} value={newTeam} onChange={(event) => setNewTeam(event.target.value)} maxLength={TEAM_SLUG_MAX} className="font-mono" autoComplete="off" autoCapitalize="off" spellCheck={false} />
               )}
             </Field>
           ) : (

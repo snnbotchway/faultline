@@ -13,6 +13,9 @@ export type SignInProvider = (typeof SignInProvider)[keyof typeof SignInProvider
 
 export const SIGN_IN_APP_NAME_MAX = 40
 export const SIGN_IN_APPS_MAX = 10
+// The longest client ID and secret, and provider address, the backend stores.
+export const SIGN_IN_CLIENT_MAX = 191
+export const SIGN_IN_SERVER_URL_MAX = 500
 
 export type SignInAppInput = { name: string; serverUrl: string | null; clientID: string; clientSecret: string | null }
 

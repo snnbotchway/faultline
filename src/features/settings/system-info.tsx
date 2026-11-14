@@ -39,7 +39,7 @@ export function SystemInfo() {
             </Group>
             <Group label="Accounts">
               <Row label="Sign-up" value={settings.enableUserRegistration ? 'Open to anyone' : 'By invitation'} />
-              <Row label="New organizations" value={settings.enableOrganizationCreation ? 'Any user can create one' : 'Only the server’s admins'} />
+              <Row label="New organizations" value={settings.enableOrganizationCreation ? 'Any user can create one' : "Only the server's admins"} />
             </Group>
             <Group label="Features">
               {FEATURES.map(({ feature, label }) => (

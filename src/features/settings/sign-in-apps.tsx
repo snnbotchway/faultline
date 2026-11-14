@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { SIGN_IN_APPS_MAX, SIGN_IN_APP_NAME_MAX, SignInProvider, signInAppActions, signInAppsQuery, type SignInApp } from '@/api/sign-in-apps'
+import { SIGN_IN_APPS_MAX, SIGN_IN_APP_NAME_MAX, SIGN_IN_CLIENT_MAX, SIGN_IN_SERVER_URL_MAX, SignInProvider, signInAppActions, signInAppsQuery, type SignInApp } from '@/api/sign-in-apps'
 import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,8 +12,6 @@ import { useFold } from './rows'
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { [SignInProvider.openIdConnect]: 'OpenID Connect', [SignInProvider.google]: 'Google' }
 const providerName = (app: SignInApp) => PROVIDER_NAME[app.brand as SignInProvider] ?? app.brand
-
-const KEY_MAX = 191
 
 /**
  * The organization's own single sign-on: OpenID Connect providers (or Google) its people can sign in with.
@@ -101,7 +99,7 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
 
   const problems = {
     name: !name.trim() ? 'Give the app a name.' : undefined,
-    serverUrl: google ? undefined : !serverUrl.trim() ? 'Enter the provider’s address.' : !/^https:\/\/\S+$/.test(serverUrl.trim()) ? 'Use an address that starts with https://.' : undefined,
+    serverUrl: google ? undefined : !serverUrl.trim() ? "Enter the provider's address." : !/^https:\/\/\S+$/.test(serverUrl.trim()) ? 'Use an address that starts with https://.' : undefined,
     clientID: !clientID.trim() ? 'Enter the client ID.' : undefined,
     secret: !app && !secret.trim() ? 'Enter the client secret.' : undefined,
   }
@@ -145,12 +143,11 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
               {...field}
               value={serverUrl}
               onChange={(event) => setServerUrl(event.target.value)}
-              placeholder="https://login.example.com"
               inputMode="url"
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
-              maxLength={500}
+              maxLength={SIGN_IN_SERVER_URL_MAX}
               className="font-mono"
             />
           )}
@@ -158,7 +155,7 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
       )}
       <Field label="Client ID" error={shown(problems.clientID)}>
         {(field) => (
-          <Input {...field} value={clientID} onChange={(event) => setClientID(event.target.value)} maxLength={KEY_MAX} autoComplete="off" autoCapitalize="off" spellCheck={false} className="font-mono" />
+          <Input {...field} value={clientID} onChange={(event) => setClientID(event.target.value)} maxLength={SIGN_IN_CLIENT_MAX} autoComplete="off" autoCapitalize="off" spellCheck={false} className="font-mono" />
         )}
       </Field>
       <Field label={app ? 'New client secret' : 'Client secret'} error={shown(problems.secret)}>
@@ -168,8 +165,7 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
             type="password"
             value={secret}
             onChange={(event) => setSecret(event.target.value)}
-            placeholder={app ? 'Leave empty to keep the current one' : undefined}
-            maxLength={KEY_MAX}
+            maxLength={SIGN_IN_CLIENT_MAX}
             autoComplete="new-password"
             className="font-mono"
           />

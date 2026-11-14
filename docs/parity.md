@@ -37,7 +37,7 @@ Totals: **44 routed screens** and **6 redirects** in the stock router, plus 5 sc
 | `/:org/:project/issues/:id` | `/:org/issues/:id` | [x] |
 | `/orgredirect/organizations/:org/settings/auth-tokens` | `/profile/auth-tokens` | [x] |
 | `/account/settings/wizard/:hash` | `/profile/wizard/:hash` | [x] |
-| `/:org/:project-slug` | `/:org/settings/projects/:project-slug` | [ ] |
+| `/:org/:project-slug` | `/:org/settings/projects/:project-slug` | [x] |
 | `/:org/performance` | `/:org/performance/transaction-groups` | [ ] |
 | `**` | `/` | [ ] |
 
@@ -49,9 +49,9 @@ Shell (`FE/logged-in.component.*`, `FE/main-nav/`): `loggedInGuard` redirects to
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Home | `/` | All projects across orgs, one row each: 14-day error trend, unresolved count, last seen, alert count, links to issues and project settings. "New project" if `canWriteProject`. Empty state "No organization yet" | `GET /organizations/` (fetch-all, limit 200 x5 pages); `GET /organizations/{org}/stats_v2/` (`category=error&interval=1h&field=sum(quantity)&project&start&end`); `GET /organizations/{org}/issues/?project&query=is:unresolved&limit=1` (X-Hits = count); same with `sort=-last_seen&limit=1`; `GET /projects/{org}/{slug}/alerts/` | [ ] |
-| Org | `/organizations/new` | Create org (name, max 200). With billing on, goes to `/:slug/settings/subscription` | `POST /organizations/` | [ ] |
-| Misc | `/system-info` | Read-only: server time zone, org creation, registration, version, instance name (markdown), docs link. Stock bug: "Organization creation" row reads `enableUserRegistration` | `GET /api/settings/` | [ ] |
+| Home | `/` | All projects across orgs, one row each: 14-day error trend, unresolved count, last seen, alert count, links to issues and project settings. "New project" if `canWriteProject`. Empty state "No organization yet" **Faultline:** built except the alert count, which waits for Alerts. | `GET /organizations/` (fetch-all, limit 200 x5 pages); `GET /organizations/{org}/stats_v2/` (`category=error&interval=1h&field=sum(quantity)&project&start&end`); `GET /organizations/{org}/issues/?project&query=is:unresolved&limit=1` (X-Hits = count); same with `sort=-last_seen&limit=1`; `GET /projects/{org}/{slug}/alerts/` | [ ] |
+| Org | `/organizations/new` | Create org (name, max 200). With billing on, goes to `/:slug/settings/subscription` | `POST /organizations/` | [x] |
+| Misc | `/system-info` | Read-only: server time zone, org creation, registration, version, instance name (markdown), docs link. Stock bug: "Organization creation" row reads `enableUserRegistration` **Faultline:** the instance name is plain text and there is no docs link; it adds which features are on. | `GET /api/settings/` | [x] |
 | Shell | side nav | Items: Issues, Uptime Monitors (feature `uptime`), Performance, Logs (feature `logs`), Projects, Releases. Org menu: General settings, Projects, Subscription, Teams, Members. Profile menu: Account, MFA, Notifications, Auth tokens. Org `<select>` with "create new". Collapse toggle (`localStorage glitchtip-sidenav-collapsed`). Mobile drawer + toolbar | `GET /api/settings/` (`enabledFeatures`); `GET /organizations/`; `GET /organizations/{org}/` | [ ] |
 | Shell | support menu | Docs, bug report, Liberapay link when unpaid + billing off, "Open Support Chat" when `iPaidForGlitchTip`, chatwoot widget when token set | `GET /instance-license/support-link/`; `GET /instance-license/` | [ ] |
 | Shell | banners | verify-email banner (primary email unverified, resend), terms banner (billing on only, `localStorage termsUpdate20261121Dismissed`), upgrade banner (throttled org), support banner | `GET /users/me/emails/`; `POST /users/me/emails/confirm/`; stripe overage endpoints | [ ] |
@@ -140,23 +140,23 @@ Where Faultline differs on purpose:
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Projects | `/:org/projects` | Same project list component as Home, scoped to the active org | as Home | [ ] |
-| Projects | `/:org/settings/projects` | Same project-rows list as Home (trend, unresolved, alerts, settings link); "New project" if `canWriteProject`; empty state differs for writers vs non-writers | `GET /organizations/{org}/projects/` (fetch-all); per-row stats as Home | [ ] |
-| Projects | `/:org/settings/projects/new` | Create: platform picker (grid, searchable), name (max 64), team select (opens "create team" dialog if none) | `POST /teams/{org}/{team_slug}/projects/`; `GET /organizations/{org}/teams/`; `POST /organizations/{org}/teams/` | [ ] |
-| Projects | `/:org/settings/projects/:project-slug` (`?tab=general` default, `dsn`, `environments`, `alerts`; `&alert=new` or `&alert=<id>`) | Project detail with four tabs, counts on tab labels | `GET /projects/{org}/{slug}/`; `GET .../keys/?limit=200` | [ ] |
+| Projects | `/:org/projects` | Same project list component as Home, scoped to the active org **Faultline:** built except the alert count, which waits for Alerts. | as Home | [ ] |
+| Projects | `/:org/settings/projects` | Same project-rows list as Home (trend, unresolved, alerts, settings link); "New project" if `canWriteProject`; empty state differs for writers vs non-writers **Faultline:** built except the alert count, which waits for Alerts. | `GET /organizations/{org}/projects/` (fetch-all); per-row stats as Home | [ ] |
+| Projects | `/:org/settings/projects/new` | Create: platform picker (grid, searchable), name (max 64), team select (opens "create team" dialog if none) **Faultline:** an organization with no team names its first one in the same form. | `POST /teams/{org}/{team_slug}/projects/`; `GET /organizations/{org}/teams/`; `POST /organizations/{org}/teams/` | [x] |
+| Projects | `/:org/settings/projects/:project-slug` (`?tab=general` default, `dsn`, `environments`, `alerts`; `&alert=new` or `&alert=<id>`) | Project detail with four tabs, counts on tab labels **Faultline:** a Set up tab (`?tab=setup`) comes first; `?tab=alerts` opens General until Alerts is built. | `GET /projects/{org}/{slug}/`; `GET .../keys/?limit=200` | [ ] |
 
 General tab:
-- [ ] Rename (`PUT` `{name}`); needs `canWriteProject`. Server errors map onto the field.
-- [ ] Platform autocomplete (validates against the platform list, `PUT` `{name, platform}`).
+- [x] Rename (`PUT` `{name}`); needs `canWriteProject`. Server errors map onto the field.
+- [x] Platform autocomplete (validates against the platform list, `PUT` `{name, platform}`).
 - [ ] "Your notifications" link to `/profile/notifications`.
-- [ ] Delete project (`canAdminProject`), confirms, then returns to the list.
+- [x] Delete project (`canAdminProject`), confirms, then returns to the list.
 - [ ] Non-member admin note: "You can manage X as an organization admin".
 
 DSN tab:
-- [ ] Per key: DSN (`dsn.public`) with copy input, security/CSP report endpoint (`dsn.security`). Only list is used; key create/rename/rate-limit/delete are not in the stock UI.
+- [x] Per key: DSN (`dsn.public`) with copy input, security/CSP report endpoint (`dsn.security`). Only list is used; key create/rename/rate-limit/delete are not in the stock UI.
 
 Environments tab:
-- [ ] List with hidden toggle per environment (`PUT .../environments/{name}/` body is the environment object with `isHidden`); gated on `canWriteProject`. Empty state "No environments".
+- [x] List with hidden toggle per environment (`PUT .../environments/{name}/` body is the environment object with `isHidden`); gated on `canWriteProject`. Empty state "No environments".
 
 Alerts tab (see Alerts section).
 
@@ -181,21 +181,21 @@ Alerts tab (see Alerts section).
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Org | `/:org/settings` | General: project/team counts, rename (`canWriteOrg`), delete org (`canAdminOrg`, owner only) | `PUT /organizations/{org}/` `{name}`; `DELETE /organizations/{org}/` | [ ] |
-| Teams | `/:org/settings/teams` | "Your teams" and "Other teams"; join/leave (join needs `openMembership` or `canWriteOrg`), create team dialog (slug, `gtSlugify` blocks bad keys and paste, pattern `^[-a-zA-Z0-9_]+$`, max 50) | `GET /organizations/{org}/teams/`; `POST /organizations/{org}/teams/`; `POST`/`DELETE /organizations/{org}/members/{member_id}/teams/{team_slug}/` | [ ] |
-| Teams | `/:org/settings/teams/:team-slug/members` | Add member (select), member list with remove/leave, links to member detail | `GET /teams/{org}/{team}/members/`; `GET /organizations/{org}/members/`; `POST`/`DELETE .../members/{id}/teams/{team}/` | [ ] |
-| Teams | `/:org/settings/teams/:team-slug/projects` | Add project to team, list with remove | `GET /teams/{org}/{team}/` ; `POST`/`DELETE /projects/{org}/{project}/teams/{team}/` | [ ] |
-| Teams | `/:org/settings/teams/:team-slug/settings` | Rename slug (`canWriteTeam`), delete team (`canAdminTeam`) | `PUT`/`DELETE /teams/{org}/{team}/` | [ ] |
-| Members | `/:org/settings/members` | Member list: email link, pending tag, Account owner tag, role, resend invite (pending), remove or leave, role badge notes for owners | `GET /organizations/{org}/members/`; `POST /organizations/{org}/members/` (`reinvite:true` to resend); `DELETE .../members/{id}/` | [ ] |
-| Members | `/:org/settings/members/new` | Invite by email (comma-separated list), role radio with description, team multi-select; "Only existing users" hint when registration is closed | `POST /organizations/{org}/members/` per email, body `{email, orgRole, teamRoles:[{teamSlug, role}], sendInvite, reinvite}` | [ ] |
-| Members | `/:org/settings/members/:member-id` | Role radios (Member, Admin, Manager, Owner; owner changes owner-only), team list with links, transfer ownership (confirm) | `GET`/`PUT /organizations/{org}/members/{id}/` body `{orgRole, teamRoles}`; `POST .../members/{id}/set_owner/` | [ ] |
+| Org | `/:org/settings` | General: project/team counts, rename (`canWriteOrg`), delete org (`canAdminOrg`, owner only) | `PUT /organizations/{org}/` `{name}`; `DELETE /organizations/{org}/` | [x] |
+| Teams | `/:org/settings/teams` | "Your teams" and "Other teams"; join/leave (join needs `openMembership` or `canWriteOrg`), create team dialog (slug, `gtSlugify` blocks bad keys and paste, pattern `^[-a-zA-Z0-9_]+$`, max 50) | `GET /organizations/{org}/teams/`; `POST /organizations/{org}/teams/`; `POST`/`DELETE /organizations/{org}/members/{member_id}/teams/{team_slug}/` | [x] |
+| Teams | `/:org/settings/teams/:team-slug/members` | Add member (select), member list with remove/leave, links to member detail | `GET /teams/{org}/{team}/members/`; `GET /organizations/{org}/members/`; `POST`/`DELETE .../members/{id}/teams/{team}/` | [x] |
+| Teams | `/:org/settings/teams/:team-slug/projects` | Add project to team, list with remove | `GET /teams/{org}/{team}/` ; `POST`/`DELETE /projects/{org}/{project}/teams/{team}/` | [x] |
+| Teams | `/:org/settings/teams/:team-slug/settings` | Rename slug (`canWriteTeam`), delete team (`canAdminTeam`) | `PUT`/`DELETE /teams/{org}/{team}/` | [x] |
+| Members | `/:org/settings/members` | Member list: email link, pending tag, Account owner tag, role, resend invite (pending), remove or leave, role badge notes for owners | `GET /organizations/{org}/members/`; `POST /organizations/{org}/members/` (`reinvite:true` to resend); `DELETE .../members/{id}/` | [x] |
+| Members | `/:org/settings/members/new` | Invite by email (comma-separated list), role radio with description, team multi-select; "Only existing users" hint when registration is closed | `POST /organizations/{org}/members/` per email, body `{email, orgRole, teamRoles:[{teamSlug, role}], sendInvite, reinvite}` | [x] |
+| Members | `/:org/settings/members/:member-id` | Role radios (Member, Admin, Manager, Owner; owner changes owner-only), team list with links, transfer ownership (confirm) | `GET`/`PUT /organizations/{org}/members/{id}/` body `{orgRole, teamRoles}`; `POST .../members/{id}/set_owner/` | [x] |
 
 Easy to miss:
-- [ ] Permission gates are scope based, from `GET /organizations/{org}/` `access[]`: `project:write|admin`, `team:write|admin`, `org:write|admin`, `member:write|admin`. Gates fail closed while the active org is still the first-org fallback.
-- [ ] Role names/descriptions: Owner (full), Manager (members and every team), Admin (teams and projects they are on), Member (issues and events).
-- [ ] Managers cannot grant, change or remove owners (7.0 breaking change).
-- [ ] Invite throttling is server-side (`Throttled`); UI shows the error.
-- [ ] `inviteLink` is returned on invite but not shown by the stock UI (see "Beyond parity").
+- [x] Permission gates are scope based, from `GET /organizations/{org}/` `access[]`: `project:write|admin`, `team:write|admin`, `org:write|admin`, `member:write|admin`. Gates fail closed while the active org is still the first-org fallback.
+- [x] Role names/descriptions: Owner (full), Manager (members and every team), Admin (teams and projects they are on), Member (issues and events).
+- [x] Managers cannot grant, change or remove owners (7.0 breaking change).
+- [x] Invite throttling is server-side (`Throttled`); UI shows the error.
+- [x] `inviteLink` is returned on invite but not shown by the stock UI (see "Beyond parity").
 
 ---
 
@@ -295,11 +295,11 @@ These are not required for parity. Tick only if Faultline chooses to ship them.
 | Org login page `/login/{org-slug}` | `GET /api/settings/{organization_slug}/` returns that org's social apps (including non-public ones). SPA regex in `glitchtip/urls.py` already serves `/login/...` | Backend-generated `loginUrl` for org SSO apps points here; stock router falls through to `**` and redirects to `/` | [x] |
 | Org SSO / social-app management | `GET`/`POST /organizations/{org}/social-apps/`; `PUT`/`DELETE .../social-apps/{id}/` (name, serverUrl, clientID, clientSecret, provider; returns `callbackUrl` and `loginUrl`) | Gated by `organization_can_customize_sso` | [+] |
 | Status pages | `GET`/`POST /organizations/{org}/status-pages/`; public HTML at `/status-pages/{org}/{slug}/` | List and create only; no update/delete route in the schema. HTML is server-rendered and cached 60 s | [+] |
-| Copy-link invites | `inviteLink` in the invite response | Works with email disabled (`enabledFeatures` lacks `email`). Stock frontend ignores it | [+] |
+| Copy-link invites | `inviteLink` in the invite response | Works with email disabled (`enabledFeatures` lacks `email`). Stock frontend ignores it | [x] |
 | Short-ID jump | `GET /organizations/{org}/issues/?shortIdLookup=1&query=PROJECT-1A`; `GET .../shortids/{short_id}/` | Stock UI does not send `shortIdLookup` | [+] |
 | Assign issue | `PUT` with `assignedTo` (`user:<id>`, `team:<slug>`, email, or empty) | Field is rendered nowhere in stock | [+] |
-| DSN key management | `POST /projects/{org}/{slug}/keys/`; `GET`/`PUT`/`DELETE .../keys/{id}/` (name, rate limit) | Stock lists keys only | [+] |
-| Project rate limit / `eventThrottleRate`, org `isAcceptingEvents`, `require2fa`, `openMembership` | org and project `PUT` | Not editable in stock UI (read for the over-limit snackbar and team-join rule only) | [+] |
+| DSN key management | `POST /projects/{org}/{slug}/keys/`; `GET`/`PUT`/`DELETE .../keys/{id}/` (name, rate limit) | Stock lists keys only | [x] |
+| Project rate limit / `eventThrottleRate`, org `isAcceptingEvents`, `require2fa`, `openMembership` | org and project `PUT` | Not editable in stock UI (read for the over-limit snackbar and team-join rule only) **Faultline:** the project rate is editable; the organization fields are not, the backend ignores them on `PUT`. | [+] |
 | Release create/deploys/commits/files delete, source-map upload | `/organizations/{org}/releases/...`, `/chunk-upload/`, `/artifactbundle/assemble/`, difs, dsyms | CLI-oriented | [+] |
 | Passkey login, reauthentication, email-code login | allauth `webauthn/login`, `auth/reauthenticate`, `code/confirm` | `reauthenticate` exists in the stock service but nothing calls it | [+] |
 | Issue commits, project events list, log detail/stats, span groups, N+1, transaction trend | `GET /issues/{id}/commits/`, `/projects/{org}/{slug}/events/`, `/logs/{id}/`, `/logs/stats/`, `/span-groups/`, `/n-plus-one/`, `/transaction-groups/{id}/trend/` | No stock UI | [+] |

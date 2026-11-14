@@ -122,7 +122,7 @@ The inbox and the issue page draw events the same way.
 ## Components
 
 - **Buttons.** Outline is the default. One filled (`primary`) button per view marks the main action. Destructive is outlined in red and fills on hover. Labels are verbs in sentence case.
-- **Inputs.** A hairline box on `card`; the border turns `foreground` on focus and `destructive` when invalid. The label is always visible above the field. Errors appear under the field in the user's words; forms check themselves (`noValidate`), so the browser's own bubbles never show.
+- **Inputs.** A hairline box on `card`; the border turns `foreground` on focus and `destructive` only when the field holds a real error, which is after the user has tried to send it. Focus is never red. The label is always visible above the field. Errors appear under the field in the user's words; forms check themselves (`noValidate`), so the browser's own bubbles never show.
 - **Menus and popovers.** Square, hairline, on `card`. Items are 32px tall, 44px on touch.
 - **Dialogs** are for short tasks that keep their context (confirm a delete or a merge, pick an assignee). They are not a page. A confirmation names what it acts on: how many issues, and for a merge which one is kept.
 - **Notices** ("Password changed.") sit at the bottom of the page, one at a time. While a dialog or sheet is open they move to the top, so they never cover it, and opening a dialog clears an old one. A dialog shown once (a new token, recovery codes to confirm) closes only by its own button.
@@ -133,6 +133,18 @@ The inbox and the issue page draw events the same way.
 - **State screens** (empty, not found, not built, failed) are a muted mark, one plain sentence as the title, and at most one action. An empty list says what would make it non-empty.
 - **Key hints** (`Kbd`) show beside the action they trigger and are hidden on touch layouts.
 
+## Settings
+
+- **One index.** `/:org/settings` lists everything that can be set: the organization, its people, its projects, the server. Its search finds a setting, project or person by any word; `Enter` opens the first match.
+- **Rows.** A setting is a row: name, current value, then what it does. A chevron right leads to a page, a chevron down unfolds the row in place with one field and Save, a row with neither only reports. A setting the backend will not change is left out, not shown disabled.
+- **Short tasks are dialogs** (invite, new team, new key, confirm). A dialog that deletes something with data behind it asks for its name to be typed.
+- **Danger** is the last group on a page and holds only destructive rows.
+- **Tabs** show one panel at a time and each has an address. The project page opens on Set up until the first event arrives, then on General.
+- **Machine text is never cut.** A DSN, an invite link, an email address and a code sample wrap inside their box; each copyable value has its Copy button in the same box.
+- **Waiting** for something from outside (the first event) is a status line with an icon, not a control: dashed while waiting, `ok` when it arrives, with the main button leading on.
+- **Permissions.** Controls the user's role cannot use are absent. A list they can read but not change is a plain list with no rows that unfold.
+- No help paragraphs under fields. What a role may do is behind "Compare roles", beside the control.
+
 ## Command palette
 
 `⌘K` or `Ctrl K`. 640px wide, centred near the top; full width on a phone. It lists the commands that apply right now and nothing else: a command that cannot run in the current context is absent, not disabled.
@@ -142,7 +154,7 @@ The inbox and the issue page draw events the same way.
 | selection | what can be done to the selected issues |
 | issue | what can be done to the open issue |
 | show | the inbox's other status views |
-| go to | every section except the one you are in |
+| go to | every section except the one you are in, then the organization's projects, members and teams |
 | organization | the other organizations |
 | theme | system, light and dark |
 | account | sign out |
@@ -156,6 +168,7 @@ The groups are listed in this order.
 | --- | --- | --- |
 | `⌘K` / `Ctrl K` | everywhere | open the palette |
 | `/` | inbox | focus search |
+| `/` | settings | focus the settings search |
 | `j` / `k` | inbox | next / previous issue |
 | `Enter` | inbox | open the issue |
 | `o` | inbox | unfold the row (desktop) |
@@ -196,5 +209,6 @@ Designed at 390px, checked at 375px.
 
 ## Not built yet
 
-- Settings. When they are built: no help paragraphs under fields (principle 2), DSNs and code samples scroll with a visible cut-off edge and a copy button, and organization settings need an entry point from the settings home.
+- Alerts, and with them the project's Alerts tab and the alert count on project rows.
+- Sign-in apps (single sign-on) for an organization.
 - The server-stored theme preference; the theme is per browser for now.

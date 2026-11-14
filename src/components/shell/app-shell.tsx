@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
 import { useHotkeys } from '@/lib/hotkeys'
+import { useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
 import { Theme, setTheme, useTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
@@ -248,7 +249,21 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
       <TopBar org={org} current={current} inbox={current === 'issues' && deeper.length === 0} />
       {children}
       <TabBar org={org} current={current} />
+      <Notice />
       <Palette onSearch={(text) => void navigate({ to: '/$org/issues', params: { org }, search: { query: text } })} />
+    </div>
+  )
+}
+
+function Notice() {
+  const notice = useNotice()
+  return (
+    <div role="status" className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 max-lg:bottom-32">
+      {notice && (
+        <p className={cn('pointer-events-auto max-w-md border bg-card px-3 py-2 shadow-[0_8px_24px_-8px_rgb(0_0_0/0.35)]', notice.error && 'border-destructive text-destructive')}>
+          {notice.text}
+        </p>
+      )}
     </div>
   )
 }

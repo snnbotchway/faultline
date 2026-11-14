@@ -2,8 +2,8 @@ const STEPS: [number, string][] = [
   [60, 's'],
   [60, 'm'],
   [24, 'h'],
-  [7, 'd'],
-  [Infinity, 'w'],
+  [30, 'd'],
+  [Infinity, 'mo'],
 ]
 
 // `7m`, `3h`, `2d`: how long ago, short enough for a table cell.

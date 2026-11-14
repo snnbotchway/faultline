@@ -15,7 +15,7 @@ export default defineConfig({
   server: {
     port: 5190,
     proxy: Object.fromEntries(
-      BACKEND_PATHS.map((path) => [path, { target: backend, changeOrigin: false, xfwd: true }]),
+      BACKEND_PATHS.map((path) => [`^${path.replace('.', '\\.')}(/|$)`, { target: backend, xfwd: true }]),
     ),
   },
 })

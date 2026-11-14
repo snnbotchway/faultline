@@ -158,7 +158,10 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
             name="Authenticator app"
             value={
               <>
-                On <span className="mono whitespace-nowrap text-muted-foreground">since {day(factors.totp.created_at)}</span>
+                On{' '}
+                <span className="whitespace-nowrap text-muted-foreground">
+                  since <span className="mono">{day(factors.totp.created_at)}</span>
+                </span>
               </>
             }
             action="Turn off"
@@ -177,9 +180,9 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
           <Fact
             name="Recovery codes"
             value={
-              <span className="mono">
-                {factors.recovery.unused_code_count} of {factors.recovery.total_code_count} left
-              </span>
+              <>
+                <span className="mono">{factors.recovery.unused_code_count}</span> of <span className="mono">{factors.recovery.total_code_count}</span> left
+              </>
             }
             action="New codes"
             onClick={open(Task.recovery)}

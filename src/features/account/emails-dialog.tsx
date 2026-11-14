@@ -25,7 +25,7 @@ function EmailRow({ address, canSend }: { address: EmailAddress; canSend: boolea
         <span className="ml-auto flex flex-wrap items-center justify-end gap-x-4">
           {removing ? (
             <>
-              <RowButton className="text-destructive" disabled={remove.busy} onClick={() => void remove.run()}>
+              <RowButton danger disabled={remove.busy} onClick={() => void remove.run()}>
                 Remove it
               </RowButton>
               <RowButton onClick={() => setRemoving(false)}>Keep</RowButton>
@@ -48,7 +48,7 @@ function EmailRow({ address, canSend }: { address: EmailAddress; canSend: boolea
                   Make primary
                 </RowButton>
               )}
-              {!address.isPrimary && <RowButton onClick={() => setRemoving(true)}>Remove</RowButton>}
+              {!address.isPrimary && <RowButton danger onClick={() => setRemoving(true)}>Remove</RowButton>}
             </>
           )}
         </span>

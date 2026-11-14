@@ -7,7 +7,7 @@ const ROW_NAME = 'w-36 shrink-0 text-muted-foreground sm:w-44'
 // Names a group of rows. `current` marks the group a link pointed at.
 export function Heading({ id, current, action, children }: { id?: string; current?: boolean; action?: ReactNode; children: ReactNode }) {
   return (
-    <div id={id} className={cn('-mx-2 mt-8 flex min-h-10 scroll-mt-14 items-center justify-between gap-3 border-b px-2 first:mt-5', current && 'bg-selected')}>
+    <div id={id} className={cn('mt-8 flex min-h-10 scroll-mt-14 items-center justify-between gap-3 border-b first:mt-5', current && 'bg-selected')}>
       <h2 className={cn('label-caps', current && 'font-semibold text-foreground')}>{children}</h2>
       {action}
     </div>
@@ -25,7 +25,7 @@ export function Fact({ name, value, action, danger, className, ...props }: { nam
     >
       <span className={cn(ROW_NAME, 'max-sm:w-auto')}>{name}</span>
       <span className="min-w-0 flex-1 max-sm:order-last max-sm:col-span-2 max-sm:empty:hidden">{value}</span>
-      <span className={cn('shrink-0 text-sm font-medium', danger ? 'text-destructive' : 'text-brand')}>{action}</span>
+      <span className={cn('shrink-0 text-sm font-medium', danger && 'text-destructive')}>{action}</span>
     </button>
   )
 }
@@ -44,7 +44,13 @@ export function Tag({ warning, children }: { warning?: boolean; children: ReactN
   return <span className={cn('shrink-0 border px-2 text-xs leading-5', warning && 'border-level-warning text-level-warning')}>{children}</span>
 }
 
-// A small action inside a list row of a dialog.
-export function RowButton({ className, ...props }: ComponentProps<'button'>) {
-  return <button type="button" className={cn('min-h-8 shrink-0 text-sm font-medium text-brand hover:underline disabled:opacity-50 max-lg:min-h-11', className)} {...props} />
+// A small action inside a list row. `danger` is for the ones that take something away: delete, remove, disconnect, revoke.
+export function RowButton({ danger, className, ...props }: { danger?: boolean } & ComponentProps<'button'>) {
+  return (
+    <button
+      type="button"
+      className={cn('min-h-8 shrink-0 cursor-pointer text-right text-sm font-medium hover:underline disabled:opacity-50 max-lg:min-h-11 max-lg:min-w-11', danger && 'text-destructive', className)}
+      {...props}
+    />
+  )
 }

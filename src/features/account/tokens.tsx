@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ConfirmDialog, TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { CopyButton } from './copy-button'
 import { day } from './format'
+import { RowButton } from './rows'
 import { LEVEL_LABELS, RELEASES_LABEL, RESOURCE_LABELS, scopeWords } from './scopes'
 import { useAction } from './use-action'
 
@@ -29,9 +30,9 @@ function TokenRow({ token }: { token: ApiToken }) {
         </span>
         <span className="block text-sm text-muted-foreground">{scopeWords(token.scopes)}</span>
       </span>
-      <Button className="max-lg:h-11" onClick={() => setConfirming(true)}>
+      <RowButton danger onClick={() => setConfirming(true)}>
         Revoke
-      </Button>
+      </RowButton>
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
@@ -46,7 +47,7 @@ function TokenRow({ token }: { token: ApiToken }) {
 }
 
 export function TokenRows({ list }: { list: ApiToken[] }) {
-  if (list.length === 0) return <p className="prose-text border-b py-3 text-muted-foreground">No tokens</p>
+  if (list.length === 0) return <p className="border-b py-3 text-muted-foreground">No tokens</p>
   return (
     <ul>
       {list.map((token) => (

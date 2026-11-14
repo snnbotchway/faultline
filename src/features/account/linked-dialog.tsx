@@ -16,19 +16,21 @@ function LinkedRow({ linked, name }: { linked: LinkedAccount; name: string }) {
   const disconnect = useAction(() => account.disconnect(linked), { action: `disconnect ${name}`, refresh: [accountKeys.user] })
   return (
     <li className="border-b py-2">
-      <div className="flex min-h-8 flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="font-medium">{name}</span>
-        <span className="mono min-w-0 [overflow-wrap:anywhere] text-muted-foreground">{linked.email ?? linked.username}</span>
-        <span className="ml-auto flex items-center gap-x-4">
+      <div className="flex min-h-8 items-center gap-x-3">
+        <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3">
+          <span className="font-medium">{name}</span>
+          <span className="mono min-w-0 [overflow-wrap:anywhere] text-muted-foreground">{linked.email ?? linked.username}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-x-4">
           {confirming ? (
             <>
-              <RowButton className="text-destructive" disabled={disconnect.busy} onClick={() => void disconnect.run()}>
+              <RowButton danger disabled={disconnect.busy} onClick={() => void disconnect.run()}>
                 Disconnect it
               </RowButton>
               <RowButton onClick={() => setConfirming(false)}>Keep</RowButton>
             </>
           ) : (
-            <RowButton onClick={() => setConfirming(true)}>Disconnect</RowButton>
+            <RowButton danger onClick={() => setConfirming(true)}>Disconnect</RowButton>
           )}
         </span>
       </div>

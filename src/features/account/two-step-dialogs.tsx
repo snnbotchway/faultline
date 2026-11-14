@@ -107,18 +107,15 @@ function RecoveryCodesForm({ action, cancel, onDone, onClose }: { action: string
     )
   return (
     <form noValidate className="space-y-4" onSubmit={submit}>
-      <div>
-        <p className="label-caps mb-2">Recovery codes</p>
-        {preview.data ? (
-          <ul className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-code">
-            {codes.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        ) : (
-          <Skeleton className="h-36" />
-        )}
-      </div>
+      {preview.data ? (
+        <ul aria-label="Recovery codes" className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-code">
+          {codes.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <Skeleton className="h-36" />
+      )}
       <div className="flex flex-wrap gap-2">
         <CopyButton text={text} label="Copy codes" />
         <Button asChild className="max-lg:h-11">
@@ -202,13 +199,13 @@ function KeyRow({ item }: { item: SecurityKey }) {
         <span className="ml-auto flex items-center gap-x-4">
           {confirming ? (
             <>
-              <RowButton className="text-destructive" disabled={remove.busy} onClick={() => void remove.run()}>
+              <RowButton danger disabled={remove.busy} onClick={() => void remove.run()}>
                 Remove it
               </RowButton>
               <RowButton onClick={() => setConfirming(false)}>Keep</RowButton>
             </>
           ) : (
-            <RowButton onClick={() => setConfirming(true)}>Remove</RowButton>
+            <RowButton danger onClick={() => setConfirming(true)}>Remove</RowButton>
           )}
         </span>
       </div>

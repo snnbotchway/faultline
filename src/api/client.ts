@@ -2,7 +2,7 @@ import createClient, { type Middleware } from 'openapi-fetch'
 import type { paths as AllauthPaths } from './schema/allauth'
 import type { paths } from './schema/openapi'
 
-export const HttpStatus = { unauthenticated: 401, sessionGone: 410 } as const
+export const HttpStatus = { unauthenticated: 401, sessionGone: 410, tooManyRequests: 429 } as const
 
 const CSRF_COOKIE = 'csrftoken'
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
@@ -38,6 +38,13 @@ export function setSignedOutHandler(callback: () => void) {
   onSignedOut = callback
 }
 
+// The request never got an answer: offline, DNS, a dropped connection.
+export class NetworkError extends Error {}
+
+const unreachable: Middleware = {
+  onError: () => new NetworkError("Couldn't reach the server."),
+}
+
 const signedOut: Middleware = {
   onResponse({ response }) {
     if (response.status === HttpStatus.unauthenticated) onSignedOut()
@@ -68,19 +75,6 @@ function errorMessage(body: unknown): string | undefined {
   return allauthErrors(body)[0]?.message
 }
 
-export function fieldErrors(error: unknown): Record<string, string> {
-  if (!(error instanceof ApiError)) return {}
-  return Object.fromEntries(
-    allauthErrors(error.body).flatMap((e) => (e.param && e.message ? [[e.param, e.message]] : [])),
-  )
-}
-
-// allauth's messages that belong to no field; they are written for the person signing in.
-export function formErrors(error: unknown): string[] {
-  if (!(error instanceof ApiError)) return []
-  return allauthErrors(error.body).flatMap((e) => (!e.param && e.message ? [e.message] : []))
-}
-
 export const orgPath = (slug: string) => ({ organization_id_or_slug: slug })
 
 export type ApiResult<T> = { data?: T; error?: unknown; response: Response }
@@ -91,8 +85,8 @@ export function unwrap<T>({ data, error, response }: ApiResult<T>): T {
 }
 
 export const api = createClient<paths>({ baseUrl: '/', credentials: 'same-origin' })
-api.use(csrf, signedOut)
+api.use(csrf, signedOut, unreachable)
 
 // allauth's own 401s describe sign-in state, so they skip the signed-out handler.
 export const allauth = createClient<AllauthPaths>({ baseUrl: '/', credentials: 'same-origin' })
-allauth.use(csrf)
+allauth.use(csrf, unreachable)

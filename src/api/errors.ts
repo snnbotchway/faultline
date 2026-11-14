@@ -1,4 +1,4 @@
-import { ApiError } from './client'
+import { ApiError, NetworkError } from './client'
 
 const STATUS_TEXT: Record<number, string> = {
   403: "You don't have permission to do that.",
@@ -26,7 +26,7 @@ export function explain(error: unknown, action: string): string {
   console.error(error instanceof ApiError ? (detailOf(error) ?? error.body ?? error) : error)
   const fallback = `Couldn't ${action}. Try again.`
   if (error instanceof ApiError) return DETAIL_TEXT[detailOf(error) ?? ''] ?? STATUS_TEXT[error.status] ?? fallback
-  if (error instanceof TypeError) return "Couldn't reach the server. Check your connection, then try again."
+  if (error instanceof NetworkError) return "Couldn't reach the server. Check your connection, then try again."
   // Anything else was thrown by this app with a message written for the user.
   return error instanceof Error && error.message ? error.message : fallback
 }

@@ -2,8 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { SessionStatus, auth, isBackendPage, redirectToProvider, safeNext, sessionQuery, type Session } from '@/api/auth'
-import { fieldErrors, formErrors } from '@/api/client'
-import { explain } from '@/api/errors'
+import { SignInField, checkCode, checkSignIn, signInProblems, type SignInProblems } from '@/api/sign-in-errors'
 import { instanceSettingsQuery } from '@/api/organizations'
 import { Mark } from '@/components/mark'
 import { Button } from '@/components/ui/button'
@@ -29,16 +28,18 @@ export const Route = createFileRoute('/login')({
   component: Login,
 })
 
-function Field({ label, error, children }: { label: string; error?: string; children: (id: string) => ReactNode }) {
+// A labelled field with its error underneath. `children` gets the ids that tie the input to both.
+function Field({ label, error, children }: { label: string; error?: string; children: (ids: { id: string; 'aria-describedby'?: string }) => ReactNode }) {
   const id = useId()
+  const errorId = `${id}-error`
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium">
+      <label htmlFor={id} className="mb-2 block text-sm font-medium">
         {label}
       </label>
-      {children(id)}
+      {children({ id, 'aria-describedby': error ? errorId : undefined })}
       {error && (
-        <p className="prose-text mt-1.5 text-destructive" role="alert">
+        <p id={errorId} className="mt-2 text-sm text-destructive" role="alert">
           {error}
         </p>
       )}
@@ -57,26 +58,33 @@ function Login() {
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<SignInProblems['fields']>({})
   const [message, setMessage] = useState(
     search.socialLoginError ? "That sign-in didn't go through. Try again, or use your email and password." : '',
   )
   const mfa = session?.status === SessionStatus.mfaPending
 
-  async function submit(event: FormEvent, request: () => Promise<Session>) {
+  function show(form: HTMLFormElement, problems: SignInProblems) {
+    setErrors(problems.fields)
+    setMessage(problems.message ?? '')
+    const first = Object.values(SignInField).find((field) => problems.fields[field])
+    const input = first && form.elements.namedItem(first)
+    if (input instanceof HTMLElement) input.focus()
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>, found: SignInProblems, request: () => Promise<Session>) {
     event.preventDefault()
+    const form = event.currentTarget
+    show(form, found)
+    if (Object.keys(found.fields).length > 0) return
     setBusy(true)
-    setErrors({})
-    setMessage('')
     try {
       const next = await request()
       queryClient.setQueryData(sessionQuery.queryKey, next)
       // The route's beforeLoad sends a signed-in user on to `next`.
       if (next.status === SessionStatus.authenticated) await router.invalidate()
     } catch (error) {
-      const fields = fieldErrors(error)
-      setErrors(fields)
-      if (Object.keys(fields).length === 0) setMessage(formErrors(error)[0] ?? explain(error, 'sign you in'))
+      show(form, signInProblems(error))
     } finally {
       setBusy(false)
     }
@@ -99,7 +107,7 @@ function Login() {
         <Mark className="-mx-1 size-12" />
         <div className="mt-8 h-px flex-1 -translate-y-1/2 bg-border" />
       </div>
-      <div className="mx-auto w-full max-w-[376px] px-4 pt-7">
+      <div className="mx-auto w-full max-w-94 px-4 pt-7">
         <p className="text-center font-mono text-xs font-semibold tracking-[0.18em]">FAULTLINE</p>
         <h1 className="mt-10 text-2xl font-semibold">{mfa ? 'Two-step verification' : 'Sign in'}</h1>
         {message && (
@@ -108,16 +116,16 @@ function Login() {
           </p>
         )}
         {mfa ? (
-          <form className="mt-5 space-y-4" onSubmit={(event) => void submit(event, () => auth.mfaCode(code.trim()))}>
+          <form noValidate className="mt-5 space-y-4" onSubmit={(event) => void submit(event, checkCode(code), () => auth.mfaCode(code.trim()))}>
             <Field label="Authenticator or recovery code" error={errors.code}>
-              {(id) => (
+              {(ids) => (
                 <Input
-                  id={id}
+                  {...ids}
+                  name={SignInField.code}
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
                   autoComplete="one-time-code"
                   autoFocus
-                  required
                   aria-invalid={!!errors.code}
                   className="h-10 font-mono tracking-[0.2em]"
                 />
@@ -132,31 +140,31 @@ function Login() {
           </form>
         ) : (
           <>
-            <form className="mt-5 space-y-4" onSubmit={(event) => void submit(event, () => auth.login({ email, password }))}>
+            <form noValidate className="mt-5 space-y-4" onSubmit={(event) => void submit(event, checkSignIn({ email, password }), () => auth.login({ email: email.trim(), password }))}>
               <Field label="Email" error={errors.email}>
-                {(id) => (
+                {(ids) => (
                   <Input
-                    id={id}
+                    {...ids}
+                    name={SignInField.email}
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     autoComplete="username"
                     autoFocus
-                    required
                     aria-invalid={!!errors.email}
                     className="h-10"
                   />
                 )}
               </Field>
               <Field label="Password" error={errors.password}>
-                {(id) => (
+                {(ids) => (
                   <Input
-                    id={id}
+                    {...ids}
+                    name={SignInField.password}
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     autoComplete="current-password"
-                    required
                     aria-invalid={!!errors.password}
                     className="h-10"
                   />

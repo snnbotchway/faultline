@@ -1,11 +1,12 @@
 import { frameFile, type ExceptionValue, type Frame } from './event'
+import { Language } from './highlight'
 
 const line = (frame: Frame) => frame.context?.find(([number]) => number === frame.lineNo)?.[1]?.trim()
 
 function frameText(frame: Frame, platform: string | null | undefined) {
   const file = frameFile(frame)
   const code = line(frame)
-  if (platform === 'python') {
+  if (platform === Language.python) {
     return [`  File "${file}", line ${frame.lineNo ?? '?'}, in ${frame.function ?? '?'}`, ...(code ? [`    ${code}`] : [])].join('\n')
   }
   const place = [file, frame.lineNo, frame.colNo && frame.colNo > 0 ? frame.colNo : undefined].filter((part) => part != null).join(':')

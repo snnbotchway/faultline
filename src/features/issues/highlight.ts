@@ -2,8 +2,23 @@ import { useEffect, useState } from 'react'
 
 // Colours code with highlight.js, which loads only when a frame is opened. Each language is its own small chunk
 // (1 to 7 kB gzipped), loaded the first time a frame in it shows.
+export const Language = {
+  javascript: 'javascript',
+  typescript: 'typescript',
+  python: 'python',
+  ruby: 'ruby',
+  php: 'php',
+  java: 'java',
+  kotlin: 'kotlin',
+  go: 'go',
+  rust: 'rust',
+  csharp: 'csharp',
+  swift: 'swift',
+} as const
+export type Language = (typeof Language)[keyof typeof Language]
+
 type Grammar = () => Promise<{ default: (hljs: never) => unknown }>
-const GRAMMARS: Record<string, Grammar> = {
+const GRAMMARS: Record<Language, Grammar> = {
   javascript: () => import('highlight.js/lib/languages/javascript'),
   typescript: () => import('highlight.js/lib/languages/typescript'),
   python: () => import('highlight.js/lib/languages/python'),
@@ -17,19 +32,36 @@ const GRAMMARS: Record<string, Grammar> = {
   swift: () => import('highlight.js/lib/languages/swift'),
 }
 
-const EXTENSIONS: Record<string, string> = {
-  js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript', ts: 'typescript', tsx: 'typescript', mts: 'typescript',
-  py: 'python', rb: 'ruby', php: 'php', java: 'java', kt: 'kotlin', go: 'go', rs: 'rust', cs: 'csharp', swift: 'swift',
+const EXTENSIONS: Record<string, Language> = {
+  js: Language.javascript,
+  jsx: Language.javascript,
+  mjs: Language.javascript,
+  cjs: Language.javascript,
+  ts: Language.typescript,
+  tsx: Language.typescript,
+  mts: Language.typescript,
+  py: Language.python,
+  rb: Language.ruby,
+  php: Language.php,
+  java: Language.java,
+  kt: Language.kotlin,
+  go: Language.go,
+  rs: Language.rust,
+  cs: Language.csharp,
+  swift: Language.swift,
 }
-const PLATFORMS: Record<string, string> = { node: 'javascript', 'javascript-react': 'javascript', csharp: 'csharp' }
+// Event platforms whose name is not the language's own.
+const PLATFORMS: Record<string, Language> = { node: Language.javascript, 'javascript-react': Language.javascript }
+
+const isLanguage = (name: string): name is Language => name in GRAMMARS
 
 // The file's extension says more than the event's platform (a `.ts` frame in a `javascript` event), so it goes first.
-export function languageOf(filename: string | null | undefined, platform: string | null | undefined): string | undefined {
+export function languageOf(filename: string | null | undefined, platform: string | null | undefined): Language | undefined {
   const extension = filename?.split(/[?#]/)[0]?.split('.').at(-1)?.toLowerCase()
   const byFile = extension ? EXTENSIONS[extension] : undefined
   if (byFile) return byFile
-  const named = platform ? (PLATFORMS[platform] ?? platform) : undefined
-  return named && named in GRAMMARS ? named : undefined
+  if (!platform) return undefined
+  return PLATFORMS[platform] ?? (isLanguage(platform) ? platform : undefined)
 }
 
 export const Tone = { keyword: 'keyword', value: 'value', comment: 'comment' } as const
@@ -73,7 +105,7 @@ type Core = typeof import('highlight.js/lib/core').default
 let core: Promise<Core> | undefined
 const registered = new Set<string>()
 
-async function highlighter(language: string): Promise<Core | undefined> {
+async function highlighter(language: Language): Promise<Core | undefined> {
   const grammar = GRAMMARS[language]
   if (!grammar) return undefined
   core ??= import('highlight.js/lib/core').then((module) => module.default)
@@ -86,7 +118,7 @@ async function highlighter(language: string): Promise<Core | undefined> {
 }
 
 // The lines coloured, once highlight.js and the language have loaded; until then (and for a language it does not know) `undefined`.
-export function useHighlighted(lines: string[], language: string | undefined): Piece[][] | undefined {
+export function useHighlighted(lines: string[], language: Language | undefined): Piece[][] | undefined {
   const [done, setDone] = useState<{ source: string; pieces: Piece[][] }>()
   const source = `${language}\n${lines.join('\n')}`
   useEffect(() => {

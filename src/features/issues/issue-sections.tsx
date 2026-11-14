@@ -95,15 +95,19 @@ export function Timeline({ event, title }: { event: IssueEvent; title: string })
   )
 }
 
-function Pairs({ pairs }: { pairs: [string, unknown][] }) {
+// Structured values are indented, one field to a line, so their braces line up instead of wrapping where they fall.
+export function Pairs({ pairs }: { pairs: [string, unknown][] }) {
   return (
     <dl className="mono grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] gap-x-4 gap-y-1">
-      {pairs.map(([name, value], index) => (
-        <div key={`${name}:${index}`} className="contents">
-          <dt className="truncate text-muted-foreground">{name}</dt>
-          <dd className="min-w-0 break-words">{valueText(value)}</dd>
-        </div>
-      ))}
+      {pairs.map(([name, value], index) => {
+        const structured = value !== null && typeof value === 'object'
+        return (
+          <div key={`${name}:${index}`} className="contents">
+            <dt className="truncate text-muted-foreground">{name}</dt>
+            <dd className={cn('min-w-0 break-words', structured && 'whitespace-pre-wrap')}>{structured ? JSON.stringify(value, null, 2) : valueText(value)}</dd>
+          </div>
+        )
+      })}
     </dl>
   )
 }

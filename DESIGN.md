@@ -31,7 +31,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 | Token | Desktop | Touch (below 1024px) | Use |
 | --- | --- | --- | --- |
 | `text-xs` | 12px | 12px | the floor; labels, axis text |
-| `text-sm` | 13px | 13px | secondary sans, navigation, buttons |
+| `text-sm` | 13px | 13px | secondary sans, navigation, buttons, field labels and the errors under them |
 | `text-base` | 14px | 15px | body sans |
 | `mono` utility | 12.5px | 13px | machine text |
 | `text-lg` | 16px | 16px | emphasised body |
@@ -127,8 +127,9 @@ The inbox and the issue page draw events the same way.
 - **Dialogs** are for short tasks that keep their context (confirm a delete or a merge, pick an assignee). They are not a page. A confirmation names what it acts on: how many issues, and for a merge which one is kept.
 - **Notices** ("Password changed.") sit at the bottom of the page, one at a time. While a dialog or sheet is open they move to the top, so they never cover it, and opening a dialog clears an old one. A dialog shown once (a new token, recovery codes to confirm) closes only by its own button.
 - **Top bar.** Mark and wordmark, organization, then on the inbox the project and environment filters, navigation at the right, the palette button, theme, account.
+- **Signed-out screens** (sign in, sign up, reset, an invitation) have the top bar and nothing else in it: the wordmark at its left, and the bar's rule drawn as the mark, slipping at the centre of the page. The page title is the first thing in the column below.
 - **Page bar.** A second 44px bar that sticks while the page scrolls. It says where you are within the section and carries the page's main controls. It mirrors the URL path.
-- **Rows.** The whole row is the target. Hover and the keyboard cursor look the same.
+- **Rows.** The whole row is the target. Hover and the keyboard cursor look the same. The word that names a row's action (`Edit`, `Manage`, `Turn on`) is in the text colour; it is `destructive` only when it takes something away (`Delete`, `Remove`, `Disconnect`, `Revoke`). A row's action is always that word, never a boxed button.
 - **State screens** (empty, not found, not built, failed) are a muted mark, one plain sentence as the title, and at most one action. An empty list says what would make it non-empty.
 - **Key hints** (`Kbd`) show beside the action they trigger and are hidden on touch layouts.
 

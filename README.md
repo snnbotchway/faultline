@@ -92,6 +92,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Coding agents: start with [AGENTS.md](AG
 
 More in [docs/](docs): [parity checklist](docs/parity.md), [compatibility](docs/compatibility.md), [languages](docs/i18n.md), [GlitchTip backend notes](docs/research/backend-integration.md), and the [changelog](CHANGELOG.md).
 
+## Support
+
+If Faultline is useful to you, you can support its development with the **Sponsor** button at the top of this repository, which leads to [GitHub Sponsors](https://github.com/sponsors/snnbotchway).
+
 ## Licence
 
 [MIT](LICENSE). The vendored API schemas come from GlitchTip and django-allauth, both MIT; see [src/api/schema/NOTICE.md](src/api/schema/NOTICE.md).

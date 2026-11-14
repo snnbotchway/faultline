@@ -52,7 +52,7 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
         <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a member" aria-label="Find a member" className="h-8 w-56 max-lg:hidden" />
         {write && (
           // The filled button is the page's main action; while a row is open that is the row's Save.
-          <Button variant={openId ? 'outline' : 'default'} size="sm" className="max-lg:h-9" onClick={() => void navigate({ to: '/$org/settings/members/new', params: { org }, replace: true })}>
+          <Button variant={openId ? 'outline' : 'default'} size="sm" className="max-lg:h-9 touch-hit" onClick={() => void navigate({ to: '/$org/settings/members/new', params: { org }, replace: true })}>
             <Plus />
             Invite members
           </Button>
@@ -130,7 +130,7 @@ function MemberRow(props: RowProps) {
         {summary}
         <span className="flex w-16 shrink-0 justify-end">
           {mine && member.role !== OrgRole.owner && (
-            <Button size="sm" className="max-lg:h-9" onClick={() => setLeaving(true)}>
+            <Button size="sm" className="max-lg:h-9 touch-hit" onClick={() => setLeaving(true)}>
               Leave
             </Button>
           )}
@@ -169,11 +169,11 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
   const resend = useChange(org, 'send the invite again', () => memberActions.resend(org, member), { notice: true, onDone: () => notify(`Invite sent again to ${member.email}`) })
   const transfer = useChange(org, 'transfer ownership', () => memberActions.makeOwner(org, member.id), { onDone: () => setAsking(undefined) })
   return (
-    <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-[3.25rem]">
+    <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-13">
       <div className="grid max-w-2xl gap-4 lg:grid-cols-2">
         {/* Nobody changes their own role: an owner would lock the organization, anyone else would promote themselves. */}
         {!mine && <RoleField value={role} onChange={setRole} allowOwner={owner} />}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <span className="flex h-5 items-center text-sm font-medium">Teams</span>
           <TeamChecklist teams={teams} projects={projects} value={chosen} onChange={setChosen} />
         </div>

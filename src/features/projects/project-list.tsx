@@ -62,7 +62,7 @@ export function ProjectList({ org }: { org?: string }) {
     <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a project" aria-label="Find a project" className={className} />
   )
   const create = target && can(Scope.projectWrite) && (
-    <Button asChild variant="default" size="sm" className="max-lg:h-9">
+    <Button asChild variant="default" size="sm" className="max-lg:h-9 touch-hit">
       <Link to="/$org/settings/projects/new" params={{ org: target }}>
         <Plus />
         New project
@@ -104,7 +104,7 @@ export function ProjectList({ org }: { org?: string }) {
               {group.pending ? (
                 <div className={cn(GRID, 'h-14 border-b')} aria-busy>
                   <span />
-                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="h-3 w-40" />
                 </div>
               ) : (
                 <ul>
@@ -151,7 +151,7 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
       <Link
         to="/$org/settings/projects/$project"
         params={{ org, project: slug }}
-        className="relative z-10 flex h-8 items-center justify-end gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground max-lg:hidden"
+        className="relative z-10 flex h-8 items-center justify-end gap-2 text-sm font-medium text-muted-foreground hover:text-foreground max-lg:hidden"
       >
         {fresh ? <Plug className="size-4" /> : <Settings className="size-4" />}
         {fresh ? 'Set up' : 'Settings'}

@@ -64,7 +64,7 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
 
 function Waiting() {
   return (
-    <div role="status" className="flex min-h-11 items-center gap-2.5 border border-dashed px-3">
+    <div role="status" className="flex min-h-11 items-center gap-2 border border-dashed px-3">
       <CircleDashed className="size-4 shrink-0 animate-spin text-muted-foreground [animation-duration:4s] motion-reduce:animate-none" aria-hidden />
       <span className="font-medium">Waiting for the first event</span>
     </div>
@@ -75,14 +75,14 @@ function Arrived({ org, projectId, firstEvent }: { org: string; projectId: strin
   const issue = useQuery(latestIssueQuery(org, projectId)).data
   return (
     <div role="status" className="border border-ok/60">
-      <div className="flex min-h-11 items-center gap-2.5 px-3">
+      <div className="flex min-h-11 items-center gap-2 px-3">
         <CircleCheck className="size-4 shrink-0 text-ok" aria-hidden />
         <span className="font-medium">First event received</span>
         <span className="mono ml-auto text-muted-foreground">{ago(firstEvent)} ago</span>
       </div>
       {issue && (
         <div className="flex flex-col gap-3 border-t border-ok/60 p-3 lg:flex-row lg:items-center">
-          <span className="flex min-w-0 flex-1 items-start gap-2.5">
+          <span className="flex min-w-0 flex-1 items-start gap-2">
             <LevelGlyph level={issue.level} className="mt-1 shrink-0" />
             <span className="min-w-0 break-words">{issue.title}</span>
           </span>

@@ -45,7 +45,7 @@ export function Group({ label, action, children }: { label: string; action?: Rea
 
 // A button in a group's heading: "New key", "Invite members".
 export function GroupAction({ className, ...props }: React.ComponentProps<typeof Button>) {
-  return <Button size="sm" variant="ghost" className={cn('max-lg:h-9', className)} {...props} />
+  return <Button size="sm" variant="ghost" className={cn('max-lg:h-9 touch-hit', className)} {...props} />
 }
 
 export const ROW = 'flex min-h-12 w-full items-center gap-3 border-b px-3 text-left md:px-4 lg:min-h-11'
@@ -102,7 +102,7 @@ export function FoldRow({
         <span className={cn('min-w-0 flex-1 truncate text-muted-foreground', mono && 'mono')}>{value}</span>
         <Chevron open={open} />
       </button>
-      {open && <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-[14rem]">{children}</div>}
+      {open && <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-59">{children}</div>}
     </div>
   )
 }
@@ -112,7 +112,7 @@ FoldRow.Chevron = Chevron
 export function Field({ label, error, className, children }: { label: string; error?: string; className?: string; children: (props: { id: string; 'aria-invalid': boolean; 'aria-describedby'?: string }) => ReactNode }) {
   const id = useId()
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       <label htmlFor={id} className="text-sm font-medium">
         {label}
       </label>
@@ -310,7 +310,7 @@ export function CopyButton({
   )
 }
 
-const COPY = 'flex shrink-0 items-center gap-1.5 border-l bg-card px-3 text-sm font-medium -outline-offset-2 hover:bg-accent'
+const COPY = 'flex shrink-0 items-center gap-2 border-l bg-card px-3 text-sm font-medium -outline-offset-2 hover:bg-accent'
 
 function CopyControl({ text }: { text: string }) {
   const { copied, copy } = useCopy(text)
@@ -326,7 +326,7 @@ function CopyControl({ text }: { text: string }) {
 export function CopyField({ value, label, className }: { value: string; label: string; className?: string }) {
   return (
     <div className={cn('flex items-stretch border bg-code', className)}>
-      <code aria-label={label} className="mono min-w-0 flex-1 px-2.5 py-2 leading-[1.5] [overflow-wrap:anywhere] max-lg:py-3">
+      <code aria-label={label} className="mono min-w-0 flex-1 px-3 py-2 leading-[1.5] [overflow-wrap:anywhere] max-lg:py-3">
         {value}
       </code>
       <CopyControl text={value} />
@@ -360,7 +360,7 @@ export function Tabs<T extends string>({ tabs, current, link, label }: { tabs: T
           replace
           aria-current={tab.value === current ? 'page' : undefined}
           className={cn(
-            'flex h-full items-center gap-1.5 border-y-2 border-transparent text-sm font-medium whitespace-nowrap -outline-offset-2',
+            'flex h-full items-center gap-2 border-y-2 border-transparent text-sm font-medium whitespace-nowrap -outline-offset-2',
             tab.value === current ? 'border-b-brand' : 'text-muted-foreground hover:text-foreground',
           )}
         >
@@ -397,7 +397,7 @@ export function Initials({ name, hollow, className }: { name: string; hollow?: b
 }
 
 export function Tag({ children }: { children: ReactNode }) {
-  return <span className="mono shrink-0 border px-1.5 text-xs whitespace-nowrap text-muted-foreground">{children}</span>
+  return <span className="mono shrink-0 border px-1 text-xs whitespace-nowrap text-muted-foreground">{children}</span>
 }
 
 export function RowSkeleton({ rows = 4 }: { rows?: number }) {
@@ -405,8 +405,8 @@ export function RowSkeleton({ rows = 4 }: { rows?: number }) {
     <div aria-busy>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className={ROW}>
-          <span className="h-3.5 w-32 animate-pulse bg-muted" />
-          <span className="h-3.5 w-48 animate-pulse bg-muted" />
+          <span className="h-3 w-32 animate-pulse bg-muted" />
+          <span className="h-3 w-48 animate-pulse bg-muted" />
         </div>
       ))}
     </div>

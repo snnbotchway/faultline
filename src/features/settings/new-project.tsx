@@ -65,7 +65,7 @@ export function NewProject({ org }: { org: string }) {
           <Field label="Project name" error={checked && !name.trim() ? 'Give the project a name.' : undefined}>
             {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={PROJECT_NAME_MAX} autoComplete="off" />}
           </Field>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <span className="text-sm font-medium">Platform</span>
             <PlatformPicker value={platform} onChange={setPlatform} />
           </div>

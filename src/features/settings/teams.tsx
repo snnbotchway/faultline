@@ -34,7 +34,7 @@ export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
   const open = (slug?: string) =>
     void navigate(slug ? { to: '/$org/settings/teams/$team/$tab', params: { org, team: slug, tab: 'members' }, replace: true } : { to: '/$org/settings/teams', params: { org }, replace: true })
   const create = write && (
-    <Button variant="default" size="sm" className="max-lg:h-9" onClick={() => setCreating(true)}>
+    <Button variant="default" size="sm" className="max-lg:h-9 touch-hit" onClick={() => setCreating(true)}>
       <Plus />
       New team
     </Button>
@@ -105,7 +105,7 @@ function TeamRow(props: RowProps) {
           </span>
         </span>
         {me && (team.isMember || canJoin) && (
-          <Button size="sm" className="relative z-10 w-16 max-lg:h-9" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
+          <Button size="sm" className="relative z-10 w-16 max-lg:h-9 touch-hit" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
             {team.isMember ? 'Leave' : 'Join'}
           </Button>
         )}
@@ -116,7 +116,7 @@ function TeamRow(props: RowProps) {
   )
 }
 
-const LINE = 'flex min-h-10 items-center gap-2.5 border-b max-lg:min-h-11'
+const LINE = 'flex min-h-10 items-center gap-2 border-b max-lg:min-h-11'
 
 function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpen }: RowProps & { opens: Project[] }) {
   const roster = useQuery(teamMembersQuery(org, team.slug)).data
@@ -134,12 +134,12 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpe
   return (
     <div className="grid gap-x-8 gap-y-4 border-b px-3 pt-1 pb-4 md:px-4 lg:grid-cols-2">
       <section aria-label={`Members of ${team.slug}`}>
-        <h3 className="label-caps border-b pb-1.5">Members</h3>
+        <h3 className="label-caps border-b pb-2">Members</h3>
         {!roster && <RowSkeleton rows={2} />}
         {roster?.length === 0 && <p className={cn(LINE, 'text-muted-foreground')}>Nobody yet</p>}
         {roster?.map((member) => (
           <div key={member.id} className={LINE}>
-            <Initials name={member.user?.name || member.email} hollow={member.pending} className="size-5 text-[0.625rem]" />
+            <Initials name={member.user?.name || member.email} hollow={member.pending} className="size-5" />
             <Link to="/$org/settings/members/$memberId" params={{ org, memberId: member.id }} className="min-w-0 flex-1 py-1 [overflow-wrap:anywhere] hover:underline">
               {member.user?.name || member.email}
             </Link>
@@ -169,7 +169,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpe
         )}
       </section>
       <section aria-label={`Projects of ${team.slug}`}>
-        <h3 className="label-caps border-b pb-1.5">Projects</h3>
+        <h3 className="label-caps border-b pb-2">Projects</h3>
         {opens.length === 0 && <p className={cn(LINE, 'text-muted-foreground')}>None yet</p>}
         {opens.map((project) => (
           <div key={project.id} className={LINE}>

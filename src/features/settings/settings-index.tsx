@@ -49,7 +49,7 @@ export function SettingsIndex({ org }: { org: string }) {
       <PageBar className="max-lg:h-auto max-lg:flex-wrap max-lg:gap-y-0 max-lg:pb-2">
         <h1 className="font-semibold max-lg:flex max-lg:h-11 max-lg:w-full max-lg:items-center">Settings</h1>
         <div className="relative w-full lg:ml-3 lg:max-w-md">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             ref={search}
             value={query}
@@ -59,7 +59,7 @@ export function SettingsIndex({ org }: { org: string }) {
             }}
             placeholder="Find a setting, project or person"
             aria-label="Find a setting, project or person"
-            className="h-8 pl-8 max-lg:h-9"
+            className="h-8 pl-9"
           />
           <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 max-lg:hidden">/</Kbd>
         </div>
@@ -72,7 +72,7 @@ export function SettingsIndex({ org }: { org: string }) {
             {found.map((entry, index) => (
               <li key={entry.path.join('/')}>
                 <Link {...entry.link} className={cn(ROW, '-outline-offset-2 hover:bg-accent', index === 0 && 'bg-selected')}>
-                  <span className="flex min-w-0 flex-1 flex-col py-1.5 lg:flex-row lg:items-center lg:gap-3">
+                  <span className="flex min-w-0 flex-1 flex-col py-2 lg:flex-row lg:items-center lg:gap-3">
                     <span className="min-w-0 truncate">
                       {entry.path.slice(0, -1).map((part) => (
                         <span key={part} className="text-muted-foreground">
@@ -171,7 +171,7 @@ export function SettingsIndex({ org }: { org: string }) {
                 <Row
                   label="Delete organization"
                   action={
-                    <Button variant="destructive" size="sm" className="max-lg:h-9" onClick={() => setDeleting(true)}>
+                    <Button variant="destructive" size="sm" className="max-lg:h-9 touch-hit" onClick={() => setDeleting(true)}>
                       Delete
                     </Button>
                   }

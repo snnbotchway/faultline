@@ -44,7 +44,7 @@ export function Confirm({
 export function RoleField({ value, onChange, allowOwner }: { value: OrgRole; onChange: (next: OrgRole) => void; allowOwner: boolean }) {
   const options = ROLES.filter((role) => allowOwner || role !== 'owner').map((role) => ({ value: role, label: ROLE_LABEL[role] }))
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <div className="flex h-5 items-center justify-between">
         <span className="text-sm font-medium">Role</span>
         <Popover>
@@ -52,7 +52,7 @@ export function RoleField({ value, onChange, allowOwner }: { value: OrgRole; onC
           <PopoverContent align="end" className="w-80 max-w-[calc(100vw-1.5rem)] p-0">
             <dl>
               {ROLES.map((role) => (
-                <div key={role} className={cn('flex flex-col gap-0.5 border-b px-3 py-2.5 last:border-b-0', role === value && 'bg-selected')}>
+                <div key={role} className={cn('flex flex-col gap-1 border-b px-3 py-2 last:border-b-0', role === value && 'bg-selected')}>
                   <dt className="text-sm font-semibold">{ROLE_LABEL[role]}</dt>
                   <dd className="text-sm text-muted-foreground">{ROLE_ADDS[role]}</dd>
                 </div>
@@ -84,7 +84,7 @@ export function TeamChecklist({
   return (
     <div role="group" aria-label="Teams" className={cn('border bg-card', className)}>
       {teams.map((team) => (
-        <label key={team.slug} className="flex min-h-10 cursor-pointer items-center gap-2.5 border-b px-2.5 py-1.5 last:border-b-0 hover:bg-accent max-lg:min-h-11">
+        <label key={team.slug} className="flex min-h-10 cursor-pointer items-center gap-2 border-b px-3 py-2 last:border-b-0 hover:bg-accent max-lg:min-h-11">
           <Checkbox checked={value.includes(team.slug)} onCheckedChange={(next) => onChange(next ? [...value, team.slug] : value.filter((slug) => slug !== team.slug))} />
           <span className="mono shrink-0 whitespace-nowrap">#{team.slug}</span>
           <span className="mono min-w-0 flex-1 text-right text-muted-foreground">
@@ -106,8 +106,8 @@ export function PlatformPicker({ value, onChange }: { value: string; onChange: (
   return (
     <div className="border">
       <div className="relative border-b">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a platform" aria-label="Find a platform" className="border-0 pl-8" />
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a platform" aria-label="Find a platform" className="border-0 pl-9" />
       </div>
       <div role="radiogroup" aria-label="Platform">
         {PLATFORM_GROUPS.filter((group) => shown.some((platform) => platform.group === group)).map((group) => (

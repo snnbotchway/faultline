@@ -77,7 +77,7 @@ export function InviteDialog({
       <FormDialog open onClose={onClose} title={links.length === 1 ? 'Invite link' : `${links.length} invite links`}>
         <p className="prose-text">This server doesn't send email. Pass each link on yourself.</p>
         {links.map((outcome) => (
-          <div key={outcome.email} className="flex flex-col gap-1.5">
+          <div key={outcome.email} className="flex flex-col gap-2">
             <span className="text-sm font-medium [overflow-wrap:anywhere]">{outcome.email}</span>
             <CopyField value={outcome.link ?? ''} label={`Invite link for ${outcome.email}`} />
           </div>
@@ -101,7 +101,7 @@ export function InviteDialog({
         </FormError>
       ))}
       <RoleField value={role} onChange={setRole} allowOwner={allowOwner} />
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Teams</span>
         <TeamChecklist teams={teams} projects={projects} value={chosen} onChange={setChosen} />
       </div>

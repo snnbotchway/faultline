@@ -68,7 +68,7 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
     <>
       <SettingsBar org={org} title={slug} mono>
         {project.data?.firstEvent && (
-          <Button asChild size="sm" className="max-lg:h-9">
+          <Button asChild size="sm" className="max-lg:h-9 touch-hit">
             <Link to="/$org/issues" params={{ org }} search={{ project: [Number(project.data.id)] }}>
               Issues
             </Link>
@@ -131,7 +131,7 @@ function General({ org, project, teams, write, admin }: { org: string; project: 
           <Row
             label="Delete project"
             action={
-              <Button variant="destructive" size="sm" className="max-lg:h-9" onClick={() => setDeleting(true)}>
+              <Button variant="destructive" size="sm" className="max-lg:h-9 touch-hit" onClick={() => setDeleting(true)}>
                 Delete
               </Button>
             }

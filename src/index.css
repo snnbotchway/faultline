@@ -229,3 +229,15 @@
   line-height: 1.55;
   max-width: 72ch;
 }
+
+/* A control drawn 36px tall in a bar or a group heading whose target still reaches 44px on touch layouts. */
+@utility touch-hit {
+  @variant max-lg {
+    position: relative;
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -4px 0;
+    }
+  }
+}

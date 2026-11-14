@@ -10,8 +10,8 @@ export function Switch({ className, ...props }: React.ComponentProps<typeof Prim
       className={cn('group/switch grid h-8 w-11 shrink-0 place-items-center outline-none disabled:opacity-50 max-lg:size-11', className)}
       {...props}
     >
-      <span className="flex h-5 w-9 items-center border border-foreground/45 bg-card p-0.5 transition-colors duration-100 group-focus-visible/switch:outline-2 group-focus-visible/switch:outline-offset-1 group-focus-visible/switch:outline-brand group-data-[state=checked]/switch:border-foreground group-data-[state=checked]/switch:bg-foreground">
-        <Primitive.Thumb className="size-3.5 bg-foreground/55 transition-transform duration-100 data-[state=checked]:translate-x-4 data-[state=checked]:bg-background" />
+      <span className="flex h-5 w-9 items-center bg-card p-1 inset-ring inset-ring-foreground/45 transition-colors duration-100 group-focus-visible/switch:outline-2 group-focus-visible/switch:outline-offset-1 group-focus-visible/switch:outline-foreground group-data-[state=checked]/switch:bg-foreground group-data-[state=checked]/switch:inset-ring-foreground">
+        <Primitive.Thumb className="size-3 bg-foreground/55 transition-transform duration-100 data-[state=checked]:translate-x-4 data-[state=checked]:bg-background" />
       </span>
     </Primitive.Root>
   )

@@ -18,13 +18,13 @@ Totals: **44 routed screens** and **6 redirects** in the stock router, plus 5 sc
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Auth | `/login` (`alreadyLoggedInGuard`) | Email + password form, social-app buttons, MFA step (TOTP / recovery code / WebAuthn) | `GET /api/settings/` (socialApps, enableUserRegistration); `/_allauth/browser/v1/auth/login`; `.../auth/2fa/authenticate`; `.../auth/webauthn/authenticate` (GET options, POST credential); `POST .../auth/provider/redirect` (form POST) | [ ] |
-| Auth | `/login/finalize` | Waits for `GET .../auth/session`, then follows `?next` or sends back to `/login`. Social login callback lands here | `GET /_allauth/browser/v1/auth/session` | [ ] |
-| Auth | `/register` (`alreadyLoggedInGuard`) | Email, password, confirm. Social register buttons. Shows "registration closed" copy. With `?next` goes there, else `/organizations/new` | `GET /api/settings/`; `POST /_allauth/browser/v1/auth/signup`; `POST .../auth/provider/redirect` | [ ] |
-| Auth | `/reset-password` | Request reset email | `POST /_allauth/browser/v1/auth/password/request` | [ ] |
-| Auth | `/reset-password/set-new-password/:key` | Set new password from emailed key. Allauth answers 401 on success (flow continues to login/MFA) | `POST /_allauth/browser/v1/auth/password/reset` | [ ] |
-| Auth | `/accept/:memberId/:token` | Org invite landing: shows org name, accept button if logged in, else register/login links carrying `next=/accept/:id/:token` | `GET /accept/{org_user_id}/{token}/` (anonymous); `POST /accept/{org_user_id}/{token}/` body `{acceptInvite:true}` | [ ] |
-| Auth | `/profile/confirm-email/:key` (inside shell, so needs login) | Posts the email-verification key, then goes to `/profile` | `POST /_allauth/browser/v1/auth/email/verify` | [ ] |
+| Auth | `/login` (`alreadyLoggedInGuard`) | Email + password form, social-app buttons, MFA step (TOTP / recovery code / WebAuthn) | `GET /api/settings/` (socialApps, enableUserRegistration); `/_allauth/browser/v1/auth/login`; `.../auth/2fa/authenticate`; `.../auth/webauthn/authenticate` (GET options, POST credential); `POST .../auth/provider/redirect` (form POST) | [x] |
+| Auth | `/login/finalize` | Waits for `GET .../auth/session`, then follows `?next` or sends back to `/login`. Social login callback lands here | `GET /_allauth/browser/v1/auth/session` | [x] |
+| Auth | `/register` (`alreadyLoggedInGuard`) | Email, password, confirm. Social register buttons. Shows "registration closed" copy. With `?next` goes there, else `/organizations/new` | `GET /api/settings/`; `POST /_allauth/browser/v1/auth/signup`; `POST .../auth/provider/redirect` | [x] |
+| Auth | `/reset-password` | Request reset email | `POST /_allauth/browser/v1/auth/password/request` | [x] |
+| Auth | `/reset-password/set-new-password/:key` | Set new password from emailed key. Allauth answers 401 on success (flow continues to login/MFA) | `POST /_allauth/browser/v1/auth/password/reset` | [x] |
+| Auth | `/accept/:memberId/:token` | Org invite landing: shows org name, accept button if logged in, else register/login links carrying `next=/accept/:id/:token` | `GET /accept/{org_user_id}/{token}/` (anonymous); `POST /accept/{org_user_id}/{token}/` body `{acceptInvite:true}` | [x] |
+| Auth | `/profile/confirm-email/:key` (inside shell, so needs login) | Posts the email-verification key, then goes to `/profile` | `POST /_allauth/browser/v1/auth/email/verify` | [x] |
 | Auth | (none) session boot | `GET .../auth/session` on app start; 401 means logged out, 401 with `mfa_authenticate` flow means half-logged-in. `isAuthenticated` mirrored in `localStorage` to avoid a flash | `GET /_allauth/browser/v1/auth/session` | [x] |
 | Auth | (none) logout | User menu "Log Out", then hard navigate to `/login` | `DELETE /_allauth/browser/v1/auth/session` | [x] |
 | Auth | (none) global 401 handler | Any non-session 401/403 with `detail` "Unauthorized" or "Authentication credentials were not provided." clears auth and reloads `/` | n/a | [x] |
@@ -35,8 +35,8 @@ Totals: **44 routed screens** and **6 redirects** in the stock router, plus 5 sc
 | Stock path | Redirects to | Faultline |
 |---|---|---|
 | `/:org/:project/issues/:id` | `/:org/issues/:id` | [x] |
-| `/orgredirect/organizations/:org/settings/auth-tokens` | `/profile/auth-tokens` | [ ] |
-| `/account/settings/wizard/:hash` | `/profile/wizard/:hash` | [ ] |
+| `/orgredirect/organizations/:org/settings/auth-tokens` | `/profile/auth-tokens` | [x] |
+| `/account/settings/wizard/:hash` | `/profile/wizard/:hash` | [x] |
 | `/:org/:project-slug` | `/:org/settings/projects/:project-slug` | [ ] |
 | `/:org/performance` | `/:org/performance/transaction-groups` | [ ] |
 | `**` | `/` | [ ] |
@@ -107,7 +107,6 @@ Where Faultline differs on purpose:
 
 - Comments, merged fingerprints and user reports are sections of the issue page; the stock tab paths redirect to it.
 - An issue that was merged into another shows "Issue not found" at its old address; the backend keeps no pointer to the issue that survived.
-- `/login` stays unticked until signing in with a security key (WebAuthn) is built; password, social and authenticator or recovery code sign-in work.
 
 ---
 
@@ -226,22 +225,28 @@ Easy to miss:
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Profile | `/profile` (Account) | Name, time zone (autocomplete validated), theme (System/Light/Dark); change/set password; manage emails; connect/disconnect social accounts; delete account | `PUT /users/me/` `{name, options}`; `POST /_allauth/browser/v1/account/password/change`; `/users/{id}/emails/`; `/_allauth/browser/v1/account/providers`; `DELETE /users/me/` | [ ] |
-| Profile | `/profile/multi-factor-auth` | TOTP setup wizard (QR/secret, recovery codes preview, confirm code), turn off TOTP, regenerate recovery codes, WebAuthn keys (add with name, remove) | `GET /_allauth/browser/v1/account/authenticators`; `.../authenticators/totp` (GET 404 carries secret, POST code, DELETE); `.../authenticators/recovery-codes` (POST regenerates); `.../authenticators/webauthn` (GET creation options, POST, DELETE body `{authenticators:[id]}`); `GET`/`POST /generate-recovery-codes/` | [ ] |
-| Profile | `/profile/notifications` | Default "Project alerts" On/Off; per-project tri-state (Default / On / Off) grouped by org | `GET`/`PUT /users/me/notifications/`; `GET`/`PUT /users/me/notifications/alerts/` (body `{<projectId>: -1|0|1}`, 204); `GET /projects/` | [ ] |
-| Profile | `/profile/auth-tokens` | Token list: label, scope summary, token value in a copy-input (always visible, not one-time), delete; "New token" | `GET /api-tokens/`; `DELETE /api-tokens/{id}/` | [ ] |
-| Profile | `/profile/auth-tokens/new` | Label + scope checkboxes grouped by project/team/event/org/member with read/write/admin levels; shows 422 field errors | `POST /api-tokens/` | [ ] |
-| Profile | `/profile/wizard/:hash` | CLI login: posts the hash so `@sentry/wizard` gets a token; shows success/failure text | `POST /wizard-set-token/` `{hash}` | [ ] |
+| Profile | `/profile` (Account) | Name, time zone (autocomplete validated), theme (System/Light/Dark); change/set password; manage emails; connect/disconnect social accounts; delete account | `PUT /users/me/` `{name, options}`; `POST /_allauth/browser/v1/account/password/change`; `/users/{id}/emails/`; `/_allauth/browser/v1/account/providers`; `DELETE /users/me/` | [x] |
+| Profile | `/profile/multi-factor-auth` | TOTP setup wizard (QR/secret, recovery codes preview, confirm code), turn off TOTP, regenerate recovery codes, WebAuthn keys (add with name, remove) | `GET /_allauth/browser/v1/account/authenticators`; `.../authenticators/totp` (GET 404 carries secret, POST code, DELETE); `.../authenticators/recovery-codes` (POST regenerates); `.../authenticators/webauthn` (GET creation options, POST, DELETE body `{authenticators:[id]}`); `GET`/`POST /generate-recovery-codes/` | [x] |
+| Profile | `/profile/notifications` | Default "Project alerts" On/Off; per-project tri-state (Default / On / Off) grouped by org | `GET`/`PUT /users/me/notifications/`; `GET`/`PUT /users/me/notifications/alerts/` (body `{<projectId>: -1|0|1}`, 204); `GET /projects/` | [x] |
+| Profile | `/profile/auth-tokens` | Token list: label, scope summary, token value in a copy-input (always visible, not one-time), delete; "New token" | `GET /api-tokens/`; `DELETE /api-tokens/{id}/` | [x] |
+| Profile | `/profile/auth-tokens/new` | Label + scope checkboxes grouped by project/team/event/org/member with read/write/admin levels; shows 422 field errors | `POST /api-tokens/` | [x] |
+| Profile | `/profile/wizard/:hash` | CLI login: posts the hash so `@sentry/wizard` gets a token; shows success/failure text | `POST /wizard-set-token/` `{hash}` | [x] |
 
 Account page details:
-- [ ] Email list: Primary tag, Unverified pill, resend confirmation, make primary, remove; add email with duplicate check. Uses GlitchTip's own email API, not allauth's `/account/email`.
-- [ ] Social: "Connect an account" select (only when `socialApps` exist), connected accounts list with Disconnect (blocked when it would leave no login method), shows provider name.
-- [ ] Password: "Set password" variant when `hasPasswordAuth` is false (no current-password field). Min 8, confirm field.
-- [ ] Delete account: 400 means the user still owns an org; paid-subscription owners are blocked.
+- [x] Email list: Primary tag, Unverified pill, resend confirmation, make primary, remove; add email with duplicate check. Uses GlitchTip's own email API, not allauth's `/account/email`.
+- [x] Social: "Connect an account" select (only when `socialApps` exist), connected accounts list with Disconnect (blocked when it would leave no login method), shows provider name.
+- [x] Password: "Set password" variant when `hasPasswordAuth` is false (no current-password field). Min 8, confirm field.
+- [x] Delete account: 400 means the user still owns an org; paid-subscription owners are blocked.
 - [ ] Preferences schema also has `stacktraceOrder`, `clock24Hours`, `language` but the stock UI never edits them (stack order toggle is per-view local state).
-- [ ] MFA: first-time TOTP enrolment needs the user to type one of the preview recovery codes to confirm they saved them; `POST /generate-recovery-codes/` returns 204 on success and the stock UI treats any non-200 as success.
-- [ ] MFA: WebAuthn uses `@github/webauthn-json` (base64url JSON <-> ArrayBuffer). Passkey-only login (`mfa_login_webauthn` flow, `auth/webauthn/login`) is advertised by the backend but not used by the stock login page.
-- [ ] Recovery codes list shown once with copy and "I copied them" gate.
+- [x] MFA: first-time TOTP enrolment needs the user to type one of the preview recovery codes to confirm they saved them; `POST /generate-recovery-codes/` returns 204 on success and the stock UI treats any non-200 as success.
+- [x] MFA: WebAuthn uses `@github/webauthn-json` (base64url JSON <-> ArrayBuffer). Passkey-only login (`mfa_login_webauthn` flow, `auth/webauthn/login`) is advertised by the backend but not used by the stock login page.
+- [x] Recovery codes list shown once with copy and "I copied them" gate.
+
+Where Faultline differs on purpose:
+
+- New passwords have a Show toggle instead of a confirm field.
+- An API token is shown in full once, when it is made; the list shows its first characters.
+- Two-step setup asks for every unverified email to be verified or removed first, because the backend refuses it otherwise.
 
 ---
 
@@ -287,7 +292,7 @@ These are not required for parity. Tick only if Faultline chooses to ship them.
 
 | Feature | Backend | Notes | Faultline |
 |---|---|---|---|
-| Org login page `/login/{org-slug}` | `GET /api/settings/{organization_slug}/` returns that org's social apps (including non-public ones). SPA regex in `glitchtip/urls.py` already serves `/login/...` | Backend-generated `loginUrl` for org SSO apps points here; stock router falls through to `**` and redirects to `/` | [+] |
+| Org login page `/login/{org-slug}` | `GET /api/settings/{organization_slug}/` returns that org's social apps (including non-public ones). SPA regex in `glitchtip/urls.py` already serves `/login/...` | Backend-generated `loginUrl` for org SSO apps points here; stock router falls through to `**` and redirects to `/` | [x] |
 | Org SSO / social-app management | `GET`/`POST /organizations/{org}/social-apps/`; `PUT`/`DELETE .../social-apps/{id}/` (name, serverUrl, clientID, clientSecret, provider; returns `callbackUrl` and `loginUrl`) | Gated by `organization_can_customize_sso` | [+] |
 | Status pages | `GET`/`POST /organizations/{org}/status-pages/`; public HTML at `/status-pages/{org}/{slug}/` | List and create only; no update/delete route in the schema. HTML is server-rendered and cached 60 s | [+] |
 | Copy-link invites | `inviteLink` in the invite response | Works with email disabled (`enabledFeatures` lacks `email`). Stock frontend ignores it | [+] |

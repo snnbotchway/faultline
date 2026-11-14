@@ -175,6 +175,7 @@ Designed at 390px, checked at 375px.
 - Tapping a row opens the issue; rows do not unfold. Titles wrap to two lines instead of cutting off.
 - With a selection, the tab bar gives way to an action bar holding the bulk actions.
 - An issue's actions sit in a sticky bar at the bottom, the main action filled.
+- A dialog opens as a sheet from the bottom edge, full width, with the page's bars still visible above it. Its buttons are pinned along the sheet's bottom, main action first, so they stay in thumb reach while the content scrolls.
 - Stats sit in one row and the chart is short, so the stack trace starts on the first screen.
 - Code scrolls sideways inside its own box, and a box that scrolls shows a cut-off edge so the user can tell.
 - No hover-only information.
@@ -192,5 +193,4 @@ Designed at 390px, checked at 375px.
 ## Not built yet
 
 - Settings. When they are built: no help paragraphs under fields (principle 2), DSNs and code samples scroll with a visible cut-off edge and a copy button, and organization settings need an entry point from the settings home.
-- Sign-up, password reset, invitations and social account linking screens.
 - The server-stored theme preference; the theme is per browser for now.

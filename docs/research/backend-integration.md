@@ -103,6 +103,25 @@ Live response and the flags that matter (`BE glitchtip/api/api.py:169-262`):
 Other anonymous endpoints: `GET /api/settings/{organization_slug}/` returns only `{socialApps}` for that org's own login page (empty list for unknown slugs). The backend builds `loginUrl = {GLITCHTIP_URL}/login/{org-slug}` (`BE apps/organizations_ext/schema.py:204-209`) but the stock router has no such page.
 Instance-license endpoints (`/api/0/instance-license/`, `/support-link/`) need a session.
 
+### 1.6 Account errors (live, 7.0.0)
+
+Faultline never shows the backend's sentences. It words each error by allauth's `code` (`src/api/sign-in-errors.ts` for the password and code steps, `src/api/form-errors.ts` for everything else) and by GlitchTip's `detail` string, and logs the raw body.
+
+| Where | Answer |
+|---|---|
+| `POST .../auth/signup`, `.../account/password/change` (`new_password`), `.../auth/password/reset` | 400 with one entry per failed rule on the password param: `password_too_short`, `password_too_common`, `password_entirely_numeric` (and `password_too_similar`) |
+| `POST .../auth/signup` | `email_taken` (param `email`); `invalid` (param `email`) for a malformed address |
+| `POST .../account/password/change` | A wrong current password is `enter_current_password` (param `current_password`), not a mismatch code |
+| `GET .../auth/password/reset` with header `X-Password-Reset-Key: <key>` | 200 for a usable key, 400 `invalid_password_reset` (param `key`) for a bad, used or expired one. Lets the set-new-password page say "expired" before the user types |
+| `POST .../auth/email/verify` | 400 `invalid_or_expired_key` (param `key`) |
+| `POST .../account/authenticators/totp` | 400 `unverified_email` (param `code`) while **any** of the user's addresses is unverified, not only the primary |
+| `POST /api/0/users/me/emails/` | 400 `Email already exists` when the user already has it. An address that belongs to another account is accepted (unverified). 422 Ninja `detail` list for a malformed address |
+| `DELETE /api/0/users/me/` | 400 `User is organization owner. Delete organization or transfer ownership first.` |
+| `POST /api/0/generate-recovery-codes/` | 400 `Invalid code`, or `No recovery codes set, use GET first` |
+| `POST /api/0/wizard-set-token/` | 422 when `hash` is not 64 characters; 400 `Token not found` for an unknown or used hash |
+| `POST /api/0/api-tokens/` | Accepts an empty `label` and an empty `scopes` list; Faultline requires both |
+| `PUT /api/0/users/me/` | Needs `options` in the body (422 `missing` otherwise); `name` is at most 255 characters |
+
 ---
 
 ## 2. Invite acceptance

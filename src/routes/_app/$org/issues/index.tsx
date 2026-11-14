@@ -1,8 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { NotBuilt } from '@/components/shell/not-built'
+import { Inbox } from '@/features/issues/inbox'
 import { validateInboxSearch } from '@/features/issues/search'
 
 export const Route = createFileRoute('/_app/$org/issues/')({
   validateSearch: validateInboxSearch,
-  component: () => <NotBuilt name="issues" />,
+  component: InboxRoute,
 })
+
+function InboxRoute() {
+  return <Inbox org={Route.useParams().org} search={Route.useSearch()} />
+}

@@ -113,7 +113,6 @@ export function uptimeShare(history: { changes: StateChange[]; toFirst: boolean 
   return { share: 1 - down / (now - from), sinceFirst }
 }
 
-// `100%`, `99.2%`; never rounded up to 100% while there was downtime.
 export function percent(share: number): string {
   if (share >= 1) return '100%'
   return `${Math.min(99.9, Math.floor(share * 1000) / 10)}%`

@@ -95,8 +95,8 @@ export const monitorQuery = (slug: string, id: number, stamp?: string) =>
 // they reach back to its first check; and, while they end where a page ended, the cursor of the next.
 export type ChangeHistory = { changes: Check[]; toFirst: boolean; older?: string }
 
-// Each page holds 100 changes; 20 cover a monitor going down every 20 minutes for a fortnight. No
-// more than that many are kept either.
+// Each page holds 100 changes; 20 cover a monitor going down every 20 minutes for a fortnight. The
+// cap also holds the cache, which grows by joining new pages to it, at that size.
 const MAX_CHANGE_PAGES = 20
 const MAX_CHANGES = MAX_CHANGE_PAGES * MAX_PAGE_SIZE
 // The furthest back any screen draws, the 14-day period. Older changes are dropped from the cache.

@@ -2,7 +2,7 @@ import { useId, useState, type FormEvent } from 'react'
 import { RELEASES_SCOPE, TOKEN_LEVELS, TOKEN_RESOURCES, TokenLevel, TokenResource, accountKeys, tokens, type ApiToken, type TokenScope } from '@/api/account'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field, FormAlert } from '@/components/ui/field'
+import { Field, FieldError, FormAlert, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog, TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { CopyButton } from './copy-button'
@@ -46,7 +46,7 @@ function TokenRow({ token }: { token: ApiToken }) {
 }
 
 export function TokenRows({ list }: { list: ApiToken[] }) {
-  if (list.length === 0) return <p className="prose-text border-b py-3 text-muted-foreground">No tokens. Make one to use the API or the command-line tools.</p>
+  if (list.length === 0) return <p className="prose-text border-b py-3 text-muted-foreground">No tokens</p>
   return (
     <ul>
       {list.map((token) => (
@@ -121,16 +121,14 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
             </tr>
           </tbody>
         </table>
-        {create.fields.scopes && (
-          <p id={scopesErrorId} className="prose-text mt-2 text-destructive" role="alert">
-            {create.fields.scopes}
-          </p>
-        )}
+        <FieldError id={scopesErrorId} className="mt-2">
+          {create.fields.scopes}
+        </FieldError>
       </div>
       <TaskActions>
-        <Button type="submit" variant="default" disabled={create.busy} aria-busy={create.busy}>
+        <SubmitButton busy={create.busy}>
           Create token
-        </Button>
+        </SubmitButton>
         <Button onClick={onClose}>Cancel</Button>
       </TaskActions>
     </form>
@@ -160,7 +158,7 @@ export function TokenRevealDialog({ token, onClose }: { token: ApiToken | null; 
       }
       description="It won't be shown again."
     >
-      <code className="mono mb-4 block border bg-code px-3 py-3 break-all select-all">{token?.token}</code>
+      <code className="mono mb-4 block border bg-code p-3 break-all select-all">{token?.token}</code>
       <TaskActions>
         <CopyButton text={token?.token ?? ''} label="Copy token" variant="default" />
         <Button onClick={onClose}>Done</Button>

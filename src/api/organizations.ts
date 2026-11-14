@@ -57,9 +57,11 @@ export const projectsQuery = (slug: string) =>
 export const environmentsQuery = (slug: string) =>
   queryOptions({
     queryKey: organizationKeys.environments(slug),
-    queryFn: async () =>
-      unwrap(
-        await api.GET('/api/0/organizations/{organization_id_or_slug}/environments/', { params: { path: orgPath(slug) } }),
+    queryFn: () =>
+      fetchAllPages((cursor) =>
+        api.GET('/api/0/organizations/{organization_id_or_slug}/environments/', {
+          params: { path: orgPath(slug), query: { cursor, limit: MAX_PAGE_SIZE } },
+        }),
       ),
   })
 

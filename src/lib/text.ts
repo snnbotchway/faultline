@@ -1,5 +1,8 @@
-// `1 issue`, `3 issues`. `count` may already be worded (`1000+`).
-export const plural = (count: number | string, one: string, many = `${one}s`) => `${count} ${String(count) === '1' ? one : many}`
+// `issue` or `issues`: the word for a count, for when the count is shown apart from it. `count` may already be worded (`1000+`).
+export const countWord = (count: number | string, one: string, many = `${one}s`) => (String(count) === '1' ? one : many)
+
+// `1 issue`, `3 issues`.
+export const plural = (count: number | string, one: string, many = `${one}s`) => `${count} ${countWord(count, one, many)}`
 
 // The words of a search box, for matching in any order and case.
 export const searchWords = (query: string) => query.toLowerCase().split(/\s+/).filter(Boolean)

@@ -10,16 +10,17 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MarkLabels, PeriodToggle, ReleaseRules } from '@/features/issues/trace'
 import { periodInfo, releaseMarks, spanAxis, type Mark } from '@/features/issues/trend'
-import { ago, dayTime, exact, noun } from '@/features/issues/format'
+import { ago, dayTime, exact } from '@/features/issues/format'
 import { SECOND_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { responseText } from './format'
 import { Health } from './health'
 import { UptimeTab } from './address'
 import { HEALTH, HEALTH_ORDER, downReason, healthLine, isAlarm, isHeartbeat, targetText } from './describe'
 import { CheckBars, DowntimeStrip, HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth, type MonitorHealth } from './use-health'
+import { countWord } from '@/lib/text'
+import { formatMs } from '@/features/performance/format'
 
 // How far back the shared time axis reaches, in milliseconds.
 const periodLength = (period: StatsPeriod) => periodInfo(period).size * periodInfo(period).count * SECOND_MS
@@ -102,7 +103,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
         {shown ? (
           <>
             <span>
-              <span className="mono text-2xl leading-none font-semibold lg:text-3xl">{monitors.length}</span> {noun(monitors.length, 'monitor')}
+              <span className="mono text-2xl leading-none font-semibold lg:text-3xl">{monitors.length}</span> {countWord(monitors.length, 'monitor')}
             </span>
             {alarms.map((state) => (
               <span key={state} className={HEALTH[state].color}>
@@ -195,14 +196,14 @@ function MonitorRow({ org, monitor, health, from, now, marks }: { org: string; m
             <span className="truncate max-lg:hidden">{targetText(monitor)}</span>
             <span className={cn('truncate lg:hidden', loud && HEALTH[state].color)}>
               {line}
-              {state === Health.up && report.typical !== undefined && ` · ${responseText(report.typical)}`}
+              {state === Health.up && report.typical !== undefined && ` · ${formatMs(report.typical)}`}
             </span>
           </div>
         </div>
         <DowntimeStrip downtimes={report.downtimes} from={from} to={now} marks={marks} waiting={state === Health.waiting} className="lg:mx-4" />
         <span className="flex items-center justify-end gap-3 max-lg:hidden">
           {!isHeartbeat(monitor) && checks.length > 0 && <CheckBars checks={checks} timeout={monitor.timeout} height={20} className="w-30" />}
-          <span className={cn('mono w-14 text-right', (state === Health.slow || alsoSlow) && cn('font-semibold', HEALTH[Health.slow].color))}>{responseText(report.typical)}</span>
+          <span className={cn('mono w-14 text-right', (state === Health.slow || alsoSlow) && cn('font-semibold', HEALTH[Health.slow].color))}>{report.typical === undefined ? '' : formatMs(report.typical)}</span>
         </span>
         <time className="mono text-right text-muted-foreground max-lg:hidden" dateTime={monitor.lastChange ?? undefined} title={monitor.lastChange ? exact(monitor.lastChange) : undefined}>
           {monitor.lastChange && monitor.isUp !== null ? ago(monitor.lastChange, new Date(now)) : ''}

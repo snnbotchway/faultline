@@ -14,6 +14,7 @@ import { ALL_ENVIRONMENTS } from '@/lib/text'
 import { withScheme } from '@/lib/url'
 import { cn } from '@/lib/utils'
 import { every } from './format'
+import { DAY, HOUR, MINUTE } from '@/lib/time'
 
 // The kinds a monitor can be made as, or switched between. An SSL monitor keeps its kind.
 const TYPES: { value: MonitorType; label: string; icon: LucideIcon }[] = [
@@ -23,7 +24,7 @@ const TYPES: { value: MonitorType; label: string; icon: LucideIcon }[] = [
   { value: MonitorType.port, label: 'Port', icon: Plug },
   { value: MonitorType.heartbeat, label: 'Heartbeat', icon: HeartPulse },
 ]
-const INTERVALS = [60, 120, 300, 900, 3600, 86_400]
+const INTERVALS = [MINUTE, 2 * MINUTE, 5 * MINUTE, 15 * MINUTE, HOUR, DAY]
 const THRESHOLDS = [1, 2, 3, 5]
 const MAX_TIMEOUT = 60
 const DEFAULT_TIMEOUT = 20

@@ -1,5 +1,5 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
-import { DAY_MS } from '@/lib/time'
+import { DAY_MS, MINUTE_MS } from '@/lib/time'
 import { api, orgPath, unwrap } from './client'
 import type { Issue } from './issues'
 import { MAX_PAGE_SIZE, toPage, type Page } from './pagination'
@@ -40,7 +40,7 @@ export const canOpenRelease = (version: string) => !version.includes('/')
 export const recentReleasesQuery = (slug: string) =>
   queryOptions({
     queryKey: releaseKeys.recent(slug),
-    staleTime: 5 * 60_000,
+    staleTime: 5 * MINUTE_MS,
     queryFn: async () =>
       unwrap(
         await api.GET('/api/0/organizations/{organization_id_or_slug}/releases/', {
@@ -72,7 +72,7 @@ export const releaseQuery = (slug: string, version: string) =>
 export const releaseDeploysQuery = (slug: string, version: string) =>
   queryOptions({
     queryKey: releaseKeys.deploys(slug, version),
-    staleTime: 5 * 60_000,
+    staleTime: 5 * MINUTE_MS,
     queryFn: async () =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/releases/{version}/deploys/', { params: { path: releasePath(slug, version) } })),
   })
@@ -104,7 +104,7 @@ export const releaseFilesQuery = (slug: string, version: string) =>
 export const releaseIssuesQuery = (slug: string, version: string) =>
   infiniteQueryOptions({
     queryKey: releaseKeys.issues(slug, version),
-    staleTime: 5 * 60_000,
+    staleTime: 5 * MINUTE_MS,
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }): Promise<Page<Issue>> => {
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/', {
@@ -137,7 +137,7 @@ export function countNewIssues(issues: Pick<Issue, 'firstRelease' | 'firstSeen'>
 export const newIssuesByReleaseQuery = (slug: string) =>
   queryOptions({
     queryKey: releaseKeys.newIssues(slug),
-    staleTime: 5 * 60_000,
+    staleTime: 5 * MINUTE_MS,
     queryFn: async () => {
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/', {
         params: { path: orgPath(slug), query: { query: 'is:unresolved', sort: '-first_seen', limit: MAX_PAGE_SIZE } },
@@ -162,7 +162,7 @@ export type DailyEvents = { start: number; counts: number[] }
 export const dailyEventsQuery = (slug: string, days: number) =>
   queryOptions({
     queryKey: releaseKeys.events(slug, days),
-    staleTime: 5 * 60_000,
+    staleTime: 5 * MINUTE_MS,
     queryFn: async (): Promise<DailyEvents> => {
       const midnight = new Date()
       midnight.setHours(0, 0, 0, 0)

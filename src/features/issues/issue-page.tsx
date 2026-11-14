@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, Ellipsis } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { ApiError } from '@/api/client'
 import { IssueStatus, StatsPeriod, TagKey, issueEventQuery, issueQuery, issueStatsQuery, issueTagsQuery, rawEventUrl, type IssueDetail } from '@/api/issues'
 import { canAdminEvents, canWriteEvents, organizationQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
@@ -30,6 +29,7 @@ import { StackTrace } from './stack-trace'
 import { ACTION, STATUS, isStatus, statusActions } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { axisFor, axisStartLabel, fillBuckets, periodInfo, releaseMarks } from './trend'
+import { isNotFound } from '@/api/errors'
 
 // Enough of an event id to tell two apart; the full id is in the title and the raw event.
 const EVENT_ID_SHOWN = 8
@@ -237,7 +237,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   )
 
   if (issue.isError) {
-    const missing = issue.error instanceof ApiError && issue.error.status === 404
+    const missing = isNotFound(issue.error)
     return (
       <>
         {bar}

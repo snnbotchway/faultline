@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { Health, checkHealth, checkScale, downtimes, healthOf } from './health'
+import { MINUTE_MS } from '@/lib/time'
 
 const NOW = Date.parse('2026-11-14T12:00:00Z')
-const MIN = 60_000
+const MIN = MINUTE_MS
 const at = (minutesAgo: number) => new Date(NOW - minutesAgo * MIN).toISOString()
 const change = (minutesAgo: number, isUp: boolean, reason: number | null = isUp ? null : 2) => ({ startCheck: at(minutesAgo), isUp, reason, responseTime: null })
 const passed = (responseTime: number) => ({ startCheck: at(1), isUp: true, reason: null, responseTime })
@@ -44,7 +45,7 @@ describe('healthOf', () => {
   })
 
   it('is never slow without a timeout, as for a heartbeat', () => {
-    expect(healthOf({ isUp: true, timeout: null }, [passed(60_000)], [], NOW).health).toBe(Health.up)
+    expect(healthOf({ isUp: true, timeout: null }, [passed(MIN)], [], NOW).health).toBe(Health.up)
   })
 })
 

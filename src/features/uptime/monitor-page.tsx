@@ -3,8 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { projectAlertsQuery } from '@/api/alerts'
-import { ApiError } from '@/api/client'
-import { explain } from '@/api/errors'
+import { explain, isNotFound } from '@/api/errors'
 import { isHttp, monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectSlug, projectsQuery } from '@/api/organizations'
 import { recentReleasesQuery, type Release } from '@/api/releases'
@@ -22,11 +21,12 @@ import { releaseName } from '@/lib/text'
 import { ago, brief, clock, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { every, responseText, span } from './format'
+import { every, span } from './format'
 import { Health, checkHealth, checkScale, healthOf, isSlow, type Downtime, type HealthReport } from './health'
 import { isMonitorId } from './address'
 import { HEALTH, healthLine, isAlarm, isHeartbeat, reasonText, targetText } from './describe'
 import { CheckBars, DowntimeGlyph, HealthGlyph } from './parts'
+import { formatMs } from '@/features/performance/format'
 
 const CHECKS_SHOWN = 8
 
@@ -65,7 +65,7 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
   )
 
   if (!valid || monitor.isError) {
-    const missing = !valid || (monitor.error instanceof ApiError && monitor.error.status === 404)
+    const missing = !valid || (isNotFound(monitor.error))
     return (
       <>
         {bar}
@@ -251,7 +251,7 @@ function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: Hea
         <>
           <dl className="grid grid-cols-3 gap-x-4 pt-3">
             <Stat label="Passed" value={`${passed}/${checks.length}`} tone={health === Health.down ? HEALTH[Health.down].color : undefined} />
-            {!heartbeat && <Stat label="Response" value={responseText(report.typical) || 'None'} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
+            {!heartbeat && <Stat label="Response" value={report.typical === undefined ? 'None' : formatMs(report.typical)} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
             {!heartbeat && <Stat label="Slow" value={slowChecks} tone={slowChecks ? HEALTH[Health.slow].color : undefined} />}
           </dl>
           {!heartbeat && (
@@ -260,11 +260,11 @@ function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: Hea
               <p className="mono mt-2 flex justify-between gap-2 text-muted-foreground">
                 <span>{clock(checks.at(-1)!.startCheck)}</span>
                 <span className="flex items-center gap-2">
-                  peak {responseText(peak)}
+                  peak {formatMs(peak)}
                   {overLimit && (
                     <span className="flex items-center gap-1">
                       <span aria-hidden className="h-0.5 w-3 bg-foreground" />
-                      slow over {responseText(over!)}
+                      slow over {formatMs(over!)}
                     </span>
                   )}
                 </span>
@@ -344,7 +344,7 @@ function LatestChecks({ monitor, now }: { monitor: MonitorDetail; now: number })
                   <HealthGlyph health={state} />
                   <span className={cn('truncate', state !== Health.up && HEALTH[state].color)}>{state === Health.down ? reasonText(monitor, check.reason) : HEALTH[state].label}</span>
                 </span>
-                <span className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{responseText(check.responseTime)}</span>
+                <span className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{check.responseTime == null ? '' : formatMs(check.responseTime)}</span>
               </li>
             )
           })}

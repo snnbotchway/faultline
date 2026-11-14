@@ -31,6 +31,9 @@ const DETAIL_ENDINGS: [string, string][] = [
   [' is already invited', "They're already invited. Open their row to send the invite again."],
 ]
 
+// The thing asked for doesn't exist (or isn't visible to this user).
+export const isNotFound = (error: unknown) => error instanceof ApiError && error.status === 404
+
 // The backend's own sentence for why it refused, when it sent one.
 export const detailOf = (error: unknown) =>
   error instanceof ApiError && error.body && typeof error.body === 'object' && 'detail' in error.body && typeof error.body.detail === 'string' ? error.body.detail : undefined

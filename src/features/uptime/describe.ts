@@ -1,7 +1,8 @@
 import { CheckReason, MonitorType, type Check, type Monitor } from '@/api/monitors'
 import { clock, dayTime } from '@/features/issues/format'
-import { every, responseText, span } from './format'
+import { every, span } from './format'
 import { Health, type HealthReport } from './health'
+import { formatMs } from '@/features/performance/format'
 
 // Each health's name, its text colour, its colour as a bar in a chart of checks, and how a title says it.
 export const HEALTH: Record<Health, { label: string; color: string; bar: string; headline: string }> = {
@@ -56,7 +57,7 @@ export function healthLine(monitor: Described, report: HealthReport, now: number
       return `Down ${report.downs} times since ${when}`
     }
     case Health.slow:
-      return `${responseText(report.typical)} of a ${monitor.timeout}s timeout`
+      return `${formatMs(report.typical!)} of a ${monitor.timeout}s timeout`
     case Health.up:
       return since ? `Up ${since}` : 'Up'
   }

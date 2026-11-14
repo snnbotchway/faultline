@@ -1,7 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ApiError } from '@/api/client'
 import type { Issue } from '@/api/issues'
 import { canManageReleases, organizationQuery } from '@/api/organizations'
 import { canOpenRelease, isNewIn, releaseActions, releaseCommitsQuery, releaseDeploysQuery, releaseFilesQuery, releaseIssuesQuery, releaseKeys, releaseQuery, type ReleaseFile } from '@/api/releases'
@@ -12,18 +11,17 @@ import { RowButton } from '@/components/ui/row-button'
 import { Section } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
-import { explain } from '@/api/errors'
+import { explain, isNotFound } from '@/api/errors'
 import { errorParts } from '@/features/issues/event'
-import { ago, brief, compact, exact, noun } from '@/features/issues/format'
+import { bytes, ago, brief, compact, exact } from '@/features/issues/format'
 import { LevelGlyph } from '@/features/issues/level'
-import { releaseName } from '@/lib/text'
+import { countWord, releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
 const COMMITS_SHOWN = 3
 const SHA_SHOWN = 7
 
-const bytes = (size: number) => (size >= 1_000_000 ? `${(size / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(size / 1000))} kB`)
 
 /** One release: the issues it brought and the ones still happening in it, where it was deployed, its commits and its files. */
 export function ReleasePage({ org, version }: { org: string; version: string }) {
@@ -60,7 +58,7 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
       </>
     )
   if (release.isError) {
-    const missing = release.error instanceof ApiError && release.error.status === 404
+    const missing = isNotFound(release.error)
     return (
       <>
         {bar}
@@ -264,7 +262,7 @@ function Files({ org, version }: { org: string; version: string }) {
         <p className="py-3 text-muted-foreground">No source maps uploaded.</p>
       ) : !shown ? (
         <p className="mono py-3 text-muted-foreground">
-          {count} {noun(items.length, 'file')}, {bytes(items.reduce((sum, file) => sum + file.size, 0))}
+          {count} {countWord(items.length, 'file')}, {bytes(items.reduce((sum, file) => sum + file.size, 0))}
         </p>
       ) : (
         <>

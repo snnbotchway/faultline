@@ -1,5 +1,5 @@
 import { plural } from '@/lib/text'
-import { DAY, HOUR, MINUTE_MS, SECOND_MS } from '@/lib/time'
+import { DAY, HOUR, MINUTE, MINUTE_MS } from '@/lib/time'
 
 // `14m`, `3h 20m`, `2d 4h`, `9d`: how long something lasted, as exact as it is worth being.
 export function span(ms: number): string {
@@ -10,12 +10,10 @@ export function span(ms: number): string {
   return hours < 72 && hours % 24 ? `${Math.floor(hours / 24)}d ${hours % 24}h` : `${Math.floor(hours / 24)}d`
 }
 
-export const responseText = (ms: number | null | undefined) => (ms == null ? '' : ms >= SECOND_MS ? `${(ms / SECOND_MS).toFixed(1)}s` : `${Math.round(ms)}ms`)
-
 const UNITS: [number, string][] = [
   [DAY, 'day'],
   [HOUR, 'hour'],
-  [MINUTE_MS / SECOND_MS, 'minute'],
+  [MINUTE, 'minute'],
   [1, 'second'],
 ]
 

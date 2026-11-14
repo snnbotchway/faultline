@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState, type ReactNode } from 'react'
 import { projectAlertsQuery } from '@/api/alerts'
-import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
 import { stale } from '@/api/stale'
 import {
@@ -34,6 +33,7 @@ import { Keys } from './project-keys'
 import { ProjectTab } from './project-tabs'
 import { ProjectAlerts } from '@/features/alerts/project-alerts'
 import type { AlertParam } from '@/features/alerts/open-rule'
+import { isNotFound } from '@/api/errors'
 
 /**
  * One project's settings. Until its first event arrives the page opens on the set-up step; after that on General.
@@ -57,7 +57,7 @@ export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: stri
     if (!tab && project.data) void navigate({ to: '/$org/settings/projects/$project', params: { org, project: slug }, search: { tab: opening }, replace: true })
   }, [tab, project.data, opening, navigate, org, slug])
 
-  if (project.error instanceof ApiError && project.error.status === 404)
+  if (isNotFound(project.error))
     return (
       <>
         <SettingsBar org={org} title={slug} mono />

@@ -44,5 +44,5 @@ export function dayName(time: Date, now: Date): string {
 // `Yesterday 14:02`: a moment within the last few days, in words a person on call reads at a glance.
 export const dayTime = (time: Date, now: Date) => `${dayName(time, now)} ${clock(time)}`
 
-// `issue` or `issues`, for a count shown apart from its word. `count` may already be worded (`1000+`).
-export const noun = (count: number | string, word: string) => `${word}${String(count) === '1' ? '' : 's'}`
+// `12 kB`, `1.4 MB`: a file's size, never shown as zero.
+export const bytes = (size: number) => (size >= 1_000_000 ? `${(size / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(size / 1000))} kB`)

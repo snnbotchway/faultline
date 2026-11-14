@@ -3,6 +3,7 @@ import { api, orgPath, unwrap } from './client'
 import { detailOf } from './errors'
 import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
 import type { components } from './schema/openapi'
+import { MINUTE_MS } from '@/lib/time'
 
 type Schemas = components['schemas']
 // A saved monitor always has an id, though the schema shares its type with the unsaved one.
@@ -45,7 +46,7 @@ export function monitorRefusal(error: unknown): MonitorRefusal | undefined {
 
 const PAGE_SIZE = 50
 // Monitors are checked once a minute at the fastest.
-const REFRESH_EVERY = 60_000
+const REFRESH_EVERY = MINUTE_MS
 
 export const monitorKeys = {
   all: (slug: string) => ['monitors', slug] as const,
@@ -54,7 +55,6 @@ export const monitorKeys = {
   detail: (slug: string, id: number) => [...monitorKeys.all(slug), 'detail', id] as const,
   monitor: (slug: string, id: number) => [...monitorKeys.detail(slug, id), 'monitor'] as const,
   changes: (slug: string, id: number) => [...monitorKeys.detail(slug, id), 'changes'] as const,
-  checks: (slug: string, id: number, changesOnly: boolean) => [...monitorKeys.detail(slug, id), 'checks', changesOnly] as const,
   statusPages: (slug: string) => [...monitorKeys.all(slug), 'status-pages'] as const,
 }
 
@@ -104,19 +104,6 @@ export const monitorChangesQuery = (slug: string, id: number, lastChange: string
           params: { path: monitorPath(slug, id), query: { is_change: true, limit: MAX_PAGE_SIZE } },
         }),
       ),
-  })
-
-export const monitorChecksQuery = (slug: string, id: number, changesOnly: boolean) =>
-  infiniteQueryOptions({
-    queryKey: monitorKeys.checks(slug, id, changesOnly),
-    initialPageParam: undefined as string | undefined,
-    queryFn: async ({ pageParam }): Promise<Page<Check>> => {
-      const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/checks/', {
-        params: { path: monitorPath(slug, id), query: { is_change: changesOnly || undefined, limit: PAGE_SIZE, cursor: pageParam } },
-      })
-      return toPage(unwrap(result), result.response)
-    },
-    getNextPageParam: (page) => page.cursors.next,
   })
 
 export const statusPagesQuery = (slug: string) =>

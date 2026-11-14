@@ -6,8 +6,8 @@ import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { releaseMarks, spanAxis } from '@/features/issues/trend'
-import { clock, compact, dayLabel, dayName, exact, noun } from '@/features/issues/format'
-import { plural, releaseName } from '@/lib/text'
+import { clock, compact, dayLabel, dayName, exact } from '@/features/issues/format'
+import { countWord, plural, releaseName } from '@/lib/text'
 import { ReleaseTrace } from '@/features/issues/trace'
 import { DAY_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
@@ -100,7 +100,7 @@ export function ReleaseList({ org }: { org: string }) {
                             </span>
                             {fresh !== undefined && fresh > 0 && (
                               <span className="shrink-0 text-trend-new">
-                                <span className="mono font-semibold">{fresh}</span> new {noun(fresh, 'issue')}
+                                <span className="mono font-semibold">{fresh}</span> new {countWord(fresh, 'issue')}
                               </span>
                             )}
                           </span>

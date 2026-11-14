@@ -31,6 +31,8 @@ import { Route as AcceptMemberIdTokenRouteImport } from './routes/accept.$member
 import { Route as ResetPasswordSetNewPasswordKeyRouteImport } from './routes/reset-password_.set-new-password.$key'
 import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$section/$'
 import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
+import { Route as AppOrgLogsIndexRouteImport } from './routes/_app/$org/logs/index'
+import { Route as AppOrgPerformanceIndexRouteImport } from './routes/_app/$org/performance/index'
 import { Route as AppOrgSettingsIndexRouteImport } from './routes/_app/$org/settings/index'
 import { Route as AppOrgSettingsMembersRouteRouteImport } from './routes/_app/$org/settings/members/route'
 import { Route as AppOrgSettingsTeamsRouteRouteImport } from './routes/_app/$org/settings/teams/route'
@@ -42,6 +44,8 @@ import { Route as AccountSettingsWizardHashRouteImport } from './routes/account.
 import { Route as AppOrgProjectIssuesIssueIdRouteImport } from './routes/_app/$org/$project/issues/$issueId'
 import { Route as AppOrgIssuesIssueIdIndexRouteImport } from './routes/_app/$org/issues/$issueId/index'
 import { Route as AppOrgIssuesIssueIdTabRouteImport } from './routes/_app/$org/issues/$issueId/$tab'
+import { Route as AppOrgPerformanceTransactionGroupsIndexRouteImport } from './routes/_app/$org/performance/transaction-groups/index'
+import { Route as AppOrgPerformanceTransactionGroupsGroupIdRouteImport } from './routes/_app/$org/performance/transaction-groups/$groupId'
 import { Route as AppOrgSettingsMembersIndexRouteImport } from './routes/_app/$org/settings/members/index'
 import { Route as AppOrgSettingsMembersMemberIdRouteImport } from './routes/_app/$org/settings/members/$memberId'
 import { Route as AppOrgSettingsMembersNewRouteImport } from './routes/_app/$org/settings/members/new'
@@ -164,6 +168,16 @@ const AppOrgIssuesIndexRoute = AppOrgIssuesIndexRouteImport.update({
   path: '/issues/',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppOrgLogsIndexRoute = AppOrgLogsIndexRouteImport.update({
+  id: '/logs/',
+  path: '/logs/',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgPerformanceIndexRoute = AppOrgPerformanceIndexRouteImport.update({
+  id: '/performance/',
+  path: '/performance/',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
 const AppOrgSettingsIndexRoute = AppOrgSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -225,6 +239,18 @@ const AppOrgIssuesIssueIdTabRoute = AppOrgIssuesIssueIdTabRouteImport.update({
   path: '/issues/$issueId/$tab',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const AppOrgPerformanceTransactionGroupsIndexRoute =
+  AppOrgPerformanceTransactionGroupsIndexRouteImport.update({
+    id: '/performance/transaction-groups/',
+    path: '/performance/transaction-groups/',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgPerformanceTransactionGroupsGroupIdRoute =
+  AppOrgPerformanceTransactionGroupsGroupIdRouteImport.update({
+    id: '/performance/transaction-groups/$groupId',
+    path: '/performance/transaction-groups/$groupId',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
 const AppOrgSettingsMembersIndexRoute =
   AppOrgSettingsMembersIndexRouteImport.update({
     id: '/',
@@ -320,15 +346,19 @@ export interface FileRoutesByFullPath {
   '/profile/wizard/$hash': typeof AppProfileWizardHashRoute
   '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/$org/issues/': typeof AppOrgIssuesIndexRoute
+  '/$org/logs/': typeof AppOrgLogsIndexRoute
+  '/$org/performance/': typeof AppOrgPerformanceIndexRoute
   '/$org/settings/': typeof AppOrgSettingsIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/$org/performance/transaction-groups/$groupId': typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
   '/$org/settings/members/$memberId': typeof AppOrgSettingsMembersMemberIdRoute
   '/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
   '/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
   '/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/performance/transaction-groups/': typeof AppOrgPerformanceTransactionGroupsIndexRoute
   '/$org/settings/members/': typeof AppOrgSettingsMembersIndexRoute
   '/$org/settings/projects/': typeof AppOrgSettingsProjectsIndexRoute
   '/$org/settings/teams/': typeof AppOrgSettingsTeamsIndexRoute
@@ -360,15 +390,19 @@ export interface FileRoutesByTo {
   '/profile/wizard/$hash': typeof AppProfileWizardHashRoute
   '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/$org/issues': typeof AppOrgIssuesIndexRoute
+  '/$org/logs': typeof AppOrgLogsIndexRoute
+  '/$org/performance': typeof AppOrgPerformanceIndexRoute
   '/$org/settings': typeof AppOrgSettingsIndexRoute
   '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/$org/performance/transaction-groups/$groupId': typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
   '/$org/settings/members/$memberId': typeof AppOrgSettingsMembersMemberIdRoute
   '/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
   '/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
   '/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/$org/issues/$issueId': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/performance/transaction-groups': typeof AppOrgPerformanceTransactionGroupsIndexRoute
   '/$org/settings/members': typeof AppOrgSettingsMembersIndexRoute
   '/$org/settings/projects': typeof AppOrgSettingsProjectsIndexRoute
   '/$org/settings/teams': typeof AppOrgSettingsTeamsIndexRoute
@@ -407,15 +441,19 @@ export interface FileRoutesById {
   '/_app/profile_/wizard/$hash': typeof AppProfileWizardHashRoute
   '/account/settings/wizard/$hash': typeof AccountSettingsWizardHashRoute
   '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
+  '/_app/$org/logs/': typeof AppOrgLogsIndexRoute
+  '/_app/$org/performance/': typeof AppOrgPerformanceIndexRoute
   '/_app/$org/settings/': typeof AppOrgSettingsIndexRoute
   '/_app/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
   '/_app/$org/issues/$issueId/$tab': typeof AppOrgIssuesIssueIdTabRoute
+  '/_app/$org/performance/transaction-groups/$groupId': typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
   '/_app/$org/settings/members/$memberId': typeof AppOrgSettingsMembersMemberIdRoute
   '/_app/$org/settings/members/new': typeof AppOrgSettingsMembersNewRoute
   '/_app/$org/settings/projects/$project': typeof AppOrgSettingsProjectsProjectRoute
   '/_app/$org/settings/projects/new': typeof AppOrgSettingsProjectsNewRoute
   '/orgredirect/organizations/$org/settings/auth-tokens': typeof OrgredirectOrganizationsOrgSettingsAuthTokensRoute
   '/_app/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/_app/$org/performance/transaction-groups/': typeof AppOrgPerformanceTransactionGroupsIndexRoute
   '/_app/$org/settings/members/': typeof AppOrgSettingsMembersIndexRoute
   '/_app/$org/settings/projects/': typeof AppOrgSettingsProjectsIndexRoute
   '/_app/$org/settings/teams/': typeof AppOrgSettingsTeamsIndexRoute
@@ -453,15 +491,19 @@ export interface FileRouteTypes {
     | '/profile/wizard/$hash'
     | '/account/settings/wizard/$hash'
     | '/$org/issues/'
+    | '/$org/logs/'
+    | '/$org/performance/'
     | '/$org/settings/'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/$org/performance/transaction-groups/$groupId'
     | '/$org/settings/members/$memberId'
     | '/$org/settings/members/new'
     | '/$org/settings/projects/$project'
     | '/$org/settings/projects/new'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId/'
+    | '/$org/performance/transaction-groups/'
     | '/$org/settings/members/'
     | '/$org/settings/projects/'
     | '/$org/settings/teams/'
@@ -493,15 +535,19 @@ export interface FileRouteTypes {
     | '/profile/wizard/$hash'
     | '/account/settings/wizard/$hash'
     | '/$org/issues'
+    | '/$org/logs'
+    | '/$org/performance'
     | '/$org/settings'
     | '/$org/$project/issues/$issueId'
     | '/$org/issues/$issueId/$tab'
+    | '/$org/performance/transaction-groups/$groupId'
     | '/$org/settings/members/$memberId'
     | '/$org/settings/members/new'
     | '/$org/settings/projects/$project'
     | '/$org/settings/projects/new'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/$org/issues/$issueId'
+    | '/$org/performance/transaction-groups'
     | '/$org/settings/members'
     | '/$org/settings/projects'
     | '/$org/settings/teams'
@@ -539,15 +585,19 @@ export interface FileRouteTypes {
     | '/_app/profile_/wizard/$hash'
     | '/account/settings/wizard/$hash'
     | '/_app/$org/issues/'
+    | '/_app/$org/logs/'
+    | '/_app/$org/performance/'
     | '/_app/$org/settings/'
     | '/_app/$org/$project/issues/$issueId'
     | '/_app/$org/issues/$issueId/$tab'
+    | '/_app/$org/performance/transaction-groups/$groupId'
     | '/_app/$org/settings/members/$memberId'
     | '/_app/$org/settings/members/new'
     | '/_app/$org/settings/projects/$project'
     | '/_app/$org/settings/projects/new'
     | '/orgredirect/organizations/$org/settings/auth-tokens'
     | '/_app/$org/issues/$issueId/'
+    | '/_app/$org/performance/transaction-groups/'
     | '/_app/$org/settings/members/'
     | '/_app/$org/settings/projects/'
     | '/_app/$org/settings/teams/'
@@ -725,6 +775,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgIssuesIndexRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/logs/': {
+      id: '/_app/$org/logs/'
+      path: '/logs'
+      fullPath: '/$org/logs/'
+      preLoaderRoute: typeof AppOrgLogsIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/performance/': {
+      id: '/_app/$org/performance/'
+      path: '/performance'
+      fullPath: '/$org/performance/'
+      preLoaderRoute: typeof AppOrgPerformanceIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
     '/_app/$org/settings/': {
       id: '/_app/$org/settings/'
       path: '/settings'
@@ -800,6 +864,20 @@ declare module '@tanstack/react-router' {
       path: '/issues/$issueId/$tab'
       fullPath: '/$org/issues/$issueId/$tab'
       preLoaderRoute: typeof AppOrgIssuesIssueIdTabRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/performance/transaction-groups/': {
+      id: '/_app/$org/performance/transaction-groups/'
+      path: '/performance/transaction-groups'
+      fullPath: '/$org/performance/transaction-groups/'
+      preLoaderRoute: typeof AppOrgPerformanceTransactionGroupsIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/performance/transaction-groups/$groupId': {
+      id: '/_app/$org/performance/transaction-groups/$groupId'
+      path: '/performance/transaction-groups/$groupId'
+      fullPath: '/$org/performance/transaction-groups/$groupId'
+      preLoaderRoute: typeof AppOrgPerformanceTransactionGroupsGroupIdRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
     '/_app/$org/settings/members/': {
@@ -936,12 +1014,16 @@ interface AppOrgRouteRouteChildren {
   AppOrgSettingsMembersRouteRoute: typeof AppOrgSettingsMembersRouteRouteWithChildren
   AppOrgSettingsTeamsRouteRoute: typeof AppOrgSettingsTeamsRouteRouteWithChildren
   AppOrgIssuesIndexRoute: typeof AppOrgIssuesIndexRoute
+  AppOrgLogsIndexRoute: typeof AppOrgLogsIndexRoute
+  AppOrgPerformanceIndexRoute: typeof AppOrgPerformanceIndexRoute
   AppOrgSettingsIndexRoute: typeof AppOrgSettingsIndexRoute
   AppOrgProjectIssuesIssueIdRoute: typeof AppOrgProjectIssuesIssueIdRoute
   AppOrgIssuesIssueIdTabRoute: typeof AppOrgIssuesIssueIdTabRoute
+  AppOrgPerformanceTransactionGroupsGroupIdRoute: typeof AppOrgPerformanceTransactionGroupsGroupIdRoute
   AppOrgSettingsProjectsProjectRoute: typeof AppOrgSettingsProjectsProjectRoute
   AppOrgSettingsProjectsNewRoute: typeof AppOrgSettingsProjectsNewRoute
   AppOrgIssuesIssueIdIndexRoute: typeof AppOrgIssuesIssueIdIndexRoute
+  AppOrgPerformanceTransactionGroupsIndexRoute: typeof AppOrgPerformanceTransactionGroupsIndexRoute
   AppOrgSettingsProjectsIndexRoute: typeof AppOrgSettingsProjectsIndexRoute
   AppOrgIssuesIssueIdEventsEventIdRoute: typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
@@ -953,12 +1035,18 @@ const AppOrgRouteRouteChildren: AppOrgRouteRouteChildren = {
   AppOrgSettingsMembersRouteRoute: AppOrgSettingsMembersRouteRouteWithChildren,
   AppOrgSettingsTeamsRouteRoute: AppOrgSettingsTeamsRouteRouteWithChildren,
   AppOrgIssuesIndexRoute: AppOrgIssuesIndexRoute,
+  AppOrgLogsIndexRoute: AppOrgLogsIndexRoute,
+  AppOrgPerformanceIndexRoute: AppOrgPerformanceIndexRoute,
   AppOrgSettingsIndexRoute: AppOrgSettingsIndexRoute,
   AppOrgProjectIssuesIssueIdRoute: AppOrgProjectIssuesIssueIdRoute,
   AppOrgIssuesIssueIdTabRoute: AppOrgIssuesIssueIdTabRoute,
+  AppOrgPerformanceTransactionGroupsGroupIdRoute:
+    AppOrgPerformanceTransactionGroupsGroupIdRoute,
   AppOrgSettingsProjectsProjectRoute: AppOrgSettingsProjectsProjectRoute,
   AppOrgSettingsProjectsNewRoute: AppOrgSettingsProjectsNewRoute,
   AppOrgIssuesIssueIdIndexRoute: AppOrgIssuesIssueIdIndexRoute,
+  AppOrgPerformanceTransactionGroupsIndexRoute:
+    AppOrgPerformanceTransactionGroupsIndexRoute,
   AppOrgSettingsProjectsIndexRoute: AppOrgSettingsProjectsIndexRoute,
   AppOrgIssuesIssueIdEventsEventIdRoute: AppOrgIssuesIssueIdEventsEventIdRoute,
 }

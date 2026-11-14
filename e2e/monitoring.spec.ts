@@ -1,0 +1,87 @@
+import { expect, test, type Page } from '@playwright/test'
+import { DEMO } from '../dev/seed.ts'
+
+const uptime = `/${DEMO.org}/uptime-monitors`
+const row = (page: Page, text: string) => page.getByRole('listitem').filter({ hasText: text })
+const unique = () => Math.random().toString(36).slice(2, 8)
+
+test('the uptime list puts a monitor that is down first, and its page says since when and why', async ({ page }) => {
+  await page.goto(uptime)
+  await expect(page.getByRole('region', { name: 'Down', exact: true })).toContainText('Checkout API')
+  await expect(page.getByRole('region', { name: 'Waiting for a first check' })).toContainText('Daily report')
+  await row(page, 'Checkout API').getByRole('link').click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Checkout API is down')
+  await expect(page.getByRole('region', { name: 'Downtime' }).getByRole('button').first()).toContainText('so far')
+  await expect(page.getByRole('region', { name: 'Alerts', exact: true })).toContainText('Downtime and spikes')
+})
+
+test('a monitor is created, edited and deleted', async ({ page }) => {
+  const name = `Health ${unique()}`
+  await page.goto(uptime)
+  await page.getByRole('link', { name: 'New monitor' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('URL').fill('https://example.com/health')
+  await dialog.getByLabel('Name').fill(name)
+  await dialog.getByLabel('Timeout (seconds)').fill('10')
+  await dialog.getByRole('button', { name: 'Create monitor' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(name)
+
+  await page.getByRole('link', { name: 'Edit' }).click()
+  await page.getByRole('dialog').getByLabel('Name').fill(`${name} edited`)
+  await page.getByRole('dialog').getByRole('button', { name: 'Save monitor' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(`${name} edited`)
+
+  await page.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete monitor' }).click()
+  await expect(page).toHaveURL(new RegExp(`${uptime}$`))
+  await expect(row(page, name)).toHaveCount(0)
+})
+
+test('a new heartbeat shows the address to call', async ({ page }) => {
+  const name = `Backup ${unique()}`
+  await page.goto(`${uptime}/new`)
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('radio', { name: 'Heartbeat' }).click()
+  await dialog.getByLabel('Name').fill(name)
+  await dialog.getByRole('button', { name: 'Create monitor' }).click()
+  await expect(dialog.getByLabel('Heartbeat address')).toContainText('/heartbeat_check/')
+  await dialog.getByRole('button', { name: 'Open monitor' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(name)
+  await page.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete monitor' }).click()
+  await expect(page).toHaveURL(new RegExp(`${uptime}$`))
+})
+
+test('the status pages list the monitors on each page', async ({ page }) => {
+  await page.goto(`${uptime}/status-pages`)
+  await expect(row(page, 'Demo Co status').first()).toContainText('Checkout API')
+})
+
+test('an alert rule is created and deleted', async ({ page }) => {
+  const name = `Outage ${unique()}`
+  await page.goto(`/${DEMO.org}/alerts`)
+  await expect(page.getByRole('region', { name: 'web-app' })).toContainText('Error burst')
+  await page.getByRole('button', { name: 'New rule' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Name').fill(name)
+  await dialog.getByLabel('Project').selectOption('mobile')
+  await dialog.getByRole('checkbox', { name: 'An issue gets many events' }).click()
+  await dialog.getByText('a monitor goes down').click()
+  await dialog.getByRole('button', { name: 'Create rule' }).click()
+  const rule = page.getByRole('region', { name: 'mobile' }).getByRole('button', { name })
+  await expect(rule).toContainText('a monitor goes down')
+
+  await rule.click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete this rule' }).click()
+  await expect(rule).toHaveCount(0)
+})
+
+test('a release lists the issues it brought apart from older ones', async ({ page }) => {
+  await page.goto(`/${DEMO.org}/releases`)
+  await row(page, '1.5.0').getByRole('link').click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('1.5.0')
+  await expect(page.getByRole('region', { name: 'First seen in this release' })).toContainText('Unexpected token < in JSON at position 0')
+  await expect(page.getByRole('region', { name: 'Seen before, still happening' })).toContainText('Mobile money gateway did not respond')
+  await expect(page.getByRole('region', { name: 'Deploys' })).toContainText('production')
+})

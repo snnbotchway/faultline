@@ -6,6 +6,7 @@ import type { Team } from '@/api/teams'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { hasWords, searchWords } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { CodeBlock, FormDialog, Segmented } from './parts'
 import { OTHER_PLATFORM, PLATFORMS, PLATFORM_GROUPS, platformOf } from './platforms'
@@ -103,7 +104,8 @@ export function TeamChecklist({
 // Every platform under its group, all on the page: nothing scrolls inside, so nothing opens cut off.
 export function PlatformPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
   const [query, setQuery] = useState('')
-  const shown = PLATFORMS.filter((platform) => platform.name.toLowerCase().includes(query.trim().toLowerCase()))
+  const words = searchWords(query)
+  const shown = PLATFORMS.filter((platform) => hasWords(platform.name, words))
   return (
     <div className="border">
       <div className="relative border-b">

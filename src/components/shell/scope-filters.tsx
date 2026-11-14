@@ -1,7 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Check, ChevronsUpDown, Plus } from 'lucide-react'
-import { useEffect } from 'react'
 import { Scope, environmentsQuery, projectsQuery } from '@/api/organizations'
 import { projectEnvironmentsQuery, shownEnvironmentNames } from '@/api/projects'
 import {
@@ -31,8 +30,12 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
   const slugs = picked.flatMap((id) => projects.find((project) => Number(project.id) === id)?.slug ?? [])
   const orgEnvironments = useQuery(environmentsQuery(org)).data
   const projectEnvironments = useQueries({ queries: slugs.map((slug) => projectEnvironmentsQuery(org, slug)) })
+  // The environment in the URL is always offered, even when the chosen projects hide it, so an old link keeps its filter.
   const environments = [
-    ...new Set(slugs.length > 0 ? projectEnvironments.flatMap((result) => shownEnvironmentNames(result.data)) : (orgEnvironments ?? []).map((environment) => environment.name)),
+    ...new Set([
+      ...(slugs.length > 0 ? projectEnvironments.flatMap((result) => shownEnvironmentNames(result.data)) : (orgEnvironments ?? []).map((environment) => environment.name)),
+      ...(search.environment ? [search.environment] : []),
+    ]),
   ].sort()
   const update = (patch: Partial<InboxSearch>) =>
     void navigate({ to: '/$org/issues', params: { org }, search: (previous) => ({ ...previous, ...patch }), replace: true })
@@ -48,14 +51,6 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
       },
       replace: true,
     })
-  // The chosen environment stays only while one of the chosen projects has it. It is dropped once
-  // their lists have loaded, and kept when a list fails to load.
-  const listsLoaded = slugs.length > 0 ? projectEnvironments.every((result) => result.isSuccess) : orgEnvironments !== undefined
-  const missing = !!search.environment && listsLoaded && !environments.includes(search.environment)
-  useEffect(() => {
-    if (missing)
-      void navigate({ to: '/$org/issues', params: { org }, search: (previous) => ({ ...previous, environment: undefined }), replace: true })
-  }, [missing, navigate, org])
   const projectLabel =
     picked.length === 0
       ? 'All projects'
@@ -88,19 +83,19 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
               <span className="mono">{project.slug}</span>
             </DropdownMenuItem>
           ))}
+          {can(Scope.projectWrite) && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/$org/settings/projects/new" params={{ org }}>
+                  <Plus />
+                  New project
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {can(Scope.projectWrite) && (
-        <Link
-          to="/$org/settings/projects/new"
-          params={{ org }}
-          aria-label="New project"
-          title="New project"
-          className="grid size-7 shrink-0 place-items-center text-muted-foreground hover:bg-accent hover:text-foreground max-lg:size-11 max-lg:border max-lg:bg-card"
-        >
-          <Plus className="size-4" />
-        </Link>
-      )}
       <span className="text-muted-foreground max-lg:hidden">/</span>
       <DropdownMenu>
         <DropdownMenuTrigger className={TRIGGER} aria-label="Environment">

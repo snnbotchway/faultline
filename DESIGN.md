@@ -103,7 +103,7 @@ Rules:
 
 Lucide, in the text colour. An icon is 16px, or 12px when it sits inline with small text (a chevron in a chip, a count beside an id); there are no other sizes.
 
-Icons accompany a label. An icon alone is allowed for theme, account, close and the palette button, and for the glyphs everyone reads: more (ellipsis), previous and next (chevrons), disclosure (a chevron that unfolds), sort, help (a question mark in a circle, for a syntax popover) and add (a plus beside a filter). Every icon-only control has an accessible name and, on desktop, shows that name on hover. No emoji and no character glyphs standing in for icons.
+Icons accompany a label. An icon alone is allowed for theme, account, close and the palette button, and for the glyphs everyone reads: more (ellipsis), previous and next (chevrons), disclosure (a chevron that unfolds), sort, and help (a question mark in a circle, for a syntax popover). Every icon-only control has an accessible name and, on desktop, shows that name on hover. No emoji and no character glyphs standing in for icons.
 
 - Level: a filled square (fatal, error), a triangle (warning), a circle (info), a hollow circle (debug), in the level colour. Logs add trace, which issues do not have: a short dash in the debug colour.
 - Health (uptime) borrows the level shape of the same weight: a filled square for down in `destructive`, a triangle for slow in `level-warning`, a hollow circle for not checked yet in the muted colour. Up is a filled circle in `ok`, and flapping, which no level has, a diamond in `trend-spiking`. Health and level glyphs never share a list.
@@ -188,6 +188,7 @@ The groups are listed in this order.
 | `Enter` | inbox | open the issue |
 | `o` | inbox | unfold the row (desktop) |
 | `x` | inbox | select the row |
+| `Shift X` | inbox | select every row from the last one ticked to this one |
 | `e` | inbox, issue | resolve |
 | `i` | inbox, issue | ignore |
 | `u` | inbox, issue | unresolve |

@@ -70,7 +70,7 @@ export function ProjectList({ org }: { org?: string }) {
     <>
       <PageBar>
         <h1 className="text-2xl font-semibold">Projects</h1>
-        {org && <span className="text-muted-foreground">{nameOf(org)}</span>}
+        {org && <span className="min-w-0 truncate text-muted-foreground max-lg:hidden">{nameOf(org)}</span>}
         {!empty && (
           <>
             {find('h-8 w-56 max-lg:hidden')}
@@ -95,10 +95,11 @@ export function ProjectList({ org }: { org?: string }) {
             <span className="max-lg:hidden" />
           </div>
           {groups.map((group) => (
-            <section key={group.slug} aria-label={group.name}>
+            <section key={group.slug} aria-label={group.name === group.slug ? group.name : `${group.name} (${group.slug})`}>
               {!org && (group.pending || group.projects.length > 0) && (
                 <div className="flex h-8 items-center gap-2 border-b bg-muted px-3 md:px-4">
                   <h2 className="font-medium">{group.name}</h2>
+                  {group.name !== group.slug && <span className="mono text-muted-foreground">{group.slug}</span>}
                   {!group.pending && <span className="mono text-muted-foreground">{group.projects.length}</span>}
                 </div>
               )}

@@ -14,7 +14,6 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useAccess } from './access'
 import { useChange } from './change'
-import { Field } from '@/components/ui/field'
 import { DeleteDialog, FoldRow, Group, GroupAction, InlineForm, LinkRow, ROW, Row, RowSkeleton, Sheet } from './parts'
 import { plural } from '@/lib/text'
 import { teamList } from './labels'
@@ -203,9 +202,8 @@ function RenameOrganization({ org, name, onDone }: { org: string; name: string; 
   const rename = useChange('rename the organization', () => organizationActions.rename(org, value.trim()), { stale: [stale.organizations(), stale.organization(org)], onDone })
   return (
     <InlineForm onSubmit={() => rename.run()} onCancel={onDone} pending={rename.pending} error={rename.error} disabled={!value.trim() || value.trim() === name}>
-      <Field label="Name" className="max-w-sm">
-        {(field) => <Input {...field} autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={ORGANIZATION_NAME_MAX} />}
-      </Field>
+      {/* The open row already says Name, so the field is named for screen readers only. */}
+      <Input aria-label="Name" className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={ORGANIZATION_NAME_MAX} />
     </InlineForm>
   )
 }

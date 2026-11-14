@@ -192,9 +192,7 @@ function NameForm({ org, slug, name, onDone }: { org: string; slug: string; name
   return (
     // The backend would take an empty name, so the form does not offer to send one.
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={!value.trim() || value.trim() === name}>
-      <Field label="Name" className="max-w-sm">
-        {(field) => <Input {...field} autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={PROJECT_NAME_MAX} />}
-      </Field>
+      <Input aria-label="Name" className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={PROJECT_NAME_MAX} />
     </InlineForm>
   )
 }
@@ -206,18 +204,14 @@ function PlatformForm({ org, slug, name, platform, onDone }: { org: string; slug
   const unknown = platform && !PLATFORMS.some((p) => p.id === platform)
   return (
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={value === shownPlatform(platform)}>
-      <Field label="Platform" className="max-w-sm">
-        {(field) => (
-          <Select {...field} autoFocus value={value} onChange={(event) => setValue(event.target.value)}>
-            {unknown && <option value={platform}>{platform}</option>}
-            {PLATFORMS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
-        )}
-      </Field>
+      <Select aria-label="Platform" className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)}>
+        {unknown && <option value={platform}>{platform}</option>}
+        {PLATFORMS.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </Select>
     </InlineForm>
   )
 }

@@ -5,7 +5,7 @@ import { useState, type ReactNode } from 'react'
 import { StatsPeriod } from '@/api/issues'
 import { projectAlertsQuery } from '@/api/alerts'
 import { explain, isNotFound } from '@/api/errors'
-import { CHECKS_PAGE_SIZE, isHttp, monitorActions, monitorChangesQuery, monitorChecksQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
+import { CHECKS_PAGE_SIZE, isHttp, monitorActions, monitorChangesQuery, monitorChecksQuery, monitorKeys, monitorQuery, type Check, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectSlug, projectsQuery } from '@/api/organizations'
 import { canOpenRelease, recentReleasesQuery, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
@@ -20,8 +20,8 @@ import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
 import { MarkLabels, PeriodToggle } from '@/features/issues/trace'
 import { releaseBefore, releaseMarks, spanAxis } from '@/features/issues/trend'
-import { releaseName } from '@/lib/text'
-import { ago, brief, clock, dayTime, exact } from '@/features/issues/format'
+import { plural, releaseName } from '@/lib/text'
+import { ago, brief, clock, dayName, dayTime, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { every, periodLength, span } from './format'
@@ -125,14 +125,19 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const changes = useQuery(monitorChangesQuery(org, monitor.id, monitor.lastChange, periodMs))
   const from = now - periodMs
   const marks = releaseMarks(releases, spanAxis(from, now))
+  const periodText = period === StatsPeriod.day ? '24 hours' : '14 days'
 
   const report = healthOf(monitor, monitor.checks, changes.data?.changes ?? [], now)
   const health = report.health
+  const inPeriod = report.downtimes.filter((downtime) => downtime.to > from)
+  // Before the monitor's first check the strip has nothing to say, so it is drawn as not checked yet.
+  const oldestChange = changes.data?.toFirst ? changes.data.changes.at(-1) : undefined
+  const firstCheck = oldestChange && Date.parse(oldestChange.startCheck)
   const uptime = changes.data && health !== Health.waiting ? uptimeShare(changes.data, monitor.created, now, periodMs) : undefined
   const heartbeat = isHeartbeat(monitor)
   const loud = isAlarm(health)
   const alsoSlow = health === Health.flapping && report.slow
-  const open = unfolded === undefined ? report.downtimes.find((period) => period.ongoing)?.from : unfolded
+  const open = unfolded === undefined ? inPeriod.find((period) => period.ongoing)?.from : unfolded
   // Who hears about it now. Only an ongoing downtime says so: the rules may have changed since an older one.
   const recipients = [...new Set(rules.flatMap((rule) => rule.alertRecipients.map((recipient) => recipientMeta(recipient).label)))]
   const alertsGoTo = !project || (alerts.isSuccess && recipients.length === 0) ? 'Nobody' : alerts.isPending ? undefined : recipients.join(', ')
@@ -174,13 +179,22 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
         </header>
 
         <div className="order-3">
-          <Section label="Downtime" count={changes.data ? report.downtimes.length : undefined} action={<PeriodToggle period={period} onChange={setPeriod} />}>
+          <Section label="Downtime" count={changes.data ? inPeriod.length : undefined} action={<PeriodToggle period={period} onChange={setPeriod} />}>
             {changes.data && (
               // Every stretch down in the period on one strip, with the releases made in it.
               <div className="pt-3 pb-4">
                 <div className="relative pt-5">
                   <MarkLabels marks={marks} />
-                  <DowntimeStrip downtimes={report.downtimes} from={from} to={now} marks={marks} phoneMarks waiting={health === Health.waiting} height={28} />
+                  <DowntimeStrip
+                    downtimes={inPeriod}
+                    from={from}
+                    to={now}
+                    marks={marks}
+                    phoneMarks
+                    waiting={health === Health.waiting}
+                    firstCheck={firstCheck}
+                    height={28}
+                  />
                 </div>
                 <p className="label-caps mt-2 flex justify-between">
                   <span>{dayTime(new Date(from), new Date(now))}</span>
@@ -188,21 +202,21 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
                 </p>
                 {uptime && (
                   <p className="mt-3">
-                    <span className={cn('mono font-semibold', uptime.share < 1 && HEALTH[Health.down].color)}>{percent(uptime.share)}</span> up{' '}
-                    {uptime.sinceFirst ? 'since its first check' : `in the last ${period === StatsPeriod.day ? '24 hours' : '14 days'}`}
+                    <span className="mono font-semibold">{percent(uptime.share)}</span> up{' '}
+                    {uptime.sinceFirst ? 'since its first check' : `in the last ${periodText}`}
                   </p>
                 )}
               </div>
             )}
             {changes.isPending ? (
-              <Skeleton className="mt-3 h-20" />
+              <RowsSkeleton rows={2} className="min-h-11" />
             ) : changes.isError ? (
               <p className="py-4 text-muted-foreground">The downtime didn't load.</p>
-            ) : report.downtimes.length === 0 ? (
-              <p className="py-4 text-muted-foreground">{health === Health.waiting ? 'Nothing to show until the first check.' : 'No downtime recorded.'}</p>
+            ) : inPeriod.length === 0 ? (
+              <p className="py-4 text-muted-foreground">{health === Health.waiting ? 'Nothing to show until the first check.' : `No downtime in the last ${periodText}.`}</p>
             ) : (
               <ul>
-                {report.downtimes.map((period) => (
+                {inPeriod.map((period) => (
                   <DowntimeRow
                     key={period.from}
                     monitor={monitor}
@@ -219,14 +233,16 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
             )}
           </Section>
 
-          <Checks org={org} monitor={monitor} now={now} />
+          {health !== Health.waiting && <Checks org={org} monitor={monitor} now={now} />}
         </div>
       </div>
 
       <aside className="contents lg:flex lg:flex-col lg:gap-8 lg:border-l lg:pt-5 lg:pl-6">
-        <div className="order-2 pb-8 lg:pb-0">
-          <CheckSummary monitor={monitor} report={report} />
-        </div>
+        {monitor.checks.length > 0 && (
+          <div className="order-2 pb-8 lg:pb-0">
+            <CheckSummary monitor={monitor} report={report} />
+          </div>
+        )}
         <div className="order-4 mt-8 flex flex-col gap-8 lg:mt-0">
           {heartbeat && monitor.heartbeatEndpoint && (
             <Section label="Heartbeat address">
@@ -280,7 +296,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   )
 }
 
-// The newest checks at a glance: how many passed, the typical response, how many were slow, and each as a bar.
+// The newest checks at a glance, once there are any: how many passed, the typical response, how many were slow, and each as a bar.
 function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: HealthReport }) {
   const checks = monitor.checks
   const heartbeat = isHeartbeat(monitor)
@@ -289,11 +305,7 @@ function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: Hea
   const slowChecks = checks.filter((check) => isSlow(check, monitor.timeout)).length
   const { peak, over, overLimit } = checkScale(checks, monitor.timeout)
   return (
-    <Section label={checks.length ? `Last ${checks.length} checks` : 'Checks'}>
-      {checks.length === 0 ? (
-        <p className="py-3 text-muted-foreground">None yet.</p>
-      ) : (
-        <>
+    <Section label={`Last ${plural(checks.length, 'check')}`}>
           <dl className="grid grid-cols-3 gap-x-4 pt-3">
             <Stat label="Passed" value={`${passed}/${checks.length}`} tone={health === Health.down ? HEALTH[Health.down].color : undefined} />
             {!heartbeat && <Stat label="Response" value={report.typical === undefined ? 'None' : formatMs(report.typical)} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
@@ -317,8 +329,6 @@ function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: Hea
               </p>
             </>
           )}
-        </>
-      )}
     </Section>
   )
 }
@@ -406,7 +416,8 @@ function DowntimeRow({
   )
 }
 
-// Every check, newest first, a page at a time; "Incidents only" keeps the ones where the monitor went down or came back.
+// Every check, newest first, a page at a time, under the day it ran. "Incidents only" keeps the ones where the
+// monitor went down or came back, and names each by that change rather than by its result.
 function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; now: number }) {
   const [view, setView] = useState<ChecksView>(ChecksView.all)
   // The cursor of each page opened so far, from the newest; the last is the page shown.
@@ -420,14 +431,26 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
   const offset = (cursors.length - 1) * CHECKS_PAGE_SIZE
   // Until the page asked for is in, the one shown belongs to another page or view.
   const stale = checks.isPlaceholderData
+  const heartbeat = isHeartbeat(monitor)
+  const days = new Map<string, Check[]>()
+  for (const check of items) {
+    const day = dayName(new Date(check.startCheck), new Date(now))
+    days.set(day, [...(days.get(day) ?? []), check])
+  }
   const show = (to: ChecksView) => {
     setView(to)
     setCursors([undefined])
   }
+  // The paging buttons stay focusable while they cannot move, so the keyboard does not lose its place.
+  const turn = (to: (string | undefined)[], blocked: boolean) => () => {
+    if (!blocked) setCursors(to)
+  }
+  const olderBlocked = stale || !older
+  const newerBlocked = stale || cursors.length === 1
   return (
-    <Section label="Checks" className="mt-8" action={<Segmented label="Show checks" value={view} options={CHECKS_VIEWS} onChange={show} />}>
+    <Section label="Checks" className="mt-8" action={<Segmented label="Show checks" size="sm" value={view} options={CHECKS_VIEWS} onChange={show} />}>
       {checks.isPending ? (
-        <Skeleton className="mt-3 h-40" />
+        <RowsSkeleton rows={8} />
       ) : checks.isError ? (
         <p className="py-4 text-muted-foreground">
           The checks didn't load.{' '}
@@ -446,61 +469,100 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
       ) : items.length === 0 ? (
         <p className="py-4 text-muted-foreground">{view === ChecksView.incidents ? 'No incidents recorded.' : 'No checks yet.'}</p>
       ) : (
-        <table className={cn('w-full', stale && 'opacity-60')}>
+        <table className={cn('w-full table-fixed', stale && 'opacity-60')}>
           <caption className="sr-only">{total} checks, newest first</caption>
           <thead>
             <tr className="label-caps h-9 text-left">
-              <th scope="col" className="w-36 font-normal">
+              <th scope="col" className="w-20 font-normal">
                 Time
               </th>
               <th scope="col" className="font-normal">
                 Result
               </th>
-              <th scope="col" className="w-20 text-right font-normal lg:w-24">
-                Response
-              </th>
+              {!heartbeat && (
+                <th scope="col" className="w-20 text-right font-normal lg:w-24">
+                  Response
+                </th>
+              )}
             </tr>
           </thead>
-          <tbody>
-            {items.map((check) => {
-              const state = checkHealth(check, monitor.timeout)
-              return (
-                <tr key={check.startCheck} className="h-9 border-t">
-                  <td>
-                    <time className="mono text-muted-foreground" dateTime={check.startCheck} title={exact(check.startCheck)}>
-                      {ago(check.startCheck, new Date(now))}
-                    </time>
-                  </td>
-                  <td>
-                    <span className="flex min-w-0 items-center gap-2">
-                      <HealthGlyph health={state} />
-                      <span className={cn('truncate', state !== Health.up && HEALTH[state].color)}>{state === Health.down ? reasonText(monitor, check.reason) : HEALTH[state].label}</span>
-                    </span>
-                  </td>
-                  <td className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{check.responseTime == null ? '' : formatMs(check.responseTime)}</td>
-                </tr>
-              )
-            })}
-          </tbody>
+          {[...days].map(([day, rows]) => (
+            <tbody key={day}>
+              <tr className="h-9 border-t">
+                <th scope="colgroup" colSpan={heartbeat ? 2 : 3} className="label-caps text-left font-normal">
+                  {day}
+                </th>
+              </tr>
+              {rows.map((check) => (
+                <CheckRow key={check.startCheck} monitor={monitor} check={check} view={view} first={!older && check === items.at(-1)} />
+              ))}
+            </tbody>
+          ))}
         </table>
       )}
       {items.length > 0 && (cursors.length > 1 || older) && (
         <div className="mt-2 flex items-center justify-between gap-4">
-          <p className={cn('mono text-muted-foreground', stale && 'invisible')}>
+          <p aria-live="polite" className={cn('mono text-muted-foreground transition-opacity duration-100', stale && 'opacity-60')}>
             {offset + 1}–{offset + items.length}
             {total !== undefined && ` of ${total}`}
           </p>
           <div className="flex shrink-0 items-center">
-            <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={stale || !older} onClick={() => setCursors([...cursors, older])} aria-label="Older checks">
+            <Button variant="ghost" size="icon-sm" className={PAGER} aria-disabled={olderBlocked} onClick={turn([...cursors, older], olderBlocked)} aria-label="Older checks">
               <ChevronLeft />
             </Button>
-            <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={stale || cursors.length === 1} onClick={() => setCursors(cursors.slice(0, -1))} aria-label="Newer checks">
+            <Button variant="ghost" size="icon-sm" className={PAGER} aria-disabled={newerBlocked} onClick={turn(cursors.slice(0, -1), newerBlocked)} aria-label="Newer checks">
               <ChevronRight />
             </Button>
           </div>
         </div>
       )}
     </Section>
+  )
+}
+
+const PAGER = 'max-lg:size-11 aria-disabled:cursor-default aria-disabled:opacity-50 aria-disabled:hover:bg-transparent'
+
+// One check: the time of day it ran, its result, and how long it took. In the incidents view the result is the
+// change, worded as in the downtime list; a recovery that was slow keeps its time in amber. The oldest change of all
+// is the monitor's `first` check, which came back from nothing.
+function CheckRow({ monitor, check, view, first }: { monitor: MonitorDetail; check: Check; view: ChecksView; first: boolean }) {
+  const state = checkHealth(check, monitor.timeout)
+  const incidents = view === ChecksView.incidents
+  const glyph = incidents && check.isUp ? Health.up : state
+  const reason = reasonText(monitor, check.reason)
+  const result = incidents ? (check.isUp ? (first ? 'First check' : 'Came back') : `Went down · ${reason}`) : state === Health.down ? reason : HEALTH[state].label
+  return (
+    <tr className="h-9 border-t">
+      <td>
+        <time className="mono whitespace-nowrap text-muted-foreground" dateTime={check.startCheck} title={exact(check.startCheck)}>
+          {clock(check.startCheck)}
+        </time>
+      </td>
+      <td>
+        <span className="flex min-w-0 items-center gap-2">
+          <HealthGlyph health={glyph} />
+          <span className={cn('truncate', glyph !== Health.up && HEALTH[glyph].color)}>{result}</span>
+        </span>
+      </td>
+      {!isHeartbeat(monitor) && (
+        <td className={cn('mono text-right', state === Health.slow && cn('font-semibold', HEALTH[state].color))}>{check.responseTime == null ? '' : formatMs(check.responseTime)}</td>
+      )}
+    </tr>
+  )
+}
+
+// The shape of rows still loading: a time, a result, and a figure at the right.
+function RowsSkeleton({ rows, className = 'h-9' }: { rows: number; className?: string }) {
+  return (
+    <div aria-busy aria-label="Loading">
+      {Array.from({ length: rows }, (_, index) => (
+        <div key={index} className={cn('flex items-center gap-4 border-b', className)}>
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="ml-auto h-3 w-12" />
+        </div>
+      ))}
+    </div>
   )
 }
 

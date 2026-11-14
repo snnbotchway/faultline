@@ -31,8 +31,8 @@ test('a monitor page says how much of the day it was up and pages through every 
   await expect(checks).toContainText('1–25 of')
 
   await checks.getByRole('radio', { name: 'Incidents only' }).click()
-  await expect(checks.getByRole('row').filter({ hasText: 'Wrong status' }).first()).toBeVisible()
-  await expect(checks.getByRole('row').filter({ has: page.getByText('Up', { exact: true }) }).first()).toBeVisible()
+  await expect(checks.getByRole('row').filter({ hasText: 'Went down · Wrong status' }).first()).toBeVisible()
+  await expect(checks.getByRole('row').filter({ hasText: 'Came back' }).first()).toBeVisible()
 })
 
 test('a monitor is created, edited and deleted', async ({ page }) => {

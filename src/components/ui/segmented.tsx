@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils'
 
 const STEP: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }
 
-// A choice among a few fixed values, all visible. The chosen one is filled and heavier, so colour is not the only signal.
+// A choice among a few fixed values, all visible. The chosen one is filled and heavier, so colour is not the only signal;
+// `sm` sits in a section heading beside a period toggle and looks like it, the chosen one inverted.
 // Like any radio group it is one Tab stop; the arrow keys move the choice.
 export function Segmented<T extends string | number>({
   label,
@@ -11,6 +12,7 @@ export function Segmented<T extends string | number>({
   options,
   onChange,
   disabled,
+  size = 'default',
   className,
 }: {
   label: string
@@ -18,6 +20,7 @@ export function Segmented<T extends string | number>({
   options: readonly { value: T; label: string }[]
   onChange: (value: T) => void
   disabled?: boolean
+  size?: 'default' | 'sm'
   className?: string
 }) {
   const current = Math.max(
@@ -45,8 +48,13 @@ export function Segmented<T extends string | number>({
           disabled={disabled}
           onClick={() => option.value !== value && onChange(option.value)}
           className={cn(
-            'h-8 border-l px-3 text-sm transition-colors duration-100 first:border-l-0 disabled:opacity-50 max-lg:h-11',
-            option.value === value ? 'bg-selected font-semibold' : 'bg-card text-muted-foreground hover:bg-accent hover:text-foreground',
+            'border-l text-sm transition-colors duration-100 first:border-l-0 disabled:opacity-50 max-lg:h-11',
+            size === 'sm' ? 'h-6 px-2 max-lg:px-3' : 'h-8 px-3',
+            option.value === value
+              ? size === 'sm'
+                ? 'bg-foreground text-background'
+                : 'bg-selected font-semibold'
+              : cn('text-muted-foreground hover:text-foreground', size === 'default' && 'bg-card hover:bg-accent'),
           )}
         >
           {option.label}

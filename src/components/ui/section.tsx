@@ -5,11 +5,13 @@ import { cn } from '@/lib/utils'
 export function Section({ label, count, action, className, children }: { label: string; count?: number; action?: ReactNode; className?: string; children: ReactNode }) {
   return (
     <section className={className} aria-label={label}>
-      <h2 className="label-caps flex h-9 items-center gap-2 border-b">
-        {label}
-        {count !== undefined && <span className="text-foreground">{count}</span>}
-        {action && <span className="ml-auto tracking-normal normal-case">{action}</span>}
-      </h2>
+      <div className="flex h-9 items-center gap-2 border-b">
+        <h2 className="label-caps flex items-center gap-2">
+          {label}
+          {count !== undefined && <span className="text-foreground">{count}</span>}
+        </h2>
+        {action && <div className="ml-auto">{action}</div>}
+      </div>
       {children}
     </section>
   )

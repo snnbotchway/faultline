@@ -34,7 +34,6 @@ export function ProjectList({ org }: { org?: string }) {
   const canCreateOrganization = useQuery(instanceSettingsQuery).data?.enableOrganizationCreation
   // New projects go into the organization on screen, or the one the shell is showing.
   const target = org ?? last
-  const can = useAccess(target ?? '')
 
   if (!organizations.isPending && slugs.length === 0)
     return (
@@ -63,14 +62,7 @@ export function ProjectList({ org }: { org?: string }) {
   const find = (className: string) => (
     <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a project" aria-label="Find a project" className={className} />
   )
-  const create = target && can(Scope.projectWrite) && (
-    <Button asChild variant="default" size="sm" className="max-lg:h-9 touch-hit">
-      <Link to="/$org/settings/projects/new" params={{ org: target }}>
-        <Plus />
-        New project
-      </Link>
-    </Button>
-  )
+  const create = target && <NewProjectButton org={target} />
 
   return (
     <>
@@ -122,6 +114,19 @@ export function ProjectList({ org }: { org?: string }) {
         </>
       )}
     </>
+  )
+}
+
+function NewProjectButton({ org }: { org: string }) {
+  const can = useAccess(org)
+  if (!can(Scope.projectWrite)) return null
+  return (
+    <Button asChild variant="default" size="sm" className="max-lg:h-9 touch-hit">
+      <Link to="/$org/settings/projects/new" params={{ org }}>
+        <Plus />
+        New project
+      </Link>
+    </Button>
   )
 }
 

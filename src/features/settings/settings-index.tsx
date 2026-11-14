@@ -4,6 +4,7 @@ import { ChevronRight, Plus, Search } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { ORGANIZATION_NAME_MAX, Scope, instanceSettingsQuery, membersQuery, organizationActions, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
 import { signInAppsQuery } from '@/api/sign-in-apps'
+import { stale } from '@/api/stale'
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -195,7 +196,7 @@ export function SettingsIndex({ org }: { org: string }) {
 
 function RenameOrganization({ org, name, onDone }: { org: string; name: string; onDone: () => void }) {
   const [value, setValue] = useState(name)
-  const rename = useChange(org, 'rename the organization', () => organizationActions.rename(org, value.trim()), { onDone, everyOrganization: true })
+  const rename = useChange('rename the organization', () => organizationActions.rename(org, value.trim()), { stale: [stale.organizations, stale.organization(org)], onDone })
   return (
     <InlineForm onSubmit={() => rename.run()} onCancel={onDone} pending={rename.pending} error={rename.error} disabled={!value.trim() || value.trim() === name}>
       <Field label="Name" className="max-w-sm">
@@ -207,9 +208,9 @@ function RenameOrganization({ org, name, onDone }: { org: string; name: string; 
 
 function DeleteOrganization({ org, loses, onClose }: { org: string; loses: string; onClose: () => void }) {
   const navigate = useNavigate()
-  const remove = useChange(org, 'delete the organization', () => organizationActions.remove(org), {
-    everyOrganization: true,
-    gone: true,
+  const remove = useChange('delete the organization', () => organizationActions.remove(org), {
+    stale: [stale.organizations],
+    leavesPage: true,
     onDone: () => void navigate({ to: '/' }),
   })
   return <DeleteDialog open onClose={onClose} what="organization" name={org} loses={loses} onDelete={() => remove.run()} pending={remove.pending} error={remove.error} />

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { SIGN_IN_APPS_MAX, SIGN_IN_APP_NAME_MAX, SignInProvider, signInAppActions, signInAppsQuery, type SignInApp } from '@/api/sign-in-apps'
+import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useChange } from './access'
@@ -24,7 +25,7 @@ export function SignInApps({ org }: { org: string }) {
   // 'new', or the id of the app being edited.
   const [editing, setEditing] = useState<number | 'new'>()
   const [deleting, setDeleting] = useState<SignInApp>()
-  const remove = useChange(org, 'delete the sign-in app', (app: SignInApp) => signInAppActions.remove(org, app.id!), { onDone: () => setDeleting(undefined) })
+  const remove = useChange('delete the sign-in app', (app: SignInApp) => signInAppActions.remove(org, app.id!), { stale: [stale.signInApps(org)], onDone: () => setDeleting(undefined) })
   const full = (apps?.length ?? 0) >= SIGN_IN_APPS_MAX
   return (
     <>
@@ -111,13 +112,13 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
     secret: !app && !secret.trim() ? 'Enter the client secret.' : undefined,
   }
   const save = useChange(
-    org,
     app ? 'change the sign-in app' : 'create the sign-in app',
     () => {
       const input = { name: name.trim(), serverUrl: google ? null : serverUrl.trim(), clientID: clientID.trim(), clientSecret: secret.trim() || null }
       return app ? signInAppActions.update(org, app.id!, input) : signInAppActions.create(org, provider, input)
     },
     {
+      stale: [stale.signInApps(org)],
       onDone: (saved) => {
         onClose()
         if (!app) onCreated(saved)

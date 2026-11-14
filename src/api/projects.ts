@@ -19,8 +19,9 @@ export const projectKeys = {
   detail: (org: string, project: string) => [...organizationKeys.projects(org), project] as const,
   keys: (org: string, project: string) => [...projectKeys.detail(org, project), 'keys'] as const,
   environments: (org: string, project: string) => [...projectKeys.detail(org, project), 'environments'] as const,
-  activity: (org: string, id: string) => [...organizationKeys.projects(org), 'activity', id] as const,
-  alertCount: (org: string, project: string) => [...projectKeys.detail(org, project), 'alert-count'] as const,
+  // Kept apart from the organization's keys: a change to settings never makes a project's history stale.
+  activity: (org: string, id: string) => ['project-activity', org, id] as const,
+  alertCount: (org: string, project: string) => ['project-alert-count', org, project] as const,
 }
 
 export const projectQuery = (org: string, project: string) =>

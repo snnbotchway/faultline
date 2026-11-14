@@ -3,10 +3,11 @@ import { Link } from '@tanstack/react-router'
 import { CircleCheck, CircleDashed } from 'lucide-react'
 import { useState } from 'react'
 import { latestIssueQuery, projectActions, projectQuery, type ProjectDetail } from '@/api/projects'
+import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
 import { ago } from '@/features/issues/format'
 import { LevelGlyph } from '@/features/issues/level'
-import { useChange } from './access'
+import { Failure, useChange } from './access'
 import { PlatformPicker, Snippets } from './fields'
 import { FormDialog } from './parts'
 import { OTHER_PLATFORM, platformName } from './platforms'
@@ -25,7 +26,10 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
   const [viewed, setViewed] = useState<string>()
   const platform = viewed ?? project.platform ?? OTHER_PLATFORM
   const firstEvent = useQuery({ ...projectQuery(org, slug), refetchInterval: (query) => (query.state.data?.firstEvent ? false : POLL_MS) }).data?.firstEvent
-  const save = useChange(org, 'change the platform', (id: string) => projectActions.update(org, slug, { name: project.name, platform: id === OTHER_PLATFORM ? null : id }), { notice: true })
+  const save = useChange('change the platform', (id: string) => projectActions.update(org, slug, { name: project.name, platform: id === OTHER_PLATFORM ? null : id }), {
+    stale: [stale.projects(org)],
+    failure: Failure.asNotice,
+  })
   const choose = (id: string) => {
     setChanging(false)
     setViewed(id)

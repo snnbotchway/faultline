@@ -4,6 +4,7 @@ import { ChevronRight, Plus } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
+import { stale } from '@/api/stale'
 import {
   PROJECT_KEY_NAME_MAX,
   PROJECT_NAME_MAX,
@@ -21,7 +22,7 @@ import { Input, Select } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { useAccess, useChange } from './access'
+import { Failure, useAccess, useChange } from './access'
 import { Confirm, TeamChecklist } from './fields'
 import { CopyField, DeleteDialog, Field, FoldRow, FormDialog, Group, GroupAction, InlineForm, ROW, ROW_LABEL, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
 import { useFold } from './rows'
@@ -186,7 +187,7 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
 
 function NameForm({ org, slug, name, onDone }: { org: string; slug: string; name: string; onDone: () => void }) {
   const [value, setValue] = useState(name)
-  const save = useChange(org, 'rename the project', () => projectActions.update(org, slug, { name: value.trim() }), { onDone })
+  const save = useChange('rename the project', () => projectActions.update(org, slug, { name: value.trim() }), { stale: [stale.projects(org)], onDone })
   return (
     // The backend would take an empty name, so the form does not offer to send one.
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={!value.trim() || value.trim() === name}>
@@ -199,7 +200,7 @@ function NameForm({ org, slug, name, onDone }: { org: string; slug: string; name
 
 function PlatformForm({ org, slug, name, platform, onDone }: { org: string; slug: string; name: string; platform?: string | null; onDone: () => void }) {
   const [value, setValue] = useState(platform ?? OTHER_PLATFORM)
-  const save = useChange(org, 'change the platform', () => projectActions.update(org, slug, { name, platform: value === OTHER_PLATFORM ? null : value }), { onDone })
+  const save = useChange('change the platform', () => projectActions.update(org, slug, { name, platform: value === OTHER_PLATFORM ? null : value }), { stale: [stale.projects(org)], onDone })
   // A platform set by another client that this list does not know stays choosable.
   const unknown = platform && !PLATFORMS.some((p) => p.id === platform)
   return (
@@ -227,13 +228,12 @@ function TeamsForm({ org, slug, teams, onDone }: { org: string; slug: string; te
   const added = value.filter((team) => !teams.includes(team))
   const removed = teams.filter((team) => !value.includes(team))
   const save = useChange(
-    org,
     'change the teams',
     async () => {
       for (const team of added) await projectActions.addTeam(org, slug, team)
       for (const team of removed) await projectActions.removeTeam(org, slug, team)
     },
-    { onDone },
+    { stale: [stale.projects(org), stale.teams(org)], onDone },
   )
   return (
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={!added.length && !removed.length}>
@@ -246,7 +246,7 @@ function ThrottleForm({ org, slug, name, rate, onDone }: { org: string; slug: st
   const [value, setValue] = useState(String(rate))
   const percent = Number(value)
   const valid = /^\d+$/.test(value.trim()) && percent <= 100
-  const save = useChange(org, 'change how many events are dropped', () => projectActions.update(org, slug, { name, eventThrottleRate: percent }), { onDone })
+  const save = useChange('change how many events are dropped', () => projectActions.update(org, slug, { name, eventThrottleRate: percent }), { stale: [stale.projects(org)], onDone })
   return (
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={!valid || percent === rate}>
       <Field label="Percent of events to drop" className="max-w-56" error={value.trim() && !valid ? 'A whole number from 0 to 100.' : undefined}>
@@ -258,8 +258,9 @@ function ThrottleForm({ org, slug, name, rate, onDone }: { org: string; slug: st
 
 function DeleteProject({ org, slug, onClose }: { org: string; slug: string; onClose: () => void }) {
   const navigate = useNavigate()
-  const remove = useChange(org, 'delete the project', () => projectActions.remove(org, slug), {
-    gone: true,
+  const remove = useChange('delete the project', () => projectActions.remove(org, slug), {
+    stale: [stale.projects(org), stale.teams(org)],
+    leavesPage: true,
     onDone: () => void navigate({ to: '/$org/settings', params: { org } }),
   })
   return (
@@ -285,7 +286,7 @@ function Keys({ org, slug, keys, write, admin }: { org: string; slug: string; ke
   const row = useFold(keys?.length === 1 ? keys[0]!.id : undefined)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<ProjectKey>()
-  const remove = useChange(org, 'delete the key', (key: ProjectKey) => projectActions.removeKey(org, slug, key.id), { onDone: () => setDeleting(undefined) })
+  const remove = useChange('delete the key', (key: ProjectKey) => projectActions.removeKey(org, slug, key.id), { stale: [stale.project(org, slug)], onDone: () => setDeleting(undefined) })
   return (
     <>
       <Group
@@ -336,7 +337,7 @@ function Keys({ org, slug, keys, write, admin }: { org: string; slug: string; ke
 function NewKeyDialog({ org, slug, onClose }: { org: string; slug: string; onClose: () => void }) {
   const [name, setName] = useState('')
   const [checked, setChecked] = useState(false)
-  const save = useChange(org, 'create the key', () => projectActions.createKey(org, slug, name.trim()), { onDone: onClose })
+  const save = useChange('create the key', () => projectActions.createKey(org, slug, name.trim()), { stale: [stale.project(org, slug)], onDone: onClose })
   const submit = () => {
     setChecked(true)
     if (name.trim()) save.run()
@@ -353,7 +354,10 @@ function NewKeyDialog({ org, slug, onClose }: { org: string; slug: string; onClo
 /* ---------- environments ---------- */
 
 function Environments({ org, slug, environments, write }: { org: string; slug: string; environments?: ProjectEnvironment[]; write: boolean }) {
-  const toggle = useChange(org, 'change the environment', ({ name, hidden }: { name: string; hidden: boolean }) => projectActions.setEnvironmentHidden(org, slug, name, hidden), { notice: true })
+  const toggle = useChange('change the environment', ({ name, hidden }: { name: string; hidden: boolean }) => projectActions.setEnvironmentHidden(org, slug, name, hidden), {
+    stale: [stale.project(org, slug)],
+    failure: Failure.asNotice,
+  })
   if (!environments) return <RowSkeleton rows={3} />
   if (!environments.length) return <Screen title="No environments yet" />
   return (

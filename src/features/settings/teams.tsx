@@ -6,12 +6,13 @@ import { OrgRole, type Member } from '@/api/members'
 import { Scope, membersQuery, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
 import { projectActions, type Project } from '@/api/projects'
 import { TEAM_SLUG_MAX, teamActions, teamMembersQuery, type Team } from '@/api/teams'
+import { stale } from '@/api/stale'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { useAccess, useChange, useOwnMember } from './access'
+import { Failure, useAccess, useChange, useOwnMember } from './access'
 import { Confirm } from './fields'
 import { Field, FoldRow, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { atLeast } from './roles'
@@ -105,8 +106,10 @@ type RowProps = {
 function TeamRow(props: RowProps) {
   const { org, team, projects, me, canChange, open, onOpen } = props
   const opens = projects.filter((project) => project.teams.some((t) => t.slug === team.slug))
-  const membership = useChange(org, team.isMember ? 'leave the team' : 'join the team', () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
-    notice: true,
+  const membership = useChange(team.isMember ? 'leave the team' : 'join the team', () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
+    // Being on a team changes which projects the user is a member of.
+    stale: [stale.teams(org), stale.projects(org)],
+    failure: Failure.asNotice,
   })
   return (
     <li className={cn(open && 'bg-card')}>
@@ -137,12 +140,13 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
   const everyone = useQuery(membersQuery(org)).data ?? []
   const [renaming, setRenaming] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const quiet = { notice: true }
-  const addMember = useChange(org, 'add the member', (id: string) => teamActions.addMember(org, team.slug, id), quiet)
-  const removeMember = useChange(org, 'remove the member', (id: string) => teamActions.removeMember(org, team.slug, id), quiet)
-  const addProject = useChange(org, 'add the project', (slug: string) => projectActions.addTeam(org, slug, team.slug), quiet)
-  const removeProject = useChange(org, 'remove the project', (slug: string) => projectActions.removeTeam(org, slug, team.slug), quiet)
-  const remove = useChange(org, 'delete the team', () => teamActions.remove(org, team.slug), { gone: true, onDone: () => onOpen() })
+  const onRoster = { stale: [stale.teams(org)], failure: Failure.asNotice }
+  const onAccess = { stale: [stale.teams(org), stale.projects(org)], failure: Failure.asNotice }
+  const addMember = useChange('add the member', (id: string) => teamActions.addMember(org, team.slug, id), onRoster)
+  const removeMember = useChange('remove the member', (id: string) => teamActions.removeMember(org, team.slug, id), onRoster)
+  const addProject = useChange('add the project', (slug: string) => projectActions.addTeam(org, slug, team.slug), onAccess)
+  const removeProject = useChange('remove the project', (slug: string) => projectActions.removeTeam(org, slug, team.slug), onAccess)
+  const remove = useChange('delete the team', () => teamActions.remove(org, team.slug), { stale: [stale.teams(org), stale.projects(org)], leavesPage: true, onDone: () => onOpen() })
   const outside = everyone.filter((member) => member.id !== me?.id && !roster?.some((m) => m.id === member.id) && canChange(member.id))
   const closed = projects.filter((project) => !opens.includes(project))
   return (
@@ -247,7 +251,8 @@ function SlugDialog({ org, team, taken, onClose, onDone }: { org: string; team?:
   const [slug, setSlug] = useState(team ?? '')
   const [checked, setChecked] = useState(false)
   const problem = teamSlugError(slug, taken)
-  const save = useChange(org, team ? 'rename the team' : 'create the team', () => (team ? teamActions.rename(org, team, slug.trim()) : teamActions.create(org, slug.trim())), {
+  const save = useChange(team ? 'rename the team' : 'create the team', () => (team ? teamActions.rename(org, team, slug.trim()) : teamActions.create(org, slug.trim())), {
+    stale: [stale.teams(org), stale.projects(org)],
     onDone: (saved) => {
       onClose()
       onDone(saved)

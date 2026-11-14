@@ -3,6 +3,7 @@ import { explain } from '@/api/errors'
 import { OrgRole, memberActions } from '@/api/members'
 import type { Project } from '@/api/projects'
 import type { Team } from '@/api/teams'
+import { stale } from '@/api/stale'
 import { Input } from '@/components/ui/input'
 import { useChange } from './access'
 import { RoleField, TeamChecklist } from './fields'
@@ -39,7 +40,6 @@ export function InviteDialog({
   const { emails, invalid } = parseEmails(text)
 
   const invite = useChange(
-    org,
     'send the invites',
     async (): Promise<Outcome[]> => {
       const outcomes: Outcome[] = []
@@ -55,6 +55,7 @@ export function InviteDialog({
       return outcomes
     },
     {
+      stale: [stale.members(org), stale.teams(org)],
       onDone: (outcomes) => {
         const failures = outcomes.filter((outcome) => outcome.error)
         const invited = outcomes.filter((outcome) => !outcome.error)

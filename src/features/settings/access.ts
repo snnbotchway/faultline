@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, type QueryFilters } from '@tanstack/react-query'
 import { useState } from 'react'
 import { explain } from '@/api/errors'
-import { currentUserQuery, hasScope, membersQuery, organizationKeys, organizationQuery, organizationsQuery, type Scope } from '@/api/organizations'
+import { currentUserQuery, hasScope, membersQuery, organizationQuery, organizationsQuery, type Scope } from '@/api/organizations'
 import { failed } from '@/lib/notice'
 import { LAST_ORG_KEY } from '@/lib/session'
 
@@ -25,18 +25,24 @@ export function useOwnMember(org: string) {
   return userId === undefined ? undefined : members?.find((member) => member.user?.id === userId)
 }
 
+// Where a failed change says so: under the form it came from, or as a notice when the control has no form.
+export const Failure = { inForm: 'inForm', asNotice: 'asNotice' } as const
+export type Failure = (typeof Failure)[keyof typeof Failure]
+
+type ChangeOptions<Input, Result> = {
+  // What the change makes out of date; fetched again before `onDone` runs.
+  stale: readonly QueryFilters[]
+  failure?: Failure
+  onDone?: (result: Result, input: Input) => void
+  // For a change that removes the page it was made on: `onDone` runs first, as fetching the removed thing again would only fail.
+  leavesPage?: boolean
+}
+
 /**
- * One change to the organization's settings. `what` completes "Couldn't …". The result shows up in the
- * lists it changed, which are fetched again; a failure is returned for a form to show under its fields,
- * or raised as a notice when the control has no form (`notice`). `everyOrganization` is for a change to the list of
- * organizations itself. `gone` is for a change that removes what the page is showing.
+ * One change to settings. `what` completes "Couldn't …". A failure in a form is returned as `error` for the form to
+ * show under its fields.
  */
-export function useChange<Input = void, Result = unknown>(
-  org: string,
-  what: string,
-  change: (input: Input) => Promise<Result>,
-  options: { onDone?: (result: Result, input: Input) => void; notice?: boolean; everyOrganization?: boolean; gone?: boolean } = {},
-) {
+export function useChange<Input = void, Result = unknown>(what: string, change: (input: Input) => Promise<Result>, options: ChangeOptions<Input, Result>) {
   const queryClient = useQueryClient()
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string>()
@@ -45,9 +51,8 @@ export function useChange<Input = void, Result = unknown>(
     setError(undefined)
     try {
       const result = await change(input)
-      const refresh = () => queryClient.invalidateQueries({ queryKey: options.everyOrganization ? organizationKeys.all : organizationKeys.detail(org) })
-      if (options.gone) {
-        // Leave first: fetching the removed thing again would only fail, and waiting for that would hold the page.
+      const refresh = () => Promise.all(options.stale.map((filters) => queryClient.invalidateQueries(filters)))
+      if (options.leavesPage) {
         options.onDone?.(result, input)
         void refresh()
       } else {
@@ -55,7 +60,7 @@ export function useChange<Input = void, Result = unknown>(
         options.onDone?.(result, input)
       }
     } catch (caught) {
-      if (options.notice) failed(caught, what)
+      if (options.failure === Failure.asNotice) failed(caught, what)
       else setError(explain(caught, what))
     } finally {
       setPending(false)

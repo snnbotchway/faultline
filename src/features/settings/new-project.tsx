@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { Scope, teamsQuery } from '@/api/organizations'
 import { PROJECT_NAME_MAX, projectActions } from '@/api/projects'
 import { TEAM_SLUG_MAX, teamActions } from '@/api/teams'
+import { stale } from '@/api/stale'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
@@ -34,13 +35,15 @@ export function NewProject({ org }: { org: string }) {
   const teamError = firstTeam ? teamSlugError(newTeam, []) : undefined
 
   const create = useChange(
-    org,
     'create the project',
     async () => {
       const slug = firstTeam ? (await teamActions.create(org, newTeam.trim())).slug : (team ?? teams![0]!.slug)
       return projectActions.create(org, slug, { name: name.trim(), platform: platform === OTHER_PLATFORM ? null : platform })
     },
-    { onDone: (project) => void navigate({ to: '/$org/settings/projects/$project', params: { org, project: project.slug ?? '' }, search: { tab: ProjectTab.setup } }) },
+    {
+      stale: [stale.projects(org), stale.teams(org)],
+      onDone: (project) => void navigate({ to: '/$org/settings/projects/$project', params: { org, project: project.slug ?? '' }, search: { tab: ProjectTab.setup } }),
+    },
   )
   const submit = (event: FormEvent) => {
     event.preventDefault()

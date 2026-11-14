@@ -16,11 +16,13 @@ export const SIGN_IN_APPS_MAX = 10
 
 export type SignInAppInput = { name: string; serverUrl: string | null; clientID: string; clientSecret: string | null }
 
+export const signInAppKeys = { all: (org: string) => [...organizationKeys.detail(org), 'sign-in-apps'] as const }
+
 const appPath = (org: string, id: number) => ({ ...orgPath(org), social_app_id: id })
 
 export const signInAppsQuery = (org: string) =>
   queryOptions({
-    queryKey: [...organizationKeys.detail(org), 'sign-in-apps'] as const,
+    queryKey: signInAppKeys.all(org),
     queryFn: async () => unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/social-apps/', { params: { path: orgPath(org) } })),
   })
 

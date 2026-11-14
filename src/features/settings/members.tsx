@@ -6,13 +6,14 @@ import { OrgRole, memberActions, type Member } from '@/api/members'
 import { Feature, Scope, instanceSettingsQuery, membersQuery, projectsQuery, teamsQuery } from '@/api/organizations'
 import type { Project } from '@/api/projects'
 import { teamActions, teamMembersQuery, type Team } from '@/api/teams'
+import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ago, exact } from '@/features/issues/format'
 import { failed, notify } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { useAccess, useChange, useOwnMember } from './access'
+import { Failure, useAccess, useChange, useOwnMember } from './access'
 import { Confirm, RoleField, TeamChecklist } from './fields'
 import { InviteDialog } from './invite-dialog'
 import { CopyButton, FoldRow, FormError, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
@@ -157,17 +158,20 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
   const removed = memberTeams.filter((team) => !chosen.includes(team))
   const owner = me?.role === OrgRole.owner
   const save = useChange(
-    org,
     'save the member',
     async () => {
       if (role !== member.role) await memberActions.setRole(org, member.id, role)
       for (const team of added) await teamActions.addMember(org, team, member.id)
       for (const team of removed) await teamActions.removeMember(org, team, member.id)
     },
-    { onDone: onClose },
+    { stale: [stale.members(org), stale.teams(org)], onDone: onClose },
   )
-  const resend = useChange(org, 'send the invite again', () => memberActions.resend(org, member), { notice: true, onDone: () => notify(`Invite sent again to ${member.email}`) })
-  const transfer = useChange(org, 'transfer ownership', () => memberActions.makeOwner(org, member.id), { onDone: () => setAsking(undefined) })
+  const resend = useChange('send the invite again', () => memberActions.resend(org, member), {
+    stale: [stale.members(org)],
+    failure: Failure.asNotice,
+    onDone: () => notify(`Invite sent again to ${member.email}`),
+  })
+  const transfer = useChange('transfer ownership', () => memberActions.makeOwner(org, member.id), { stale: [stale.members(org)], onDone: () => setAsking(undefined) })
   return (
     <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-13">
       <div className="grid max-w-2xl gap-4 lg:grid-cols-2">
@@ -221,10 +225,10 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
 
 function RemoveMember({ org, member, mine, onClose, onDone }: { org: string; member: Member; mine: boolean; onClose: () => void; onDone?: () => void }) {
   const navigate = useNavigate()
-  const remove = useChange(org, mine ? 'leave the organization' : member.pending ? 'cancel the invite' : 'remove the member', () => memberActions.remove(org, member.id), {
+  const remove = useChange(mine ? 'leave the organization' : member.pending ? 'cancel the invite' : 'remove the member', () => memberActions.remove(org, member.id), {
     // Leaving takes the organization out of the user's list, so there is nothing here to go back to.
-    everyOrganization: mine,
-    gone: mine,
+    stale: mine ? [stale.organizations] : [stale.members(org), stale.teams(org)],
+    leavesPage: mine,
     onDone: () => (mine ? void navigate({ to: '/' }) : onDone?.()),
   })
   return (

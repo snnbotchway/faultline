@@ -202,9 +202,11 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
             Transfer ownership
           </Button>
         )}
-        {(!mine || member.role !== OrgRole.owner) && (
+        {mine && member.role === OrgRole.owner ? (
+          <span className="flex items-center text-sm text-muted-foreground lg:ml-auto">To leave, make someone else the owner first.</span>
+        ) : (
           <Button variant="destructive" className="lg:ml-auto" onClick={() => setAsking(Question.remove)}>
-            {mine ? 'Leave organization' : member.pending ? 'Cancel invite' : 'Remove'}
+            {removal(org, member, mine).confirm}
           </Button>
         )}
       </div>
@@ -227,26 +229,25 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
   )
 }
 
+// What taking someone out of the organization is called, asked and costs: leaving it yourself, cancelling an invite, or removing a member.
+function removal(org: string, member: Member, mine: boolean) {
+  if (mine) return { what: 'leave the organization', title: `Leave ${org}?`, confirm: 'Leave organization', loses: 'You lose access to its projects and issues until someone invites you again.' }
+  if (member.pending) return { what: 'cancel the invite', title: `Cancel the invite for ${member.email}?`, confirm: 'Cancel invite', loses: 'The link they were sent stops working.' }
+  return { what: 'remove the member', title: `Remove ${memberName(member)}?`, confirm: 'Remove', loses: "They lose access to this organization's projects and issues." }
+}
+
 function RemoveMember({ org, member, mine, onClose, onDone }: { org: string; member: Member; mine: boolean; onClose: () => void; onDone?: () => void }) {
   const navigate = useNavigate()
-  const remove = useChange(mine ? 'leave the organization' : member.pending ? 'cancel the invite' : 'remove the member', () => memberActions.remove(org, member.id), {
+  const { what, title, confirm, loses } = removal(org, member, mine)
+  const remove = useChange(what, () => memberActions.remove(org, member.id), {
     // Leaving takes the organization out of the user's list, so there is nothing here to go back to.
     stale: mine ? [stale.organizations] : [stale.members(org), stale.teams(org)],
     leavesPage: mine,
     onDone: () => (mine ? void navigate({ to: '/' }) : onDone?.()),
   })
   return (
-    <Confirm
-      open
-      onClose={onClose}
-      title={mine ? `Leave ${org}?` : member.pending ? `Cancel the invite for ${member.email}?` : `Remove ${memberName(member)}?`}
-      confirm={mine ? 'Leave organization' : member.pending ? 'Cancel invite' : 'Remove'}
-      destructive
-      onConfirm={() => remove.run()}
-      pending={remove.pending}
-      error={remove.error}
-    >
-      {mine ? 'You lose access to its projects and issues until someone invites you again.' : member.pending ? 'The link they were sent stops working.' : "They lose access to this organization's projects and issues."}
+    <Confirm open onClose={onClose} title={title} confirm={confirm} destructive onConfirm={() => remove.run()} pending={remove.pending} error={remove.error}>
+      {loses}
     </Confirm>
   )
 }

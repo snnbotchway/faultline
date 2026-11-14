@@ -134,7 +134,7 @@ function TeamRow(props: RowProps) {
   )
 }
 
-const LINE = 'flex min-h-10 items-center gap-2 border-b max-lg:min-h-11'
+const DETAIL_ROW = 'flex min-h-10 items-center gap-2 border-b max-lg:min-h-11'
 
 function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkProjects, canChange, onOpen }: RowProps & { opens: Project[] }) {
   const roster = useQuery(teamMembersQuery(org, team.slug)).data
@@ -155,10 +155,10 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
       <section aria-label={`Members of ${team.slug}`}>
         <h3 className="label-caps border-b pb-2">Members</h3>
         {!roster && <RowSkeleton rows={2} />}
-        {roster?.length === 0 && <p className={cn(LINE, 'text-muted-foreground')}>Nobody yet</p>}
+        {roster?.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>Nobody yet</p>}
         {roster?.map((member) => (
-          <div key={member.id} className={LINE}>
-            <Initials name={memberName(member)} hollow={member.pending} className="size-5" />
+          <div key={member.id} className={DETAIL_ROW}>
+            <Initials name={memberName(member)} hollow={member.pending} />
             <Link to="/$org/settings/members/$memberId" params={{ org, memberId: member.id }} className="min-w-0 flex-1 py-1 [overflow-wrap:anywhere] hover:underline">
               {memberName(member)}
             </Link>
@@ -189,9 +189,9 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
       </section>
       <section aria-label={`Projects of ${team.slug}`}>
         <h3 className="label-caps border-b pb-2">Projects</h3>
-        {opens.length === 0 && <p className={cn(LINE, 'text-muted-foreground')}>None yet</p>}
+        {opens.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>None yet</p>}
         {opens.map((project) => (
-          <div key={project.id} className={LINE}>
+          <div key={project.id} className={DETAIL_ROW}>
             <Link to="/$org/settings/projects/$project" params={{ org, project: project.slug ?? '' }} className="mono min-w-0 flex-1 py-1 break-words hover:underline">
               {project.slug}
             </Link>
@@ -241,7 +241,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
         pending={remove.pending}
         error={remove.error}
       >
-        {opens.length ? `Its members lose the access it gave them to ${plural(opens.length, 'project')}. The projects stay.` : 'Its members stay in the organization.'}
+        {opens.length ? `Its members lose the access it gave them to ${plural(opens.length, 'project')}. The projects stay.` : 'It has no projects, so nobody loses access to anything.'}
       </Confirm>
     </div>
   )

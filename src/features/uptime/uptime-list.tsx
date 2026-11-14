@@ -9,11 +9,11 @@ import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MarkLabels, PeriodToggle, ReleaseRules } from '@/features/issues/trace'
-import { periodInfo, releaseMarks, spanAxis, type Mark } from '@/features/issues/trend'
+import { releaseMarks, spanAxis, type Mark } from '@/features/issues/trend'
 import { ago, dayTime, exact } from '@/features/issues/format'
-import { SECOND_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
+import { periodLength } from './format'
 import { Health } from './health'
 import { UptimeTab } from './address'
 import { HEALTH, HEALTH_ORDER, downReason, healthLine, isAlarm, isHeartbeat, targetText } from './describe'
@@ -21,9 +21,6 @@ import { CheckBars, DowntimeStrip, HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth, type MonitorHealth } from './use-health'
 import { countWord } from '@/lib/text'
 import { formatMs } from '@/features/performance/format'
-
-// How far back the shared time axis reaches, in milliseconds.
-const periodLength = (period: StatsPeriod) => periodInfo(period).size * periodInfo(period).count * SECOND_MS
 
 const COLUMNS = 'lg:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_232px_80px]'
 // A group is named as its health, except the monitors that have not been checked yet.
@@ -56,7 +53,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
 
   const bar = (
     <PageBar>
-      <UptimeTabs org={org} current={UptimeTab.monitors} counts={{ [UptimeTab.monitors]: list.isSuccess ? monitors.length : undefined, [UptimeTab.statusPages]: pages?.length }} />
+      <UptimeTabs org={org} current={UptimeTab.monitors} counts={{ [UptimeTab.statusPages]: pages?.length }} />
       <div className="ml-auto flex items-center gap-2">
         {monitors.length > 0 && <div className="max-lg:hidden">{toggle}</div>}
         {canWrite && (
@@ -191,12 +188,23 @@ function MonitorRow({ org, monitor, health, from, now, marks }: { org: string; m
             <span className="truncate font-medium">{monitor.name}</span>
             {alsoSlow && <span className={cn('label-caps shrink-0', HEALTH[Health.slow].color)}>{HEALTH[Health.slow].label}</span>}
           </div>
-          <div className="mono mt-1 flex gap-2 pl-5 text-muted-foreground">
-            {loud && <span className={cn('shrink-0 max-lg:hidden', HEALTH[state].color)}>{state === Health.down ? downReason(monitor, report) : line}</span>}
-            <span className="truncate max-lg:hidden">{targetText(monitor)}</span>
+          {/* Health in words, then what is checked: an address in mono, a heartbeat's schedule in words. */}
+          <div className="mt-1 flex gap-2 pl-5 text-muted-foreground">
+            {loud && (
+              <span className={cn('shrink-0 max-lg:hidden', HEALTH[state].color)}>
+                {state === Health.down ? downReason(monitor, report) : line}
+                <span className="text-muted-foreground"> ·</span>
+              </span>
+            )}
+            <span className={cn('truncate max-lg:hidden', !isHeartbeat(monitor) && 'mono')}>{targetText(monitor)}</span>
             <span className={cn('truncate lg:hidden', loud && HEALTH[state].color)}>
               {line}
-              {state === Health.up && report.typical !== undefined && ` · ${formatMs(report.typical)}`}
+              {state === Health.up && report.typical !== undefined && (
+                <>
+                  {' · '}
+                  <span className="mono">{formatMs(report.typical)}</span>
+                </>
+              )}
             </span>
           </div>
         </div>

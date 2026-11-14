@@ -31,9 +31,11 @@ export const compact = (count: number | string) => compactFormat.format(Number(c
 const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
 const hourFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
 export const dayLabel = (seconds: number) => dayFormat.format(new Date(seconds * 1000))
-// `14:02`: the time of day of a moment.
-export const clock = (time: string | Date) => hourFormat.format(new Date(time))
-export const hourLabel = (seconds: number) => clock(new Date(seconds * 1000))
+export const hourLabel = (seconds: number) => hourFormat.format(new Date(seconds * 1000))
+
+// `2:02 PM`: the time of day of a moment, in the same style as `brief`.
+const clockFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' })
+export const clock = (time: string | Date) => clockFormat.format(new Date(time))
 
 // `Today`, `Yesterday`, or the date, in the viewer's time zone.
 export function dayName(time: Date, now: Date): string {

@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { StatsPeriod } from '@/api/issues'
 import { projectAlertsQuery } from '@/api/alerts'
 import { explain, isNotFound } from '@/api/errors'
 import { isHttp, monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectSlug, projectsQuery } from '@/api/organizations'
-import { recentReleasesQuery, type Release } from '@/api/releases'
+import { canOpenRelease, recentReleasesQuery, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
 import { Button } from '@/components/ui/button'
@@ -16,16 +17,17 @@ import { Section, Stat } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
-import { releaseBefore } from '@/features/issues/trend'
+import { MarkLabels, PeriodToggle } from '@/features/issues/trace'
+import { releaseBefore, releaseMarks, spanAxis } from '@/features/issues/trend'
 import { releaseName } from '@/lib/text'
-import { ago, brief, clock, exact } from '@/features/issues/format'
+import { ago, brief, clock, dayTime, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { every, span } from './format'
+import { every, periodLength, span } from './format'
 import { Health, checkHealth, checkScale, healthOf, isSlow, type Downtime, type HealthReport } from './health'
 import { isMonitorId } from './address'
 import { HEALTH, healthLine, isAlarm, isHeartbeat, reasonText, targetText } from './describe'
-import { CheckBars, DowntimeGlyph, HealthGlyph } from './parts'
+import { CheckBars, DowntimeGlyph, DowntimeStrip, HealthGlyph } from './parts'
 import { formatMs } from '@/features/performance/format'
 
 const CHECKS_SHOWN = 8
@@ -113,6 +115,9 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const rules = (alerts.data ?? []).filter((rule) => rule.uptime)
   // Which downtime is unfolded: the ongoing one until the user picks, and none once they fold it.
   const [unfolded, setUnfolded] = useState<number | null | undefined>()
+  const [period, setPeriod] = useState<StatsPeriod>(StatsPeriod.day)
+  const from = now - periodLength(period)
+  const marks = releaseMarks(releases, spanAxis(from, now))
 
   const report = healthOf(monitor, monitor.checks, changes.data ?? [], now)
   const health = report.health
@@ -120,8 +125,9 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const loud = isAlarm(health)
   const alsoSlow = health === Health.flapping && report.slow
   const open = unfolded === undefined ? report.downtimes.find((period) => period.ongoing)?.from : unfolded
+  // Who hears about it now. Only an ongoing downtime says so: the rules may have changed since an older one.
   const recipients = [...new Set(rules.flatMap((rule) => rule.alertRecipients.map((recipient) => recipientMeta(recipient).label)))]
-  const notified = !project ? 'Nobody' : alerts.isPending ? '…' : recipients.length ? recipients.join(', ') : 'Nobody'
+  const alertsGoTo = !project || (alerts.isSuccess && recipients.length === 0) ? 'Nobody' : alerts.isPending ? undefined : recipients.join(', ')
   const facts: [string, string | null | undefined][] = [
     ['Check', monitor.monitorType],
     ['Status', isHttp(monitor.monitorType) ? String(monitor.expectedStatus ?? '') : null],
@@ -145,11 +151,35 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
             {alsoSlow && <span className={cn('label-caps', HEALTH[Health.slow].color)}>{HEALTH[Health.slow].label}</span>}
           </h1>
           {health !== Health.waiting && <p className="mt-1 font-medium">{healthLine(monitor, report, now)}</p>}
-          <p className="mono mt-2 [overflow-wrap:anywhere] text-muted-foreground">{heartbeat ? targetText(monitor) : `${monitor.monitorType} ${targetText(monitor)} every ${every(monitor.interval)}`}</p>
+          <p className="mt-2 [overflow-wrap:anywhere] text-muted-foreground">
+            {heartbeat ? (
+              `Heartbeat ${targetText(monitor)}`
+            ) : (
+              <>
+                <span className="mono">
+                  {monitor.monitorType} {targetText(monitor)}
+                </span>{' '}
+                every {every(monitor.interval)}
+              </>
+            )}
+          </p>
         </header>
 
         <div className="order-3">
-          <Section label="Downtime" count={changes.data ? report.downtimes.length : undefined}>
+          <Section label="Downtime" count={changes.data ? report.downtimes.length : undefined} action={<PeriodToggle period={period} onChange={setPeriod} />}>
+            {changes.data && (
+              // Every stretch down in the period on one strip, with the releases made in it.
+              <div className="pt-3 pb-4">
+                <div className="relative pt-5">
+                  <MarkLabels marks={marks} />
+                  <DowntimeStrip downtimes={report.downtimes} from={from} to={now} marks={marks} phoneMarks waiting={health === Health.waiting} height={28} />
+                </div>
+                <p className="label-caps mt-2 flex justify-between">
+                  <span>{dayTime(new Date(from), new Date(now))}</span>
+                  <span>Now</span>
+                </p>
+              </div>
+            )}
             {changes.isPending ? (
               <Skeleton className="mt-3 h-20" />
             ) : changes.isError ? (
@@ -167,7 +197,8 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
                     unfolded={open === period.from}
                     onToggle={() => setUnfolded(open === period.from ? null : period.from)}
                     before={releaseBefore(releases, period.from)}
-                    notified={notified}
+                    org={org}
+                    alertsGoTo={period.ongoing ? alertsGoTo : undefined}
                   />
                 ))}
               </ul>
@@ -278,13 +309,52 @@ function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: Hea
   )
 }
 
-// One stretch of downtime: when it began, why, and how long it lasted; unfolded, the moments, the release before it and who was told.
-function DowntimeRow({ monitor, period, now, unfolded, onToggle, before, notified }: { monitor: MonitorDetail; period: Downtime; now: number; unfolded: boolean; onToggle: () => void; before?: Release; notified: string }) {
-  const details: { label: string; value: string; title?: string }[] = [
-    { label: 'Went down', value: brief(new Date(period.from)) },
-    { label: 'Came back', value: period.ongoing ? 'Not yet' : brief(new Date(period.to)) },
-    { label: 'Release before', value: before ? `${releaseName(before.version)}, ${span(period.from - Date.parse(before.dateCreated))} earlier` : 'None', title: before?.version },
-    { label: 'Notified', value: notified },
+// One stretch of downtime: when it began, why, and how long it lasted; unfolded, the moments and the release before it.
+// An ongoing one also says who its alerts go to now.
+function DowntimeRow({
+  org,
+  monitor,
+  period,
+  now,
+  unfolded,
+  onToggle,
+  before,
+  alertsGoTo,
+}: {
+  org: string
+  monitor: MonitorDetail
+  period: Downtime
+  now: number
+  unfolded: boolean
+  onToggle: () => void
+  before?: Release
+  alertsGoTo?: string
+}) {
+  const releaseText = before && releaseName(before.version)
+  // Times and versions are machine text; the words around them are not.
+  const details: { label: string; value: ReactNode; mono?: boolean }[] = [
+    { label: 'Went down', value: brief(new Date(period.from)), mono: true },
+    period.ongoing ? { label: 'Came back', value: 'Not yet' } : { label: 'Came back', value: brief(new Date(period.to)), mono: true },
+    {
+      label: 'Release before',
+      value: before ? (
+        <>
+          {canOpenRelease(before.version) ? (
+            <Link to="/$org/releases/$" params={{ org, _splat: before.version }} title={before.version} className="mono hover:underline">
+              {releaseText}
+            </Link>
+          ) : (
+            <span className="mono" title={before.version}>
+              {releaseText}
+            </span>
+          )}
+          , <span className="mono">{span(period.from - Date.parse(before.dateCreated))}</span> earlier
+        </>
+      ) : (
+        'None'
+      ),
+    },
+    ...(alertsGoTo ? [{ label: 'Alerts go to', value: alertsGoTo }] : []),
   ]
   return (
     <li className="border-b">
@@ -292,10 +362,11 @@ function DowntimeRow({ monitor, period, now, unfolded, onToggle, before, notifie
         type="button"
         aria-expanded={unfolded}
         onClick={onToggle}
-        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[48px_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfolded ? 'bg-accent' : 'hover:bg-accent/60')}
+        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[64px_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfolded ? 'bg-accent' : 'hover:bg-accent/60')}
       >
+        {/* "ago", so a start is not read as a length; the length is at the right. */}
         <time className="mono text-muted-foreground" dateTime={new Date(period.from).toISOString()} title={exact(new Date(period.from))}>
-          {ago(new Date(period.from), new Date(now))}
+          {ago(new Date(period.from), new Date(now))} ago
         </time>
         <span className="flex min-w-0 items-center gap-2">
           <DowntimeGlyph ongoing={period.ongoing} />
@@ -308,13 +379,11 @@ function DowntimeRow({ monitor, period, now, unfolded, onToggle, before, notifie
         <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', unfolded && 'rotate-180')} />
       </button>
       {unfolded && (
-        <dl className="border-t bg-card px-3 py-2 lg:pl-15">
+        <dl className="border-t bg-card px-3 py-2 lg:pl-19">
           {details.map((detail) => (
             <div key={detail.label} className="flex min-h-8 items-center justify-between gap-4">
               <dt className="shrink-0 text-muted-foreground">{detail.label}</dt>
-              <dd className="mono truncate" title={detail.title}>
-                {detail.value}
-              </dd>
+              <dd className={cn('truncate', detail.mono && 'mono')}>{detail.value}</dd>
             </div>
           ))}
         </dl>

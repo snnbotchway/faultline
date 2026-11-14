@@ -1,5 +1,7 @@
+import type { StatsPeriod } from '@/api/issues'
+import { periodInfo } from '@/features/issues/trend'
 import { plural } from '@/lib/text'
-import { DAY, HOUR, MINUTE, MINUTE_MS } from '@/lib/time'
+import { DAY, HOUR, MINUTE, MINUTE_MS, SECOND_MS } from '@/lib/time'
 
 // `14m`, `3h 20m`, `2d 4h`, `9d`: how long something lasted, as exact as it is worth being.
 export function span(ms: number): string {
@@ -22,3 +24,6 @@ export function every(seconds: number): string {
   const [size, word] = UNITS.find(([size]) => seconds % size === 0)!
   return seconds === size ? word : plural(seconds / size, word)
 }
+
+// How far back a downtime strip reaches for a period (24h or 14d), in milliseconds.
+export const periodLength = (period: StatsPeriod) => periodInfo(period).size * periodInfo(period).count * SECOND_MS

@@ -69,6 +69,7 @@ export function DowntimeStrip({
   from,
   to,
   marks = [],
+  phoneMarks = false,
   waiting = false,
   height = 20,
   className,
@@ -77,14 +78,15 @@ export function DowntimeStrip({
   from: number
   to: number
   marks?: Mark[]
+  // A phone's row strips are too narrow for release rules; a strip across the page is not.
+  phoneMarks?: boolean
   waiting?: boolean
   height?: number
   className?: string
 }) {
   const width = to - from
   return (
-    // A phone's row strips are too narrow for release rules.
-    <TraceFrame height={height} marks={marks} phoneMarks={false} className={cn(waiting && 'border-dashed border-foreground/30', className)}>
+    <TraceFrame height={height} marks={marks} phoneMarks={phoneMarks} className={cn(waiting && 'border-dashed border-foreground/30', className)}>
       {downtimes
         .filter((period) => period.to > from)
         .map((period) => {

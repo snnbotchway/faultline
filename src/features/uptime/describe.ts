@@ -34,9 +34,10 @@ export const isHeartbeat = (monitor: Pick<Monitor, 'monitorType'>) => monitor.mo
 export const reasonText = (monitor: Pick<Monitor, 'monitorType'>, reason: number | null | undefined) =>
   isHeartbeat(monitor) ? NO_HEARTBEAT : (REASON[(reason ?? CheckReason.unknown) as CheckReason] ?? REASON[CheckReason.unknown])
 
-// What the monitor checks, without the scheme: `api.example.com/health`, or `a heartbeat every hour`.
+// What the monitor checks, without the scheme: `api.example.com/health` (machine text), or for a heartbeat,
+// which checks nothing itself, how often one is due: `every hour` (words).
 export const targetText = (monitor: Pick<Monitor, 'monitorType' | 'url' | 'interval'>) =>
-  isHeartbeat(monitor) ? `a heartbeat every ${every(monitor.interval)}` : (monitor.url ?? '').replace(/^https?:\/\//, '')
+  isHeartbeat(monitor) ? `every ${every(monitor.interval)}` : (monitor.url ?? '').replace(/^https?:\/\//, '')
 
 type Described = Pick<Monitor, 'monitorType' | 'lastChange' | 'timeout'> & { checks: Pick<Check, 'reason'>[] }
 

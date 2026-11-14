@@ -14,7 +14,7 @@ import { useChange } from './change'
 import { PlatformPicker, Snippets } from './fields'
 import { Field, FormError, SettingsBar } from './parts'
 import { teamLabel } from './labels'
-import { DSN_PLACEHOLDER, OTHER_PLATFORM, platformName, storedPlatform } from './platforms'
+import { OTHER_PLATFORM, platformName, storedPlatform } from './platforms'
 import { ProjectTab } from './project-tabs'
 import { teamSlugError } from './team-slug'
 
@@ -84,9 +84,10 @@ export function NewProject({ org }: { org: string }) {
             <PlatformPicker value={platform} onChange={setPlatform} />
           </div>
         </div>
-        <div className="flex min-w-0 flex-col gap-3 border-y p-3 md:p-4 lg:row-span-2 lg:border-y-0">
+        {/* On a phone the code would sit between the choices and Create; the set-up step shows it with the real DSN. */}
+        <div className="flex min-w-0 flex-col gap-3 p-3 md:p-4 max-lg:hidden lg:row-span-2">
           <h2 className="flex min-h-8 items-center text-lg font-semibold">{platformName(platform)}</h2>
-          <Snippets platform={platform} dsn={DSN_PLACEHOLDER} />
+          <Snippets platform={platform} />
         </div>
         <div className="flex flex-col gap-4 p-3 md:p-4 lg:border-r lg:pt-0">
           {firstTeam ? (

@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { hasWords, searchWords } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { CodeBlock, FormDialog, Segmented } from './parts'
-import { OTHER_PLATFORM, PLATFORMS, PLATFORM_GROUPS, platformOf } from './platforms'
+import { DSN_PLACEHOLDER, OTHER_PLATFORM, PLATFORMS, PLATFORM_GROUPS, platformOf } from './platforms'
 import { projectHasTeam, teamLabel } from './labels'
 import { ROLES, ROLE_ADDS, ROLE_LABEL } from './roles'
 
@@ -146,12 +146,13 @@ export function PlatformPicker({ value, onChange }: { value: string; onChange: (
 }
 
 // The two things to paste for a platform: the install command, and the code that starts the SDK with this DSN.
-export function Snippets({ platform, dsn, className }: { platform: string | null | undefined; dsn: string; className?: string }) {
+// Before the project exists there is no DSN, so its code shows a stand-in and offers nothing to copy.
+export function Snippets({ platform, dsn, className }: { platform: string | null | undefined; dsn?: string; className?: string }) {
   const chosen = platformOf(platform) ?? platformOf(OTHER_PLATFORM)!
   return (
     <div className={cn('flex min-w-0 flex-col gap-3', className)}>
       {chosen.install && <CodeBlock label="Install" code={chosen.install} />}
-      <CodeBlock label={chosen.file} code={chosen.code(dsn)} />
+      <CodeBlock label={chosen.file} code={chosen.code(dsn ?? DSN_PLACEHOLDER)} copy={!!dsn} />
     </div>
   )
 }

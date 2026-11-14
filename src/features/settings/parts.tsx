@@ -338,12 +338,12 @@ export function CopyField({ value, label, className }: { value: string; label: s
 }
 
 // Code to paste. A long line breaks where it runs out of room, keeping its indent, so a DSN in a snippet is never cut off.
-export function CodeBlock({ code, label, className }: { code: string; label: string; className?: string }) {
+export function CodeBlock({ code, label, copy = true, className }: { code: string; label: string; copy?: boolean; className?: string }) {
   return (
     <figure className={cn('border bg-code', className)}>
       <figcaption className="flex h-9 items-stretch justify-between border-b pl-3 max-lg:h-11">
         <span className="mono flex min-w-0 items-center truncate text-muted-foreground">{label}</span>
-        <CopyButton text={code} inBox />
+        {copy && <CopyButton text={code} inBox />}
       </figcaption>
       <pre className="mono p-3 leading-code break-all whitespace-pre-wrap">{code}</pre>
     </figure>

@@ -69,7 +69,7 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
 function Waiting() {
   return (
     <div role="status" className="flex min-h-11 items-center gap-2 border border-dashed px-3">
-      <CircleDashed className="size-4 shrink-0 animate-spin text-muted-foreground [animation-duration:4s] motion-reduce:animate-none" aria-hidden />
+      <CircleDashed className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       <span className="font-medium">Waiting for the first event</span>
     </div>
   )

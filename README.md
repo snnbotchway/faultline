@@ -4,7 +4,17 @@
 
 Faultline is an independent project and is not affiliated with or endorsed by GlitchTip.
 
-<!-- screenshots -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inbox-1440-dark.png">
+  <img src="docs/screenshots/inbox-1440-light.png" alt="The issue inbox: issues grouped as new, spiking and ongoing on one 14-day timeline with release markers">
+</picture>
+
+![An issue: what happened, the stack trace with the line that threw, and tag breakdowns](docs/screenshots/issue-1440-dark.png)
+
+<p>
+  <img src="docs/screenshots/inbox-390-dark.png" alt="The inbox on a phone" width="260">
+  <img src="docs/screenshots/issue-390-light.png" alt="An issue on a phone" width="260">
+</p>
 
 ## Why
 

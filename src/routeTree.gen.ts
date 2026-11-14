@@ -17,6 +17,7 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppOrgRouteRouteImport } from './routes/_app/$org/route'
 import { Route as AppOrgIndexRouteImport } from './routes/_app/$org/index'
 import { Route as AppOrgSectionRouteRouteImport } from './routes/_app/$org/$section/route'
+import { Route as PrototypeSettingsSplatRouteImport } from './routes/prototype.settings.$'
 import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$section/$'
 import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
 import { Route as AppOrgProjectIssuesIssueIdRouteImport } from './routes/_app/$org/$project/issues/$issueId'
@@ -63,6 +64,11 @@ const AppOrgSectionRouteRoute = AppOrgSectionRouteRouteImport.update({
   path: '/$section',
   getParentRoute: () => AppOrgRouteRoute,
 } as any)
+const PrototypeSettingsSplatRoute = PrototypeSettingsSplatRouteImport.update({
+  id: '/prototype/settings/$',
+  path: '/prototype/settings/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppOrgSectionSplatRoute = AppOrgSectionSplatRouteImport.update({
   id: '/$',
   path: '/$',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/$org': typeof AppOrgRouteRouteWithChildren
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/prototype/settings/$': typeof PrototypeSettingsSplatRoute
   '/$org/': typeof AppOrgIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/$org/issues/': typeof AppOrgIssuesIndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/': typeof AppIndexRoute
   '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/prototype/settings/$': typeof PrototypeSettingsSplatRoute
   '/$org': typeof AppOrgIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/$org/issues': typeof AppOrgIssuesIndexRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/_app/$org': typeof AppOrgRouteRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/prototype/settings/$': typeof PrototypeSettingsSplatRoute
   '/_app/$org/': typeof AppOrgIndexRoute
   '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/$org'
     | '/$org/$section'
+    | '/prototype/settings/$'
     | '/$org/'
     | '/$org/$section/$'
     | '/$org/issues/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/'
     | '/$org/$section'
+    | '/prototype/settings/$'
     | '/$org'
     | '/$org/$section/$'
     | '/$org/issues'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/_app/$org'
     | '/_app/'
     | '/_app/$org/$section'
+    | '/prototype/settings/$'
     | '/_app/$org/'
     | '/_app/$org/$section/$'
     | '/_app/$org/issues/'
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PrototypeSettingsSplatRoute: typeof PrototypeSettingsSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -255,6 +268,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$org/$section'
       preLoaderRoute: typeof AppOrgSectionRouteRouteImport
       parentRoute: typeof AppOrgRouteRoute
+    }
+    '/prototype/settings/$': {
+      id: '/prototype/settings/$'
+      path: '/prototype/settings/$'
+      fullPath: '/prototype/settings/$'
+      preLoaderRoute: typeof PrototypeSettingsSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/$org/$section/$': {
       id: '/_app/$org/$section/$'
@@ -355,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PrototypeSettingsSplatRoute: PrototypeSettingsSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

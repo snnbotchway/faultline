@@ -16,15 +16,13 @@ export const RECIPIENTS: Record<RecipientType, { label: string; icon: LucideIcon
 
 export const recipientMeta = (recipient: { recipientType: string }) => RECIPIENTS[recipient.recipientType as RecipientType] ?? RECIPIENTS.webhook
 
-// The part of an address that tells two apart: the host and the last path segment.
-export function recipientTarget(recipient: { recipientType: string; url?: string | null }): { host: string; tail?: string } {
-  if (recipient.recipientType === RecipientType.email) return { host: 'project members' }
+// Where a recipient sends, shown as its host only: a webhook's path often holds its secret token.
+export function recipientHost(recipient: { recipientType: string; url?: string | null }): string {
+  if (recipient.recipientType === RecipientType.email) return 'project members'
   try {
-    const url = new URL(recipient.url ?? '')
-    const last = url.pathname.split('/').filter(Boolean).at(-1)
-    return { host: url.host.replace(/^www\./, ''), tail: last }
+    return new URL(recipient.url ?? '').host.replace(/^www\./, '')
   } catch {
-    return { host: recipient.url ?? '' }
+    return ''
   }
 }
 

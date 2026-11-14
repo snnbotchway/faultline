@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { explain } from '@/api/errors'
 import { RecipientType, TestStatus, alertActions, alertKeys, toRecipientInput, type Alert, type AlertInput, type RecipientInput } from '@/api/alerts'
 import { projectEnvironmentsQuery } from '@/api/projects'
@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldError, SubmitButton } from '@/components/ui/field'
 import { Input, Select } from '@/components/ui/input'
+import { RowButton } from '@/components/ui/row-button'
 import { ConfirmDialog, TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { ALL_ENVIRONMENTS } from '@/lib/text'
 import { failed, notify } from '@/lib/notice'
 import { cn } from '@/lib/utils'
-import { recipientMeta } from './recipient-kinds'
+import { recipientHost, recipientMeta } from './recipient-kinds'
 import { AddRecipient, RecipientTag } from './recipients'
 
 const MAX_EVENTS = 10_000
@@ -49,6 +50,7 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
   const [draft, setDraft] = useState(() => draftFrom(rule, project))
   const [tried, setTried] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const eventsId = useId()
   const [deleteError, setDeleteError] = useState<string>()
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }))
   const environments = useQuery(projectEnvironmentsQuery(org, draft.project)).data?.filter((environment) => !environment.isHidden || draft.environments.includes(environment.name))
@@ -107,7 +109,13 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
   }
   const toggleEnvironment = (name: string) =>
     set('environments', draft.environments.includes(name) ? draft.environments.filter((value) => value !== name) : [...draft.environments, name])
-  const chip = (on: boolean) => cn('mono h-8 cursor-pointer border px-3 max-lg:h-11', on ? 'border-foreground bg-foreground text-background' : 'bg-card hover:bg-accent')
+  const chip = (on: boolean) => cn('h-8 cursor-pointer border px-3 max-lg:h-11', on ? 'border-foreground bg-foreground text-background' : 'bg-card hover:bg-accent')
+  // Where several recipients of one kind share a host, each is numbered in order (1, 2, …).
+  const where = (recipient: RecipientInput) => `${recipient.recipientType} ${recipientHost(recipient)}`
+  const sameHost = (recipient: RecipientInput) => {
+    const peers = draft.recipients.filter((entry) => where(entry.recipient) === where(recipient))
+    return peers.length > 1 ? peers.findIndex((entry) => entry.recipient === recipient) + 1 : undefined
+  }
 
   return (
     <TaskDialog open onClose={onClose} title={rule ? 'Edit rule' : 'New rule'} quietFocus={!!rule} className="sm:max-w-xl">
@@ -143,8 +151,11 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
         <fieldset className="min-w-0">
           <legend className="mb-2 text-sm font-medium">Alert when</legend>
           <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 border-y py-2">
-            <Checkbox checked={draft.events} onCheckedChange={(checked) => set('events', checked === true)} aria-label="An issue gets many events" />
-            <span>an issue gets</span>
+            <Checkbox id={eventsId} checked={draft.events} onCheckedChange={(checked) => set('events', checked === true)} aria-label="An issue gets many events" />
+            {/* Tapping the words ticks the box, as it does for "a monitor goes down". */}
+            <label htmlFor={eventsId} className="cursor-pointer">
+              an issue gets
+            </label>
             <Input
               aria-label="Events"
               aria-invalid={!!shown(errors.quantity)}
@@ -155,16 +166,19 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
               className="h-8 w-16 shrink-0 px-1 text-center font-mono max-lg:h-11"
             />
             <span>events in</span>
-            <Input
-              aria-label="Minutes"
-              aria-invalid={!!shown(errors.minutes)}
-              inputMode="numeric"
-              disabled={!draft.events}
-              value={draft.minutes}
-              onChange={(event) => set('minutes', event.target.value)}
-              className="h-8 w-16 shrink-0 px-1 text-center font-mono max-lg:h-11"
-            />
-            <span>minutes</span>
+            {/* The number and its unit stay on one line. */}
+            <span className="flex items-center gap-2 whitespace-nowrap">
+              <Input
+                aria-label="Minutes"
+                aria-invalid={!!shown(errors.minutes)}
+                inputMode="numeric"
+                disabled={!draft.events}
+                value={draft.minutes}
+                onChange={(event) => set('minutes', event.target.value)}
+                className="h-8 w-16 shrink-0 px-1 text-center font-mono max-lg:h-11"
+              />
+              minutes
+            </span>
           </div>
           <label className="flex min-h-11 cursor-pointer items-center gap-2 border-b">
             <Checkbox checked={draft.down} onCheckedChange={(checked) => set('down', checked === true)} />a monitor goes down
@@ -176,7 +190,12 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
           <legend className="mb-2 text-sm font-medium">Notifies</legend>
           <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {draft.recipients.map((entry) => (
-              <RecipientTag key={entry.key} recipient={entry.recipient} onRemove={() => set('recipients', draft.recipients.filter((other) => other.key !== entry.key))} />
+              <RecipientTag
+                key={entry.key}
+                recipient={entry.recipient}
+                index={sameHost(entry.recipient)}
+                onRemove={() => set('recipients', draft.recipients.filter((other) => other.key !== entry.key))}
+              />
             ))}
             <li>
               <AddRecipient
@@ -194,13 +213,18 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
               {ALL_ENVIRONMENTS}
             </button>
             {environments?.map((environment) => (
-              <button key={environment.name} type="button" aria-pressed={draft.environments.includes(environment.name)} onClick={() => toggleEnvironment(environment.name)} className={chip(draft.environments.includes(environment.name))}>
+              <button key={environment.name} type="button" aria-pressed={draft.environments.includes(environment.name)} onClick={() => toggleEnvironment(environment.name)} className={cn(chip(draft.environments.includes(environment.name)), 'font-mono')}>
                 {environment.name}
               </button>
             ))}
           </div>
         </fieldset>
 
+        {rule && canDelete && (
+          <RowButton danger onClick={() => setDeleting(true)} className="self-start text-left sm:hidden">
+            Delete rule
+          </RowButton>
+        )}
         {/* Main action first, so it leads on a phone; on a desktop it sits at the right and Delete at the left. */}
         <TaskActions className="sm:justify-end">
           <SubmitButton busy={save.isPending} className="sm:order-last">
@@ -211,9 +235,10 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
               Send test to {testable.length}
             </Button>
           )}
-          {!rule && <Button onClick={onClose}>Cancel</Button>}
+          <Button onClick={onClose}>Cancel</Button>
+          {/* On a phone the pinned row holds only the way forward and back; Delete sits above it. */}
           {rule && canDelete && (
-            <Button variant="destructive" onClick={() => setDeleting(true)} className="sm:order-first sm:mr-auto">
+            <Button variant="destructive" onClick={() => setDeleting(true)} className="max-sm:hidden sm:order-first sm:mr-auto">
               Delete
             </Button>
           )}

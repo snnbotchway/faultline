@@ -18,4 +18,4 @@ export const hasWords = (text: string, words: string[]) => {
 export const releaseName = (version: string) => version.replace(/(^|@)(?=[0-9a-f]*[a-f])([0-9a-f]{7})(?:[0-9a-f]{33}|[0-9a-f]{57})$/i, '$1$2')
 
 // The word for every environment at once, as a filter or a rule's scope.
-export const ALL_ENVIRONMENTS = 'All'
+export const ALL_ENVIRONMENTS = 'All environments'

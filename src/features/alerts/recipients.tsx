@@ -7,30 +7,31 @@ import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { withScheme } from '@/lib/url'
-import { RECIPIENTS, isAddress, recipientMeta, recipientTarget } from './recipient-kinds'
+import { RECIPIENTS, isAddress, recipientHost, recipientMeta } from './recipient-kinds'
 
 // A recipient on a rule's row: its kind, with where it goes on hover. A webhook address is a secret, so only its host is shown.
 export function RecipientChip({ recipient }: { recipient: { recipientType: string; url?: string | null } }) {
   const meta = recipientMeta(recipient)
   return (
-    <span className="inline-flex min-w-0 items-center gap-2 text-sm" title={recipientTarget(recipient).host || undefined}>
+    <span className="inline-flex min-w-0 items-center gap-2 text-sm" title={recipientHost(recipient) || undefined}>
       <meta.icon className="size-3 shrink-0 text-muted-foreground" />
       <span className="truncate">{meta.label}</span>
     </span>
   )
 }
 
-// A recipient in the editor: its kind, an address short enough to fit (the host gives way first), and remove.
-export function RecipientTag({ recipient, onRemove }: { recipient: RecipientInput; onRemove: () => void }) {
+// A recipient in the editor: its kind, its host, and remove. Hooks to the same host are told apart by `index`
+// (2 for the second one), never by their path, which often holds the token.
+export function RecipientTag({ recipient, index, onRemove }: { recipient: RecipientInput; index?: number; onRemove: () => void }) {
   const meta = recipientMeta(recipient)
-  const { host, tail } = recipientTarget(recipient)
+  const host = recipientHost(recipient)
   return (
     <li className="flex h-9 max-w-full min-w-0 items-center gap-2 border bg-background pl-3 max-lg:h-11" title={host || undefined}>
       <meta.icon className="size-3 shrink-0 text-muted-foreground" />
       <span className="shrink-0 text-sm font-medium">{meta.label}</span>
-      <span className="mono flex min-w-0 flex-1 text-xs text-muted-foreground">
+      <span className="mono flex min-w-0 flex-1 gap-2 text-xs text-muted-foreground">
         <span className="truncate">{host}</span>
-        {tail !== undefined && <span className="shrink-0">/…/{tail}</span>}
+        {index !== undefined && <span className="shrink-0">#{index}</span>}
       </span>
       <button
         type="button"

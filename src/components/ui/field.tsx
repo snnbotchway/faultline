@@ -1,10 +1,13 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useState, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { Button } from './button'
 import { Input } from './input'
 
-// A form's button at a field's height (44px on touch), and the form's full-width main action.
+// A button at a field's height (44px on touch), and one that also spans the column, such as a form's main action.
 export const FIELD_BUTTON = 'h-10 max-lg:h-11'
-export const SUBMIT = `${FIELD_BUTTON} w-full`
+export const FULL_BUTTON = `${FIELD_BUTTON} w-full`
+// A one-time code being typed, so each digit stands apart.
+export const CODE_INPUT = 'h-10 font-mono tracking-code'
 
 // What a field's control needs to be tied to its label and error.
 export type FieldProps = { id: string; 'aria-describedby'?: string; 'aria-invalid'?: boolean }
@@ -22,12 +25,20 @@ export function Field({ label, aside, error, className, children }: { label: str
         {aside && <span className="text-xs text-muted-foreground">{aside}</span>}
       </div>
       {children({ id, 'aria-describedby': error ? errorId : undefined, 'aria-invalid': error ? true : undefined })}
-      {error && (
-        <p id={errorId} className="prose-text mt-2 text-destructive" role="alert">
-          {error}
-        </p>
-      )}
+      <FieldError id={errorId} className="mt-2">
+        {error}
+      </FieldError>
     </div>
+  )
+}
+
+// What is wrong with one field, or one row of a list, written under it.
+export function FieldError({ id, className, children }: { id?: string; className?: string; children: ReactNode }) {
+  if (!children) return null
+  return (
+    <p id={id} className={cn('prose-text text-destructive', className)} role="alert">
+      {children}
+    </p>
   )
 }
 
@@ -55,4 +66,9 @@ export function PasswordInput({ className, ...props }: Omit<React.ComponentProps
       </button>
     </div>
   )
+}
+
+// A form's submit button, filled by default, that shows it is waiting while the form is sent.
+export function SubmitButton({ busy, disabled, variant = 'default', ...props }: Omit<ComponentProps<typeof Button>, 'type'> & { busy: boolean }) {
+  return <Button type="submit" variant={variant} disabled={busy || disabled} aria-busy={busy} {...props} />
 }

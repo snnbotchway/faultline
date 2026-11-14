@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { MfaType, SessionStatus, auth, type Session } from '@/api/auth'
 import { ApiError, HttpStatus } from '@/api/client'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, SUBMIT } from '@/components/ui/field'
+import { CODE_INPUT, FULL_BUTTON, Field, FormAlert, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { askSecurityKey, supportsSecurityKeys } from '@/lib/webauthn'
 import { AuthLinks } from './frame'
@@ -90,13 +90,13 @@ export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedO
                 autoComplete="one-time-code"
                 autoFocus
                 required
-                className="h-10 font-mono tracking-code"
+                className={CODE_INPUT}
               />
             )}
           </Field>
-          <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>
+          <SubmitButton className={FULL_BUTTON} busy={form.busy}>
             Verify
-          </Button>
+          </SubmitButton>
         </form>
       )}
       {takesKey && (
@@ -113,7 +113,7 @@ export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedO
               </Button>
             </div>
           ) : (
-            <Button variant={takesCode ? 'outline' : 'default'} className={SUBMIT} onClick={() => void tryKey()}>
+            <Button variant={takesCode ? 'outline' : 'default'} className={FULL_BUTTON} onClick={() => void tryKey()}>
               <KeyRound />
               {key === KeyState.failed ? 'Try the security key again' : 'Use a security key'}
             </Button>

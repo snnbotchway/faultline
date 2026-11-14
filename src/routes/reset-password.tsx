@@ -5,7 +5,7 @@ import { auth } from '@/api/auth'
 import { ApiError, HttpStatus } from '@/api/client'
 import { Feature, instanceSettingsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, SUBMIT } from '@/components/ui/field'
+import { FULL_BUTTON, Field, FormAlert, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { AuthFrame, AuthLinks } from '@/features/auth/frame'
 import { useCountdown } from '@/lib/countdown'
@@ -63,13 +63,13 @@ function ResetPassword() {
     return (
       <AuthFrame title="Reset password">
         <form noValidate className="space-y-4" onSubmit={(event) => void request.submit(event, sendLink)}>
-          <FormAlert>{request.problems.message}</FormAlert>
-          <Field label="Email" error={request.problems.fields.email}>
+          <FormAlert>{request.message}</FormAlert>
+          <Field label="Email" error={request.fields.email}>
             {(field) => <Input {...field} name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" autoFocus required className="h-10" />}
           </Field>
-          <Button type="submit" variant="default" className={SUBMIT} disabled={request.busy} aria-busy={request.busy}>
+          <SubmitButton className={FULL_BUTTON} busy={request.busy}>
             Send reset link
-          </Button>
+          </SubmitButton>
         </form>
         <AuthLinks>
           <Button variant="link" asChild>

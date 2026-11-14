@@ -4,7 +4,7 @@ import { AuthProcess, redirectToProvider } from '@/api/auth'
 import type { InstanceSettings } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { TaskDialog } from '@/components/ui/task-dialog'
-import { SUBMIT } from '@/components/ui/field'
+import { FULL_BUTTON, FieldError } from '@/components/ui/field'
 import { providerName } from './format'
 import { RowButton } from './rows'
 import { useAction } from './use-action'
@@ -32,11 +32,7 @@ function LinkedRow({ linked, name }: { linked: LinkedAccount; name: string }) {
           )}
         </span>
       </div>
-      {disconnect.message && (
-        <p className="prose-text pb-1 text-destructive" role="alert">
-          {disconnect.message}
-        </p>
-      )}
+      <FieldError className="pb-1">{disconnect.message}</FieldError>
     </li>
   )
 }
@@ -56,7 +52,7 @@ export function LinkedDialog({ open, onClose, linked, apps }: { open: boolean; o
       {unlinked.length > 0 && (
         <div className={linked.length > 0 ? 'mt-4 space-y-2' : 'space-y-2'}>
           {unlinked.map((app) => (
-            <Button key={app.provider} className={SUBMIT} onClick={() => redirectToProvider(app.provider, '/profile', AuthProcess.connect)}>
+            <Button key={app.provider} className={FULL_BUTTON} onClick={() => redirectToProvider(app.provider, '/profile', AuthProcess.connect)}>
               Connect {app.name}
             </Button>
           ))}

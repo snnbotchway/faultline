@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { SessionStatus, auth } from '@/api/auth'
 import { isExpiredLink } from '@/api/form-errors'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, PasswordInput, SUBMIT } from '@/components/ui/field'
+import { FULL_BUTTON, Field, FormAlert, PasswordInput, SubmitButton } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AuthFrame } from '@/features/auth/frame'
 import { PASSWORD_RULE } from '@/features/auth/forms'
@@ -59,9 +59,9 @@ function SetNewPassword() {
         <Field label="New password" aside={PASSWORD_RULE} error={form.fields.password}>
           {(field) => <PasswordInput {...field} name="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" autoFocus required minLength={8} />}
         </Field>
-        <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>
+        <SubmitButton className={FULL_BUTTON} busy={form.busy}>
           Set password
-        </Button>
+        </SubmitButton>
       </form>
     </AuthFrame>
   )

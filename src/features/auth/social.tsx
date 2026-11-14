@@ -1,6 +1,6 @@
 import type { InstanceSettings } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
-import { SUBMIT } from '@/components/ui/field'
+import { FULL_BUTTON } from '@/components/ui/field'
 import { continueWithProvider } from './session-form'
 
 type SocialApp = InstanceSettings['socialApps'][number]
@@ -11,7 +11,7 @@ export function SocialButtons({ apps, next }: { apps: SocialApp[] | undefined; n
   return (
     <div className="mt-6 space-y-2 border-t pt-6">
       {apps.map((app) => (
-        <Button key={app.provider} className={SUBMIT} onClick={() => continueWithProvider(app.provider, next)}>
+        <Button key={app.provider} className={FULL_BUTTON} onClick={() => continueWithProvider(app.provider, next)}>
           Continue with {app.name}
         </Button>
       ))}

@@ -1,7 +1,7 @@
 import { useId, useState, type FormEvent } from 'react'
 import { account, accountKeys, type CurrentUser } from '@/api/account'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert } from '@/components/ui/field'
+import { Field, FormAlert, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { useAction } from './use-action'
@@ -43,9 +43,9 @@ function DetailsForm({ user, onClose }: { user: CurrentUser; onClose: () => void
         )}
       </Field>
       <TaskActions>
-        <Button type="submit" variant="default" disabled={save.busy} aria-busy={save.busy}>
+        <SubmitButton busy={save.busy}>
           Save
-        </Button>
+        </SubmitButton>
         <Button onClick={onClose}>Cancel</Button>
       </TaskActions>
     </form>

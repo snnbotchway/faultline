@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { auth, type Session } from '@/api/auth'
-import { Button } from '@/components/ui/button'
-import { Field, FormAlert, PasswordInput, SUBMIT } from '@/components/ui/field'
+import { FULL_BUTTON, Field, FormAlert, PasswordInput, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useSessionForm } from './session-form'
 
@@ -39,9 +38,9 @@ export function SignInForm({ email, action = 'Sign in', onSession }: Props) {
       <Field label="Password" error={form.fields.password}>
         {(field) => <PasswordInput {...field} name="password" value={value.password} onChange={set('password')} autoComplete="current-password" autoFocus={!!email} required />}
       </Field>
-      <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>
+      <SubmitButton className={FULL_BUTTON} busy={form.busy}>
         {action}
-      </Button>
+      </SubmitButton>
     </form>
   )
 }
@@ -62,9 +61,9 @@ export function SignUpForm({ email, action = 'Create account', onSession }: Prop
       <Field label="Password" aside={PASSWORD_RULE} error={form.fields.password}>
         {(field) => <PasswordInput {...field} name="password" value={value.password} onChange={set('password')} autoComplete="new-password" autoFocus={!!email} required minLength={8} />}
       </Field>
-      <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>
+      <SubmitButton className={FULL_BUTTON} busy={form.busy}>
         {action}
-      </Button>
+      </SubmitButton>
     </form>
   )
 }

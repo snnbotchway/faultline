@@ -7,7 +7,7 @@ import { ApiError } from '@/api/client'
 import { explain } from '@/api/errors'
 import { instanceSettingsQuery, organizationKeys, organizationsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
-import { FormAlert, SUBMIT } from '@/components/ui/field'
+import { FormAlert, FULL_BUTTON } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AuthFrame, AuthLinks } from '@/features/auth/frame'
 import { SignInForm, SignUpForm } from '@/features/auth/forms'
@@ -92,7 +92,7 @@ function AcceptInvite() {
   if (signedIn && organizations?.some((item) => item.slug === organization.slug))
     return (
       <AuthFrame title={`You're already in ${organization.name}`}>
-        <Button variant="default" className={SUBMIT} onClick={() => void open()}>
+        <Button variant="default" className={FULL_BUTTON} onClick={() => void open()}>
           Open {organization.name}
         </Button>
       </AuthFrame>
@@ -106,7 +106,7 @@ function AcceptInvite() {
         <p className="prose-text mb-4 text-muted-foreground">
           Signed in as <span className="mono [overflow-wrap:anywhere] text-foreground">{session.user.email ?? session.user.display}</span>
         </p>
-        <Button variant="default" className={SUBMIT} disabled={busy} aria-busy={busy} onClick={() => void join()}>
+        <Button variant="default" className={FULL_BUTTON} disabled={busy} aria-busy={busy} onClick={() => void join()}>
           Join {organization.name}
         </Button>
         <AuthLinks>

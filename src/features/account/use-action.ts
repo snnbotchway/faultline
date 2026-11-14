@@ -22,8 +22,8 @@ export function useAction<Input = void>(request: (input: Input) => Promise<unkno
     run: async (input: Input) => !!(await form.send(() => change(input))),
     submit: async (event: FormEvent<HTMLFormElement>, input: Input, found?: FormProblems) => !!(await form.submit(event, () => change(input), found)),
     busy: form.busy,
-    message: form.problems.message,
-    fields: form.problems.fields,
+    message: form.message,
+    fields: form.fields,
     clear: form.clear,
   }
 }

@@ -7,9 +7,11 @@ const check = (html: string) => {
   return checkForm(form).fields
 }
 
-test('a required field left empty, or only spaces, asks to be filled in', () => {
+test('a required field left empty, or only spaces, asks to be filled in; an optional one does not', () => {
   expect(check('<input name="name" required value="  "><input name="note" value="">')).toEqual({ name: 'Fill this in.' })
-  // The backend strips passwords too, so one made of spaces is empty to it.
+})
+
+test('a password of only spaces is empty, because the backend strips passwords too', () => {
   expect(check('<input name="password" type="password" required value="     ">')).toEqual({ password: 'Fill this in.' })
 })
 

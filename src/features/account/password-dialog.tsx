@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { account, accountKeys } from '@/api/account'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, PasswordInput } from '@/components/ui/field'
+import { Field, FormAlert, PasswordInput, SubmitButton } from '@/components/ui/field'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { PASSWORD_RULE } from '@/features/auth/forms'
 import { notify } from '@/lib/notice'
@@ -30,9 +30,9 @@ function PasswordForm({ hasPassword, onClose }: { hasPassword: boolean; onClose:
         {(field) => <PasswordInput {...field} name="new_password" value={next} onChange={(event) => setNext(event.target.value)} autoComplete="new-password" required minLength={8} />}
       </Field>
       <TaskActions>
-        <Button type="submit" variant="default" disabled={change.busy} aria-busy={change.busy}>
+        <SubmitButton busy={change.busy}>
           {hasPassword ? 'Change password' : 'Set password'}
-        </Button>
+        </SubmitButton>
         <Button onClick={onClose}>Cancel</Button>
       </TaskActions>
     </form>

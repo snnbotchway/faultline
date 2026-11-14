@@ -42,5 +42,5 @@ export function useFormRequest(action: string) {
     return undefined
   }
 
-  return { busy, problems, send, submit, clear: () => setProblems(NONE) }
+  return { busy, fields: problems.fields, message: problems.message, send, submit, clear: () => setProblems(NONE) }
 }

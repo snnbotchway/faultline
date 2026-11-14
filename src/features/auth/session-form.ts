@@ -64,5 +64,5 @@ export function useSessionForm(action: string) {
     forget()
   }
 
-  return { busy: form.busy, fields: form.problems.fields, message: form.problems.message, clear: form.clear, run, submit, proceed, forget, startOver }
+  return { busy: form.busy, fields: form.fields, message: form.message, clear: form.clear, run, submit, proceed, forget, startOver }
 }

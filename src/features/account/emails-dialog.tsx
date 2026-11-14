@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { account, accountKeys, type EmailAddress } from '@/api/account'
-import { Button } from '@/components/ui/button'
-import { FIELD_BUTTON, Field } from '@/components/ui/field'
+import { FIELD_BUTTON, Field, FieldError, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { TaskDialog } from '@/components/ui/task-dialog'
 import { RowButton, Tag } from './rows'
@@ -54,11 +53,7 @@ function EmailRow({ address, canSend }: { address: EmailAddress; canSend: boolea
           )}
         </span>
       </div>
-      {error && (
-        <p className="prose-text pb-1 text-destructive" role="alert">
-          {error}
-        </p>
-      )}
+      <FieldError className="pb-1">{error}</FieldError>
     </li>
   )
 }
@@ -72,9 +67,9 @@ function AddEmail() {
         {(field) => (
           <div className="flex gap-2">
             <Input {...field} name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="h-10" />
-            <Button type="submit" className={FIELD_BUTTON} disabled={add.busy} aria-busy={add.busy}>
+            <SubmitButton variant="outline" className={FIELD_BUTTON} busy={add.busy}>
               Add email
-            </Button>
+            </SubmitButton>
           </div>
         )}
       </Field>

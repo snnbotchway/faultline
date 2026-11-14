@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { SessionStatus, auth, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, loginSettingsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, SUBMIT } from '@/components/ui/field'
+import { FULL_BUTTON, Field, FormAlert, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { AuthFrame, AuthLinks, AuthNote } from './frame'
 import { SignInForm } from './forms'
@@ -26,9 +26,9 @@ function ProviderSignup({ provider }: { provider: string | undefined }) {
         <Field label="Email" error={form.fields.email}>
           {(field) => <Input {...field} name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" autoFocus required className="h-10" />}
         </Field>
-        <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>
+        <SubmitButton className={FULL_BUTTON} busy={form.busy}>
           Create account
-        </Button>
+        </SubmitButton>
       </form>
       <AuthLinks>
         <Button variant="link" onClick={() => void form.startOver()}>

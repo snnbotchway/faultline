@@ -83,7 +83,7 @@ export function ReleaseList({ org }: { org: string }) {
                       <Link
                         to="/$org/releases/$"
                         params={{ org, _splat: release.version }}
-                        className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 px-3 py-3 transition-colors duration-100 hover:bg-accent/60 lg:grid-cols-[72px_minmax(0,1fr)] lg:px-4"
+                        className="grid grid-cols-[minmax(64px,max-content)_minmax(0,1fr)] gap-x-3 px-3 py-3 transition-colors duration-100 hover:bg-accent/60 lg:grid-cols-[minmax(72px,max-content)_minmax(0,1fr)] lg:px-4"
                       >
                         {/* The day heading says how long ago; the row gives the time of that day (DESIGN.md, Copy). */}
                         <time className="mono whitespace-nowrap text-muted-foreground" dateTime={release.dateCreated} title={exact(release.dateCreated)}>
@@ -101,20 +101,22 @@ export function ReleaseList({ org }: { org: string }) {
                             )}
                           </span>
                           {/* Slugs are machine text; the counts are words, with their figure in mono. */}
-                          <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-                            {release.projects.length > 0 && <span className="mono">{release.projects.map((project) => project.slug).join(', ')}</span>}
-                            {/* A release without deploys may still be live: GlitchTip only knows of deploys a pipeline reports. */}
-                            {release.deployCount > 0 && (
-                              <span>
-                                <Counted count={release.deployCount} word="deploy" />
-                              </span>
-                            )}
-                            {release.commitCount > 0 && (
-                              <span>
-                                <Counted count={release.commitCount} word="commit" />
-                              </span>
-                            )}
-                          </span>
+                          {(release.projects.length > 0 || release.deployCount > 0 || release.commitCount > 0) && (
+                            <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+                              {release.projects.length > 0 && <span className="mono">{release.projects.map((project) => project.slug).join(', ')}</span>}
+                              {/* A release without deploys may still be live: GlitchTip only knows of deploys a pipeline reports. */}
+                              {release.deployCount > 0 && (
+                                <span>
+                                  <Counted count={release.deployCount} word="deploy" />
+                                </span>
+                              )}
+                              {release.commitCount > 0 && (
+                                <span>
+                                  <Counted count={release.commitCount} word="commit" />
+                                </span>
+                              )}
+                            </span>
+                          )}
                         </span>
                       </Link>
                     </li>

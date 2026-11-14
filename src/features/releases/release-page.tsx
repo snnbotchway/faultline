@@ -88,7 +88,8 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
             </h1>
             {release.data ? (
               <p className="mono mt-2 text-muted-foreground">
-                {release.data.projects.map((project) => project.slug).join(', ')} · <time dateTime={release.data.dateCreated}>{brief(release.data.dateCreated)}</time>
+                {release.data.projects.length > 0 && `${release.data.projects.map((project) => project.slug).join(', ')} · `}
+                <time dateTime={release.data.dateCreated}>{brief(release.data.dateCreated)}</time>
               </p>
             ) : (
               <Skeleton className="mt-2 h-4 w-48" />

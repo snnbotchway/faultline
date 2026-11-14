@@ -71,40 +71,50 @@ export function releaseMarks(releases: { shortVersion: string; dateCreated: stri
     .sort((a, b) => a.at - b.at)
 }
 
-// `left` is where the label starts, in pixels from the chart's left edge.
-export type MarkLabel = { at: number; text: string; left: number }
+// `left` is where the label starts, in pixels from the chart's left edge. `releases` are the versions it names, newest first.
+export type MarkLabel = { at: number; text: string; left: number; releases: string[] }
 
 // Labels are text-xs Plex Mono: 0.6em a character. Each has the 4px padding of `pl-1` in `MarkLabels`, then an
 // 8px gap before the next.
 const LABEL_CHAR = 7.2
 const LABEL_SPACE = 4 + 8
 
-// The labels of the marks on a chart `width` pixels wide. Releases whose labels would run into each other share one,
-// placed at the oldest and named after the newest with a count of the others.
+// The labels of the marks on a chart `width` pixels wide. Releases whose labels would run into each other, or into
+// each other's rules, share one, placed at the oldest and named after the newest with a count of the others.
 export function markLabels(marks: Mark[], width: number): MarkLabel[] {
   if (width <= 0) return []
-  type Group = { at: number; version: string; count: number }
+  // `first` and `last` are the positions of the oldest and newest release in the group; `versions` run oldest first.
+  type Group = { first: number; last: number; versions: string[] }
   const groups: Group[] = []
-  const text = (group: Group) => (group.count > 1 ? `${group.version} +${group.count - 1}` : group.version)
-  // A label starts at its mark, moved left as far as it needs to stay on the chart, but never past its left edge.
-  const span = (group: Group) => {
+  const text = (group: Group) => {
+    const newest = group.versions.at(-1) ?? ''
+    return group.versions.length > 1 ? `${newest} +${group.versions.length - 1}` : newest
+  }
+  // A label starts at its rule, or ends there when it would run past the right edge; never past the left edge.
+  const label = (group: Group) => {
+    const x = group.first * width
     const size = text(group).length * LABEL_CHAR + LABEL_SPACE
-    const from = Math.max(0, Math.min(group.at * width, width - size))
+    const from = x + size <= width ? x : Math.max(0, x - size)
     return { from, to: from + size }
   }
+  // What a group covers: its label and every one of its rules, which no other label may cross.
+  const extent = (group: Group) => {
+    const { from, to } = label(group)
+    return { from: Math.min(from, group.first * width), to: Math.max(to, group.last * width) }
+  }
   for (const mark of marks) {
-    let newer: Group = { at: mark.at, version: mark.version, count: 1 }
+    let newer: Group = { first: mark.at, last: mark.at, versions: [mark.version] }
     groups.push(newer)
     let older = groups.at(-2)
-    while (older && span(older).to > span(newer).from) {
-      older.version = newer.version
-      older.count += newer.count
+    while (older && extent(older).to > extent(newer).from) {
+      older.last = newer.last
+      older.versions.push(...newer.versions)
       groups.pop()
       newer = older
       older = groups.at(-2)
     }
   }
-  return groups.map((group) => ({ at: group.at, text: text(group), left: span(group).from }))
+  return groups.map((group) => ({ at: group.first, text: text(group), left: label(group).from, releases: [...group.versions].reverse() }))
 }
 
 export const axisStartLabel = (period: StatsPeriod, start: number) => (period === StatsPeriod.day ? hourLabel(start) : dayLabel(start))

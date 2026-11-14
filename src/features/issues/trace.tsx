@@ -58,6 +58,7 @@ export function MarkLabels({ marks }: { marks: Mark[] }) {
           key={label.at}
           className="absolute top-0 max-w-full truncate pl-1 font-mono text-xs whitespace-nowrap text-muted-foreground"
           style={{ left: label.left }}
+          title={label.releases.length > 1 ? label.releases.join(', ') : undefined}
         >
           {label.text}
         </span>

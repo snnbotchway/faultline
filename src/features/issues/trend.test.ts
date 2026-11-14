@@ -59,23 +59,21 @@ describe('release labels', () => {
     expect(markLabels(marks, 6000).map((label) => label.text)).toEqual(['2.3.0', 'a30f472', '71b3d06', 'c2f9e10'])
   })
 
-  it('starts a label at its mark, moved left only as far as it needs to stay on the chart', () => {
-    expect(markLabels([mark(0.7, '2.4.0')], 600)).toEqual([{ at: 0.7, text: '2.4.0', left: 420 }])
-    expect(markLabels([mark(0.95, '2.4.0')], 600)).toEqual([{ at: 0.95, text: '2.4.0', left: 552 }])
-    expect(markLabels([mark(0.7, 'a30f472'), mark(0.72, '71b3d06')], 260)).toEqual([{ at: 0.7, text: '71b3d06 +1', left: 176 }])
+  it('starts a label at its rule, or ends it there when it would run past the right edge', () => {
+    expect(markLabels([mark(0.7, '2.4.0')], 600)[0]?.left).toBeCloseTo(420)
+    expect(markLabels([mark(0.95, '2.4.0')], 600)[0]?.left).toBeCloseTo(522)
   })
 
   it('never moves a label past the left edge of the chart', () => {
-    const [label] = markLabels([mark(0.5, 'my-service@1.12.0-rc.1')], 260)
-    expect(label?.left).toBeCloseTo(89.6)
-    expect(markLabels([mark(0.5, 'a30f4726113a06a8e2702987b4127aa0d3b4c1e5')], 200)[0]?.left).toBe(0)
+    expect(markLabels([mark(0.5, 'my-service@1.12.0-rc.1')], 260)[0]?.left).toBe(0)
   })
 
-  it('folds a label at the right edge into the one before when they would meet', () => {
+  it('folds a label at the right edge into the one before when they would meet, and lists both newest first', () => {
     const [label, ...rest] = markLabels([mark(0.85, '2.4.0'), mark(0.9, '2.4.1')], 400)
     expect(rest).toEqual([])
     expect(label?.text).toBe('2.4.1 +1')
-    expect(label?.left).toBeCloseTo(330.4)
+    expect(label?.left).toBeCloseTo(270.4)
+    expect(label?.releases).toEqual(['2.4.1', '2.4.0'])
   })
 })
 

@@ -29,6 +29,8 @@ export function ProjectList({ org }: { org?: string }) {
   const organizations = useQuery(organizationsQuery)
   const last = useLastOrganization()
   const slugs = org ? [org] : (organizations.data ?? []).map((organization) => organization.slug)
+  // Organizations are named by their name, which can change; the slug stays in addresses.
+  const nameOf = (slug: string) => organizations.data?.find((organization) => organization.slug === slug)?.name ?? slug
   const lists = useQueries({ queries: slugs.map((slug) => projectsQuery(slug)) })
   const [query, setQuery] = useState('')
   const canCreateOrganization = useQuery(instanceSettingsQuery).data?.enableOrganizationCreation
@@ -51,9 +53,10 @@ export function ProjectList({ org }: { org?: string }) {
   const words = searchWords(query)
   const groups = slugs.map((slug, index) => ({
     slug,
+    name: nameOf(slug),
     pending: lists[index]?.isPending ?? true,
     projects: (lists[index]?.data ?? [])
-      .filter((project) => hasWords(`${slug} ${project.slug} ${project.name} ${platformName(project.platform)}`, words))
+      .filter((project) => hasWords(`${slug} ${nameOf(slug)} ${project.slug} ${project.name} ${platformName(project.platform)}`, words))
       .sort((a, b) => (a.slug ?? '').localeCompare(b.slug ?? '')),
   }))
   const loading = organizations.isPending || groups.some((group) => group.pending)
@@ -68,7 +71,7 @@ export function ProjectList({ org }: { org?: string }) {
     <>
       <PageBar>
         <h1 className="text-2xl font-semibold">Projects</h1>
-        {org && <span className="mono text-muted-foreground">{org}</span>}
+        {org && <span className="text-muted-foreground">{nameOf(org)}</span>}
         {!empty && (
           <>
             {find('h-8 w-56 max-lg:hidden')}
@@ -93,10 +96,10 @@ export function ProjectList({ org }: { org?: string }) {
             <span className="max-lg:hidden" />
           </div>
           {groups.map((group) => (
-            <section key={group.slug} aria-label={group.slug}>
+            <section key={group.slug} aria-label={group.name}>
               {!org && (group.pending || group.projects.length > 0) && (
                 <div className="flex h-8 items-center gap-2 border-b bg-muted px-3 md:px-4">
-                  <h2 className="mono font-medium">{group.slug}</h2>
+                  <h2 className="font-medium">{group.name}</h2>
                   {!group.pending && <span className="mono text-muted-foreground">{group.projects.length}</span>}
                 </div>
               )}

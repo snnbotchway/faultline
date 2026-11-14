@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { CircleCheck, CircleDashed } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { latestIssueQuery, projectActions, projectQuery, type ProjectDetail } from '@/api/projects'
 import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
@@ -46,7 +46,7 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
           Change platform
         </button>
       </div>
-      {firstEvent ? <Arrived org={org} projectId={project.id} firstEvent={firstEvent} /> : <Waiting />}
+      {firstEvent ? <Arrived org={org} slug={slug} projectId={project.id} firstEvent={firstEvent} /> : <Waiting />}
       {dsn ? (
         <Snippets platform={platform} dsn={dsn} />
       ) : (
@@ -75,10 +75,18 @@ function Waiting() {
   )
 }
 
-function Arrived({ org, projectId, firstEvent }: { org: string; projectId: string; firstEvent: string }) {
+function Arrived({ org, slug, projectId, firstEvent }: { org: string; slug: string; projectId: string; firstEvent: string }) {
   // The backend marks the first event before it files the issue, and a transaction marks it with no issue at all,
   // so this keeps asking until an issue is there.
   const issue = useQuery({ ...latestIssueQuery(org, projectId), refetchInterval: (query) => (query.state.data ? false : POLL_MS) }).data
+  const queryClient = useQueryClient()
+  const issueId = issue?.id
+  // The backend files an event's environment before its issue, so once the issue is in, the environment is too.
+  useEffect(() => {
+    if (!issueId) return
+    void queryClient.invalidateQueries(stale.projectEnvironments(org, slug))
+    void queryClient.invalidateQueries(stale.environments(org))
+  }, [issueId, queryClient, org, slug])
   return (
     <div role="status" className="border border-ok/60">
       <div className="flex min-h-11 items-center gap-2 px-3">

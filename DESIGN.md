@@ -78,6 +78,7 @@ Rules:
 - New is teal and spiking is red-orange, so the two group labels cannot be mistaken for each other in either theme.
 - The brand colour marks where you are. It is not a fill for large areas.
 - Focus is drawn in `foreground`: a 2px outline, or the field's border. In the light theme the brand is red, so a focused field must never look like an invalid one; red on a field means `aria-invalid` and nothing else.
+- Code in a stack frame is coloured by three tones only: keywords are semibold, strings and numbers are `level-info`, comments are `muted-foreground`. Each is at least 4.5:1 on `code` and on `hit`, in both themes.
 - When a pick in a chart singles some of it out, the rest is `dimmed` (30% opacity), the one dim strength; it stays readable as the shape it belongs to.
 - Release marks are quiet: the rule is `grid` and the label is `muted-foreground`. Red on the time axis is reserved for a spike.
 - The theme follows the system unless the user picks light or dark; the choice is stored in `localStorage.theme` and applied before first paint.

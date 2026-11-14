@@ -4,7 +4,7 @@ import type { paths } from './schema/openapi'
 
 type AllauthSchemas = AllauthComponents['schemas']
 
-export const HttpStatus = { unauthenticated: 401, sessionGone: 410, tooManyRequests: 429 } as const
+export const HttpStatus = { unauthenticated: 401, forbidden: 403, notFound: 404, sessionGone: 410, tooManyRequests: 429 } as const
 
 const CSRF_COOKIE = 'csrftoken'
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
@@ -62,6 +62,9 @@ export class ApiError extends Error {
     this.body = body
   }
 }
+
+// The backend answered the request with this status.
+export const hasStatus = (error: unknown, status: number) => error instanceof ApiError && error.status === status
 
 type AllauthError = { message?: string; param?: string }
 

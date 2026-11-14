@@ -136,7 +136,7 @@ Uptime draws checks and downtime on the same rules:
 
 Usage draws what an organization took in on the same rules:
 
-- **One row a kind.** All events, then errors, transactions, logs and uptime checks, each a row of daily bars on one 30-day axis that is labelled once, in a header that stays under the page bar. Each row is scaled to its own peak and labelled with it; a project's bars under a kind are scaled to that kind's peak, so projects compare.
+- **One row a kind.** All events, then errors, transactions, logs and uptime checks, each a row of daily bars on one 30-day axis that is labelled once, in a header that stays under the page bar. Each row is scaled to its own peak and its count gives the magnitude, as in the inbox; only the all-events row is labelled with its peak. A project's bars under a kind are scaled to that kind's peak, so projects compare, and they draw as each project's count arrives.
 - **Picking a day.** A click, a tap or a drag on any chart picks the nearest day, and every figure on the page becomes that day's. The picked column is a band in `selected` with its bar in full `foreground`, and the rest is `dimmed`. The header names the day in place of the period, with previous and next chevrons and a button back to all 30 days.
 
 ## Components

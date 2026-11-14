@@ -25,7 +25,7 @@ import { TeamChecklist } from './fields'
 import { DeleteDialog, Field, FoldRow, Group, InlineForm, ROW, ROW_LABEL, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
 import { teamList } from './labels'
 import { useFold } from './rows'
-import { OTHER_PLATFORM, PLATFORMS, platformName } from './platforms'
+import { PLATFORMS, platformName, shownPlatform, storedPlatform } from './platforms'
 import { ProjectSetup } from './project-setup'
 import { Environments } from './project-environments'
 import { Keys } from './project-keys'
@@ -204,12 +204,12 @@ function NameForm({ org, slug, name, onDone }: { org: string; slug: string; name
 }
 
 function PlatformForm({ org, slug, name, platform, onDone }: { org: string; slug: string; name: string; platform?: string | null; onDone: () => void }) {
-  const [value, setValue] = useState(platform ?? OTHER_PLATFORM)
-  const save = useChange('change the platform', () => projectActions.update(org, slug, { name, platform: value === OTHER_PLATFORM ? null : value }), { stale: [stale.projects(org)], onDone })
+  const [value, setValue] = useState(shownPlatform(platform))
+  const save = useChange('change the platform', () => projectActions.update(org, slug, { name, platform: storedPlatform(value) }), { stale: [stale.projects(org)], onDone })
   // A platform set by another client that this list does not know stays choosable.
   const unknown = platform && !PLATFORMS.some((p) => p.id === platform)
   return (
-    <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={value === (platform ?? OTHER_PLATFORM)}>
+    <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={value === shownPlatform(platform)}>
       <Field label="Platform" className="max-w-sm">
         {(field) => (
           <Select {...field} autoFocus value={value} onChange={(event) => setValue(event.target.value)}>

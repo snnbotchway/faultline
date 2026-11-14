@@ -10,7 +10,7 @@ import { LevelGlyph } from '@/features/issues/level'
 import { Failure, useChange } from './access'
 import { PlatformPicker, Snippets } from './fields'
 import { FormDialog } from './parts'
-import { OTHER_PLATFORM, platformName } from './platforms'
+import { OTHER_PLATFORM, platformName, shownPlatform, storedPlatform } from './platforms'
 import { ProjectTab } from './project-tabs'
 
 const POLL_MS = 5000
@@ -24,16 +24,16 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
   const [changing, setChanging] = useState(false)
   // Someone who cannot change the project can still look at another platform's code.
   const [viewed, setViewed] = useState<string>()
-  const platform = viewed ?? project.platform ?? OTHER_PLATFORM
+  const platform = viewed ?? shownPlatform(project.platform)
   const firstEvent = useQuery({ ...projectQuery(org, slug), refetchInterval: (query) => (query.state.data?.firstEvent ? false : POLL_MS) }).data?.firstEvent
-  const save = useChange('change the platform', (id: string) => projectActions.update(org, slug, { name: project.name, platform: id === OTHER_PLATFORM ? null : id }), {
+  const save = useChange('change the platform', (id: string) => projectActions.update(org, slug, { name: project.name, platform: storedPlatform(id) }), {
     stale: [stale.projects(org)],
     failure: Failure.asNotice,
   })
   const choose = (id: string) => {
     setChanging(false)
     setViewed(id)
-    if (write && id !== (project.platform ?? OTHER_PLATFORM)) save.run(id)
+    if (write && id !== shownPlatform(project.platform)) save.run(id)
   }
   return (
     <div className="flex min-w-0 flex-col gap-4 p-3 md:p-4">

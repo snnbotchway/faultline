@@ -13,7 +13,7 @@ import { useAccess, useChange } from './access'
 import { PlatformPicker, Snippets } from './fields'
 import { Field, FormError, SettingsBar } from './parts'
 import { teamLabel } from './labels'
-import { DSN_PLACEHOLDER, OTHER_PLATFORM, platformName } from './platforms'
+import { DSN_PLACEHOLDER, OTHER_PLATFORM, platformName, storedPlatform } from './platforms'
 import { ProjectTab } from './project-tabs'
 import { teamSlugError } from './team-slug'
 
@@ -39,7 +39,7 @@ export function NewProject({ org }: { org: string }) {
     'create the project',
     async () => {
       const slug = firstTeam ? (await teamActions.create(org, newTeam.trim())).slug : (team ?? teams![0]!.slug)
-      return projectActions.create(org, slug, { name: name.trim(), platform: platform === OTHER_PLATFORM ? null : platform })
+      return projectActions.create(org, slug, { name: name.trim(), platform: storedPlatform(platform) })
     },
     {
       stale: [stale.projects(org), stale.teams(org)],

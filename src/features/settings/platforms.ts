@@ -116,4 +116,7 @@ export const platformName = (id: string | null | undefined) => platformOf(id)?.n
 // Stands in for the DSN until the project exists.
 export const DSN_PLACEHOLDER = 'https://<key>@<this-server>/<project-id>'
 export const OTHER_PLATFORM = OTHER.id
+// The backend keeps no platform for "Other"; these map between what it stores and the platform shown.
+export const shownPlatform = (stored: string | null | undefined) => stored ?? OTHER_PLATFORM
+export const storedPlatform = (id: string) => (id === OTHER_PLATFORM ? null : id)
 export const PLATFORM_GROUPS = Object.values(PlatformGroup)

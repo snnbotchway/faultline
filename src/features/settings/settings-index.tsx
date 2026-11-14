@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Plus, Search } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { ORGANIZATION_NAME_MAX, Scope, instanceSettingsQuery, membersQuery, organizationActions, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
+import { signInAppsQuery } from '@/api/sign-in-apps'
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,7 @@ import { DeleteDialog, Field, FoldRow, Group, GroupAction, InlineForm, LinkRow, 
 import { plural, useFold } from './rows'
 import { platformName } from './platforms'
 import { matchEntries, settingsEntries } from './search'
+import { SignInApps } from './sign-in-apps'
 
 /**
  * Everything that can be set for an organization, on one page: itself, its people, its projects.
@@ -29,6 +31,7 @@ export function SettingsIndex({ org }: { org: string }) {
   const teams = useQuery(teamsQuery(org)).data
   const projects = useQuery(projectsQuery(org)).data
   const version = useQuery(instanceSettingsQuery).data?.version
+  const signInApps = useQuery({ ...signInAppsQuery(org), enabled: can(Scope.orgWrite) }).data
   const [query, setQuery] = useState('')
   const [deleting, setDeleting] = useState(false)
   const search = useRef<HTMLInputElement>(null)
@@ -41,7 +44,7 @@ export function SettingsIndex({ org }: { org: string }) {
   })
 
   const loaded = organization && members && teams && projects
-  const found = loaded ? matchEntries(settingsEntries({ organization, members, teams, projects, version }), query) : []
+  const found = loaded ? matchEntries(settingsEntries({ organization, members, teams, projects, signInApps, version }), query) : []
   const invited = members?.filter((member) => member.pending).length ?? 0
 
   return (
@@ -125,6 +128,8 @@ export function SettingsIndex({ org }: { org: string }) {
                 params={{ org }}
               />
             </Group>
+
+            {can(Scope.orgWrite) && <SignInApps org={org} />}
 
             <Group
               label="Projects"

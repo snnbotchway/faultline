@@ -44,7 +44,7 @@ const addressFor = (type: MonitorType, url: string) => (isHttp(type) || type ===
 // The choices with the monitor's current value among them, when it was set to one the list lacks.
 const withCurrent = (choices: number[], current: number) => (choices.includes(current) ? choices : [...choices, current].sort((a, b) => a - b))
 
-type Draft = { name: string; type: MonitorType; url: string; status: string; body: string; interval: number; timeout: string; threshold: number; project: string; environment: string }
+type Draft = { name: string; type: MonitorType; url: string; status: string; body: string; interval: number; timeout: string; threshold: number; project?: string; environment: string }
 
 const draftFrom = (monitor?: MonitorDetail): Draft => ({
   name: monitor?.name ?? '',
@@ -56,7 +56,8 @@ const draftFrom = (monitor?: MonitorDetail): Draft => ({
   interval: monitor?.interval ?? 60,
   timeout: String(monitor?.timeout ?? DEFAULT_TIMEOUT),
   threshold: monitor?.confirmationThreshold ?? 1,
-  project: monitor?.projectID ?? '',
+  // A new monitor joins the first project until the user picks (`undefined`), so its downtime can alert someone.
+  project: monitor ? (monitor.projectID ?? '') : undefined,
   environment: monitor?.environmentID ? String(monitor.environmentID) : '',
 })
 
@@ -104,7 +105,8 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
   const [created, setCreated] = useState<Monitor>()
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }))
   const projects = useQuery(projectsQuery(org)).data
-  const slug = projects?.find((project) => project.id === draft.project)?.slug
+  const project = draft.project ?? projects?.[0]?.id ?? ''
+  const slug = projects?.find((candidate) => candidate.id === project)?.slug
   // A hidden environment is offered only to the monitor that already uses it.
   const environments = useQuery({ ...projectEnvironmentsQuery(org, slug ?? ''), enabled: !!slug }).data?.filter(
     (environment) => !environment.isHidden || String(environment.id) === draft.environment,
@@ -125,8 +127,8 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
         interval: draft.interval,
         timeout: heartbeat ? null : Number(draft.timeout),
         confirmationThreshold: heartbeat ? 1 : draft.threshold,
-        project: draft.project || null,
-        environmentID: draft.project && draft.environment ? Number(draft.environment) : null,
+        project: project || null,
+        environmentID: project && draft.environment ? Number(draft.environment) : null,
       }
       return monitor?.id ? monitorActions.update(org, monitor.id, body) : monitorActions.create(org, body)
     },
@@ -276,11 +278,12 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
             <div className="grid grid-cols-2 gap-3">
               <Field label="Project">
                 {(props) => (
-                  <Select {...props} className="font-mono" value={draft.project} onChange={(event) => setDraft((current) => ({ ...current, project: event.target.value, environment: '' }))}>
-                    <option value="">None</option>
-                    {projects?.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.slug}
+                  // Slugs are machine text; "None (no alerts)" is words.
+                  <Select {...props} className={cn(project && 'font-mono')} value={project} onChange={(event) => setDraft((current) => ({ ...current, project: event.target.value, environment: '' }))}>
+                    <option value="">None (no alerts)</option>
+                    {projects?.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.slug}
                       </option>
                     ))}
                   </Select>
@@ -288,7 +291,7 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
               </Field>
               <Field label="Environment">
                 {(props) => (
-                  <Select {...props} className="font-mono" value={draft.environment} disabled={!draft.project} onChange={(event) => set('environment', event.target.value)}>
+                  <Select {...props} className={cn(draft.environment && 'font-mono')} value={draft.environment} disabled={!project} onChange={(event) => set('environment', event.target.value)}>
                     <option value="">{ALL_ENVIRONMENTS}</option>
                     {environments?.map((environment) => (
                       <option key={environment.id} value={environment.id ?? ''}>

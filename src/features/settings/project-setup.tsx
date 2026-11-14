@@ -28,6 +28,9 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
   const [viewed, setViewed] = useState<string>()
   const platform = viewed ?? shownPlatform(project.platform)
   const firstEvent = useQuery({ ...projectQuery(org, slug), refetchInterval: (query) => (query.state.data?.firstEvent ? false : POLL_MS) }).data?.firstEvent
+  // Whether this page saw the project wait for its first event, so what came with that event is new to it.
+  const [waited, setWaited] = useState(false)
+  if (!firstEvent && !waited) setWaited(true)
   const save = useChange('change the platform', (id: string) => projectActions.update(org, slug, { name: project.name, platform: storedPlatform(id) }), {
     stale: [stale.projects(org)],
     notice: true,
@@ -48,7 +51,7 @@ export function ProjectSetup({ org, project, dsn, keysLoaded, write }: { org: st
           Change platform
         </button>
       </div>
-      {firstEvent ? <Arrived org={org} slug={slug} projectId={project.id} firstEvent={firstEvent} /> : <Waiting />}
+      {firstEvent ? <Arrived org={org} slug={slug} projectId={project.id} firstEvent={firstEvent} justNow={waited} /> : <Waiting />}
       {dsn ? (
         <Snippets platform={platform} dsn={dsn} />
       ) : (
@@ -77,7 +80,7 @@ function Waiting() {
   )
 }
 
-function Arrived({ org, slug, projectId, firstEvent }: { org: string; slug: string; projectId: string; firstEvent: string }) {
+function Arrived({ org, slug, projectId, firstEvent, justNow }: { org: string; slug: string; projectId: string; firstEvent: string; justNow: boolean }) {
   // The backend marks the first event before it files the issue, and a transaction marks it with no issue at all,
   // so this asks again for a while, then stops.
   const queryClient = useQueryClient()
@@ -85,16 +88,14 @@ function Arrived({ org, slug, projectId, firstEvent }: { org: string; slug: stri
   // Reading when it last answered re-renders this on every answer, even an unchanged "none yet", so the count is current.
   const { data: issue, dataUpdatedAt } = useQuery({ ...options, refetchInterval: (query) => (query.state.data || query.state.dataUpdateCount >= ISSUE_TRIES ? false : POLL_MS) })
   const gaveUp = issue === null && dataUpdatedAt > 0 && (queryClient.getQueryState(options.queryKey)?.dataUpdateCount ?? 0) >= ISSUE_TRIES
-  // Whether the issue was missing while this was open, so it arrived just now rather than long ago.
-  const [waited, setWaited] = useState(false)
-  if (issue === null && !waited) setWaited(true)
   const issueId = issue?.id
-  // The backend files an event's environment before its issue, so once the issue is in, the environment is too.
+  // The backend files an event's environment before its issue, so once the first issue is in, the environment is too.
+  // A project that already had events when the page opened has its environments loaded already.
   useEffect(() => {
-    if (!issueId || !waited) return
+    if (!issueId || !justNow) return
     void queryClient.invalidateQueries(stale.project(org, slug))
     void queryClient.invalidateQueries(stale.environments(org))
-  }, [issueId, waited, queryClient, org, slug])
+  }, [issueId, justNow, queryClient, org, slug])
   return (
     <div role="status" className="border border-ok/60">
       <div className="flex min-h-11 items-center gap-2 px-3">

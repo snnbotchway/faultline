@@ -14,8 +14,5 @@ const LEVEL: Record<IssueLevel, { color: string; shape: Shape }> = {
 
 const isLevel = (level: string): level is IssueLevel => level in LEVEL
 
-// The text colour for a level; undefined for a level this app does not know.
-export const levelColor = (level: string | null | undefined) => (level && isLevel(level) ? LEVEL[level].color : undefined)
-
 // How a level is drawn; a level this app does not know is drawn as debug.
 export const levelStyle = (level: string) => (isLevel(level) ? LEVEL[level] : LEVEL[IssueLevel.debug])

@@ -24,7 +24,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 - An exception type in a row (`TypeError`) is mono semibold at 13px and its message is sans, so the type still scans as code: the `error-type` utility.
 - Section labels (`STACK TRACE`, `WHAT HAPPENED`, `EVENTS`) are mono, 12px, uppercase, tracked 0.12em, muted: the `label-caps` utility. A label names a section; it never sits above a heading as a kicker.
 - The wordmark `FAULTLINE` is mono semibold 12px, tracked 0.18em: the `tracking-wordmark` token.
-- A one-time code being typed (an authenticator or recovery code) is mono, tracked 0.2em so each digit stands apart: the `tracking-code` token.
+- A one-time code (an authenticator or recovery code, typed or shown) is mono, tracked 0.2em so each digit stands apart: the `tracking-code` token.
 - Sans text is sentence case. Identifiers are shown exactly as the system has them.
 - Numbers are tabular everywhere.
 
@@ -125,6 +125,7 @@ The inbox and the issue page draw events the same way.
 - **Inputs.** A hairline box on `card`; the border turns `foreground` on focus and `destructive` when invalid. The label is always visible above the field. Errors appear under the field in the user's words; forms check themselves (`noValidate`), so the browser's own bubbles never show.
 - **Menus and popovers.** Square, hairline, on `card`. Items are 32px tall, 44px on touch.
 - **Dialogs** are for short tasks that keep their context (confirm a delete or a merge, pick an assignee). They are not a page. A confirmation names what it acts on: how many issues, and for a merge which one is kept.
+- **Notices** ("Password changed.") sit at the bottom of the page, one at a time. While a dialog or sheet is open they move to the top, so they never cover it, and opening a dialog clears an old one. A dialog shown once (a new token, recovery codes to confirm) closes only by its own button.
 - **Top bar.** Mark and wordmark, organization, then on the inbox the project and environment filters, navigation at the right, the palette button, theme, account.
 - **Page bar.** A second 44px bar that sticks while the page scrolls. It says where you are within the section and carries the page's main controls. It mirrors the URL path.
 - **Rows.** The whole row is the target. Hover and the keyboard cursor look the same.

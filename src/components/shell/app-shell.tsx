@@ -265,7 +265,11 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
 export function Notice() {
   const notice = useNotice()
   return (
-    <div role="status" className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 max-lg:bottom-32">
+    // While a dialog or sheet is open (the page's scroll is locked), the message moves to the top so it never covers it.
+    <div
+      role="status"
+      className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 max-lg:bottom-32 [body[data-scroll-locked]_&]:top-4 [body[data-scroll-locked]_&]:bottom-auto"
+    >
       {notice && (
         <p className={cn('pointer-events-auto max-w-md border bg-card px-3 py-2 shadow-float', notice.error && 'border-destructive text-destructive')}>
           {notice.text}

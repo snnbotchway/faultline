@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
+import { clearNotice } from '@/lib/notice'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
+import { FormAlert } from './field'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './dialog'
 
 /**
@@ -30,7 +32,7 @@ export function TaskDialog({
   // Focus normally lands in the task's first field. This puts it on the dialog itself, for a list or a confirmation,
   // where a focused first control would look like the thing to press.
   quietFocus?: boolean
-  // Stays open when the page behind it is tapped: for something shown only once.
+  // Stays open when the page behind it is tapped or Esc is pressed: for something shown only once, closed by its own button.
   modal?: boolean
   className?: string
   children: ReactNode
@@ -41,15 +43,17 @@ export function TaskDialog({
         // Radix warns about a dialog with no description; most tasks here are named fully by their title.
         {...(description ? {} : { 'aria-describedby': undefined })}
         onInteractOutside={modal ? (event) => event.preventDefault() : undefined}
+        onEscapeKeyDown={modal ? (event) => event.preventDefault() : undefined}
         onOpenAutoFocus={(event) => {
           event.preventDefault()
+          clearNotice()
           const dialog = event.currentTarget as HTMLElement
           const field = quietFocus ? null : dialog.querySelector<HTMLElement>('input:not([type=hidden]), textarea')
           ;(field ?? dialog).focus()
         }}
         className={cn(
-          'max-h-[calc(100dvh-6rem)] overflow-y-auto p-5',
-          'max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:max-h-[calc(100dvh-5.5rem)] max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:border-x-0 max-sm:border-b-0 max-sm:data-[state=open]:slide-in-from-bottom-4',
+          'max-h-[calc(100dvh-var(--spacing)*24)] overflow-y-auto p-5',
+          'max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:max-h-[calc(100dvh-var(--spacing)*22)] max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:border-x-0 max-sm:border-b-0 max-sm:data-[state=open]:slide-in-from-bottom-4',
           // The pinned buttons carry the sheet's bottom padding, so they sit flush with its edge.
           'max-sm:has-[[data-task-actions]]:pb-0',
           className,
@@ -80,7 +84,7 @@ export function TaskActions({ className, children }: { className?: string; child
       data-task-actions
       className={cn(
         'flex flex-wrap gap-2 pt-1 [&>*]:h-10 max-lg:[&>*]:h-11',
-        'max-sm:sticky max-sm:bottom-0 max-sm:-mx-5 max-sm:border-t max-sm:bg-popover max-sm:px-5 max-sm:pt-3 max-sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] max-sm:[&>*]:flex-1',
+        'max-sm:sticky max-sm:bottom-0 max-sm:-mx-5 max-sm:border-t max-sm:bg-popover max-sm:px-5 max-sm:pt-3 max-sm:pb-[max(var(--spacing)*5,env(safe-area-inset-bottom))] max-sm:[&>*]:flex-1',
         className,
       )}
     >
@@ -111,11 +115,7 @@ export function ConfirmDialog({
 }) {
   return (
     <TaskDialog open={open} onClose={onClose} title={title} description={description} quietFocus>
-      {error && (
-        <p className="prose-text mb-4 border border-destructive px-3 py-2 text-destructive" role="alert">
-          {error}
-        </p>
-      )}
+      <FormAlert className="mb-4">{error}</FormAlert>
       <TaskActions className="sm:justify-end">
         <Button variant="destructive" disabled={busy} aria-busy={busy} onClick={onConfirm} className="sm:order-2">
           {action}

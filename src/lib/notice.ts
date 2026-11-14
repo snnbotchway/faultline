@@ -17,6 +17,13 @@ export function notify(text: string, error = false) {
   }, SHOWN_FOR)
 }
 
+// Drops the message now: a dialog that opens starts a new task, and an old message would sit over it.
+export function clearNotice() {
+  if (!current) return
+  current = undefined
+  listeners.forEach((listener) => listener())
+}
+
 // `action` completes "Couldn't …": "resolve the issue".
 export const failed = (error: unknown, action: string) => notify(explain(error, action), true)
 

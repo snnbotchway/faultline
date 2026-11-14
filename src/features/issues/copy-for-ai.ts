@@ -1,9 +1,9 @@
 import { type IssueEvent } from '@/api/issues'
+import { Feature } from '@/api/organizations'
 import { notify } from '@/lib/notice'
 
 // Set once the hint has been shown. The stock interface uses the same key, so the hint is not shown twice.
 export const MCP_HINT_KEY = 'mcpCopyHintSeen'
-export const McpFeature = 'mcp'
 
 const MCP_GUIDE = 'https://glitchtip.com/documentation/mcp'
 
@@ -32,7 +32,7 @@ export async function copyForAi(event: IssueEvent, where: Omit<Where, 'instance'
   // The event's own address: on the issue's first tab the page shows whichever event is newest.
   const eventUrl = `${instance}/${where.org}/issues/${where.issueId}/events/${event.id}`
   await navigator.clipboard.writeText(aiPayload(event, { ...where, instance, eventUrl }))
-  if (!features?.includes(McpFeature) || localStorage.getItem(MCP_HINT_KEY) === 'true') {
+  if (!features?.includes(Feature.mcp) || localStorage.getItem(MCP_HINT_KEY) === 'true') {
     notify('Copied for AI')
     return
   }

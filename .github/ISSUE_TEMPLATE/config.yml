@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GlitchTip backend bug
+    url: https://gitlab.com/glitchtip/glitchtip-backend/-/issues
+    about: Faultline is not affiliated with GlitchTip; report backend bugs to GlitchTip.
+  - name: Security vulnerability
+    url: https://github.com/snnbotchway/faultline/security/advisories/new
+    about: Report privately, please.

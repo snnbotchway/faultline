@@ -1,0 +1,15 @@
+name: Feature request
+description: Something the stock GlitchTip UI does that Faultline doesn't, or a new idea
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you want to do?
+    validations: { required: true }
+  - type: dropdown
+    id: parity
+    attributes:
+      label: Does the stock GlitchTip UI do this?
+      options: ["Yes", "No", "Not sure"]
+    validations: { required: true }

@@ -1,0 +1,30 @@
+name: Bug report
+description: Something in Faultline doesn't work
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations: { required: true }
+  - type: input
+    id: faultline
+    attributes:
+      label: Faultline version
+      placeholder: e.g. 0.1.0 (shown in the user menu)
+    validations: { required: true }
+  - type: input
+    id: glitchtip
+    attributes:
+      label: GlitchTip backend version
+      placeholder: e.g. 7.0.0
+    validations: { required: true }
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device

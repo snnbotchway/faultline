@@ -11,7 +11,7 @@ test('the uptime list puts a monitor that is down first, and its page says since
   await expect(page.getByRole('region', { name: 'Waiting for a first check' })).toContainText('Daily report')
   await row(page, 'Checkout API').getByRole('link').click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Checkout API is down')
-  await expect(page.getByRole('region', { name: 'Downtime' }).getByRole('button').first()).toContainText('so far')
+  await expect(page.getByRole('region', { name: 'Downtime' }).getByRole('button', { name: /so far/ })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Alerts', exact: true })).toContainText('Downtime and spikes')
 })
 

@@ -171,6 +171,8 @@ export const dailyEventsQuery = (slug: string, days: number) =>
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/stats_v2/', {
         params: { path: orgPath(slug), query: { category: 'error', interval: '1h', field: EVENTS_FIELD, start: new Date(start).toISOString(), end: new Date().toISOString() } },
       })
+      // An organization without projects has no events; the backend answers that with 404.
+      if (result.response.status === 404) return { start, counts: Array.from({ length: days }, () => 0) }
       // The body is parsed as JSON at runtime; only its type is missing from the schema.
       const stats = unwrap(result) as unknown as EventStats
       return { start, counts: eventsPerDay(stats.intervals, stats.groups[0]?.series[EVENTS_FIELD] ?? [], start, days) }

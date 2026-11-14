@@ -47,8 +47,7 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
     return (
       <>
         {bar}
-        <Screen title="This release can't be opened">
-          <p className="text-muted-foreground">GlitchTip can't look up a release whose version has a slash in it, so its issues, deploys and files can't be shown here.</p>
+        <Screen title="Releases with a slash in the version can't be opened">
           <Button asChild>
             <Link to="/$org/releases" params={{ org }}>
               Go to releases
@@ -296,9 +295,9 @@ function FileRow({ org, version, file, canDelete }: { org: string; version: stri
       </span>
       <span className="mono text-muted-foreground">{bytes(file.size)}</span>
       {canDelete && (
-        <button type="button" onClick={() => setConfirming(true)} disabled={remove.isPending} className="cursor-pointer text-sm text-destructive hover:underline max-lg:min-h-11">
+        <Button size="sm" variant="destructive" onClick={() => setConfirming(true)} disabled={remove.isPending} aria-busy={remove.isPending} className="max-lg:h-11">
           Delete
-        </button>
+        </Button>
       )}
       <ConfirmDialog
         open={confirming}

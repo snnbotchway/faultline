@@ -214,7 +214,7 @@ Designed at 390px, checked at 375px.
 - Errors say what happened and what to do next, in one sentence.
 - Buttons name the action ("Resolve", "Delete 3 issues"), not "OK" or "Submit".
 - Counts are exact up to the backend's limit, then shown as `1000+`.
-- Times are relative in lists (`7m`, `3d`) and exact on hover. On the issue page a relative time opens to the exact one on tap, and the event's time is written out (without the year and seconds on a phone).
+- Times are relative in lists (`7m`, `3d`) and exact on hover. On the issue page a relative time opens to the exact one on tap, and the event's time is written out (without the year and seconds on a phone). A list grouped under day headings (releases) shows the time of day instead (`14:02`), still exact on hover: the heading already says how long ago, and a relative time would repeat it.
 - Words are not abbreviated: `9 events`, not `9 ev`.
 
 ## Not built yet

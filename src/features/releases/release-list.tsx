@@ -6,7 +6,7 @@ import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { releaseMarks, spanAxis } from '@/lib/axis'
-import { clock, compact, dayLabel, dayName, noun, plural } from '@/lib/format'
+import { clock, compact, dayLabel, dayName, exact, noun, plural } from '@/lib/format'
 import { ReleaseTrace } from '@/features/issues/trace'
 import { DAY_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
@@ -88,7 +88,8 @@ export function ReleaseList({ org }: { org: string }) {
                         params={{ org, _splat: release.version }}
                         className="grid grid-cols-[48px_minmax(0,1fr)] gap-x-3 px-3 py-3 transition-colors duration-100 hover:bg-accent/60 lg:grid-cols-[56px_minmax(0,1fr)] lg:px-4"
                       >
-                        <time className="mono text-muted-foreground" dateTime={release.dateCreated}>
+                        {/* The day heading says how long ago; the row gives the time of that day (DESIGN.md, Copy). */}
+                        <time className="mono text-muted-foreground" dateTime={release.dateCreated} title={exact(release.dateCreated)}>
                           {clock(release.dateCreated)}
                         </time>
                         <span className="min-w-0">

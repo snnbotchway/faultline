@@ -141,7 +141,14 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const copyAi = () => {
     if (event.data) copyForAi(event.data, { instanceName: settings?.glitchtipInstanceName, org, issueId }, settings?.enabledFeatures).catch((error: unknown) => failed(error, 'copy the event'))
   }
-  const copyLink = () => void navigator.clipboard.writeText(issueAddress(window.location.origin, org, issueId)).then(() => notify('Link copied'))
+  // Without a secure context there is no clipboard at all, so the call itself can throw.
+  const copyLink = () =>
+    void Promise.resolve()
+      .then(() => navigator.clipboard.writeText(issueAddress(window.location.origin, org, issueId)))
+      .then(
+        () => notify('Link copied'),
+        (error: unknown) => failed(error, 'copy the link'),
+      )
 
   useHotkeys({
     ...Object.fromEntries(offered.map((action) => [action.key, () => setStatus(action.status)])),
@@ -365,7 +372,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
               </div>
               <div className="flex flex-col gap-7">
                 <div className="max-lg:order-2">
-                  <Timeline event={event.data} title={data.title} />
+                  <Timeline event={event.data} title={data.title} level={data.level} />
                 </div>
                 {exceptions.length > 0 ? (
                   <StackTrace exceptions={exceptions} platform={event.data.platform} />

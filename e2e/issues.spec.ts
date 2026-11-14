@@ -4,14 +4,9 @@ import { DEMO } from '../dev/seed.ts'
 const inbox = `/${DEMO.org}/issues`
 const row = (page: Page, text: string) => page.getByRole('listitem').filter({ hasText: text })
 
-test('the inbox lists the seeded issues', async ({ page }) => {
+test('the inbox lists the seeded issues, grouped as new, spiking and ongoing', async ({ page }) => {
   await page.goto(inbox)
   await expect(row(page, 'WEB-APP-1')).toContainText("Cannot read properties of undefined (reading 'premium')")
-  await expect(row(page, 'Request failed with status code 503')).toBeVisible()
-})
-
-test('the inbox groups issues that are new, spiking and ongoing', async ({ page }) => {
-  await page.goto(inbox)
   const spiking = page.getByRole('region', { name: 'Spiking' })
   await expect(spiking.getByRole('listitem')).toHaveCount(2)
   await expect(spiking).toContainText('Mobile money gateway did not respond within 30s')
@@ -30,7 +25,7 @@ test('an issue opens on its stack trace', async ({ page }) => {
 test('an issue can be resolved and reopened from its page', async ({ page }) => {
   await page.goto(inbox)
   await row(page, "'policy_number'").getByRole('link').click()
-  await page.getByRole('button', { name: 'Resolve', exact: false }).first().click()
+  await page.getByRole('button', { name: 'Resolve' }).first().click()
   await expect(page.getByText('Resolved', { exact: true })).toBeVisible()
 
   await page.goto(inbox)

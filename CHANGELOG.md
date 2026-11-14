@@ -5,8 +5,17 @@ All notable changes to Faultline are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-14
+
+The first release. Tested against GlitchTip 7.0.0.
+
 ### Added
 
+- Sign-in with email and password, then a two-step check by authenticator code or recovery code; old GlitchTip links keep working because Faultline uses the same URLs.
+- Issue inbox: new, spiking and ongoing issues on one 14-day timeline with release markers, search and filters, keyboard triage (`j`/`k`, `x`, `e`, `u`, `i`, `a`, `m`, `/`), and bulk resolve, ignore, assign, merge and delete.
+- Issue page: the latest event with its stack trace, breadcrumbs, request, tags and context, older and newer events, comments, user reports, merged fingerprints, and the raw event.
+- A command palette (`⌘K` / `Ctrl K`) for every action that applies, light and dark themes, and a phone layout with a bottom tab bar.
+- One Docker image that serves the app and passes API, sign-in and ingest requests through to an unmodified GlitchTip on the same origin.
 - Sign-up, with a closed-registration screen when the server allows none, and sign-in with a social provider, including the step that asks for an email when the provider shares none.
 - Two-step sign-in with a security key, alongside the authenticator and recovery codes.
 - Password reset: ask for a link, wait before sending another, and set a new password from the link, or learn it has expired.
@@ -21,8 +30,5 @@ All notable changes to Faultline are listed here. The format follows
 - Performance (`/:org/performance/transaction-groups`): transactions ranked by the time they take, with tabs for repeated queries, those slower this week (and the release they slowed down at) and failing ones. A transaction shows its all-time figures, a 7-day chart and where an average request spends its time; on a desktop it opens beside the list. Breakdowns, charts and repeated queries need GlitchTip's cold storage.
 - Logs (`/:org/logs`): search, filters by level, service, environment, host and project with counts, a time window and logs per hour, a log's attributes, and the other logs in its trace.
 
-### Changed
-
-- Forms check themselves and say what is wrong under the field, in Faultline's words, instead of the server's.
-- `/` opens the projects home instead of going to the last organization's issues.
-- The organization menu leads to its projects, members, teams and settings.
+[Unreleased]: https://github.com/snnbotchway/faultline/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/snnbotchway/faultline/releases/tag/v0.1.0

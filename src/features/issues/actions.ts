@@ -77,8 +77,8 @@ export function useIssueActions(org: string) {
       resolveInNextRelease: (target: Target) =>
         update(target, { status: IssueStatus.resolved }, { status: IssueStatus.resolved, statusDetails: { inNextRelease: true } }, `resolve ${noun(target)}`),
       assign: (target: Target, assignee: Assignee | null) => update(target, { assignedTo: assignee }, { assignedTo: assigneeRef(assignee) }, `assign ${noun(target)}`),
-      // The newest issue survives a merge, so the list is simply refetched.
-      merge: (ids: string[]) => runAction(queryClient, org, { selection: { ids }, ids: [] }, {}, () => issueActions.merge(org, ids), 'merge the issues'),
+      // The newest issue survives a merge. The lists are refetched, and so is each merged issue, whose page is gone or has grown.
+      merge: (ids: string[]) => runAction(queryClient, org, { selection: { ids }, ids }, {}, () => issueActions.merge(org, ids), 'merge the issues'),
       remove: (target: Target) => runAction(queryClient, org, target, { removed: true }, () => issueActions.remove(org, target.selection), `delete ${noun(target)}`),
     }
   }, [queryClient, org])

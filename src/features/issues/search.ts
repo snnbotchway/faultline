@@ -29,8 +29,9 @@ export type InboxSearch = {
 const numbers = (value: unknown) =>
   (Array.isArray(value) ? value : value === undefined || value === '' ? [] : [value]).map(Number).filter(Number.isInteger)
 
-// A time the backend takes: relative to now (`now-7d`, `now-1h`) or an absolute date.
-const RELATIVE = /^now-(\d+)([hd])$/
+// A time the backend takes: relative to now (`now-7d`, `now-1h`, `now-30m`) or an absolute date.
+const RELATIVE = /^now-(\d+)([mhd])$/
+const UNIT = { m: { word: 'minute', perDay: 1440 }, h: { word: 'hour', perDay: 24 }, d: { word: 'day', perDay: 1 } } as const
 const date = (value: unknown) => (typeof value === 'string' && (RELATIVE.test(value) || !Number.isNaN(Date.parse(value))) ? value : undefined)
 
 export function validateInboxSearch(search: Record<string, unknown>): InboxSearch {
@@ -76,12 +77,16 @@ export function timeRange(search: Pick<InboxSearch, 'start' | 'end'>): { days?: 
   const relative = !search.end && search.start?.match(RELATIVE)
   if (relative) {
     const count = Number(relative[1])
-    const days = relative[2] === 'd' ? count : count / 24
-    return TIME_RANGES.find((range) => range.days === days) ?? { label: `Last ${relative[2] === 'd' ? plural(count, 'day') : plural(count, 'hour')}` }
+    const unit = UNIT[relative[2] as keyof typeof UNIT]
+    return TIME_RANGES.find((range) => range.days === count / unit.perDay) ?? { label: `Last ${plural(count, unit.word)}` }
   }
   const words = (value: string | undefined, missing: string) => (!value ? missing : RELATIVE.test(value) ? value : dateFormat.format(new Date(value)))
   return { label: `${words(search.start, 'Start')} – ${words(search.end, 'now')}` }
 }
+
+// Whether the inbox shows anything other than its default view.
+export const isFiltered = (search: InboxSearch) =>
+  (search.query ?? DEFAULT_QUERY) !== DEFAULT_QUERY || !!search.project?.length || !!search.environment || !!search.start || !!search.end
 
 // The backend reads `key:value` filters only up to the first bare word; everything after
 // that is free text. So filters are always written ahead of the text.

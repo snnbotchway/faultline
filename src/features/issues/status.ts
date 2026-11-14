@@ -25,3 +25,9 @@ const ACTION_ORDER = [IssueStatus.resolved, IssueStatus.unresolved, IssueStatus.
 export function statusActions(current: StatusView | undefined) {
   return ACTION_ORDER.filter((status) => status !== current).map((status) => ({ status, ...STATUS[status] }))
 }
+
+// The other actions with a key. Hotkeys, commands and buttons all read the key from here.
+export const ACTION = {
+  assign: { label: 'Assign', key: 'a' },
+  merge: { label: 'Merge', key: 'm' },
+} as const

@@ -36,6 +36,7 @@ describe('inbox search', () => {
     expect(timeRange({}).label).toBe('Any time')
     expect(timeRange({ start: 'now-7d' })).toEqual({ days: 7, label: 'Last 7 days' })
     expect(timeRange({ start: 'now-1h' })).toEqual({ label: 'Last 1 hour' })
+    expect(timeRange(validateInboxSearch({ start: 'now-30m' }))).toEqual({ label: 'Last 30 minutes' })
     expect(timeRange({ start: '2026-11-03T12:00:00Z', end: '2026-11-05T12:00:00Z' }).days).toBeUndefined()
   })
 })

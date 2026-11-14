@@ -1,6 +1,5 @@
 import { keepPreviousData, useInfiniteQuery, useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Ellipsis, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StatsPeriod, issueListQuery, issueStatsQuery, type IssueStatus } from '@/api/issues'
 import { canWriteEvents, organizationQuery } from '@/api/organizations'
@@ -10,8 +9,6 @@ import { useCommands, type Command } from '@/components/shell/commands'
 import { ScopeFilters } from '@/components/shell/scope-filters'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Kbd } from '@/components/ui/kbd'
 import { useHotkeys } from '@/lib/hotkeys'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -19,12 +16,13 @@ import { oneIssue, useIssueActions, type Target } from './actions'
 import { AssignDialog } from './assignee'
 import { ConfirmDialog, DeleteIssuesDialog } from './dialogs'
 import type { RowHandlers } from './dossier'
-import { compact } from './format'
+import { compact, hitsText, type Hits } from './format'
 import { SearchBox, SortMenu, StatusMenu, StatusTabs, TimeRangeMenu } from './inbox-controls'
 import { COLUMNS, IssueRow, SkeletonRows, type Row } from './inbox-row'
-import { DEFAULT_QUERY, statusOf, toFilters, withStatus, type InboxSearch } from './search'
-import { useSelection } from './selection'
-import { STATUS_VIEWS, statusActions, type StatusView } from './status'
+import { DEFAULT_QUERY, isFiltered, statusOf, toFilters, withStatus, type InboxSearch } from './search'
+import { useSelection, useSelectionOffer } from './selection'
+import { SelectionBar, SelectionSheet } from './selection-bar'
+import { ACTION, STATUS_VIEWS, type StatusView } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { Trend, axisFor, axisStartLabel, classify, fillBuckets, periodInfo, releaseMarks } from './trend'
 
@@ -89,34 +87,20 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   const rows = useMemo(() => groups.flatMap((group) => group.rows), [groups])
   const totals = useMemo(() => axisTotals(rows, axis.count), [rows, axis.count])
   const first = pages?.[0]
-  const hits = first?.hits === undefined ? undefined : first.maxHits !== undefined && first.hits >= first.maxHits ? `${first.maxHits}+` : String(first.hits)
+  const hits: Hits | undefined = first?.hits === undefined ? undefined : { n: first.hits, capped: first.maxHits !== undefined && first.hits >= first.maxHits }
 
   const selection = useSelection(JSON.stringify([org, filters]))
   const [cursor, setCursor] = useState<string>()
   const [unfolded, setUnfolded] = useState<string>()
   const [assigning, setAssigning] = useState<Target>()
-  const [deleting, setDeleting] = useState<Target>()
+  // The wording is kept with the target, so the dialog names what it will delete even if the selection moves on.
+  const [deleting, setDeleting] = useState<{ target: Target; what: string }>()
   const [merging, setMerging] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const actions = useIssueActions(org)
 
   const loadedIds = useMemo(() => rows.map((row) => row.issue.id), [rows])
-  const selectedRows = rows.filter((row) => selection.ids.has(row.issue.id))
-  const selectedIds = selectedRows.map((row) => row.issue.id)
-  const selecting = selectedIds.length > 0
-  const everyLoaded = selecting && selectedIds.length === loadedIds.length
-  // "All matching" only holds while every loaded row is still ticked.
-  const allMatching = selection.all && everyLoaded
-  const canSelectAllMatching = everyLoaded && !!list.hasNextPage && !allMatching
-  const selectionTarget: Target = allMatching ? { selection: { filters }, ids: loadedIds } : { selection: { ids: selectedIds }, ids: selectedIds }
-  const canMerge = !allMatching && selectedRows.length >= 2 && new Set(selectedRows.map((row) => row.issue.project.id)).size === 1
-  // The backend keeps the newest issue of a merge.
-  const survivor = selectedRows.reduce<Row | undefined>((newest, row) => (!newest || Number(row.issue.id) > Number(newest.issue.id) ? row : newest), undefined)
-  // The backend only takes a status change or a delete for "every match"; assigning needs the issues named.
-  const canAssign = !allMatching
-  const count = allMatching ? (hits ?? String(selectedIds.length)) : String(selectedIds.length)
-  const noun = allMatching || selectedIds.length !== 1 ? 'issues' : 'issue'
-  const offered = statusActions(view)
+  const offer = useSelectionOffer({ rows, selection, view, filters, hits, hasMore: !!list.hasNextPage })
 
   const go = (patch: Partial<InboxSearch>) => void navigate({ to: '/$org/issues', params: { org }, search: (previous) => ({ ...previous, ...patch }) })
   const setQuery = (next: string) => go({ query: next === DEFAULT_QUERY ? undefined : next })
@@ -124,7 +108,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
 
   // What a key or a command acts on: the selection, or else the row under the cursor.
   const target = (): Target | undefined => {
-    if (selecting) return selectionTarget
+    if (offer.selecting) return offer.target
     return cursor && loadedIds.includes(cursor) ? oneIssue(cursor) : undefined
   }
   const setStatus = (status: IssueStatus) => {
@@ -135,8 +119,10 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   }
   const assign = () => {
     const on = target()
-    if (on && canWrite && (canAssign || !selecting)) setAssigning(on)
+    if (on && canWrite && (offer.canAssign || !offer.selecting)) setAssigning(on)
   }
+  const merge = () => offer.canMerge && setMerging(true)
+  const remove = () => setDeleting({ target: offer.target, what: offer.what })
   const move = (step: number) => {
     const index = cursor ? loadedIds.indexOf(cursor) : -1
     const next = loadedIds[Math.max(0, Math.min(loadedIds.length - 1, index + step))]
@@ -165,24 +151,24 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     x: () => cursor && canWrite && selection.toggle(cursor),
     o: () => cursor && handlers.unfold(cursor),
     Enter: () => cursor && void navigate({ to: '/$org/issues/$issueId', params: { org, issueId: cursor } }),
-    ...Object.fromEntries(offered.map((action) => [action.key, () => setStatus(action.status)])),
-    a: assign,
-    m: () => canMerge && setMerging(true),
-    Escape: () => (selecting ? selection.clear() : setUnfolded(undefined)),
+    ...Object.fromEntries(offer.statuses.map((action) => [action.key, () => setStatus(action.status)])),
+    [ACTION.assign.key]: assign,
+    [ACTION.merge.key]: merge,
+    Escape: () => (offer.selecting ? selection.clear() : setUnfolded(undefined)),
   })
 
-  const commands: Command[] = selecting
+  const commands: Command[] = offer.selecting
     ? [
-        ...offered.map((action) => ({
+        ...offer.statuses.map((action) => ({
           id: `selection:${action.status}`,
           group: 'selection',
-          label: `${action.action} ${count} ${noun}`,
+          label: `${action.action} ${offer.what}`,
           keys: action.key,
           run: () => setStatus(action.status),
         })),
-        ...(canAssign ? [{ id: 'selection:assign', group: 'selection', label: `Assign ${count} ${noun}`, keys: 'a', run: assign }] : []),
-        ...(canMerge ? [{ id: 'selection:merge', group: 'selection', label: `Merge ${count} issues`, keys: 'm', run: () => setMerging(true) }] : []),
-        { id: 'selection:delete', group: 'selection', label: `Delete ${count} ${noun}`, run: () => setDeleting(selectionTarget) },
+        ...(offer.canAssign ? [{ id: 'selection:assign', group: 'selection', label: `${ACTION.assign.label} ${offer.what}`, keys: ACTION.assign.key, run: assign }] : []),
+        ...(offer.canMerge ? [{ id: 'selection:merge', group: 'selection', label: `${ACTION.merge.label} ${offer.what}`, keys: ACTION.merge.key, run: merge }] : []),
+        { id: 'selection:delete', group: 'selection', label: `Delete ${offer.what}`, run: remove },
         { id: 'selection:clear', group: 'selection', label: 'Clear selection', keys: 'esc', run: selection.clear },
       ]
     : []
@@ -202,59 +188,35 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   }, [directHit, navigate, org])
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage } = list
+  // With every match selected the list stops growing, so what is ticked on screen stays what the action covers.
+  const canLoadMore = hasNextPage && !offer.allMatching
   const observe = useCallback(
     (node: HTMLDivElement | null) => {
-      if (!node || !hasNextPage) return
+      if (!node || !canLoadMore) return
       const observer = new IntersectionObserver((entries) => entries[0]?.isIntersecting && !isFetchingNextPage && void fetchNextPage(), { rootMargin: '400px' })
       observer.observe(node)
       return () => observer.disconnect()
     },
-    [fetchNextPage, hasNextPage, isFetchingNextPage],
+    [fetchNextPage, canLoadMore, isFetchingNextPage],
   )
 
-  const filtered = query !== DEFAULT_QUERY || search.project || search.environment || search.start || search.end
   const unit = periodInfo(period)
+  const bar = {
+    offer,
+    matching: hits && hitsText(hits),
+    onStatus: setStatus,
+    onAssign: assign,
+    onMerge: merge,
+    onDelete: remove,
+    onClear: selection.clear,
+    onSelectAllMatching: selection.selectAllMatching,
+  }
 
   return (
     <>
-      <PageBar className={cn(selecting && 'max-lg:hidden')}>
-        {selecting ? (
-          <div className="flex min-w-0 flex-1 items-center gap-2" role="toolbar" aria-label="Selection">
-            <Button variant="ghost" size="icon-sm" onClick={selection.clear} aria-label="Clear selection">
-              <X />
-            </Button>
-            <span className="font-medium">
-              <span className="mono">{count}</span> selected
-            </span>
-            {canSelectAllMatching && (
-              <Button variant="link" onClick={selection.selectAllMatching}>
-                Select all {hits} matching
-              </Button>
-            )}
-            <div className="ml-auto flex items-center gap-1.5">
-              {offered.map((action, index) => (
-                <Button key={action.status} size="sm" variant={index === 0 ? 'default' : 'outline'} onClick={() => setStatus(action.status)}>
-                  {action.action}
-                  <Kbd>{action.key}</Kbd>
-                </Button>
-              ))}
-              {canAssign && (
-                <Button size="sm" onClick={assign}>
-                  Assign
-                  <Kbd>a</Kbd>
-                </Button>
-              )}
-              {canMerge && (
-                <Button size="sm" onClick={() => setMerging(true)}>
-                  Merge
-                  <Kbd>m</Kbd>
-                </Button>
-              )}
-              <Button size="sm" variant="destructive" onClick={() => setDeleting(selectionTarget)}>
-                Delete
-              </Button>
-            </div>
-          </div>
+      <PageBar className={cn(offer.selecting && 'max-lg:hidden')}>
+        {offer.selecting ? (
+          <SelectionBar {...bar} />
         ) : (
           <>
             <StatusTabs view={view} onChange={setView} />
@@ -262,7 +224,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
             <div className="max-lg:hidden">
               <TimeRangeMenu search={search} onChange={go} />
             </div>
-            <SortMenu sort={search.sort} onChange={(sort) => go({ sort })} />
+            <SortMenu sort={search.sort} disabled={list.isSuccess && rows.length === 0} onChange={(sort) => go({ sort })} />
           </>
         )}
       </PageBar>
@@ -280,8 +242,8 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
           <Button onClick={() => void list.refetch()}>Try again</Button>
         </Screen>
       ) : rows.length === 0 ? (
-        <Screen title={filtered ? 'No issues match' : 'Nothing unresolved'}>
-          {filtered && <Button onClick={() => void navigate({ to: '/$org/issues', params: { org }, search: {} })}>Show unresolved issues</Button>}
+        <Screen title={isFiltered(search) ? 'No issues match' : 'Nothing unresolved'}>
+          {isFiltered(search) && <Button onClick={() => void navigate({ to: '/$org/issues', params: { org }, search: {} })}>Show unresolved issues</Button>}
         </Screen>
       ) : (
         <>
@@ -289,7 +251,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
             <span className="max-lg:hidden" />
             <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
               <span>
-                <span className="font-mono text-2xl font-semibold lg:text-3xl">{hits}</span> {hits === '1' ? 'issue' : 'issues'}
+                <span className="font-mono text-2xl font-semibold lg:text-3xl">{hits && hitsText(hits)}</span> {hits?.n === 1 ? 'issue' : 'issues'}
               </span>
               {groups
                 .filter((group) => group.trend !== Trend.ongoing)
@@ -310,8 +272,8 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
               <Checkbox
                 hit
                 className="mx-auto"
-                checked={everyLoaded ? true : selecting ? 'indeterminate' : false}
-                onCheckedChange={() => (everyLoaded ? selection.clear() : selection.set(loadedIds))}
+                checked={offer.everyLoaded ? true : offer.selecting ? 'indeterminate' : false}
+                onCheckedChange={() => (offer.everyLoaded ? selection.clear() : selection.set(loadedIds))}
                 aria-label="Select all"
               />
             ) : (
@@ -334,7 +296,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
 
           {groups.map((group) => (
             <section key={group.trend} aria-label={group.label}>
-              <h2 className={cn('label-caps flex h-8 items-center gap-2 border-b bg-muted/60 px-3 font-semibold lg:pl-[44px]', group.color)}>
+              <h2 className={cn('label-caps flex h-8 items-center gap-2 border-b bg-muted/60 px-3 font-semibold lg:pl-check', group.color)}>
                 {group.label}
                 <span className="font-normal text-muted-foreground">{group.rows.length}</span>
               </h2>
@@ -347,7 +309,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
                     marks={marks}
                     view={view}
                     canWrite={canWrite}
-                    selected={selection.ids.has(row.issue.id)}
+                    selected={selection.all || selection.ids.has(row.issue.id)}
                     current={cursor === row.issue.id}
                     unfolded={unfolded === row.issue.id}
                     handlers={handlers}
@@ -357,7 +319,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
             </section>
           ))}
           <div ref={observe} className="grid h-14 place-items-center">
-            {hasNextPage && (
+            {canLoadMore && (
               <Button variant="ghost" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage} aria-busy={isFetchingNextPage}>
                 Load more
               </Button>
@@ -366,48 +328,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
         </>
       )}
 
-      {selecting && (
-        <div role="toolbar" aria-label="Selection" className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
-          {canSelectAllMatching && (
-            <button type="button" onClick={selection.selectAllMatching} className="flex h-11 w-full items-center justify-center border-b text-sm text-brand">
-              Select all {hits} matching
-            </button>
-          )}
-          <div className="flex h-14 items-center gap-1.5 px-1.5">
-            <Button variant="ghost" size="icon-touch" onClick={selection.clear} aria-label="Clear selection">
-              <X />
-            </Button>
-            <span className="mr-auto font-medium">
-              <span className="mono">{count}</span> selected
-            </span>
-            {offered.slice(0, 2).map((action, index) => (
-              <Button key={action.status} size="touch" variant={index === 0 ? 'default' : 'outline'} onClick={() => setStatus(action.status)}>
-                {action.action}
-              </Button>
-            ))}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon-touch" aria-label="More actions">
-                  <Ellipsis />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="top">
-                {offered.slice(2).map((action) => (
-                  <DropdownMenuItem key={action.status} onSelect={() => setStatus(action.status)}>
-                    {action.action}
-                  </DropdownMenuItem>
-                ))}
-                {canAssign && <DropdownMenuItem onSelect={assign}>Assign</DropdownMenuItem>}
-                {canMerge && <DropdownMenuItem onSelect={() => setMerging(true)}>Merge</DropdownMenuItem>}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem destructive onSelect={() => setDeleting(selectionTarget)}>
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      )}
+      {offer.selecting && <SelectionSheet {...bar} />}
 
       <AssignDialog
         org={org}
@@ -421,25 +342,25 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
       />
       <DeleteIssuesDialog
         open={!!deleting}
-        what={`${count} ${noun}`}
+        what={deleting?.what ?? ''}
         onClose={() => setDeleting(undefined)}
         onConfirm={() => {
-          if (deleting) void actions.remove(deleting)
+          if (deleting) void actions.remove(deleting.target)
           selection.clear()
         }}
       />
       <ConfirmDialog
-        open={merging && canMerge}
-        title={`Merge ${count} issues?`}
+        open={merging && offer.canMerge}
+        title={`Merge ${offer.what}?`}
         detail={
           <>
-            They become one issue. <span className="mono">{survivor?.issue.shortId}</span>, the newest, stays and takes the others' events.
+            They become one issue. <span className="mono">{offer.survivor?.issue.shortId}</span>, the newest, stays and takes the others' events.
           </>
         }
-        confirm={`Merge ${count} issues`}
+        confirm={`Merge ${offer.what}`}
         onClose={() => setMerging(false)}
         onConfirm={() => {
-          void actions.merge(selectedIds)
+          void actions.merge(offer.ids)
           selection.clear()
         }}
       />

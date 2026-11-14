@@ -3,13 +3,20 @@ import { dayLabel, hourLabel } from './format'
 
 const HOUR = 3600
 const DAY = 24 * HOUR
-const BUCKETS = { [StatsPeriod.day]: { size: HOUR, count: 24 }, [StatsPeriod.fortnight]: { size: DAY, count: 14 } } as const
+
+// Each period the traces can show: its buckets, and how it is named on screen.
+export const PERIODS = [
+  { value: StatsPeriod.day, size: HOUR, count: 24, label: '24h', unit: 'hour', now: 'Now' },
+  { value: StatsPeriod.fortnight, size: DAY, count: 14, label: '14d', unit: 'day', now: 'Today' },
+] as const
+
+export const periodInfo = (period: StatsPeriod) => PERIODS.find((item) => item.value === period)!
 
 export type Axis = { start: number; size: number; count: number }
 
 // The period's buckets, oldest first, ending with the one that contains `now`. Times are in seconds.
 export function axisFor(period: StatsPeriod, now: Date): Axis {
-  const { size, count } = BUCKETS[period]
+  const { size, count } = periodInfo(period)
   const last = Math.floor(now.getTime() / 1000 / size) * size
   return { start: last - (count - 1) * size, size, count }
 }
@@ -76,12 +83,5 @@ export function releaseMarks(releases: { shortVersion: string; dateCreated: stri
   }
   return marks.map(({ at, label }) => ({ at, label }))
 }
-
-export const PERIODS = [
-  { value: StatsPeriod.day, label: '24h', unit: 'hour', now: 'Now' },
-  { value: StatsPeriod.fortnight, label: '14d', unit: 'day', now: 'Today' },
-] as const
-
-export const periodInfo = (period: StatsPeriod) => PERIODS.find((item) => item.value === period)!
 
 export const axisStartLabel = (period: StatsPeriod, start: number) => (period === StatsPeriod.day ? hourLabel(start) : dayLabel(start))

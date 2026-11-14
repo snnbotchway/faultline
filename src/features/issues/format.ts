@@ -26,3 +26,7 @@ const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'num
 const hourFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
 export const dayLabel = (seconds: number) => dayFormat.format(new Date(seconds * 1000))
 export const hourLabel = (seconds: number) => hourFormat.format(new Date(seconds * 1000))
+
+// How many issues a search matches. The backend stops counting at a limit; `capped` says it was reached.
+export type Hits = { n: number; capped: boolean }
+export const hitsText = (hits: Hits) => `${hits.n}${hits.capped ? '+' : ''}`

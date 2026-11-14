@@ -1,4 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
+import type { IssueFilters } from '@/api/issues'
+import type { Target } from './actions'
+import { hitsText, type Hits } from './format'
+import type { Row } from './inbox-row'
+import { statusActions, type StatusView } from './status'
 
 type Stored = { scope: string; ids: ReadonlySet<string>; all: boolean }
 
@@ -26,8 +31,56 @@ export function useSelection(scope: string) {
   )
   const set = useCallback((next: string[]) => setStored({ scope, ids: new Set(next), all: false }), [scope])
   const clear = useCallback(() => setStored({ scope, ids: NONE, all: false }), [scope])
-  // Every issue the filters match, loaded or not. Only meaningful while every loaded row is selected.
+  // Every issue the filters match, loaded or not. It holds until a row is unticked or the selection is cleared,
+  // so rows that load later are part of it.
   const selectAllMatching = useCallback(() => setStored((previous) => (previous.scope === scope ? { ...previous, all: true } : previous)), [scope])
 
   return useMemo(() => ({ ids, all, toggle, set, clear, selectAllMatching }), [ids, all, toggle, set, clear, selectAllMatching])
 }
+
+export type Selection = ReturnType<typeof useSelection>
+
+type OfferInput = {
+  rows: Row[]
+  selection: Pick<Selection, 'ids' | 'all'>
+  view: StatusView
+  filters: IssueFilters
+  hits: Hits | undefined
+  hasMore: boolean
+}
+
+/**
+ * What the selection is and what can be done with it. Keys, palette commands and both
+ * toolbars read this, so an action is offered in all of them or in none.
+ */
+export function selectionOffer({ rows, selection, view, filters, hits, hasMore }: OfferInput) {
+  const selected = selection.all ? rows : rows.filter((row) => selection.ids.has(row.issue.id))
+  const ids = selected.map((row) => row.issue.id)
+  const selecting = ids.length > 0
+  const allMatching = selecting && selection.all
+  const everyLoaded = selecting && ids.length === rows.length
+  const target: Target = allMatching ? { selection: { filters }, ids } : { selection: { ids }, ids }
+  const count = allMatching && hits ? hitsText(hits) : String(ids.length)
+  return {
+    ids,
+    selecting,
+    everyLoaded,
+    allMatching,
+    canSelectAllMatching: everyLoaded && hasMore && !allMatching,
+    target,
+    count,
+    what: `${count} ${allMatching || ids.length !== 1 ? 'issues' : 'issue'}`,
+    statuses: statusActions(view),
+    // The backend only takes a status change or a delete for "every match"; assigning and merging need the issues named.
+    canAssign: !allMatching,
+    canMerge: !allMatching && ids.length >= 2 && new Set(selected.map((row) => row.issue.project.id)).size === 1,
+    // The backend keeps the newest issue of a merge.
+    survivor: selected.reduce<Row | undefined>((newest, row) => (!newest || Number(row.issue.id) > Number(newest.issue.id) ? row : newest), undefined),
+  }
+}
+
+export function useSelectionOffer({ rows, selection, view, filters, hits, hasMore }: OfferInput) {
+  return useMemo(() => selectionOffer({ rows, selection, view, filters, hits, hasMore }), [rows, selection, view, filters, hits, hasMore])
+}
+
+export type SelectionOffer = ReturnType<typeof selectionOffer>

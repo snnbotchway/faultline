@@ -14,8 +14,8 @@ import type { StatusView } from './status'
 import { Trace } from './trace'
 import type { Mark, Trend } from './trend'
 
-export const COLUMNS = 'lg:grid-cols-[44px_minmax(0,5fr)_minmax(0,4fr)_64px_56px_72px_36px]'
-const PHONE_COLUMNS = 'grid-cols-[44px_minmax(0,1fr)_64px]'
+export const COLUMNS = 'lg:grid-cols-[var(--spacing-check)_minmax(0,5fr)_minmax(0,4fr)_64px_56px_72px_36px]'
+const PHONE_COLUMNS = 'grid-cols-[var(--spacing-check)_minmax(0,1fr)_64px]'
 
 export type Row = { issue: Issue; buckets: number[]; trend: Trend }
 
@@ -69,10 +69,10 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
             params={{ org, issueId: issue.id }}
             className="flex items-center gap-2 max-lg:items-start after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-brand"
           >
-            <LevelGlyph level={issue.level} className="max-lg:mt-[7px]" />
+            <LevelGlyph level={issue.level} className="size-3 max-lg:mt-1" />
             <IssueTitle issue={issue} />
           </Link>
-          <div className="mono mt-0.5 flex items-center gap-2 pl-[18px] text-muted-foreground">
+          <div className="mono mt-0.5 flex items-center gap-2 pl-5 text-muted-foreground">
             <span className="shrink-0">{issue.shortId}</span>
             <span className="truncate max-lg:hidden">{issue.culprit}</span>
             <span className="shrink-0 lg:hidden">

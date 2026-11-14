@@ -164,16 +164,16 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
                     to="/$org/issues"
                     params={{ org }}
                     search={{ query: withFilter(DEFAULT_QUERY, tag.key, top.value) }}
-                    className="mono relative flex min-h-6 items-center gap-2.5 pr-1.5 hover:bg-accent max-lg:min-h-11"
+                    className="mono relative flex min-h-6 items-center gap-3 pr-1.5 hover:bg-accent max-lg:min-h-11"
                   >
-                    <span className="absolute inset-y-0.5 left-[46px] bg-foreground/10" style={{ width: `calc((100% - 46px) * ${top.count / Math.max(1, tag.totalValues)})` }} aria-hidden />
+                    <span className="absolute inset-y-0.5 left-12 bg-foreground/10" style={{ width: `calc((100% - 3rem) * ${top.count / Math.max(1, tag.totalValues)})` }} aria-hidden />
                     <span className="relative w-9 shrink-0 text-right text-muted-foreground">{Math.round((top.count / Math.max(1, tag.totalValues)) * 100)}%</span>
                     <span className="relative min-w-0 flex-1 truncate">{tagLabel(tag.key, top.name || top.value)}</span>
                   </Link>
                 </li>
               ))}
             </ul>
-            {tag.uniqueValues > TOP_VALUES && <p className="mono pl-[46px] text-muted-foreground">{tag.uniqueValues - TOP_VALUES} more</p>}
+            {tag.uniqueValues > TOP_VALUES && <p className="mono pl-12 text-muted-foreground">{tag.uniqueValues - TOP_VALUES} more</p>}
           </div>
         ))}
       </div>

@@ -9,6 +9,9 @@
 
 /* Fieldbook. The rules behind these values are in DESIGN.md. */
 @theme inline {
+  /* The checkbox column of a list; anything that lines up with the row text is indented by it. */
+  --spacing-check: 2.75rem;
+
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --font-sans: 'IBM Plex Sans Variable', system-ui, sans-serif;
 
@@ -206,6 +209,13 @@
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: 600;
+}
+
+/* A text field that is 16px on touch layouts, so the browser does not zoom into it. */
+@utility touch-input {
+  @variant max-lg {
+    font-size: 1rem;
+  }
 }
 
 /* Long prose: comments, markdown. */

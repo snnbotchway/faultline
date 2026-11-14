@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { crumbText, crumbsOf, frameFile, throwingFrame } from './event'
 import { exact } from './format'
 import { ContextLines } from './stack-trace'
-import { statusActions, type StatusView } from './status'
+import { ACTION, statusActions, type StatusView } from './status'
 
 const LAST_CRUMBS = 4
 
@@ -23,7 +23,7 @@ export function Dossier({ org, issue, view, canWrite, handlers }: { org: string;
   const frame = event.data && throwingFrame(event.data)
   const crumbs = event.data ? crumbsOf(event.data).slice(-LAST_CRUMBS) : []
   return (
-    <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-8 border-t bg-card py-4 pr-4 pl-[44px]">
+    <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-8 border-t bg-card py-4 pr-4 pl-check">
       <section>
         <h3 className="label-caps mb-2">What happened</h3>
         {event.isPending ? (
@@ -80,7 +80,7 @@ export function Dossier({ org, issue, view, canWrite, handlers }: { org: string;
                 </Button>
               ))}
               <Button size="sm" onClick={() => handlers.assign(issue.id)}>
-                Assign
+                {ACTION.assign.label}
               </Button>
             </>
           )}

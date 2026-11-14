@@ -34,7 +34,7 @@ export function SearchBox({ query, inputRef, onSubmit }: { query: string; inputR
         aria-label="Search issues"
         spellCheck={false}
         autoCapitalize="off"
-        className="mono h-full min-w-0 flex-1 bg-transparent outline-none focus-visible:outline-none max-lg:text-[1rem]"
+        className="mono h-full min-w-0 flex-1 bg-transparent touch-input outline-none focus-visible:outline-none"
       />
       <Kbd>/</Kbd>
     </form>
@@ -82,12 +82,12 @@ export function StatusMenu({ view, onChange }: { view: StatusView; onChange: (vi
   )
 }
 
-export function SortMenu({ sort, onChange }: { sort: IssueSort | undefined; onChange: (sort: IssueSort | undefined) => void }) {
+export function SortMenu({ sort, disabled, onChange }: { sort: IssueSort | undefined; disabled?: boolean; onChange: (sort: IssueSort | undefined) => void }) {
   const current = sort ?? DEFAULT_SORT
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label="Sort">
+        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label="Sort" disabled={disabled}>
           <ArrowDownWideNarrow />
           <span className="max-lg:hidden">{SORTS.find((item) => item.value === current)?.label}</span>
         </Button>

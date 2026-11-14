@@ -95,9 +95,9 @@ function Login() {
     <main className="min-h-dvh pb-16">
       {/* The mark, drawn across the page: one line that slips where the form begins. */}
       <div className="flex items-start pt-[14vh]" aria-hidden>
-        <div className="mt-[10px] h-px flex-1 bg-border" />
-        <Mark className="-mx-[3px] size-8" />
-        <div className="mt-[21px] h-px flex-1 bg-border" />
+        <div className="mt-4 h-px flex-1 -translate-y-1/2 bg-border" />
+        <Mark className="-mx-1 size-12" />
+        <div className="mt-8 h-px flex-1 -translate-y-1/2 bg-border" />
       </div>
       <div className="mx-auto w-full max-w-[376px] px-4 pt-7">
         <p className="text-center font-mono text-xs font-semibold tracking-[0.18em]">FAULTLINE</p>

@@ -24,7 +24,7 @@ import { ago, compact, exact } from './format'
 import { Comments, ContextRail, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
 import { LevelGlyph } from './level'
 import { StackTrace } from './stack-trace'
-import { STATUS, isStatus, statusActions } from './status'
+import { ACTION, STATUS, isStatus, statusActions } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { axisFor, axisStartLabel, fillBuckets, periodInfo, releaseMarks } from './trend'
 
@@ -109,7 +109,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
 
   useHotkeys({
     ...Object.fromEntries(offered.map((action) => [action.key, () => setStatus(action.status)])),
-    a: () => canWrite && setAssigning(true),
+    [ACTION.assign.key]: () => canWrite && setAssigning(true),
     '[': () => toEvent(older),
     ']': () => toEvent(newer),
   })
@@ -121,7 +121,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           ...(status === IssueStatus.unresolved
             ? [{ id: 'issue:next-release', group: 'issue', label: 'Resolve in next release', run: () => void actions.resolveInNextRelease(target) }]
             : []),
-          { id: 'issue:assign', group: 'issue', label: 'Assign', keys: 'a', run: () => setAssigning(true) },
+          { id: 'issue:assign', group: 'issue', label: ACTION.assign.label, keys: ACTION.assign.key, run: () => setAssigning(true) },
         ]
       : []),
     ...(older ? [{ id: 'issue:older', group: 'issue', label: 'Older event', keys: '[', run: () => toEvent(older) }] : []),
@@ -177,8 +177,8 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
               ))}
               <Button size="sm" onClick={() => setAssigning(true)}>
                 <AssigneeBadge assignee={data.assignedTo} />
-                {data.assignedTo ? data.assignedTo.name : 'Assign'}
-                <Kbd>a</Kbd>
+                {data.assignedTo ? data.assignedTo.name : ACTION.assign.label}
+                <Kbd>{ACTION.assign.key}</Kbd>
               </Button>
             </div>
           )}
@@ -259,15 +259,15 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
       {bar}
       <div className="grid gap-x-10 gap-y-4 border-b px-3 py-4 md:px-4 lg:grid-cols-[minmax(0,1fr)_440px] lg:py-5">
         <div className="min-w-0">
-          <h1 className="flex items-baseline gap-2.5 text-xl leading-snug font-semibold lg:text-2xl">
+          <h1 className="flex items-baseline gap-3 text-xl leading-snug font-semibold lg:text-2xl">
             <LevelGlyph level={data.level} className="size-3 translate-y-[-1px]" />
             <span className="min-w-0 break-words">
-              {type && <span className="font-mono text-[0.9em]">{type} </span>}
+              {type && <span className="font-mono text-lg lg:text-xl">{type} </span>}
               <span className={cn(type && 'font-medium')}>{text}</span>
             </span>
           </h1>
-          {data.culprit && <p className="mono mt-1 truncate pl-[22px] text-muted-foreground">{data.culprit}</p>}
-          <dl className="mt-4 flex gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-[22px]">
+          {data.culprit && <p className="mono mt-1 truncate pl-6 text-muted-foreground">{data.culprit}</p>}
+          <dl className="mt-4 flex gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-6">
             <Fact label="Events" value={compact(data.count)} />
             {users !== undefined && <Fact label="Users" value={compact(users)} />}
             <Fact label="First seen" value={ago(data.firstSeen)} detail={data.firstRelease?.shortVersion} title={exact(data.firstSeen)} />
@@ -302,7 +302,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                   </Button>
                   <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!newer} asChild={!!newer} aria-label="Latest event">
                     {newer ? (
-                      <Link to="/$org/issues/$issueId" params={{ org, issueId }} aria-label="Latest event">
+                      <Link to="/$org/issues/$issueId" params={{ org, issueId }}>
                         <ChevronsRight />
                       </Link>
                     ) : (
@@ -356,7 +356,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           ))}
           <Button size="touch" className="flex-1" onClick={() => setAssigning(true)}>
             <AssigneeBadge assignee={data.assignedTo} />
-            Assign
+            {ACTION.assign.label}
           </Button>
         </div>
       )}

@@ -66,7 +66,7 @@ export function AssignDialog({
           onKeyDown={(event) => event.key === 'Enter' && shown[0] && pick(shown[0])}
           placeholder="Assign to"
           aria-label="Assign to"
-          className="h-11 w-full border-b bg-transparent px-3 outline-none placeholder:text-muted-foreground focus-visible:outline-none max-lg:text-[1rem]"
+          className="h-11 w-full border-b bg-transparent px-3 outline-none placeholder:text-muted-foreground touch-input focus-visible:outline-none"
         />
         <div className="max-h-72 overflow-y-auto py-1">
           {shown.map((person) => (
@@ -81,7 +81,7 @@ export function AssignDialog({
               {current?.type === person.type && current.id === person.id && <span className="label-caps">current</span>}
             </button>
           ))}
-          {shown.length === 0 && <p className="px-3 py-3 text-muted-foreground">No one matches.</p>}
+          {shown.length === 0 && <UserRound className="mx-auto my-3 size-6 p-1 text-muted-foreground" aria-hidden />}
           {current && (
             <button type="button" onClick={() => pick(null)} className="flex min-h-9 w-full items-center gap-2.5 border-t px-3 text-left hover:bg-accent max-lg:min-h-11">
               <UserRound className="size-6 p-1 text-muted-foreground" />

@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react'
+import { Mark } from '@/components/mark'
 import { Dialog as Primitive } from 'radix-ui'
 import { useMemo, useState } from 'react'
 import { DialogContent } from '@/components/ui/dialog'
@@ -62,7 +63,7 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
             }}
             placeholder="Run a command or search issues"
             aria-label="Command"
-            className="h-12 min-w-0 flex-1 bg-transparent text-base outline-none max-lg:text-[1rem] placeholder:text-muted-foreground focus-visible:outline-none"
+            className="h-12 min-w-0 flex-1 bg-transparent touch-input text-base outline-none placeholder:text-muted-foreground focus-visible:outline-none"
           />
           <Kbd>esc</Kbd>
         </div>
@@ -84,7 +85,7 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
               </button>
             </div>
           ))}
-          {shown.length === 0 && <p className="px-3 py-6 text-center text-muted-foreground">No command matches “{text}”.</p>}
+          {shown.length === 0 && <Mark className="mx-auto my-6 size-6 text-muted-foreground" />}
         </div>
       </DialogContent>
   )

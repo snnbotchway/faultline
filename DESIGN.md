@@ -39,7 +39,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 
 Every size on screen is one of these steps; a headline that shrinks on a phone moves down a step (`text-2xl lg:text-3xl`), not to a size in between.
 
-Nothing is set below 12px except key hints. Text inputs are 16px on touch layouts so the browser does not zoom. Prose (`prose-text`) has a 1.55 line height and a measure of at most 72 characters.
+Nothing is set below 12px except key hints. Text inputs are 16px on touch layouts so the browser does not zoom (the `touch-input` utility). Prose (`prose-text`) has a 1.55 line height and a measure of at most 72 characters.
 
 ## Colour
 
@@ -80,6 +80,7 @@ Rules:
 ## Space, density, shape
 
 - 4px grid. Horizontal page padding is 12px on a phone and 16px from 768px.
+- A list's checkbox column is 44px wide, the `check` spacing token; text that lines up with the row titles is indented by it (`pl-check`).
 - Bars are 44px tall. Desktop rows are 36 to 44px; controls are 28 to 36px.
 - On touch layouts every tap target is at least 44 by 44px, including checkboxes, whose visible box stays 16px.
 - Radius is 0 everywhere.

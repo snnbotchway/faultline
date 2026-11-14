@@ -207,7 +207,7 @@ Easy to miss:
 | Releases | `/:org/releases` | Release table with two columns, Version (link, tooltip when truncated) and Date Created; cursor paging | `GET /organizations/{org}/releases/?cursor` | [x] |
 | Releases | `/:org/releases/:version` | Release detail: header with project chips, file count (plural), `dateReleased`; single-column files table (Filename, read-only), paging; per-request error list | `GET /organizations/{org}/releases/{version}/`; `GET .../releases/{version}/files/?cursor` | [x] |
 
-- [x] Version path segment must be URL-encoded (versions can contain `/`, `@`).
+- [x] Version path segment must be URL-encoded (versions can contain `/`, `@`). A version with `/` can't be opened at all (the backend answers 404 for it); its page says so.
 - [ ] Project chip strips the `slug@` prefix when the version already starts with it.
 - [ ] Stock UI is read-only: no create release, deploys, commits, file delete or source-map upload (CLI/API only).
 

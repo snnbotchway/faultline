@@ -65,3 +65,21 @@ test('a team can be created and deleted', async ({ page }) => {
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByRole('button', { name: `Team ${slug}` })).toHaveCount(0)
 })
+
+test('a sign-in app shows the redirect address to give the provider, and can be deleted', async ({ page }) => {
+  const name = unique('e2e-sso').slice(0, 40)
+  await page.goto(settings)
+  await page.getByRole('button', { name: 'New sign-in app' }).click()
+  await page.getByLabel('Name').fill(name)
+  await page.getByLabel('Provider address').fill('https://login.example.com')
+  await page.getByLabel('Client ID').fill('e2e-client')
+  await page.getByLabel('Client secret').fill('e2e-secret')
+  await page.getByRole('button', { name: 'Create app' }).click()
+
+  const app = page.getByRole('region', { name: 'Sign-in apps' })
+  await expect(app.getByLabel(`Redirect address of ${name}`)).toContainText(/\/accounts\/oidc\/.+\/login\/callback\//)
+  await app.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete sign-in app' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(app.getByRole('button', { name: new RegExp(name) })).toHaveCount(0)
+})

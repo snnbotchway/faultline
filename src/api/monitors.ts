@@ -56,6 +56,7 @@ export const monitorKeys = {
   detail: (slug: string, id: number) => [...monitorKeys.all(slug), 'detail', id] as const,
   monitor: (slug: string, id: number) => [...monitorKeys.detail(slug, id), 'monitor'] as const,
   changes: (slug: string, id: number) => [...monitorKeys.detail(slug, id), 'changes'] as const,
+  checks: (slug: string, id: number, changesOnly: boolean) => [...monitorKeys.detail(slug, id), 'checks', changesOnly] as const,
   statusPages: (slug: string) => [...monitorKeys.all(slug), 'status-pages'] as const,
 }
 
@@ -105,6 +106,28 @@ export const monitorChangesQuery = (slug: string, id: number, lastChange: string
           params: { path: monitorPath(slug, id), query: { is_change: true, limit: MAX_PAGE_SIZE } },
         }),
       ),
+  })
+
+const CHECKS_PAGE_SIZE = 25
+
+/**
+ * Every check of a monitor, newest first, a page at a time (the backend keeps the newest 1000).
+ * `changesOnly` asks for the checks where the monitor went down or came back, the backend's
+ * `is_change`. `hits` on a page is the count of checks that match.
+ */
+export const monitorChecksQuery = (slug: string, id: number, changesOnly: boolean) =>
+  infiniteQueryOptions({
+    queryKey: monitorKeys.checks(slug, id, changesOnly),
+    initialPageParam: undefined as string | undefined,
+    refetchInterval: REFRESH_EVERY,
+    placeholderData: keepPreviousData,
+    queryFn: async ({ pageParam }): Promise<Page<Check>> => {
+      const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/checks/', {
+        params: { path: monitorPath(slug, id), query: { is_change: changesOnly, limit: CHECKS_PAGE_SIZE, cursor: pageParam } },
+      })
+      return toPage(unwrap(result), result.response)
+    },
+    getNextPageParam: (page) => page.cursors.next,
   })
 
 export const statusPagesQuery = (slug: string) =>

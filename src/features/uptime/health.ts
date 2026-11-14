@@ -89,3 +89,20 @@ export function healthOf(
   if (recent.length >= FLAPPING_DOWNS) return { ...report, health: Health.flapping, downs: recent.length, since: recent.at(-1)!.from }
   return { ...report, health: slow ? Health.slow : Health.up }
 }
+
+/**
+ * The share of the last `window` milliseconds the monitor was up, from its stretches of downtime.
+ * A monitor is not counted before it was made, and has no figure until some time has passed.
+ */
+export function uptimeShare(periods: Downtime[], created: number, now: number, window: number): number | undefined {
+  const from = Math.max(created, now - window)
+  if (now <= from) return undefined
+  const down = periods.reduce((total, period) => total + Math.max(0, Math.min(period.to, now) - Math.max(period.from, from)), 0)
+  return 1 - down / (now - from)
+}
+
+// `100%`, `99.2%`; never rounded up to 100% while there was downtime.
+export function percent(share: number): string {
+  if (share >= 1) return '100%'
+  return `${Math.min(99.9, Math.floor(share * 1000) / 10)}%`
+}

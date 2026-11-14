@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { Health, checkHealth, checkScale, downtimes, healthOf } from './health'
-import { MINUTE_MS } from '@/lib/time'
+import { Health, checkHealth, checkScale, downtimes, healthOf, percent, uptimeShare, type Downtime } from './health'
+import { HOUR_MS, MINUTE_MS } from '@/lib/time'
 
 const NOW = Date.parse('2026-11-14T12:00:00Z')
 const MIN = MINUTE_MS
@@ -67,5 +67,33 @@ describe('checkScale', () => {
 
   it('has no slow line without a timeout, and never a zero ceiling', () => {
     expect(checkScale([], null)).toEqual({ peak: 0, over: undefined, overLimit: false, ceiling: 1 })
+  })
+})
+
+describe('uptimeShare', () => {
+  const now = 100 * HOUR_MS
+  const day = 24 * HOUR_MS
+  const down = (from: number, to: number): Downtime => ({ from, to, reason: 2, ongoing: false })
+
+  it('is the share of the window not spent down', () => {
+    expect(uptimeShare([down(now - 6 * HOUR_MS, now - 3 * HOUR_MS)], now - 100 * HOUR_MS, now, day)).toBeCloseTo(0.875)
+  })
+  it('counts only the part of a downtime inside the window', () => {
+    expect(uptimeShare([down(now - 30 * HOUR_MS, now - 20 * HOUR_MS)], now - 100 * HOUR_MS, now, day)).toBeCloseTo(1 - 4 / 24)
+  })
+  it('does not count the time before the monitor was made', () => {
+    expect(uptimeShare([down(now - 10 * HOUR_MS, now)], now - 10 * HOUR_MS, now, day)).toBe(0)
+  })
+  it('has no figure for a monitor made just now', () => {
+    expect(uptimeShare([], now, now, day)).toBeUndefined()
+  })
+})
+
+describe('percent', () => {
+  it('does not round up to 100% while there was downtime', () => {
+    expect(percent(0.99996)).toBe('99.9%')
+    expect(percent(0.9923)).toBe('99.2%')
+    expect(percent(1)).toBe('100%')
+    expect(percent(0)).toBe('0%')
   })
 })

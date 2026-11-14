@@ -24,28 +24,34 @@ export const signInAppKeys = { all: (org: string) => [...organizationKeys.detail
 
 const appPath = (org: string, id: number) => ({ ...orgPath(org), social_app_id: id })
 
+const withAddresses = (app: SignInApp): SignInApp => ({
+  ...app,
+  callbackUrl: app.callbackUrl && backendAddress(app.callbackUrl),
+  loginUrl: backendAddress(app.loginUrl),
+})
+
 export const signInAppsQuery = (org: string) =>
   queryOptions({
     queryKey: signInAppKeys.all(org),
     queryFn: async () =>
-      unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/social-apps/', { params: { path: orgPath(org) } })).map((app) => ({
-        ...app,
-        callbackUrl: app.callbackUrl && backendAddress(app.callbackUrl),
-        loginUrl: backendAddress(app.loginUrl),
-      })),
+      unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/social-apps/', { params: { path: orgPath(org) } })).map(withAddresses),
   })
 
 export const signInAppActions = {
   create: async (org: string, provider: SignInProvider, { clientSecret, ...input }: SignInAppInput) =>
-    unwrap(
-      await api.POST('/api/0/organizations/{organization_id_or_slug}/social-apps/', {
-        params: { path: orgPath(org) },
-        body: { ...input, provider, clientSecret: clientSecret ?? '' },
-      }),
+    withAddresses(
+      unwrap(
+        await api.POST('/api/0/organizations/{organization_id_or_slug}/social-apps/', {
+          params: { path: orgPath(org) },
+          body: { ...input, provider, clientSecret: clientSecret ?? '' },
+        }),
+      ),
     ),
   // A null secret keeps the one the backend holds.
   update: async (org: string, id: number, input: SignInAppInput) =>
-    unwrap(await api.PUT('/api/0/organizations/{organization_id_or_slug}/social-apps/{social_app_id}/', { params: { path: appPath(org, id) }, body: input })),
+    withAddresses(
+      unwrap(await api.PUT('/api/0/organizations/{organization_id_or_slug}/social-apps/{social_app_id}/', { params: { path: appPath(org, id) }, body: input })),
+    ),
   remove: async (org: string, id: number) =>
     unwrap(await api.DELETE('/api/0/organizations/{organization_id_or_slug}/social-apps/{social_app_id}/', { params: { path: appPath(org, id) } })),
 }

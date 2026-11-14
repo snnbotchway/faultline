@@ -106,6 +106,7 @@ Lucide, in the text colour. An icon is 16px, or 12px when it sits inline with sm
 Icons accompany a label. An icon alone is allowed for theme, account, close and the palette button, and for the glyphs everyone reads: more (ellipsis), previous and next (chevrons), disclosure (a chevron that unfolds), and sort. Every icon-only control has an accessible name and, on desktop, shows that name on hover. No emoji and no character glyphs standing in for icons.
 
 - Level: a filled square (fatal, error), a triangle (warning), a circle (info), a hollow circle (debug), in the level colour. Logs add trace, which issues do not have: a short dash in the debug colour.
+- Health (uptime) borrows the level shape of the same weight: a filled square for down in `destructive`, a triangle for slow in `level-warning`, a hollow circle for not checked yet in the muted colour. Up is a filled circle in `ok`, and flapping, which no level has, a diamond in `trend-spiking`. Health and level glyphs never share a list.
 - Assignee: the person's initials at 12px in a filled 24px square; unassigned is the `UserRound` outline. The column is labelled.
 
 ## The time axis
@@ -125,6 +126,12 @@ Performance draws durations, not counts, on the same rules, with two additions:
 - **A labelled scale.** A chart of one transaction labels its peak and its zero with their unit (`2.81 s`, `0`) in a column at the left, and names every day under the bars, the last one `Today`.
 - **Logs per hour.** The log chart is about which hours went wrong, so it stacks errors (with fatal) in `level-error` and warnings in `level-warning` on the rest in the foreground at reduced strength, with a key in the level shapes beside the peak. This is the one chart where red marks a level rather than a spike. The backend's hourly counts cannot apply a text search, a host or a trace, so with one of those set the chart is `dimmed` under one line saying it doesn't follow them.
 - **One duration scale for a list.** When a list is ordered by duration, every row's bar runs from typical (p50, light) to slow (p95, darker) on one logarithmic scale from 1 ms to 30 s, labelled once above the rows and lined up with the bars. Other orders draw each row's share as a plain bar in the foreground at reduced strength. A row's bar is never red; a problem is a word with an icon under it. As in the inbox, the latest day of a transaction that got slower uses `trend-spiking`.
+
+Uptime draws checks and downtime on the same rules:
+
+- **Downtime strip.** A strip covers the period ending now (24h or 14d). Each stretch down is a block in `destructive`, 80% of the strip's height so neighbouring rows' blocks never touch. A monitor not checked yet has a dashed baseline. The monitor page draws one strip across the page with release rules and labels, on a phone too.
+- **Check bars.** One bar per check, oldest first, scaled to the peak response, or to the timeout once any check was slow, with a line at the slow threshold. A passed check is the foreground at reduced strength, a slow one `level-warning`, a failed one full height in `destructive`: here red means a failure and nothing else.
+- **Releases** are drawn as on the issue charts.
 
 ## Components
 
@@ -215,7 +222,7 @@ Designed at 390px, checked at 375px.
 - Errors say what happened and what to do next, in one sentence.
 - Buttons name the action ("Resolve", "Delete 3 issues"), not "OK" or "Submit".
 - Counts are exact up to the backend's limit, then shown as `1000+`.
-- Times are relative in lists (`7m`, `3d`) and exact on hover. On the issue page a relative time opens to the exact one on tap, and the event's time is written out (without the year and seconds on a phone). A list grouped under day headings (releases) shows the time of day instead (`14:02`), still exact on hover: the heading already says how long ago, and a relative time would repeat it.
+- Times are relative in lists (`7m`, `3d`) and exact on hover. On the issue page a relative time opens to the exact one on tap, and the event's time is written out (without the year and seconds on a phone). A list grouped under day headings (releases) shows the time of day instead (`2:02 PM`, in the style of the dates beside it), still exact on hover: the heading already says how long ago, and a relative time would repeat it.
 - Words are not abbreviated: `9 events`, not `9 ev`.
 
 ## Not built yet

@@ -5,10 +5,10 @@ import { MonitorRefusal, MonitorType, isHttp, monitorActions, monitorKeys, monit
 import { projectsQuery } from '@/api/organizations'
 import { projectEnvironmentsQuery } from '@/api/projects'
 import { Button } from '@/components/ui/button'
-import { CopyField } from '@/components/ui/copy-field'
-import { Dialog, DialogBar, DialogContent } from '@/components/ui/dialog'
-import { Field } from '@/components/ui/field'
+import { CopyField } from '@/features/settings/parts'
+import { Field, SubmitButton } from '@/components/ui/field'
 import { Input, Select } from '@/components/ui/input'
+import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { failed, notify } from '@/lib/notice'
 import { ALL_ENVIRONMENTS } from '@/lib/format'
 import { withScheme } from '@/lib/url'
@@ -85,7 +85,7 @@ function addressError(error: unknown): string | undefined {
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div role="group" aria-label={label} className="grid gap-x-5 gap-y-3 border-b py-4 last:border-b-0 sm:grid-cols-[96px_minmax(0,1fr)]">
+    <div role="group" aria-label={label} className="grid gap-x-5 gap-y-3 border-b py-4 first:pt-0 last:border-b-0 sm:grid-cols-[96px_minmax(0,1fr)]">
       <span className="label-caps sm:pt-1">{label}</span>
       <div className="flex min-w-0 flex-col gap-4">{children}</div>
     </div>
@@ -104,7 +104,10 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }))
   const projects = useQuery(projectsQuery(org)).data
   const slug = projects?.find((project) => project.id === draft.project)?.slug
-  const environments = useQuery({ ...projectEnvironmentsQuery(org, slug ?? ''), enabled: !!slug }).data
+  // A hidden environment is offered only to the monitor that already uses it.
+  const environments = useQuery({ ...projectEnvironmentsQuery(org, slug ?? ''), enabled: !!slug }).data?.filter(
+    (environment) => !environment.isHidden || String(environment.id) === draft.environment,
+  )
   const heartbeat = draft.type === MonitorType.heartbeat
   const errors = validate(draft)
   const shown = (key: keyof typeof errors) => (tried ? errors[key] : undefined)
@@ -141,174 +144,169 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
   const refused = addressError(save.error)
 
   return (
-    <Dialog open onOpenChange={(next) => !next && (created ? onCreated(created) : onClose())}>
-      <DialogContent tall aria-describedby={undefined} onOpenAutoFocus={(event) => event.preventDefault()} className="max-w-2xl">
-        {created ? (
-          <>
-            <DialogBar title={`${created.name} is ready`} />
-            <div className="flex flex-col gap-3 p-4">
-              <p>Call this address every {every(created.interval)}.</p>
-              <CopyField value={created.heartbeatEndpoint ?? ''} label="Heartbeat address" />
-            </div>
-            <div className="flex justify-end border-t p-3">
-              <Button variant="default" className="max-lg:h-11" onClick={() => onCreated(created)}>
-                Open monitor
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <DialogBar title={monitor ? `Edit ${monitor.name}` : 'New monitor'} />
-            <form
-              noValidate
-              className="flex min-h-0 flex-col"
-              onSubmit={(event) => {
-                event.preventDefault()
-                setTried(true)
-                if (Object.keys(errors).length === 0) save.mutate()
-              }}
-            >
-              <div className="min-h-0 overflow-y-auto px-4">
-                <Group label="Check">
-                  {!isOffered(draft.type) ? (
-                    <p className="flex min-h-9 items-center gap-3">
-                      <span className="mono font-semibold">{draft.type}</span>
-                      <span className="text-muted-foreground">This kind of check is set up through the API and can't be changed here.</span>
-                    </p>
-                  ) : (
-                    <div role="radiogroup" aria-label="Type" className="grid grid-cols-5 border bg-card">
-                      {TYPES.map((type) => (
-                        <button
-                          key={type.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={draft.type === type.value}
-                          onClick={() => set('type', type.value)}
-                          className={cn(
-                            'flex h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 border-r text-sm font-medium -outline-offset-2 last:border-r-0',
-                            draft.type === type.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                          )}
-                        >
-                          <type.icon className="size-4" />
-                          {type.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {heartbeat ? (
-                    monitor?.heartbeatEndpoint && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-sm font-medium">Address to call</span>
-                        <CopyField value={monitor.heartbeatEndpoint} label="Heartbeat address" />
-                      </div>
-                    )
-                  ) : (
-                    <Field label={ADDRESS[draft.type]!.label} error={shown('url') ?? refused}>
-                      {(props) => (
-                        <Input
-                          {...props}
-                          className="font-mono"
-                          inputMode="url"
-                          autoCapitalize="none"
-                          spellCheck={false}
-                          value={draft.url}
-                          placeholder={ADDRESS[draft.type]!.placeholder}
-                          onChange={(event) => {
-                            set('url', event.target.value)
-                            save.reset()
-                          }}
-                        />
-                      )}
-                    </Field>
-                  )}
-                  <Field label="Name" error={shown('name')}>
-                    {(props) => <Input {...props} value={draft.name} onChange={(event) => set('name', event.target.value)} />}
-                  </Field>
-                </Group>
-                {isHttp(draft.type) && (
-                  <Group label="Expect">
-                    <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
-                      <Field label="Status" error={shown('status')}>
-                        {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.status} onChange={(event) => set('status', event.target.value)} />}
-                      </Field>
-                      <Field label="Page contains">{(props) => <Input {...props} value={draft.body} onChange={(event) => set('body', event.target.value)} />}</Field>
-                    </div>
-                  </Group>
-                )}
-                <Group label="Schedule">
-                  <div className={cn('grid gap-3', heartbeat ? 'grid-cols-1 sm:max-w-48' : 'grid-cols-2 sm:grid-cols-3')}>
-                    <Field label={heartbeat ? 'A heartbeat every' : 'Every'}>
-                      {(props) => (
-                        <Select {...props} value={draft.interval} onChange={(event) => set('interval', Number(event.target.value))}>
-                          {withCurrent(INTERVALS, draft.interval).map((seconds) => (
-                            <option key={seconds} value={seconds}>
-                              {every(seconds)}
-                            </option>
-                          ))}
-                        </Select>
-                      )}
-                    </Field>
-                    {!heartbeat && (
-                      <>
-                        <Field label="Timeout (seconds)" error={shown('timeout')}>
-                          {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.timeout} onChange={(event) => set('timeout', event.target.value)} />}
-                        </Field>
-                        <Field label="Down after">
-                          {(props) => (
-                            <Select {...props} value={draft.threshold} onChange={(event) => set('threshold', Number(event.target.value))}>
-                              {withCurrent(THRESHOLDS, draft.threshold).map((count) => (
-                                <option key={count} value={count}>
-                                  {count} failed
-                                </option>
-                              ))}
-                            </Select>
-                          )}
-                        </Field>
-                      </>
+    <TaskDialog
+      open
+      onClose={() => (created ? onCreated(created) : onClose())}
+      title={created ? `${created.name} is ready` : monitor ? `Edit ${monitor.name}` : 'New monitor'}
+      quietFocus={!!monitor || !!created}
+      className="sm:max-w-2xl"
+    >
+      {created ? (
+        <>
+          <div className="mb-4 flex flex-col gap-3">
+            <p>Call this address every {every(created.interval)}.</p>
+            <CopyField value={created.heartbeatEndpoint ?? ''} label="Heartbeat address" />
+          </div>
+          <TaskActions className="sm:justify-end">
+            <Button variant="default" onClick={() => onCreated(created)}>
+              Open monitor
+            </Button>
+          </TaskActions>
+        </>
+      ) : (
+        <form
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault()
+            setTried(true)
+            if (Object.keys(errors).length === 0) save.mutate()
+          }}
+        >
+          <Group label="Check">
+            {!isOffered(draft.type) ? (
+              <p className="flex min-h-9 items-center gap-3">
+                <span className="mono font-semibold">{draft.type}</span>
+                <span className="text-muted-foreground">This kind of check is set up through the API and can't be changed here.</span>
+              </p>
+            ) : (
+              <div role="radiogroup" aria-label="Type" className="grid grid-cols-5 border bg-card">
+                {TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={draft.type === type.value}
+                    onClick={() => set('type', type.value)}
+                    className={cn(
+                      'flex h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 border-r text-sm font-medium -outline-offset-2 last:border-r-0',
+                      draft.type === type.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                     )}
-                  </div>
-                </Group>
-                <Group label="Belongs to">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Project">
-                      {(props) => (
-                        <Select {...props} className="font-mono" value={draft.project} onChange={(event) => setDraft((current) => ({ ...current, project: event.target.value, environment: '' }))}>
-                          <option value="">None</option>
-                          {projects?.map((project) => (
-                            <option key={project.id} value={project.id}>
-                              {project.slug}
-                            </option>
-                          ))}
-                        </Select>
-                      )}
-                    </Field>
-                    <Field label="Environment">
-                      {(props) => (
-                        <Select {...props} className="font-mono" value={draft.environment} disabled={!draft.project} onChange={(event) => set('environment', event.target.value)}>
-                          <option value="">{ALL_ENVIRONMENTS}</option>
-                          {environments?.map((environment) => (
-                            <option key={environment.id} value={environment.id ?? ''}>
-                              {environment.name}
-                            </option>
-                          ))}
-                        </Select>
-                      )}
-                    </Field>
-                  </div>
-                </Group>
+                  >
+                    <type.icon className="size-4" />
+                    {type.label}
+                  </button>
+                ))}
               </div>
-              <div className="flex shrink-0 justify-end gap-2 border-t p-3">
-                <Button className="max-lg:h-11" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="default" className="max-lg:h-11" aria-busy={save.isPending} disabled={save.isPending}>
-                  {monitor ? 'Save monitor' : 'Create monitor'}
-                </Button>
+            )}
+            {heartbeat ? (
+              monitor?.heartbeatEndpoint && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium">Address to call</span>
+                  <CopyField value={monitor.heartbeatEndpoint} label="Heartbeat address" />
+                </div>
+              )
+            ) : (
+              <Field label={ADDRESS[draft.type]!.label} error={shown('url') ?? refused}>
+                {(props) => (
+                  <Input
+                    {...props}
+                    className="font-mono"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={draft.url}
+                    placeholder={ADDRESS[draft.type]!.placeholder}
+                    onChange={(event) => {
+                      set('url', event.target.value)
+                      save.reset()
+                    }}
+                  />
+                )}
+              </Field>
+            )}
+            <Field label="Name" error={shown('name')}>
+              {(props) => <Input {...props} value={draft.name} onChange={(event) => set('name', event.target.value)} />}
+            </Field>
+          </Group>
+          {isHttp(draft.type) && (
+            <Group label="Expect">
+              <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
+                <Field label="Status" error={shown('status')}>
+                  {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.status} onChange={(event) => set('status', event.target.value)} />}
+                </Field>
+                <Field label="Page contains">{(props) => <Input {...props} value={draft.body} onChange={(event) => set('body', event.target.value)} />}</Field>
               </div>
-            </form>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+            </Group>
+          )}
+          <Group label="Schedule">
+            <div className={cn('grid gap-3', heartbeat ? 'grid-cols-1 sm:max-w-48' : 'grid-cols-2 sm:grid-cols-3')}>
+              <Field label={heartbeat ? 'A heartbeat every' : 'Every'}>
+                {(props) => (
+                  <Select {...props} value={draft.interval} onChange={(event) => set('interval', Number(event.target.value))}>
+                    {withCurrent(INTERVALS, draft.interval).map((seconds) => (
+                      <option key={seconds} value={seconds}>
+                        {every(seconds)}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+              {!heartbeat && (
+                <>
+                  <Field label="Timeout (seconds)" error={shown('timeout')}>
+                    {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.timeout} onChange={(event) => set('timeout', event.target.value)} />}
+                  </Field>
+                  <Field label="Down after">
+                    {(props) => (
+                      <Select {...props} value={draft.threshold} onChange={(event) => set('threshold', Number(event.target.value))}>
+                        {withCurrent(THRESHOLDS, draft.threshold).map((count) => (
+                          <option key={count} value={count}>
+                            {count} failed
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </Field>
+                </>
+              )}
+            </div>
+          </Group>
+          <Group label="Belongs to">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Project">
+                {(props) => (
+                  <Select {...props} className="font-mono" value={draft.project} onChange={(event) => setDraft((current) => ({ ...current, project: event.target.value, environment: '' }))}>
+                    <option value="">None</option>
+                    {projects?.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.slug}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+              <Field label="Environment">
+                {(props) => (
+                  <Select {...props} className="font-mono" value={draft.environment} disabled={!draft.project} onChange={(event) => set('environment', event.target.value)}>
+                    <option value="">{ALL_ENVIRONMENTS}</option>
+                    {environments?.map((environment) => (
+                      <option key={environment.id} value={environment.id ?? ''}>
+                        {environment.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            </div>
+          </Group>
+          <TaskActions className="mt-4 sm:justify-end">
+            <SubmitButton busy={save.isPending} className="sm:order-last">
+              {monitor ? 'Save monitor' : 'Create monitor'}
+            </SubmitButton>
+            <Button onClick={onClose}>Cancel</Button>
+          </TaskActions>
+        </form>
+      )}
+    </TaskDialog>
   )
 }

@@ -6,13 +6,12 @@ import { PROJECT_NAME_MAX, projectActions } from '@/api/projects'
 import { TEAM_SLUG_MAX, teamActions } from '@/api/teams'
 import { stale } from '@/api/stale'
 import { Screen } from '@/components/shell/app-shell'
-import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
 import { useTitle } from '@/lib/title'
 import { useAccess } from './access'
 import { useChange } from './change'
 import { PlatformPicker, Snippets } from './fields'
-import { Field, FormAlert } from '@/components/ui/field'
+import { Field, FormAlert, SubmitButton } from '@/components/ui/field'
 import { SettingsBar } from './parts'
 import { teamLabel } from './labels'
 import { OTHER_PLATFORM, platformName, storedPlatform } from './platforms'
@@ -112,9 +111,9 @@ export function NewProject({ org }: { org: string }) {
             </Field>
           )}
           {create.error && <FormAlert>{create.error}</FormAlert>}
-          <Button type="submit" variant="default" className="lg:self-start" disabled={!teams || create.pending} aria-busy={create.pending}>
+          <SubmitButton busy={create.pending} disabled={!teams} className="lg:self-start">
             Create project
-          </Button>
+          </SubmitButton>
         </div>
       </form>
     </>

@@ -3,7 +3,7 @@ import { stale } from '@/api/stale'
 import { Screen } from '@/components/shell/app-shell'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import { Failure, useChange } from './access'
+import { Failure, useChange } from './change'
 import { Group, ROW, RowSkeleton } from './parts'
 
 export function Environments({ org, slug, environments, write }: { org: string; slug: string; environments?: ProjectEnvironment[]; write: boolean }) {

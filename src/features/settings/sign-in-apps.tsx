@@ -5,7 +5,7 @@ import { SIGN_IN_APPS_MAX, SIGN_IN_APP_NAME_MAX, SIGN_IN_CLIENT_MAX, SIGN_IN_SER
 import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useChange } from './access'
+import { useChange } from './change'
 import { Confirm } from './fields'
 import { CopyField, Field, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton, Segmented } from './parts'
 import { useFold } from './rows'

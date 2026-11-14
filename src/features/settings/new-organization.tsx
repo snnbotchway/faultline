@@ -5,7 +5,7 @@ import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTitle } from '@/lib/title'
-import { useChange } from './access'
+import { useChange } from './change'
 import { Field, FormError } from './parts'
 
 export function NewOrganization() {

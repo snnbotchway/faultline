@@ -41,8 +41,9 @@ test('stepping moves a day at a time and stops at the ends; with no day picked i
   expect(stepDay(undefined, 1, 31)).toBe(0)
 })
 
-test('a share too small to round to one percent still shows', () => {
+test('a share too small to round to one percent still shows, and a share never passes the whole', () => {
   expect(share(2, 38)).toBe('5%')
   expect(share(1, 4810)).toBe('<1%')
   expect([share(0, 4810), share(0, 0)]).toEqual(['0%', '0%'])
+  expect(share(4811, 4810)).toBe('100%')
 })

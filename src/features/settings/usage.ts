@@ -52,9 +52,9 @@ export function stepDay(current: number | undefined, step: -1 | 1, count: number
 const countFormat = new Intl.NumberFormat('en')
 export const exactCount = (count: number) => countFormat.format(count)
 
-// A part too small to round to one still shows.
+// A part too small to round to one still shows, and one counted a little apart from its whole never passes it.
 export function share(part: number, whole: number): string {
   if (whole <= 0 || part <= 0) return '0%'
-  const percent = Math.round((part / whole) * 100)
+  const percent = Math.min(100, Math.round((part / whole) * 100))
   return percent < 1 ? '<1%' : `${percent}%`
 }

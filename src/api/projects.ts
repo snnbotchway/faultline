@@ -67,6 +67,16 @@ export function activityDays(now: Date): number[] {
   return Array.from({ length: ACTIVITY_DAYS }, (_, index) => today - (ACTIVITY_DAYS - 1 - index) * DAY)
 }
 
+// Hourly counts summed into UTC days, keyed by each day's start. An hour the backend leaves out counts as none.
+export function dailyTotals(intervals: string[], series: (number | null)[]): Map<number, number> {
+  const byDay = new Map<number, number>()
+  intervals.forEach((interval, index) => {
+    const day = Math.floor(new Date(interval).getTime() / DAY) * DAY
+    byDay.set(day, (byDay.get(day) ?? 0) + (series[index] ?? 0))
+  })
+  return byDay
+}
+
 // The schema leaves this response untyped. A day without events comes back as null.
 type StatsResponse = { intervals: string[]; groups: { series: Record<string, (number | null)[]> }[] }
 
@@ -104,11 +114,7 @@ export const projectActivityQuery = (org: string, id: string) =>
       ])
       const { intervals, groups } = unwrap(stats) as unknown as StatsResponse
       const series = groups[0]?.series['sum(quantity)'] ?? []
-      const byDay = new Map<number, number>()
-      intervals.forEach((interval, index) => {
-        const day = Math.floor(new Date(interval).getTime() / DAY) * DAY
-        byDay.set(day, (byDay.get(day) ?? 0) + (series[index] ?? 0))
-      })
+      const byDay = dailyTotals(intervals, series)
       const page = toPage(unwrap(open), open.response)
       return {
         buckets: days.map((day) => byDay.get(day) ?? 0),

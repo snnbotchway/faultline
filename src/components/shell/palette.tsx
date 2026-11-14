@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 import { Dialog as Primitive } from 'radix-ui'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { Mark } from '@/components/mark'
 import { DialogContent } from '@/components/ui/dialog'
 import { Kbd } from '@/components/ui/kbd'
@@ -22,6 +22,7 @@ export function Palette({ onSearch }: { onSearch?: (text: string) => void }) {
 function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
   const [text, setText] = useState('')
   const [cursor, setCursor] = useState(0)
+  const id = useId()
 
   const shown = useMemo(() => {
     const words = searchWords(text)
@@ -48,6 +49,11 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
         <ChevronRight className="size-4 shrink-0 text-brand" strokeWidth={2.4} aria-hidden />
         <input
           autoFocus
+          role="combobox"
+          aria-expanded
+          aria-controls={`${id}-list`}
+          aria-activedescendant={shown[cursor] ? `${id}-${cursor}` : undefined}
+          aria-autocomplete="list"
           value={text}
           onChange={(event) => {
             setText(event.target.value)
@@ -68,13 +74,16 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
         />
         <Kbd>esc</Kbd>
       </div>
-      <div className="max-h-[min(68vh,560px)] overflow-y-auto py-1" role="listbox">
+      <div className="max-h-[min(68vh,560px)] overflow-y-auto py-1" id={`${id}-list`} role="listbox" aria-label="Commands">
         {shown.map((command, index) => (
           <div key={command.id}>
             {command.group !== shown[index - 1]?.group && <div className="label-caps px-3 pt-3 pb-1">{command.group}</div>}
+            {/* Focus stays in the field; the field's active descendant tells a screen reader which command is current. */}
             <button
               type="button"
+              id={`${id}-${index}`}
               role="option"
+              tabIndex={-1}
               aria-selected={index === cursor}
               onMouseMove={() => setCursor(index)}
               onClick={() => run(command)}

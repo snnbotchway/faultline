@@ -11,6 +11,8 @@
 @theme inline {
   /* The checkbox column of a list; anything that lines up with the row text is indented by it. */
   --spacing-check: 2.75rem;
+  /* A list with what a row opens beside it on a desktop: the list's share of the width. */
+  --container-list: 46%;
 
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --font-sans: 'IBM Plex Sans Variable', system-ui, sans-serif;
@@ -242,4 +244,18 @@
       inset: -4px 0;
     }
   }
+}
+
+/* What a row opens beside its list: it stays in view under the page bar and scrolls on its own. */
+@utility side-pane {
+  position: sticky;
+  top: --spacing(11);
+  height: calc(100dvh - --spacing(11));
+  overflow-y: auto;
+}
+
+/* A row of chips or tabs that scrolls sideways on a phone instead of wrapping. */
+@utility scroll-row {
+  overflow-x: auto;
+  scrollbar-width: none;
 }

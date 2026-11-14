@@ -13,9 +13,17 @@ export function parseLinkHeader(header: string | null): Cursors {
     const rel = link.match(/rel="(next|previous)"/)?.[1] as keyof Cursors | undefined
     if (!rel || !/results="true"/.test(link)) continue
     const cursor = link.match(/cursor="([^"]+)"/)?.[1] ?? link.match(/[?&]cursor=([^&>]+)/)?.[1]
-    if (cursor) cursors[rel] = decodeURIComponent(cursor)
+    if (cursor) cursors[rel] = safeDecode(cursor)
   }
   return cursors
+}
+
+function safeDecode(value: string) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
 }
 
 export type Page<T> = { items: T[]; cursors: Cursors; hits?: number; maxHits?: number }
@@ -38,12 +46,12 @@ export async function fetchAllPages<T>(fetchPage: (cursor?: string) => Promise<A
   const items: T[] = []
   const seen = new Set<string>()
   let cursor: string | undefined
-  do {
+  for (;;) {
     const result = await fetchPage(cursor)
     items.push(...unwrap(result))
     cursor = parseLinkHeader(result.response.headers.get('link')).next
-    if (cursor && seen.has(cursor)) break
-    if (cursor) seen.add(cursor)
-  } while (cursor)
+    if (cursor === undefined || seen.has(cursor)) break
+    seen.add(cursor)
+  }
   return items
 }

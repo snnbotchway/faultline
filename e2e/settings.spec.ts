@@ -12,16 +12,27 @@ test('the home page lists the projects and leads to their issues', async ({ page
   await expect(page).toHaveURL(new RegExp(`/${DEMO.org}/issues\\?project=`))
 })
 
-test('a new project opens on its set-up step with its DSN, and can be deleted', async ({ page }) => {
+test('a new project opens on its set-up step, which shows its first event when it arrives, and can be deleted', async ({ page }) => {
   const name = unique('e2e-project')
   await page.goto(`${settings}/projects/new`)
   await page.getByLabel('Project name').fill(name)
   await page.getByRole('radio', { name: 'Django' }).click()
   await page.getByRole('button', { name: 'Create project' }).click()
 
-  await expect(page).toHaveURL(new RegExp(`${settings}/projects/${name}$`))
+  await expect(page).toHaveURL(new RegExp(`${settings}/projects/${name}\\?tab=setup$`))
   await expect(page.getByRole('status').filter({ hasText: 'Waiting for the first event' })).toBeVisible()
-  await expect(page.getByRole('figure').filter({ hasText: 'settings.py' })).toContainText(/dsn="https?:\/\/[0-9a-f]{32}@/)
+  const snippet = page.getByRole('figure').filter({ hasText: 'settings.py' })
+  await expect(snippet).toContainText(/dsn="https?:\/\/[0-9a-f]{32}@/)
+
+  // An event sent with that DSN shows up on the set-up step, which stays open.
+  const [, key, projectId] = /dsn="https?:\/\/([0-9a-f]{32})@[^/]+\/(\d+)"/.exec((await snippet.textContent()) ?? '')!
+  const sent = await page.request.post(`/api/${projectId}/store/`, {
+    headers: { 'x-sentry-auth': `Sentry sentry_version=7, sentry_key=${key}, sentry_client=faultline-e2e/1.0` },
+    data: { event_id: crypto.randomUUID().replaceAll('-', ''), message: 'first event from e2e', level: 'error', platform: 'python' },
+  })
+  expect(sent.ok()).toBe(true)
+  await expect(page.getByRole('status').filter({ hasText: 'First event received' })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('link', { name: 'Open issue' })).toBeVisible()
 
   await page.getByRole('link', { name: 'General' }).click()
   await page.getByRole('button', { name: 'Delete' }).click()

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Plus } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
 import {
@@ -35,11 +35,19 @@ import { ProjectTab } from './project-tabs'
 export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab?: ProjectTab }) {
   useTitle(slug, 'Settings')
   const can = useAccess(org)
+  const navigate = useNavigate()
   const project = useQuery(projectQuery(org, slug))
   // The detail carries no teams; the organization's list does.
   const listed = useQuery(projectsQuery(org)).data?.find((p) => p.slug === slug)
   const keys = useQuery(projectKeysQuery(org, slug)).data
   const environments = useQuery(projectEnvironmentsQuery(org, slug)).data
+
+  const opening = project.data && !project.data.firstEvent ? ProjectTab.setup : ProjectTab.general
+  const current = tab ?? opening
+  // The tab the page opened on goes into the address, so the set-up step stays put when the first event arrives.
+  useEffect(() => {
+    if (!tab && project.data) void navigate({ to: '/$org/settings/projects/$project', params: { org, project: slug }, search: { tab: opening }, replace: true })
+  }, [tab, project.data, opening, navigate, org, slug])
 
   if (project.error instanceof ApiError && project.error.status === 404)
     return (
@@ -55,7 +63,6 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
       </>
     )
 
-  const current = tab ?? (project.data && !project.data.firstEvent ? ProjectTab.setup : ProjectTab.general)
   const context: TabContext = { org, slug, can, keys, environments, teams: listed?.teams.map((team) => team.slug) }
   const panel = PROJECT_TABS.find((entry) => entry.value === current)
 

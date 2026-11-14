@@ -12,6 +12,7 @@ import { useAccess, useChange } from './access'
 import { PlatformPicker, Snippets } from './fields'
 import { Field, FormError, SettingsBar } from './parts'
 import { DSN_PLACEHOLDER, OTHER_PLATFORM, platformName } from './platforms'
+import { ProjectTab } from './project-tabs'
 import { teamSlugError } from './team-slug'
 
 /**
@@ -39,7 +40,7 @@ export function NewProject({ org }: { org: string }) {
       const slug = firstTeam ? (await teamActions.create(org, newTeam.trim())).slug : (team ?? teams![0]!.slug)
       return projectActions.create(org, slug, { name: name.trim(), platform: platform === OTHER_PLATFORM ? null : platform })
     },
-    { onDone: (project) => void navigate({ to: '/$org/settings/projects/$project', params: { org, project: project.slug ?? '' } }) },
+    { onDone: (project) => void navigate({ to: '/$org/settings/projects/$project', params: { org, project: project.slug ?? '' }, search: { tab: ProjectTab.setup } }) },
   )
   const submit = (event: FormEvent) => {
     event.preventDefault()

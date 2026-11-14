@@ -16,6 +16,15 @@ All notable changes to Faultline are listed here. The format follows
 - Stack trace: Full and Raw views and newest or oldest call first, both remembered, a Copy button for the raw trace, how the exception was caught, and coloured code lines (highlight.js, loaded when a frame opens).
 - Event: a CSP report section, request cookies, and an "Additional data" section for what the SDK attached.
 - Tags: the four commonest values, with the rest of the ten one click away and an "other" bar, single-valued tags without a bar, and an open-in-new-tab link on web addresses.
+- A Support menu in the top bar, and in More on a phone, with links to the Faultline docs and issue tracker, GlitchTip's docs and GlitchTip's support page.
+- A banner under the top bar while your primary email is unverified, with a button to send the link again.
+- A notice, once per session, when an organization is over its event limit and dropping events.
+- Your theme choice is saved to your account, so it follows you to another browser; this browser's copy stays the fallback.
+- `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps.
+
+### Changed
+
+- Instance settings, your account, your organizations and the open organization refresh in the background while the tab is in view.
 
 ### Fixed
 

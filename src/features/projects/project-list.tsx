@@ -62,7 +62,6 @@ export function ProjectList({ org }: { org?: string }) {
   const find = (className: string) => (
     <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a project" aria-label="Find a project" className={className} />
   )
-  const create = target && <NewProjectButton org={target} />
   const empty = !loading && total === 0
 
   return (
@@ -70,11 +69,15 @@ export function ProjectList({ org }: { org?: string }) {
       <PageBar>
         <h1 className="font-semibold">Projects</h1>
         {org && <span className="mono text-muted-foreground">{org}</span>}
-        {find('h-8 w-56 max-lg:hidden')}
-        {!empty && <span className="ml-auto">{create}</span>}
+        {!empty && (
+          <>
+            {find('h-8 w-56 max-lg:hidden')}
+            <span className="ml-auto">{target && <NewProjectButton org={target} size="bar" />}</span>
+          </>
+        )}
       </PageBar>
       {empty ? (
-        <Screen title="No projects yet">{create}</Screen>
+        <Screen title="No projects yet">{target && <NewProjectButton org={target} />}</Screen>
       ) : (
         <>
           <div className="border-b px-3 py-2 lg:hidden">{find('h-9')}</div>
@@ -118,11 +121,12 @@ export function ProjectList({ org }: { org?: string }) {
   )
 }
 
-function NewProjectButton({ org }: { org: string }) {
+// In the page bar it takes the bar's size; on the empty page it is the page's one action, at the default size.
+function NewProjectButton({ org, size }: { org: string; size?: 'bar' }) {
   const can = useAccess(org)
   if (!can(Scope.projectWrite)) return null
   return (
-    <Button asChild variant="default" size="bar">
+    <Button asChild variant="default" size={size}>
       <Link to="/$org/settings/projects/new" params={{ org }}>
         <Plus />
         New project

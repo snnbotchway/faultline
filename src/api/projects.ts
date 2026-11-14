@@ -20,6 +20,7 @@ export const projectKeys = {
   keys: (org: string, project: string) => [...projectKeys.detail(org, project), 'keys'] as const,
   environments: (org: string, project: string) => [...projectKeys.detail(org, project), 'environments'] as const,
   activity: (org: string, id: string) => [...organizationKeys.projects(org), 'activity', id] as const,
+  alertCount: (org: string, project: string) => [...projectKeys.detail(org, project), 'alert-count'] as const,
 }
 
 export const projectQuery = (org: string, project: string) =>
@@ -104,6 +105,20 @@ export const projectActivityQuery = (org: string, id: string) =>
         capped: page.hits !== undefined && page.hits === page.maxHits,
         lastSeen: unwrap(latest)[0]?.lastSeen,
       }
+    },
+  })
+
+// How many alerts a project has, for its row in the projects list. One item is fetched; the header carries the count.
+export const projectAlertCountQuery = (org: string, project: string) =>
+  queryOptions({
+    queryKey: projectKeys.alertCount(org, project),
+    staleTime: 60_000,
+    queryFn: async () => {
+      const result = await api.GET('/api/0/projects/{organization_id_or_slug}/{project_slug}/alerts/', {
+        params: { path: projectPath(org, project), query: { limit: 1 } },
+      })
+      const page = toPage(unwrap(result), result.response)
+      return page.hits ?? page.items.length
     },
   })
 

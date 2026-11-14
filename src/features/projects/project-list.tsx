@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { Plug, Plus, Settings } from 'lucide-react'
 import { useState } from 'react'
 import { Scope, instanceSettingsQuery, organizationsQuery, projectsQuery } from '@/api/organizations'
-import { ACTIVITY_DAYS, projectActivityQuery, type Project } from '@/api/projects'
+import { ACTIVITY_DAYS, projectActivityQuery, projectAlertCountQuery, type Project } from '@/api/projects'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,11 +12,12 @@ import { ago, exact } from '@/features/issues/format'
 import { Trace } from '@/features/issues/trace'
 import { useAccess, useLastOrganization } from '@/features/settings/access'
 import { platformName } from '@/features/settings/platforms'
+import { plural } from '@/features/settings/rows'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
 const GRID =
-  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[3rem_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_5rem_6.5rem]'
+  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[3rem_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_5rem_4rem_6.5rem]'
 
 /**
  * Every project the user can see, with how it is doing: open issues, errors per day, when it last broke.
@@ -91,6 +92,7 @@ export function ProjectList({ org }: { org?: string }) {
               <span className="max-lg:hidden">Errors, last {ACTIVITY_DAYS} days</span>
             </span>
             <span className="label-caps text-right whitespace-nowrap max-lg:hidden">Last seen</span>
+            <span className="label-caps text-right max-lg:hidden">Alerts</span>
             <span className="max-lg:hidden" />
           </div>
           {groups.map((group) => (
@@ -127,6 +129,7 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
   const fresh = !project.firstEvent
   const activity = useQuery({ ...projectActivityQuery(org, project.id), enabled: !fresh }).data
   const lastSeen = activity?.lastSeen
+  const alerts = useQuery(projectAlertCountQuery(org, slug)).data
   return (
     <li className={cn(GRID, 'relative min-h-14 border-b hover:bg-accent')}>
       {fresh ? (
@@ -142,12 +145,14 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
         <span className="truncate text-sm text-muted-foreground">
           {platformName(project.platform)}
           {lastSeen && <span className="lg:hidden"> · {ago(lastSeen)}</span>}
+          {!!alerts && <span className="lg:hidden"> · {plural(alerts, 'alert')}</span>}
         </span>
       </div>
       {fresh ? <span className="text-sm text-muted-foreground">No events yet</span> : activity ? <Trace buckets={activity.buckets} height={24} /> : <span />}
       <span className="mono text-right text-muted-foreground max-lg:hidden" title={lastSeen && exact(lastSeen)}>
         {lastSeen && ago(lastSeen)}
       </span>
+      <span className={cn('mono text-right max-lg:hidden', !alerts && 'text-muted-foreground')}>{alerts}</span>
       <Link
         to="/$org/settings/projects/$project"
         params={{ org, project: slug }}

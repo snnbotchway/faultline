@@ -146,9 +146,14 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
             <LogHistogram buckets={logs.buckets} height={HISTOGRAM_HEIGHT} hour={search.hour} dim={!chartFollows} onPick={(hour) => set({ hour, log: undefined })} />
           </div>
           <ActiveFilters logs={logs} search={search} set={set} />
-          {logs.missing && (
+          {(logs.missing || logs.openFailed) && (
             <div className="flex items-center gap-2 border-b px-3 py-2 md:px-4 lg:hidden">
-              <p className="flex-1">This log no longer exists.</p>
+              <p className="flex-1">{logs.missing ? 'This log no longer exists.' : "This log didn't load."}</p>
+              {logs.openFailed && (
+                <Button size="sm" className="h-11" onClick={logs.retryOpen}>
+                  Try again
+                </Button>
+              )}
               <Button variant="ghost" size="icon-touch" aria-label="Close" onClick={() => set({ log: undefined })}>
                 <X />
               </Button>
@@ -169,7 +174,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
             <SkeletonRows />
           ) : hasStatus(list.error, HttpStatus.forbidden) ? (
             <Screen title="You can't see logs in this organization" />
-          ) : list.isError ? (
+          ) : list.isError && !list.data ? (
             <Screen title="The logs didn't load">
               <Button onClick={() => void list.refetch()}>Try again</Button>
             </Screen>
@@ -224,22 +229,29 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
             </ul>
           )}
           {list.hasNextPage && !search.spanId && (
-            <div className="flex justify-center py-4">
+            <div className="flex flex-col items-center gap-2 py-4">
+              {list.isFetchNextPageError && <p className="text-muted-foreground">Older logs didn't load.</p>}
               <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage} className="max-lg:h-11">
-                Load older logs
+                {list.isFetchNextPageError ? 'Try again' : 'Load older logs'}
               </Button>
             </div>
           )}
         </div>
-        {logs.missing && (
+        {(logs.missing || logs.openFailed) && (
           <aside aria-label="Log" className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
             <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-card px-4">
-              <p className="flex-1 font-semibold">This log no longer exists</p>
+              <p className="flex-1 font-semibold">{logs.missing ? 'This log no longer exists' : "This log didn't load"}</p>
               <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => set({ log: undefined })}>
                 <X />
               </Button>
             </div>
-            <p className="px-4 py-4 text-muted-foreground">It may have been removed when its retention ran out.</p>
+            <div className="px-4 py-4">
+              {logs.missing ? (
+                <p className="text-muted-foreground">It may have been removed when its retention ran out.</p>
+              ) : (
+                <Button onClick={logs.retryOpen}>Try again</Button>
+              )}
+            </div>
           </aside>
         )}
         {open && (

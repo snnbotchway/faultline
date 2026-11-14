@@ -101,7 +101,9 @@ export function useLogs(org: string, search: LogSearch) {
   const listed = logs.find((log) => log.id === search.log)
   const fetched = useQuery({ ...logQuery(org, search.log ?? ''), enabled: !!search.log && !listed && !list.isPending })
   const open = search.log ? (listed ?? fetched.data) : undefined
+  // A linked log that did not open: gone, or its request failed.
   const missing = !!search.log && !listed && hasStatus(fetched.error, HttpStatus.notFound)
+  const openFailed = !!search.log && !listed && fetched.isError && !missing
 
   const first = list.data?.pages[0]
   const hits: Hits | undefined = first?.hits === undefined ? undefined : { n: first.hits, capped: first.maxHits !== undefined && first.hits >= first.maxHits }
@@ -131,6 +133,8 @@ export function useLogs(org: string, search: LogSearch) {
     loaded,
     spanPartial,
     missing,
+    openFailed,
+    retryOpen: () => void fetched.refetch(),
     projects: projects ?? [],
     projectOf: (log: LogEvent) => projectSlug(projects, log.projectId),
   }

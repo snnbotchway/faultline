@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { RELEASES_SCOPE, TOKEN_LEVELS, TOKEN_RESOURCES, accountKeys, tokens, type ApiToken, type TokenScope } from '@/api/account'
+import { useId, useState, type FormEvent } from 'react'
+import { RELEASES_SCOPE, TOKEN_LEVELS, TOKEN_RESOURCES, TokenLevel, TokenResource, accountKeys, tokens, type ApiToken, type TokenScope } from '@/api/account'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FormAlert } from '@/components/ui/field'
@@ -9,6 +9,8 @@ import { CopyButton } from './copy-button'
 import { day } from './format'
 import { LEVEL_LABELS, RELEASES_LABEL, RESOURCE_LABELS, scopeWords } from './scopes'
 import { useAction } from './use-action'
+
+const FIRST_SCOPE: TokenScope = `${TokenResource.project}:${TokenLevel.read}`
 
 // Enough of a token to tell two apart; the whole of it is shown only when it is made.
 const PREFIX = 6
@@ -36,7 +38,7 @@ function TokenRow({ token }: { token: ApiToken }) {
         title={`Revoke ${token.label || 'this token'}?`}
         action="Revoke token"
         busy={revoke.busy}
-        error={revoke.error}
+        error={revoke.message}
         onConfirm={() => void revoke.run()}
       />
     </li>
@@ -59,7 +61,17 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
   const [scopes, setScopes] = useState<TokenScope[]>([])
   const create = useAction(async () => onCreated(await tokens.create(label.trim(), scopes)), { action: 'make that token', refresh: [accountKeys.tokens] })
   const toggle = (scope: TokenScope) => setScopes((list) => (list.includes(scope) ? list.filter((item) => item !== scope) : [...list, scope]))
-  const box = (scope: TokenScope, name: string) => <Checkbox hit checked={scopes.includes(scope)} onCheckedChange={() => toggle(scope)} aria-label={name} />
+  const scopesErrorId = useId()
+  // The first box stands for the whole set when none is ticked.
+  const box = (scope: TokenScope, name: string) => (
+    <Checkbox
+      hit
+      checked={scopes.includes(scope)}
+      onCheckedChange={() => toggle(scope)}
+      aria-label={name}
+      {...(scope === FIRST_SCOPE && { 'data-field': 'scopes', 'aria-describedby': create.fields.scopes ? scopesErrorId : undefined })}
+    />
+  )
 
   function submit(event: FormEvent<HTMLFormElement>) {
     void create.submit(event, undefined, { fields: scopes.length === 0 ? { scopes: 'Tick at least one thing this token may do.' } : {} })
@@ -67,7 +79,7 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
 
   return (
     <form noValidate className="space-y-4" onSubmit={submit}>
-      <FormAlert>{create.error}</FormAlert>
+      <FormAlert>{create.message}</FormAlert>
       <Field label="Label" error={create.fields.label}>
         {(field) => <Input {...field} name="label" value={label} onChange={(event) => setLabel(event.target.value)} required maxLength={255} className="h-10" autoComplete="off" />}
       </Field>
@@ -110,7 +122,7 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
           </tbody>
         </table>
         {create.fields.scopes && (
-          <p className="prose-text mt-2 text-destructive" role="alert">
+          <p id={scopesErrorId} className="prose-text mt-2 text-destructive" role="alert">
             {create.fields.scopes}
           </p>
         )}

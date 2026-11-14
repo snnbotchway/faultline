@@ -24,6 +24,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 - An exception type in a row (`TypeError`) is mono semibold at 13px and its message is sans, so the type still scans as code: the `error-type` utility.
 - Section labels (`STACK TRACE`, `WHAT HAPPENED`, `EVENTS`) are mono, 12px, uppercase, tracked 0.12em, muted: the `label-caps` utility. A label names a section; it never sits above a heading as a kicker.
 - The wordmark `FAULTLINE` is mono semibold 12px, tracked 0.18em: the `tracking-wordmark` token.
+- A one-time code being typed (an authenticator or recovery code) is mono, tracked 0.2em so each digit stands apart: the `tracking-code` token.
 - Sans text is sentence case. Identifiers are shown exactly as the system has them.
 - Numbers are tabular everywhere.
 

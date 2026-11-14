@@ -20,7 +20,7 @@ function PasswordForm({ hasPassword, onClose }: { hasPassword: boolean; onClose:
   })
   return (
     <form noValidate className="space-y-4" onSubmit={(event) => void change.submit(event)}>
-      <FormAlert>{change.error}</FormAlert>
+      <FormAlert>{change.message}</FormAlert>
       {hasPassword && (
         <Field label="Current password" error={change.fields.current_password}>
           {(field) => <PasswordInput {...field} name="current_password" value={current} onChange={(event) => setCurrent(event.target.value)} autoComplete="current-password" required />}

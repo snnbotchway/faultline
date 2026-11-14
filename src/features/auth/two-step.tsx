@@ -1,12 +1,12 @@
 import { KeyRound } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { MfaType, SessionStatus, auth, type Session } from '@/api/auth'
+import { ApiError, HttpStatus } from '@/api/client'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert } from '@/components/ui/field'
+import { Field, FormAlert, SUBMIT } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { askSecurityKey, supportsSecurityKeys } from '@/lib/webauthn'
 import { AuthLinks } from './frame'
-import { SUBMIT } from './forms'
 import { useSessionForm } from './session-form'
 
 const KeyState = { idle: 'idle', waiting: 'waiting', failed: 'failed' } as const
@@ -46,9 +46,20 @@ export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedO
     const controller = new AbortController()
     waiting.current = controller
     setKey(KeyState.waiting)
-    form.clearMessage()
+    form.clear()
     try {
-      const credential = await askSecurityKey(await auth.webauthnOptions(), controller.signal)
+      let options: unknown
+      try {
+        options = await auth.webauthnOptions()
+      } catch (error) {
+        if (!(error instanceof ApiError && error.status === HttpStatus.unauthenticated)) throw error
+        // No sign-in is waiting for a key any more.
+        setKey(KeyState.idle)
+        form.forget()
+        onTimedOut()
+        return
+      }
+      const credential = await askSecurityKey(options, controller.signal)
       const session = await form.run(() => auth.webauthnAuthenticate(credential))
       // `run` reports a key the backend refused; that also counts as the key not working.
       setKey(session ? KeyState.idle : KeyState.failed)
@@ -69,7 +80,7 @@ export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedO
       {takesCode && (
         <form noValidate className="space-y-4" onSubmit={(event) => void verify(event)}>
           <FormAlert>{key === KeyState.failed ? '' : form.message}</FormAlert>
-          <Field label={codeLabel(types)} error={form.errors.code}>
+          <Field label={codeLabel(types)} error={form.fields.code}>
             {(field) => (
               <Input
                 {...field}
@@ -79,7 +90,7 @@ export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedO
                 autoComplete="one-time-code"
                 autoFocus
                 required
-                className="h-10 font-mono tracking-[0.2em]"
+                className="h-10 font-mono tracking-code"
               />
             )}
           </Field>

@@ -4,10 +4,10 @@ import { useState, type FormEvent } from 'react'
 import { SessionStatus, auth } from '@/api/auth'
 import { isExpiredLink } from '@/api/form-errors'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, PasswordInput } from '@/components/ui/field'
+import { Field, FormAlert, PasswordInput, SUBMIT } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AuthFrame } from '@/features/auth/frame'
-import { PASSWORD_RULE, SUBMIT } from '@/features/auth/forms'
+import { PASSWORD_RULE } from '@/features/auth/forms'
 import { useSessionForm } from '@/features/auth/session-form'
 
 // The link in the reset email.
@@ -56,7 +56,7 @@ function SetNewPassword() {
     <AuthFrame title="Set a new password">
       <form noValidate className="space-y-4" onSubmit={(event) => void submit(event)}>
         <FormAlert>{form.message}</FormAlert>
-        <Field label="New password" aside={PASSWORD_RULE} error={form.errors.password}>
+        <Field label="New password" aside={PASSWORD_RULE} error={form.fields.password}>
           {(field) => <PasswordInput {...field} name="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" autoFocus required minLength={8} />}
         </Field>
         <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>

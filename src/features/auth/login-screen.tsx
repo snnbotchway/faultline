@@ -4,10 +4,10 @@ import { useState, type FormEvent } from 'react'
 import { SessionStatus, auth, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, loginSettingsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert } from '@/components/ui/field'
+import { Field, FormAlert, SUBMIT } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { AuthFrame, AuthLinks, AuthNote } from './frame'
-import { SUBMIT, SignInForm } from './forms'
+import { SignInForm } from './forms'
 import { LoginNotice, useSessionForm } from './session-form'
 import { SocialButtons } from './social'
 import { TwoStepCheck } from './two-step'
@@ -23,7 +23,7 @@ function ProviderSignup({ provider }: { provider: string | undefined }) {
     <AuthFrame title={`${provider ?? 'Your provider'} didn't share an email`}>
       <form noValidate className="space-y-4" onSubmit={(event) => void submit(event)}>
         <FormAlert>{form.message}</FormAlert>
-        <Field label="Email" error={form.errors.email}>
+        <Field label="Email" error={form.fields.email}>
           {(field) => <Input {...field} name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" autoFocus required className="h-10" />}
         </Field>
         <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>

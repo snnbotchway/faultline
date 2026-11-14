@@ -2,6 +2,10 @@ import { useId, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { Input } from './input'
 
+// A form's button at a field's height (44px on touch), and the form's full-width main action.
+export const FIELD_BUTTON = 'h-10 max-lg:h-11'
+export const SUBMIT = `${FIELD_BUTTON} w-full`
+
 // What a field's control needs to be tied to its label and error.
 export type FieldProps = { id: string; 'aria-describedby'?: string; 'aria-invalid'?: boolean }
 

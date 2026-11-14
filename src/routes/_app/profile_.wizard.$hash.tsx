@@ -32,7 +32,7 @@ function Wizard() {
       ) : (
         <Screen title="Let the setup wizard in your terminal use your account?">
           <p className="mono [overflow-wrap:anywhere] text-muted-foreground">{email}</p>
-          <FormAlert>{connect.error}</FormAlert>
+          <FormAlert>{connect.message}</FormAlert>
           <div className="flex flex-wrap justify-center gap-2">
             <Button variant="default" className="max-lg:h-11" disabled={connect.busy} aria-busy={connect.busy} onClick={() => void connect.run()}>
               Connect the wizard

@@ -4,7 +4,7 @@ import { AuthProcess, redirectToProvider } from '@/api/auth'
 import type { InstanceSettings } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { TaskDialog } from '@/components/ui/task-dialog'
-import { SUBMIT } from '@/features/auth/forms'
+import { SUBMIT } from '@/components/ui/field'
 import { providerName } from './format'
 import { RowButton } from './rows'
 import { useAction } from './use-action'
@@ -32,9 +32,9 @@ function LinkedRow({ linked, name }: { linked: LinkedAccount; name: string }) {
           )}
         </span>
       </div>
-      {disconnect.error && (
+      {disconnect.message && (
         <p className="prose-text pb-1 text-destructive" role="alert">
-          {disconnect.error}
+          {disconnect.message}
         </p>
       )}
     </li>

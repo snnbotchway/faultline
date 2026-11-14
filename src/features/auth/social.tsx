@@ -1,6 +1,6 @@
 import type { InstanceSettings } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
-import { SUBMIT } from './forms'
+import { SUBMIT } from '@/components/ui/field'
 import { continueWithProvider } from './session-form'
 
 type SocialApp = InstanceSettings['socialApps'][number]

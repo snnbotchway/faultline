@@ -26,7 +26,7 @@ function DetailsForm({ user, onClose }: { user: CurrentUser; onClose: () => void
 
   return (
     <form noValidate className="space-y-4" onSubmit={submit}>
-      <FormAlert>{save.error}</FormAlert>
+      <FormAlert>{save.message}</FormAlert>
       <Field label="Name" error={save.fields.name}>
         {(field) => <Input {...field} name="name" className="h-10" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" />}
       </Field>

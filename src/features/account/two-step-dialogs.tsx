@@ -15,7 +15,7 @@ import { QrCode } from './qr'
 import { RowButton } from './rows'
 import { useAction } from './use-action'
 
-const CODE_INPUT = 'h-10 font-mono tracking-[0.2em] sm:max-w-48'
+const CODE_INPUT = 'h-10 font-mono tracking-code sm:max-w-48'
 
 /* ---------- Authenticator app ---------- */
 
@@ -50,7 +50,7 @@ function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) 
           {setup.data && <CopyButton text={setup.data.secret} />}
         </div>
       </div>
-      <FormAlert>{activate.error}</FormAlert>
+      <FormAlert>{activate.message}</FormAlert>
       <Field label="Code from your authenticator app" error={activate.fields.code}>
         {(field) => (
           <Input
@@ -109,7 +109,7 @@ function RecoveryCodesForm({ action, later, onDone, onClose }: { action: string;
       <div>
         <p className="label-caps mb-2">Recovery codes</p>
         {preview.data ? (
-          <ul className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-[0.12em]">
+          <ul className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-label">
             {codes.map((item) => (
               <li key={item}>{item}</li>
             ))}
@@ -127,7 +127,7 @@ function RecoveryCodesForm({ action, later, onDone, onClose }: { action: string;
           </a>
         </Button>
       </div>
-      <FormAlert>{confirm.error}</FormAlert>
+      <FormAlert>{confirm.message}</FormAlert>
       <Field label="Type one of the codes to confirm you saved them" error={confirm.fields.code}>
         {(field) => (
           <Input
@@ -211,9 +211,9 @@ function KeyRow({ item }: { item: SecurityKey }) {
           )}
         </span>
       </div>
-      {remove.error && (
+      {remove.message && (
         <p className="prose-text pb-1 text-destructive" role="alert">
-          {remove.error}
+          {remove.message}
         </p>
       )}
     </li>
@@ -249,7 +249,7 @@ function AddKey() {
   )
   return (
     <form noValidate className="space-y-4" onSubmit={(event) => void add.submit(event)}>
-      <FormAlert>{failure || add.error}</FormAlert>
+      <FormAlert>{failure || add.message}</FormAlert>
       <Field label="Name for a new key" error={add.fields.name}>
         {(field) => <Input {...field} name="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={100} className="h-10" autoComplete="off" />}
       </Field>
@@ -317,7 +317,7 @@ export function VerifyFirstDialog({ open, onClose, emails, canSend }: { open: bo
         )
       }
     >
-      <FormAlert className="mb-4">{send.error}</FormAlert>
+      <FormAlert className="mb-4">{send.message}</FormAlert>
       <TaskActions>
         {canSend && !sent && (
           <Button variant="default" disabled={send.busy} aria-busy={send.busy} onClick={() => void send.run()}>

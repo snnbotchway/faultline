@@ -245,7 +245,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
         description={factors.keys.length > 0 ? undefined : 'Signing in will then need only your password.'}
         action="Turn off"
         busy={turnOff.busy}
-        error={turnOff.error}
+        error={turnOff.message}
         onConfirm={() => void turnOff.run()}
       />
       <ConfirmDialog
@@ -255,7 +255,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
         description="This can't be undone. Your API tokens stop working."
         action="Delete account"
         busy={remove.busy}
-        error={remove.error}
+        error={remove.message}
         onConfirm={() => void remove.run()}
       />
 

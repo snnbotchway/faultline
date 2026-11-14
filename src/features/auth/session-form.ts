@@ -53,11 +53,16 @@ export function useSessionForm(action: string) {
   // Lets the route's guard send a signed-in person on to `next`.
   const proceed = (session: Session | undefined) => (session?.status === SessionStatus.authenticated ? router.invalidate() : undefined)
 
-  async function startOver() {
-    await auth.logout()
+  // The backend has no sign-in in progress any more; show the first step.
+  function forget() {
     queryClient.setQueryData(sessionQuery.queryKey, ANONYMOUS)
     form.clear()
   }
 
-  return { busy: form.busy, errors: form.problems.fields, message: form.problems.message, clearMessage: form.clear, run, submit, proceed, startOver }
+  async function startOver() {
+    await auth.logout()
+    forget()
+  }
+
+  return { busy: form.busy, fields: form.problems.fields, message: form.problems.message, clear: form.clear, run, submit, proceed, forget, startOver }
 }

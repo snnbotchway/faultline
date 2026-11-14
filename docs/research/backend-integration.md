@@ -275,6 +275,14 @@ Sub-path deployment: backend honours `BASE_PATH`/`FORCE_SCRIPT_NAME` and rewrite
 | Passkeys | `MFA_PASSKEY_LOGIN_ENABLED=True` so `session` flows list `mfa_login_webauthn`; the stock login page ignores it | live |
 | `MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN` | Only when `DEBUG`; WebAuthn needs https or localhost otherwise | `BE settings.py:1491` |
 | CSP | Backend sets `default-src 'self'` with a per-request nonce on `index.html`. Faultline is served elsewhere so this only matters if the SPA is hosted by Django | live headers |
+| Scopes are any-of | `org_scoped` passes when the caller holds any one of the listed scopes. Alert create, update and test take `project:write` or `project:admin`; alert delete takes `project:admin`; monitor and status-page create take `project:write`; releases (read and write) take `project:releases`, which every role has | `BE apps/*/api.py` scope lists |
+| Monitor checks | List items carry the newest checks without `responseTime`; the detail carries the 60 newest with it. `checks/?is_change=true` returns state changes and includes the very first check, so downtime periods can be rebuilt from it. Checks are partitioned by UUIDv7 id (daily partitions first, weekly later); the monitor's state is cached in `cached_is_up`, `cached_last_change`, `cached_consecutive_down` | live; `BE apps/uptime/models.py` |
+| Monitor refusals | 422 messages: `Invalid Url`, `URLs targeting private/internal IPs are not allowed`, `Invalid Port URL, expected hostname and port`, and one starting `This organization is limited to` (plan limit) | live |
+| Heartbeat URL | `heartbeatEndpoint` is built from the backend's own domain setting, so it reads the dev origin (`localhost:5190`) in dev | live |
+| Alert test | `POST .../alerts/{id}/test/` returns `TestAlertResultSchema[]`, one per recipient; email recipients are skipped. It also takes `recipient_id` to test one recipient | `/api/openapi.json`; live |
+| First-release search | No issue search filters on first release. New issues per release are counted from one `is:unresolved sort=-first_seen limit=100` page, which is exact only while that page reaches back past the release | `BE apps/issue_events/search` |
+| `stats_v2` body | Needs a query (`category`, `interval`, `field`, `start`, `end`); the schema declares no response body, so the client casts it | `/api/openapi.json` |
+| Status pages | Create and list only; no API changes a page's monitors or visibility (done in the Django admin) | `/api/openapi.json` |
 | Frontend ahead of / behind backend | Backend returns `inviteLink`, supports `shortIdLookup`, `assignedTo`, social-app and status-page APIs, `/api/settings/{org}/`; the tagged frontend uses none of them | grep of `FE src/app` |
 
 ---

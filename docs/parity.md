@@ -126,14 +126,14 @@ Where Faultline differs on purpose:
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Uptime | `/:org/uptime-monitors` | Monitor list: status dot, name, project, last change; sort (Down First `status`, Newest `-created`, Oldest `created`, Name `name`, Project `project`); cursor paging; "New monitor" if `canWriteProject` | `GET /organizations/{org}/monitors/?sort&cursor` | [ ] |
-| Uptime | `/:org/uptime-monitors/new` | Create: name, type (Ping, GET, POST, TCP Port, Heartbeat; SSL exists in the API enum but is not offered), URL or `host:port`, project, environment, expected status, expected body, interval seconds, timeout 1-60 (hidden for Heartbeat), events-per-month estimate vs plan allowance | `POST /organizations/{org}/monitors/`; `GET /projects/{org}/{slug}/environments/` | [ ] |
+| Uptime | `/:org/uptime-monitors` | Monitor list: status dot, name, project, last change; sort (Down First `status`, Newest `-created`, Oldest `created`, Name `name`, Project `project`); cursor paging; "New monitor" if `canWriteProject` | `GET /organizations/{org}/monitors/?sort&cursor` | [x] |
+| Uptime | `/:org/uptime-monitors/new` | Create: name, type (Ping, GET, POST, TCP Port, Heartbeat; SSL exists in the API enum but is not offered), URL or `host:port`, project, environment, expected status, expected body, interval seconds, timeout 1-60 (hidden for Heartbeat), events-per-month estimate vs plan allowance | `POST /organizations/{org}/monitors/`; `GET /projects/{org}/{slug}/environments/` | [x] |
 | Uptime | `/:org/uptime-monitors/:monitor-id` (`?tab=overview` default, `checks`, `alerts`) | Detail: uptime %, avg response, last change, URL, response-time chart, heartbeat URL panel (Heartbeat type), checks table (status, reason, response time, "incidents only" filter, paging), alerts tab (project alerts that have `uptime` on, with count) | `GET /organizations/{org}/monitors/{id}/`; `GET .../monitors/{id}/checks/?cursor&is_change`; `GET /projects/{org}/{slug}/alerts/` | [ ] |
-| Uptime | `/:org/uptime-monitors/:monitor-id/update` | Edit with the same form | `PUT /organizations/{org}/monitors/{id}/`; `DELETE` from the detail bar (confirm) | [ ] |
+| Uptime | `/:org/uptime-monitors/:monitor-id/update` | Edit with the same form | `PUT /organizations/{org}/monitors/{id}/`; `DELETE` from the detail bar (confirm) | [x] |
 
-- [ ] Heartbeat check-in URL shown to the user is `heartbeatEndpoint` (backend route `POST /organizations/{slug}/heartbeat_check/{endpoint_id}/`).
-- [ ] `confirmationThreshold` exists in the API but is not in the stock form.
-- [ ] Edit and delete gated on `canWriteProject`.
+- [x] Heartbeat check-in URL shown to the user is `heartbeatEndpoint` (backend route `POST /organizations/{slug}/heartbeat_check/{endpoint_id}/`).
+- [x] `confirmationThreshold` exists in the API but is not in the stock form. Faultline offers it as "Down after" (1, 2, 3 or 5 failed checks; a value set elsewhere is kept).
+- [x] Edit and delete gated on `canWriteProject`.
 
 ---
 
@@ -204,10 +204,10 @@ Easy to miss:
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Releases | `/:org/releases` | Release table with two columns, Version (link, tooltip when truncated) and Date Created; cursor paging | `GET /organizations/{org}/releases/?cursor` | [ ] |
-| Releases | `/:org/releases/:version` | Release detail: header with project chips, file count (plural), `dateReleased`; single-column files table (Filename, read-only), paging; per-request error list | `GET /organizations/{org}/releases/{version}/`; `GET .../releases/{version}/files/?cursor` | [ ] |
+| Releases | `/:org/releases` | Release table with two columns, Version (link, tooltip when truncated) and Date Created; cursor paging | `GET /organizations/{org}/releases/?cursor` | [x] |
+| Releases | `/:org/releases/:version` | Release detail: header with project chips, file count (plural), `dateReleased`; single-column files table (Filename, read-only), paging; per-request error list | `GET /organizations/{org}/releases/{version}/`; `GET .../releases/{version}/files/?cursor` | [x] |
 
-- [ ] Version path segment must be URL-encoded (versions can contain `/`, `@`).
+- [x] Version path segment must be URL-encoded (versions can contain `/`, `@`).
 - [ ] Project chip strips the `slug@` prefix when the version already starts with it.
 - [ ] Stock UI is read-only: no create release, deploys, commits, file delete or source-map upload (CLI/API only).
 
@@ -301,7 +301,7 @@ These are not required for parity. Tick only if Faultline chooses to ship them.
 |---|---|---|---|
 | Org login page `/login/{org-slug}` | `GET /api/settings/{organization_slug}/` returns that org's social apps (including non-public ones). SPA regex in `glitchtip/urls.py` already serves `/login/...` | Backend-generated `loginUrl` for org SSO apps points here; stock router falls through to `**` and redirects to `/` | [x] |
 | Org SSO / social-app management | `GET`/`POST /organizations/{org}/social-apps/`; `PUT`/`DELETE .../social-apps/{id}/` (name, serverUrl, clientID, clientSecret, provider; returns `callbackUrl` and `loginUrl`) | Gated by `organization_can_customize_sso`; listing needs manager or owner **Faultline:** a Sign-in apps group on the settings index, for managers and owners. | [x] |
-| Status pages | `GET`/`POST /organizations/{org}/status-pages/`; public HTML at `/status-pages/{org}/{slug}/` | List and create only; no update/delete route in the schema. HTML is server-rendered and cached 60 s | [+] |
+| Status pages | `GET`/`POST /organizations/{org}/status-pages/`; public HTML at `/status-pages/{org}/{slug}/` | List and create only; no update/delete route in the schema. HTML is server-rendered and cached 60 s | [x] |
 | Copy-link invites | `inviteLink` in the invite response | Works with email disabled (`enabledFeatures` lacks `email`). Stock frontend ignores it | [x] |
 | Short-ID jump | `GET /organizations/{org}/issues/?shortIdLookup=1&query=PROJECT-1A`; `GET .../shortids/{short_id}/` | Stock UI does not send `shortIdLookup` | [+] |
 | Assign issue | `PUT` with `assignedTo` (`user:<id>`, `team:<slug>`, email, or empty) | Field is rendered nowhere in stock | [+] |

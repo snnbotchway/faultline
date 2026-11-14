@@ -3,6 +3,7 @@ import type { IssueEvent } from '@/api/issues'
 import { aiPayload, issueAddress } from './copy-for-ai'
 import { cookiesOf } from './event'
 import { languageOf, piecesOf } from './highlight'
+import { levelStyle } from './levels'
 import { rawTrace } from './raw-trace'
 import { sharedOrigin, tagFacets } from './tags'
 
@@ -79,4 +80,9 @@ test('a platform named after an object property is no language', () => {
   expect(languageOf(undefined, '__proto__')).toBeUndefined()
   expect(languageOf('a.constructor', 'hasOwnProperty')).toBeUndefined()
   expect(languageOf('app.py', undefined)).toBe('python')
+})
+
+test('a level named after an object property is drawn as debug', () => {
+  expect(levelStyle('constructor')).toEqual(levelStyle('debug'))
+  expect(levelStyle('toString')).toEqual(levelStyle('debug'))
 })

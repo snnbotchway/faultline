@@ -29,16 +29,19 @@ export function useSelection(scope: string) {
   const ids = live ? stored.ids : NONE
   const all = live && stored.all
 
+  // Both take the state the box will show, not a flip of what is stored: under "select all matching" the
+  // ids set is not what the boxes show.
   const toggle = useCallback(
-    (id: string) =>
+    (id: string, checked: boolean) =>
       setStored((previous) => {
         const next = new Set(previous.scope === scope ? previous.ids : NONE)
-        if (!next.delete(id)) next.add(id)
+        if (checked) next.add(id)
+        else next.delete(id)
         return { scope, ids: next, all: false, anchor: id }
       }),
     [scope],
   )
-  // Shift-click: gives every row from the last one ticked or unticked to this one the state this
+  // Shift-click, or shift+x: gives every row from the last one ticked or unticked to this one the state this
   // row's box takes, so a range unticks as well as ticks.
   const extendTo = useCallback(
     (id: string, order: readonly string[], checked: boolean) =>
@@ -47,7 +50,8 @@ export function useSelection(scope: string) {
         const range = previous.scope === scope && previous.anchor ? idsBetween(order, previous.anchor, id) : []
         if (range.length === 0) {
           const next = new Set(ids)
-          if (!next.delete(id)) next.add(id)
+          if (checked) next.add(id)
+          else next.delete(id)
           return { scope, ids: next, all: false, anchor: id }
         }
         const next = new Set(ids)

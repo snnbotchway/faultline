@@ -10,7 +10,7 @@ All notable changes to Faultline are listed here. The format follows
 - The issue list's search box has a syntax popover (`is:`, `level:`, `key:value`, `has:`, `*`).
 - The first-seen range offers "Last hour" and a custom range with date and time pickers, sent to GlitchTip in UTC.
 - A `+` beside the project filter starts a new project, for people who can create one.
-- Shift-click ticks every issue between two clicks.
+- Shift-click, or Shift X, ticks or unticks every issue between two clicks.
 - Issue rows show how old the issue is, tag CSP reports, and show `Resolved` or `Ignored` in the "All" view.
 
 ### Fixed

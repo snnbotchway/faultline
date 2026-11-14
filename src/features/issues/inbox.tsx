@@ -140,7 +140,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   const { setStatus: changeStatus } = actions
   const handlers: RowHandlers = useMemo(
     () => ({
-      toggle: (id, range, checked) => (range ? extendTo(id, loadedIds, checked) : toggle(id)),
+      toggle: (id, range, checked) => (range ? extendTo(id, loadedIds, checked) : toggle(id, checked)),
       unfold: (id) => setUnfolded((open) => (open === id ? undefined : id)),
       assign: (id) => setAssigning(oneIssue(id)),
       setStatus: (id, status) => void changeStatus(oneIssue(id), status),
@@ -148,6 +148,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     [toggle, extendTo, loadedIds, changeStatus, setAssigning, setUnfolded],
   )
 
+  const ticked = (id: string) => selection.all || selection.ids.has(id)
   useHotkeys({
     '/': (event) => {
       event.preventDefault()
@@ -155,7 +156,8 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     },
     j: () => move(1),
     k: () => move(-1),
-    x: () => cursor && canWrite && selection.toggle(cursor),
+    x: () => cursor && canWrite && selection.toggle(cursor, !ticked(cursor)),
+    X: () => cursor && canWrite && selection.extendTo(cursor, loadedIds, !ticked(cursor)),
     o: () => cursor && handlers.unfold(cursor),
     Enter: () => cursor && void navigate({ to: '/$org/issues/$issueId', params: { org, issueId: cursor } }),
     ...Object.fromEntries(offer.statuses.map((action) => [action.key, () => setStatus(action.status)])),
@@ -307,7 +309,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
                     marks={marks}
                     view={view}
                     canWrite={canWrite}
-                    selected={selection.all || selection.ids.has(row.issue.id)}
+                    selected={ticked(row.issue.id)}
                     current={cursor === row.issue.id}
                     unfolded={unfolded === row.issue.id}
                     handlers={handlers}

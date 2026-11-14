@@ -35,9 +35,20 @@ test('shift-click covers the rows between two clicks, in either direction, and n
 test('a shift-click range takes the state of the box clicked, so it unticks as well as ticks', () => {
   const order = ['a', 'b', 'c', 'd']
   const { result } = renderHook(() => useSelection('scope'))
-  act(() => result.current.toggle('a'))
+  act(() => result.current.toggle('a', true))
   act(() => result.current.extendTo('c', order, true))
   expect([...result.current.ids].sort()).toEqual(['a', 'b', 'c'])
   act(() => result.current.extendTo('b', order, false))
   expect([...result.current.ids]).toEqual(['a'])
+})
+
+test('a toggle sets the state the box will show, not the opposite of what is stored', () => {
+  const { result } = renderHook(() => useSelection('scope'))
+  // Under "select all matching" no id is stored, yet the box shows ticked; unticking must not tick it.
+  act(() => result.current.toggle('a', false))
+  expect(result.current.ids.has('a')).toBe(false)
+  act(() => result.current.toggle('a', true))
+  expect(result.current.ids.has('a')).toBe(true)
+  act(() => result.current.extendTo('z', ['a', 'b'], false))
+  expect(result.current.ids.has('z')).toBe(false)
 })

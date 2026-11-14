@@ -83,7 +83,7 @@ test("a project's Alerts tab lists its rules and opens one from the stock addres
   await expect(page.getByRole('navigation', { name: 'Project settings' }).getByRole('link', { name: /Alerts/ })).toHaveAttribute('aria-current', 'page')
   const rule = page.getByRole('region', { name: 'Alert rules' }).getByRole('button', { name: /Error burst/ })
   await rule.click()
-  await expect(page).toHaveURL(/tab=alerts&alert=\d+/)
+  await expect(page).toHaveURL(/\?tab=alerts&alert=\d+$/)
   await expect(page.getByRole('dialog').getByLabel('Name')).toHaveValue('Error burst')
 })
 

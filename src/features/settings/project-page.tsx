@@ -33,12 +33,13 @@ import { Environments } from './project-environments'
 import { Keys } from './project-keys'
 import { ProjectTab } from './project-tabs'
 import { ProjectAlerts } from '@/features/alerts/project-alerts'
+import type { AlertParam } from '@/features/alerts/open-rule'
 
 /**
  * One project's settings. Until its first event arrives the page opens on the set-up step; after that on General.
  * Each tab has an address (`?tab=`), the stock one, so links from old emails land on the right tab.
  */
-export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: string; tab?: ProjectTab; alert?: string }) {
+export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: string; tab?: ProjectTab; alert?: AlertParam }) {
   useTitle(slug, 'Settings')
   const can = useAccess(org)
   const navigate = useNavigate()
@@ -70,7 +71,7 @@ export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: stri
       </>
     )
 
-  const openRule = (rule?: string) =>
+  const openRule = (rule?: AlertParam) =>
     void navigate({ to: '/$org/settings/projects/$project', params: { org, project: slug }, search: rule ? { tab: ProjectTab.alerts, alert: rule } : { tab: ProjectTab.alerts } })
   const context: TabContext = { org, slug, can, keys, environments, teams: listed?.teams.map((team) => team.slug), rules: rules?.length, alert, openRule }
   const panel = PROJECT_TABS.find((entry) => entry.value === current)
@@ -114,8 +115,8 @@ type TabContext = {
   teams?: string[]
   rules?: number
   // The alert rule whose editor is open on the Alerts tab, and how to open another or close it.
-  alert?: string
-  openRule: (alert?: string) => void
+  alert?: AlertParam
+  openRule: (alert?: AlertParam) => void
 }
 
 // The project page's tabs, in order.

@@ -207,7 +207,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
               <ul>
                 {rules.map((rule) => (
                   <li key={rule.id} className="border-b">
-                    <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project!.slug!, alert: String(rule.id) }} className="block py-2 hover:bg-accent/60">
+                    <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project!.slug!, alert: rule.id! }} className="block py-2 hover:bg-accent/60">
                       <span className="block font-medium">{rule.name}</span>
                       <span className="block text-sm text-muted-foreground">{rule.alertRecipients.map((recipient) => recipientMeta(recipient).label).join(', ')}</span>
                     </Link>

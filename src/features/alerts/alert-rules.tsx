@@ -25,7 +25,7 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
   const canWrite = canWriteProjects(access)
   const slugs = project ? [project] : (projects.data?.flatMap((item) => (item.slug ? [item.slug] : [])) ?? [])
   const rules = useQueries({ queries: slugs.map((slug) => projectAlertsQuery(org, slug)) })
-  const editing = open && open.alert !== RuleEditor.new ? rules[slugs.indexOf(open.project)]?.data?.find((rule) => String(rule.id) === open.alert) : undefined
+  const editing = open && open.alert !== RuleEditor.new ? rules[slugs.indexOf(open.project)]?.data?.find((rule) => rule.id === open.alert) : undefined
 
   if (!project && projects.isError)
     return (
@@ -71,7 +71,7 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
               <ul>
                 {query.data.map((rule) => (
                   <li key={rule.id} className="border-b">
-                    <RuleRow rule={rule} onOpen={canWrite ? () => onOpen({ alert: String(rule.id), project: slug }) : undefined} />
+                    <RuleRow rule={rule} onOpen={canWrite ? () => onOpen({ alert: rule.id!, project: slug }) : undefined} />
                   </li>
                 ))}
               </ul>

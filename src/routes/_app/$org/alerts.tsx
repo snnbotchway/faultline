@@ -4,14 +4,16 @@ import { canWriteProjects, organizationQuery, projectsQuery } from '@/api/organi
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { AlertRules } from '@/features/alerts/alert-rules'
-import { RuleEditor, type OpenRule } from '@/features/alerts/open-rule'
+import { RuleEditor, alertParam, type AlertParam, type OpenRule } from '@/features/alerts/open-rule'
 import { useTitle } from '@/lib/title'
 
-type AlertsSearch = { alertProject?: string; alert?: string }
+type AlertsSearch = { alertProject?: string; alert?: AlertParam }
 
 // `?alertProject=&alert=<id>|new` opens a rule's editor over the list; the list itself always shows every project.
-const validateSearch = (search: Record<string, unknown>): AlertsSearch =>
-  typeof search.alertProject === 'string' && (typeof search.alert === 'string' || typeof search.alert === 'number') ? { alertProject: search.alertProject, alert: String(search.alert) } : {}
+function validateSearch(search: Record<string, unknown>): AlertsSearch {
+  const alert = alertParam(search.alert)
+  return typeof search.alertProject === 'string' && alert !== undefined ? { alertProject: search.alertProject, alert } : {}
+}
 
 export const Route = createFileRoute('/_app/$org/alerts')({ validateSearch, component: AlertsRoute })
 

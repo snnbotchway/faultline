@@ -1,5 +1,6 @@
 import { useQueries, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
-import { monitorChangesQuery, monitorKeys, monitorQuery, type Check, type Monitor, type MonitorDetail } from '@/api/monitors'
+import { monitorChangesQuery, monitorKeys, monitorQuery, type ChangeHistory, type Check, type Monitor, type MonitorDetail } from '@/api/monitors'
+import { HISTORY_WINDOW } from './format'
 import { healthOf, type HealthReport } from './health'
 
 export type MonitorHealth = { report: HealthReport; checks: Check[]; loaded: boolean }
@@ -26,14 +27,14 @@ export function useMonitorHealth(org: string, monitors: Monitor[], now: number):
   })
   const changes = useQueries({
     queries: monitors.map((monitor) => ({
-      ...monitorChangesQuery(org, monitor.id, monitor.lastChange),
-      placeholderData: () => newest<Check[]>(client, monitorKeys.changes(org, monitor.id)),
+      ...monitorChangesQuery(org, monitor.id, monitor.lastChange, HISTORY_WINDOW),
+      placeholderData: () => newest<ChangeHistory>(client, monitorKeys.changes(org, monitor.id)),
     })),
   })
   return new Map(
     monitors.map((monitor, index) => {
       const detail = details[index]?.data
-      const changed = changes[index]?.data
+      const changed = changes[index]?.data?.changes
       const checks = detail?.checks ?? monitor.checks
       return [monitor.id, { report: healthOf(monitor, checks, changed ?? [], now), checks, loaded: detail !== undefined && changed !== undefined }]
     }),

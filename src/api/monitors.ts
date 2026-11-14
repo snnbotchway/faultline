@@ -91,21 +91,40 @@ export const monitorQuery = (slug: string, id: number, stamp?: string) =>
       unwrap(await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/', { params: { path: monitorPath(slug, id) } })) as MonitorDetail,
   })
 
+// What the backend has on when a monitor went down or came back: those checks, newest first, and
+// whether they reach back to its first check.
+export type ChangeHistory = { changes: Check[]; toFirst: boolean }
+
+// Each page holds 100 changes; 20 cover a monitor going down every 20 minutes for a fortnight.
+const MAX_CHANGE_PAGES = 20
+
 /**
- * The newest checks where the monitor went down or came back, newest first. `lastChange` is the
- * monitor's own, so the answer is fetched again only when the monitor has changed state.
+ * The checks where the monitor went down or came back, newest first, paged back until one is older
+ * than the last `window` milliseconds or the first check is reached. `lastChange` is the monitor's
+ * own, so the answer is fetched again only when the monitor has changed state. A monitor that went
+ * down too often to page back that far gets fewer, and `toFirst` false.
  */
-export const monitorChangesQuery = (slug: string, id: number, lastChange: string | null) =>
+export const monitorChangesQuery = (slug: string, id: number, lastChange: string | null, window: number) =>
   queryOptions({
-    queryKey: [...monitorKeys.changes(slug, id), lastChange],
+    queryKey: [...monitorKeys.changes(slug, id), lastChange, window],
     staleTime: Infinity,
     placeholderData: keepPreviousData,
-    queryFn: async () =>
-      unwrap(
-        await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/checks/', {
-          params: { path: monitorPath(slug, id), query: { is_change: true, limit: MAX_PAGE_SIZE } },
-        }),
-      ),
+    queryFn: async (): Promise<ChangeHistory> => {
+      const since = Date.now() - window
+      const changes: Check[] = []
+      let cursor: string | undefined
+      for (let pages = 0; pages < MAX_CHANGE_PAGES; pages++) {
+        const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/checks/', {
+          params: { path: monitorPath(slug, id), query: { is_change: true, limit: MAX_PAGE_SIZE, cursor } },
+        })
+        const page = toPage(unwrap(result), result.response)
+        changes.push(...page.items)
+        cursor = page.cursors.next
+        if (cursor === undefined) return { changes, toFirst: true }
+        if (Date.parse(changes.at(-1)!.startCheck) < since) break
+      }
+      return { changes, toFirst: false }
+    },
   })
 
 export const CHECKS_PAGE_SIZE = 25

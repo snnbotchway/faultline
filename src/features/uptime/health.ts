@@ -90,15 +90,26 @@ export function healthOf(
   return { ...report, health: slow ? Health.slow : Health.up }
 }
 
+export type Uptime = { share: number; sinceFirst: boolean }
+
 /**
- * The share of the last `window` milliseconds the monitor was up, from its stretches of downtime.
- * A monitor is not counted before it was made, and has no figure until some time has passed.
+ * The share of the last `window` milliseconds the monitor was up, from the checks where it changed
+ * state (newest first). A monitor younger than the window counts from its first check (`sinceFirst`),
+ * which can predate its creation date and is never after its first downtime. There is no figure when
+ * the changes stop short of the window's start, as the state before them is unknown, or until some
+ * time has passed.
  */
-export function uptimeShare(periods: Downtime[], created: number, now: number, window: number): number | undefined {
-  const from = Math.max(created, now - window)
+export function uptimeShare(history: { changes: StateChange[]; toFirst: boolean }, now: number, window: number): Uptime | undefined {
+  const oldest = history.changes.at(-1)
+  if (!oldest) return undefined
+  const first = Date.parse(oldest.startCheck)
+  const start = now - window
+  if (first > start && !history.toFirst) return undefined
+  const sinceFirst = first > start
+  const from = sinceFirst ? first : start
   if (now <= from) return undefined
-  const down = periods.reduce((total, period) => total + Math.max(0, Math.min(period.to, now) - Math.max(period.from, from)), 0)
-  return 1 - down / (now - from)
+  const down = downtimes(history.changes, now).reduce((total, period) => total + Math.max(0, Math.min(period.to, now) - Math.max(period.from, from)), 0)
+  return { share: 1 - down / (now - from), sinceFirst }
 }
 
 // `100%`, `99.2%`; never rounded up to 100% while there was downtime.

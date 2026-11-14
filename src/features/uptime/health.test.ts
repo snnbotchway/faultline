@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Health, checkHealth, checkScale, downtimes, healthOf, percent, uptimeShare, type Downtime } from './health'
+import { Health, checkHealth, checkScale, downtimes, healthOf, percent, uptimeShare } from './health'
 import { HOUR_MS, MINUTE_MS } from '@/lib/time'
 
 const NOW = Date.parse('2026-11-14T12:00:00Z')
@@ -71,21 +71,20 @@ describe('checkScale', () => {
 })
 
 describe('uptimeShare', () => {
-  const now = 100 * HOUR_MS
-  const day = 24 * HOUR_MS
-  const down = (from: number, to: number): Downtime => ({ from, to, reason: 2, ongoing: false })
+  const DAY = 24 * HOUR_MS
+  const H = 60
 
-  it('is the share of the window not spent down', () => {
-    expect(uptimeShare([down(now - 6 * HOUR_MS, now - 3 * HOUR_MS)], now - 100 * HOUR_MS, now, day)).toBeCloseTo(0.875)
+  it('is the share of the window not spent down, counting only the part of a downtime inside it', () => {
+    // Down 6h-3h ago, and from 30h ago until 20h ago, of which the last 4h are in the window.
+    const changes = [change(3 * H, true), change(6 * H, false), change(20 * H, true), change(30 * H, false), change(50 * H, true)]
+    expect(uptimeShare({ changes, toFirst: false }, NOW, DAY)).toEqual({ share: expect.closeTo(1 - 7 / 24), sinceFirst: false })
   })
-  it('counts only the part of a downtime inside the window', () => {
-    expect(uptimeShare([down(now - 30 * HOUR_MS, now - 20 * HOUR_MS)], now - 100 * HOUR_MS, now, day)).toBeCloseTo(1 - 4 / 24)
+  it('counts a monitor younger than the window from its first check, down as it may have been', () => {
+    const changes = [change(5 * H, true), change(10 * H, false)]
+    expect(uptimeShare({ changes, toFirst: true }, NOW, DAY)).toEqual({ share: 0.5, sinceFirst: true })
   })
-  it('does not count the time before the monitor was made', () => {
-    expect(uptimeShare([down(now - 10 * HOUR_MS, now)], now - 10 * HOUR_MS, now, day)).toBe(0)
-  })
-  it('has no figure for a monitor made just now', () => {
-    expect(uptimeShare([], now, now, day)).toBeUndefined()
+  it('has no figure when the changes stop short of the window and the first check', () => {
+    expect(uptimeShare({ changes: [change(3 * H, true), change(6 * H, false)], toFirst: false }, NOW, DAY)).toBeUndefined()
   })
 })
 

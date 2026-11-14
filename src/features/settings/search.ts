@@ -4,7 +4,7 @@ import type { Organization } from '@/api/organizations'
 import type { Project } from '@/api/projects'
 import type { SignInApp } from '@/api/sign-in-apps'
 import type { Team } from '@/api/teams'
-import { hasWords, searchWords } from '@/lib/text'
+import { hasWords, plural, searchWords } from '@/lib/text'
 import { memberName, teamLabel, teamList } from './labels'
 import { platformName } from './platforms'
 import { ProjectTab } from './project-tabs'
@@ -13,7 +13,6 @@ import { TeamTab } from './team-tabs'
 
 // One thing the settings search can land on: where it sits, what it is set to, and the page that changes it.
 export type Entry = { path: string[]; value: string; link: LinkProps }
-
 
 export function settingsEntries({
   organization,
@@ -43,7 +42,7 @@ export function settingsEntries({
     })),
     ...teams.map((team) => ({
       path: ['Teams', teamLabel(team.slug)],
-      value: `${team.memberCount} ${team.memberCount === 1 ? 'member' : 'members'}`,
+      value: plural(team.memberCount, 'member'),
       link: { to: '/$org/settings/teams/$team/$tab', params: { org, team: team.slug, tab: TeamTab.members } } as LinkProps,
     })),
     ...(signInApps

@@ -80,6 +80,7 @@ export function useIssueActions(org: string) {
         const [id] = target.ids
         if (!id || target.ids.length > 1 || !('ids' in target.selection)) throw new Error('Resolve in the next release works on one issue at a time.')
         const detail = issueKeys.detail(org, id)
+        await queryClient.cancelQueries({ queryKey: detail })
         const before = queryClient.getQueryData<IssueDetail>(detail)
         if (before) queryClient.setQueryData<IssueDetail>(detail, { ...before, status: IssueStatus.resolved })
         let release: string | null | undefined

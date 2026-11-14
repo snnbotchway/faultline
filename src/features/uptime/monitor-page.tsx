@@ -434,6 +434,14 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
           <button type="button" className="text-brand hover:underline" onClick={() => void checks.refetch()}>
             Try again
           </button>
+          {cursors.length > 1 && (
+            <>
+              {' · '}
+              <button type="button" className="text-brand hover:underline" onClick={() => setCursors([undefined])}>
+                Back to newest
+              </button>
+            </>
+          )}
         </p>
       ) : items.length === 0 ? (
         <p className="py-4 text-muted-foreground">{view === ChecksView.incidents ? 'No incidents recorded.' : 'No checks yet.'}</p>

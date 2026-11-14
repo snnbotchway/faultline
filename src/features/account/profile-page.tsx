@@ -9,7 +9,8 @@ import { FormAlert } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
-import { Theme, setTheme, useTheme } from '@/lib/theme'
+import { Theme, useTheme } from '@/lib/theme'
+import { useChooseTheme } from '@/lib/theme-sync'
 import { useTitle } from '@/lib/title'
 import { DeleteAccountDialog } from './delete-dialog'
 import { DetailsDialog } from './details-dialog'
@@ -73,6 +74,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
   const alerts = useQuery(alertsQuery).data
   const settings = useQuery(instanceSettingsQuery).data
   const theme = useTheme()
+  const chooseTheme = useChooseTheme()
   const [task, setTask] = useState<Task | null>(null)
   const [created, setCreated] = useState<ApiToken | null>(null)
   const close = () => setTask(null)
@@ -136,7 +138,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
           onClick={open(Task.emails)}
         />
         <ControlRow name="Theme">
-          <Segmented label="Theme" value={theme} options={THEMES} onChange={setTheme} />
+          <Segmented label="Theme" value={theme} options={THEMES} onChange={chooseTheme} />
         </ControlRow>
 
         <Heading>Sign-in</Heading>

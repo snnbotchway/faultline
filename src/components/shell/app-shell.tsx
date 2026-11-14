@@ -21,11 +21,15 @@ import { NewOrganizationDialog } from '@/features/settings/new-organization'
 import { useHotkeys } from '@/lib/hotkeys'
 import { useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
-import { Theme, setTheme, useTheme } from '@/lib/theme'
+import { Theme, useTheme } from '@/lib/theme'
+import { useChooseTheme, useThemeSync } from '@/lib/theme-sync'
 import { cn } from '@/lib/utils'
+import { VerifyEmailBanner } from './banners'
 import { palette, CommandGroup, useCommands, type Command } from './commands'
 import { Palette } from './palette'
 import { ScopeFilters } from './scope-filters'
+import { SupportItems, SupportMenu } from './support-menu'
+import { useOverLimitNotice } from './use-over-limit-notice'
 import { SECTIONS, SECTION_OF_PAGE, TAB_PATHS, sectionLink, type Section } from './sections'
 
 const THEMES = [
@@ -58,8 +62,9 @@ function SectionLink({ org, section, className, children }: { org: string; secti
 
 function ThemeItems() {
   const theme = useTheme()
+  const chooseTheme = useChooseTheme()
   return (
-    <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as Theme)}>
+    <DropdownMenuRadioGroup value={theme} onValueChange={(value) => chooseTheme(value as Theme)}>
       {THEMES.map(({ value, label, icon: Icon }) => (
         <DropdownMenuRadioItem key={value} value={value}>
           <Icon />
@@ -170,6 +175,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
           <Search className="size-3 max-lg:size-4" />
           <Kbd className="border-0 px-0 opacity-100">⌘K</Kbd>
         </Button>
+        <SupportMenu />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" className="max-lg:hidden" aria-label="Theme">
@@ -239,6 +245,9 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
           <DropdownMenuLabel>Theme</DropdownMenuLabel>
           <ThemeItems />
           <DropdownMenuSeparator />
+          <DropdownMenuLabel>Support</DropdownMenuLabel>
+          <SupportItems />
+          <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link to="/profile">
               <UserRound />
@@ -263,6 +272,9 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
   const organizations = useQuery(organizationsQuery).data ?? []
   const navigate = useNavigate()
   const leave = useSignOut()
+  const chooseTheme = useChooseTheme()
+  useThemeSync()
+  useOverLimitNotice(org)
 
   const commands: Command[] = [
     ...sections
@@ -290,7 +302,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
         detail: organization.name === organization.slug ? undefined : organization.slug,
         run: () => void navigate({ to: '/$org/issues', params: { org: organization.slug } }),
       })),
-    ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => setTheme(t.value) })),
+    ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => chooseTheme(t.value) })),
     { id: 'profile', group: CommandGroup.account, label: 'Profile', run: () => void navigate({ to: '/profile' }) },
     { id: 'sign-out', group: CommandGroup.account, label: 'Sign out', run: () => void leave() },
   ]
@@ -300,6 +312,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
   return (
     <div className="flex min-h-dvh flex-col max-lg:pb-14">
       <TopBar org={org} current={current} inbox={current === 'issues' && deeper.length === 0} />
+      <VerifyEmailBanner />
       {children}
       <TabBar org={org} current={current} />
       <Notice />

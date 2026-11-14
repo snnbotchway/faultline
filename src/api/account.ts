@@ -41,6 +41,8 @@ export const accountKeys = {
 export const emailsQuery = queryOptions({
   queryKey: accountKeys.emails,
   queryFn: async () => unwrap(await api.GET('/api/0/users/{user_id}/emails/', me)),
+  // The shell's banner follows verification done in another tab or on the phone.
+  refetchInterval: 5 * 60_000,
 })
 
 // What stops the account being deleted. The backend refuses an owner of any organization, and anyone whose

@@ -2,8 +2,10 @@ import { useSyncExternalStore } from 'react'
 
 export const Theme = { system: 'system', light: 'light', dark: 'dark' } as const
 export type Theme = (typeof Theme)[keyof typeof Theme]
+export const isTheme = (value: unknown): value is Theme => Object.values<unknown>(Theme).includes(value)
 
 // Same key as the stock GlitchTip UI, so a saved choice carries over. public/theme.js reads it before paint.
+// It is this browser's copy of the choice; the user's `preferredTheme` follows them between browsers (lib/theme-sync.ts).
 const KEY = 'theme'
 const listeners = new Set<() => void>()
 const prefersDark = () => window.matchMedia('(prefers-color-scheme: dark)')

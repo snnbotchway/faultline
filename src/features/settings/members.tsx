@@ -131,7 +131,7 @@ function MemberRow(props: RowProps) {
         {summary}
         <span className="flex w-16 shrink-0 justify-end">
           {mine && member.role !== OrgRole.owner && (
-            <Button size="bar" onClick={() => setLeaving(true)}>
+            <Button onClick={() => setLeaving(true)}>
               Leave
             </Button>
           )}

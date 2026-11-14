@@ -123,7 +123,7 @@ function TeamRow(props: RowProps) {
           </span>
         </span>
         {me && canChange(me.id) && (
-          <Button size="bar" className="relative z-10 w-16" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
+          <Button className="relative z-10 w-16" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
             {team.isMember ? 'Leave' : 'Join'}
           </Button>
         )}

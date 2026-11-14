@@ -178,7 +178,7 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
           <Row
             label="Delete project"
             action={
-              <Button variant="destructive" size="bar" onClick={() => setDeleting(true)}>
+              <Button variant="destructive" onClick={() => setDeleting(true)}>
                 Delete
               </Button>
             }

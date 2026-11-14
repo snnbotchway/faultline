@@ -73,9 +73,10 @@ export function releaseMarks(releases: { shortVersion: string; dateCreated: stri
 
 export type MarkLabel = { at: number; text: string; end: boolean }
 
-// Labels are text-xs Plex Mono: 0.6em a character. Each keeps its padding and a gap from the next.
+// Labels are text-xs Plex Mono: 0.6em a character. Each has the 4px padding of `pl-1`/`pr-1` in `MarkLabels`, then an
+// 8px gap before the next.
 const LABEL_CHAR = 7.2
-const LABEL_SPACE = 12
+const LABEL_SPACE = 4 + 8
 // Past this point a label ends at its mark, so it stays on the chart.
 const LABEL_END = 0.8
 

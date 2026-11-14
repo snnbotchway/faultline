@@ -14,6 +14,8 @@ import { OTHER_PLATFORM, platformName, shownPlatform, storedPlatform } from './p
 import { ProjectTab } from './project-tabs'
 
 const POLL_MS = 5000
+// How many times the set-up step asks for the first issue after the first event: a minute's worth.
+const ISSUE_TRIES = 12
 
 /**
  * The set-up step: what to paste, and whether it worked. The page asks the backend for the project's first event
@@ -77,21 +79,26 @@ function Waiting() {
 
 function Arrived({ org, slug, projectId, firstEvent }: { org: string; slug: string; projectId: string; firstEvent: string }) {
   // The backend marks the first event before it files the issue, and a transaction marks it with no issue at all,
-  // so this keeps asking until an issue is there.
-  const issue = useQuery({ ...latestIssueQuery(org, projectId), refetchInterval: (query) => (query.state.data ? false : POLL_MS) }).data
+  // so this asks again for a while, then stops.
   const queryClient = useQueryClient()
+  const options = latestIssueQuery(org, projectId)
+  const issue = useQuery({ ...options, refetchInterval: (query) => (query.state.data || query.state.dataUpdateCount >= ISSUE_TRIES ? false : POLL_MS) }).data
+  const gaveUp = issue === null && (queryClient.getQueryState(options.queryKey)?.dataUpdateCount ?? 0) >= ISSUE_TRIES
+  // Whether the issue was missing while this was open, so it arrived just now rather than long ago.
+  const [waited, setWaited] = useState(false)
+  if (issue === null && !waited) setWaited(true)
   const issueId = issue?.id
   // The backend files an event's environment before its issue, so once the issue is in, the environment is too.
   useEffect(() => {
-    if (!issueId) return
-    void queryClient.invalidateQueries(stale.projectEnvironments(org, slug))
+    if (!issueId || !waited) return
+    void queryClient.invalidateQueries(stale.project(org, slug))
     void queryClient.invalidateQueries(stale.environments(org))
-  }, [issueId, queryClient, org, slug])
+  }, [issueId, waited, queryClient, org, slug])
   return (
     <div role="status" className="border border-ok/60">
       <div className="flex min-h-11 items-center gap-2 px-3">
         <CircleCheck className="size-4 shrink-0 text-ok" aria-hidden />
-        <span className="font-medium">First event received</span>
+        <span className="font-medium">{gaveUp ? 'Event received. No issue yet.' : 'First event received'}</span>
         <span className="mono ml-auto text-muted-foreground">{ago(firstEvent)} ago</span>
       </div>
       {issue && (

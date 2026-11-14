@@ -18,8 +18,8 @@ export const stale = {
   environments: (org: string): QueryFilters => ({ queryKey: organizationKeys.environments(org) }),
   // The list of projects and each project's own page.
   projects: (org: string): QueryFilters => ({ queryKey: organizationKeys.projects(org) }),
+  // One project's page: the project, its keys and its environments.
   project: (org: string, project: string): QueryFilters => ({ queryKey: projectKeys.detail(org, project) }),
-  projectEnvironments: (org: string, project: string): QueryFilters => ({ queryKey: projectKeys.environments(org, project) }),
   // Every list of issues, not the issues themselves.
   issueLists: (org: string): QueryFilters => ({ queryKey: issueKeys.lists(org) }),
   signInApps: (org: string): QueryFilters => ({ queryKey: signInAppKeys.all(org) }),

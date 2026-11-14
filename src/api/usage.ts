@@ -8,15 +8,17 @@ export const USAGE_CATEGORIES = Object.values(UsageCategory)
 export type UsageCounts = Record<UsageCategory, number>
 export type UsageDay = { date: string; counts: UsageCounts }
 
-// The backend reports logs and uptime checks at a tenth of what arrived (its billing weight). This turns them back
-// into the number that arrived.
-const WEIGHT = 0.1
-const arrived = (billed: number) => Math.round(billed / WEIGHT)
+// GlitchTip counts ten logs or ten uptime checks as one billed event, and its usage endpoints report the billed
+// figure. Mirrors `USAGE_WEIGHTS` (`log_count` and `uptime_check_event_count`) in GlitchTip 7.0.0,
+// `apps/organizations_ext/models.py:50`.
+const BILLED_PER_ARRIVED = 0.1
+// The number that arrived, from the billed figure. Always whole, whatever the float the backend sent.
+const arrived = (billed: number) => Math.round(billed / BILLED_PER_ARRIVED)
 
 type Billed = { eventCount: number; transactionEventCount: number; logEventCount: number; uptimeCheckEventCount: number }
 const toCounts = (billed: Billed): UsageCounts => ({
-  errors: billed.eventCount,
-  transactions: billed.transactionEventCount,
+  errors: Math.round(billed.eventCount),
+  transactions: Math.round(billed.transactionEventCount),
   logs: arrived(billed.logEventCount),
   uptime: arrived(billed.uptimeCheckEventCount),
 })
@@ -65,7 +67,8 @@ const USAGE_DAYS = 30
 type StatsResponse = { intervals: string[]; groups: { series: Record<string, (number | null)[]> }[] }
 const FIELD = 'sum(quantity)'
 
-export type ProjectUsage = { id: string; errors: number; transactions: number; days: Record<string, number> }
+// `days` is keyed by UTC date, as the daily counts are.
+export type ProjectUsage = { id: string; errors: number; transactions: number; days: Record<string, { errors: number; transactions: number }> }
 
 // Errors and transactions per project over the same 30 days. The backend only splits these two by project; logs and
 // uptime checks are counted for the organization as a whole. Hourly, because its daily buckets only count the first
@@ -92,8 +95,10 @@ export const projectUsageQuery = (org: string, ids: string[]) =>
       return Promise.all(
         ids.map(async (id) => {
           const [errors, transactions] = await Promise.all([series(id, 'error'), series(id, 'transaction')])
-          const days: Record<string, number> = {}
-          for (const { day, count } of [...errors, ...transactions]) days[day] = (days[day] ?? 0) + count
+          const days: ProjectUsage['days'] = {}
+          const at = (day: string) => (days[day] ??= { errors: 0, transactions: 0 })
+          for (const { day, count } of errors) at(day).errors += count
+          for (const { day, count } of transactions) at(day).transactions += count
           const sum = (rows: { count: number }[]) => rows.reduce((total, row) => total + row.count, 0)
           return { id, errors: sum(errors), transactions: sum(transactions), days }
         }),

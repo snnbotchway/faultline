@@ -25,7 +25,7 @@ export type IssueLevel = (typeof IssueLevel)[keyof typeof IssueLevel]
 export const AssigneeType = { user: 'user', team: 'team' } as const
 export type AssigneeType = (typeof AssigneeType)[keyof typeof AssigneeType]
 
-export const EventEntryType = { exception: 'exception', breadcrumbs: 'breadcrumbs', request: 'request', message: 'message' } as const
+export const EventEntryType = { exception: 'exception', breadcrumbs: 'breadcrumbs', request: 'request', message: 'message', csp: 'csp' } as const
 export type EventEntryType = (typeof EventEntryType)[keyof typeof EventEntryType]
 
 // Tags the screens read by name.

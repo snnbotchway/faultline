@@ -17,7 +17,7 @@ export type ExceptionValue = {
   value?: string | null
   module?: string | null
   stacktrace?: { frames?: Frame[] | null } | null
-  mechanism?: { type?: string; handled?: boolean | null } | null
+  mechanism?: { type?: string | null; handled?: boolean | null; description?: string | null; data?: { function?: string | null } | null } | null
 }
 export type Crumb = {
   type?: string | null
@@ -33,9 +33,12 @@ export type RequestEntry = {
   query?: [string, string][] | null
   headers?: [string, string][] | null
   data?: unknown
-  cookies?: [string, string][] | null
+  // An object of name to value on 7.0.0; other SDKs send pairs or the header's text.
+  cookies?: Record<string, unknown> | [string, string][] | string | null
   env?: Record<string, unknown> | null
 }
+// The report a browser sends when a content security policy blocks something, keyed as the browser names its fields.
+export type CspEntry = Record<string, unknown>
 
 function entry<T>(event: IssueEvent, type: EventEntryType): T | undefined {
   const found = (event.entries as { type: string; data: unknown }[] | undefined)?.find((item) => item.type === type)
@@ -46,7 +49,18 @@ function entry<T>(event: IssueEvent, type: EventEntryType): T | undefined {
 export const exceptionsOf = (event: IssueEvent) => entry<{ values?: ExceptionValue[] }>(event, EventEntryType.exception)?.values ?? []
 export const crumbsOf = (event: IssueEvent) => entry<{ values?: Crumb[] }>(event, EventEntryType.breadcrumbs)?.values ?? []
 export const requestOf = (event: IssueEvent) => entry<RequestEntry>(event, EventEntryType.request)
+export const cspOf = (event: IssueEvent) => entry<CspEntry>(event, EventEntryType.csp)
 export const messageOf = (event: IssueEvent) => entry<{ formatted?: string; message?: string }>(event, EventEntryType.message)
+
+export function cookiesOf(request: RequestEntry): [string, unknown][] {
+  const { cookies } = request
+  if (!cookies) return []
+  if (typeof cookies === 'string') return cookies.split(/;\s*/).filter(Boolean).map((pair) => {
+    const at = pair.indexOf('=')
+    return at < 0 ? [pair, ''] : [pair.slice(0, at), pair.slice(at + 1)]
+  })
+  return Array.isArray(cookies) ? cookies : Object.entries(cookies)
+}
 
 // Frames arrive oldest call first; the screen reads from where it threw.
 export const framesOf = (exception: ExceptionValue) => [...(exception.stacktrace?.frames ?? [])].reverse()

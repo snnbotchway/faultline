@@ -6,7 +6,7 @@ import { PageBar } from '@/components/shell/app-shell'
 export function ListPageBar({ title, children }: { title: string; children: ReactNode }) {
   return (
     <PageBar className="max-lg:h-auto max-lg:flex-wrap max-lg:gap-y-0 max-lg:pb-2">
-      <h1 className="shrink-0 font-semibold max-lg:flex max-lg:h-11 max-lg:items-center">{title}</h1>
+      <h1 className="shrink-0 text-2xl font-semibold max-lg:flex max-lg:h-11 max-lg:items-center">{title}</h1>
       {children}
     </PageBar>
   )

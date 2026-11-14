@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { Scope, teamsQuery } from '@/api/organizations'
@@ -25,6 +25,7 @@ export function NewProject({ org }: { org: string }) {
   useTitle('New project', org)
   const can = useAccess(org)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const teams = useQuery(teamsQuery(org)).data
   const [name, setName] = useState('')
   const [platform, setPlatform] = useState(OTHER_PLATFORM)
@@ -35,10 +36,17 @@ export function NewProject({ org }: { org: string }) {
   const firstTeam = teams?.length === 0
   const teamError = firstTeam ? teamSlugError(newTeam, []) : undefined
 
+  // The team stays if the project then fails, so the list is fetched again at once and a retry picks the team
+  // rather than making it twice.
+  const makeFirstTeam = async () => {
+    const made = await teamActions.create(org, newTeam.trim())
+    await queryClient.invalidateQueries(stale.teams(org))
+    return made.slug
+  }
   const create = useChange(
     'create the project',
     async () => {
-      const slug = firstTeam ? (await teamActions.create(org, newTeam.trim())).slug : (team ?? teams![0]!.slug)
+      const slug = firstTeam ? await makeFirstTeam() : (team ?? teams![0]!.slug)
       return projectActions.create(org, slug, { name: name.trim(), platform: storedPlatform(platform) })
     },
     {

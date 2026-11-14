@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { Failure, useAccess, useChange, useOwnMember } from './access'
 import { Confirm, RoleField, TeamChecklist } from './fields'
 import { InviteDialog } from './invite-dialog'
-import { CopyButton, FoldRow, FormError, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
+import { CopyButton, FoldChevron, FormError, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { memberName, teamList } from './labels'
 import { ROLE_LABEL } from './roles'
 
@@ -143,7 +143,7 @@ function MemberRow(props: RowProps) {
     <li className={cn(open && 'bg-card')}>
       <button type="button" aria-expanded={open} onClick={onToggle} className={cn('flex min-h-14 w-full items-center gap-3 border-b px-3 text-left -outline-offset-2 hover:bg-accent md:px-4', open && 'border-b-0')}>
         {summary}
-        <FoldRow.Chevron open={open} />
+        <FoldChevron open={open} />
       </button>
       {open && (memberTeams ? <MemberEditor {...props} memberTeams={memberTeams} mine={mine} /> : <RowSkeleton rows={2} />)}
     </li>

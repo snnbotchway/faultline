@@ -14,7 +14,7 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { Failure, useAccess, useChange, useOwnMember } from './access'
 import { Confirm } from './fields'
-import { Field, FoldRow, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
+import { Field, FoldChevron, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
 import { atLeast } from './roles'
 import { plural } from '@/lib/text'
 import { memberName, projectHasTeam, teamLabel } from './labels'
@@ -127,7 +127,7 @@ function TeamRow(props: RowProps) {
             {team.isMember ? 'Leave' : 'Join'}
           </Button>
         )}
-        <FoldRow.Chevron open={open} />
+        <FoldChevron open={open} />
       </div>
       {open && <TeamDetail {...props} opens={opens} />}
     </li>

@@ -52,7 +52,8 @@ export function GroupAction({ className, ...props }: React.ComponentProps<typeof
 export const ROW = 'flex min-h-12 w-full items-center gap-3 border-b px-3 text-left md:px-4 lg:min-h-11'
 export const ROW_LABEL = 'w-36 shrink-0 font-medium lg:w-52'
 
-const Chevron = ({ open }: { open: boolean }) => (
+// Whether a row is unfolded, for rows built outside `FoldRow`.
+export const FoldChevron = ({ open }: { open: boolean }) => (
   <ChevronDown className={cn('size-4 shrink-0 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
 )
 
@@ -101,14 +102,13 @@ export function FoldRow({
       <button type="button" aria-expanded={open} onClick={onToggle} className={cn(ROW, 'hover:bg-accent', open && 'border-b-0')}>
         <span className={ROW_LABEL}>{label}</span>
         <span className={cn('min-w-0 flex-1 truncate text-muted-foreground', mono && 'mono')}>{value}</span>
-        <Chevron open={open} />
+        <FoldChevron open={open} />
       </button>
       {open && <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-59">{children}</div>}
     </div>
   )
 }
 
-FoldRow.Chevron = Chevron
 
 export function Field({ label, error, className, children }: { label: string; error?: string; className?: string; children: (props: { id: string; 'aria-invalid': boolean; 'aria-describedby'?: string }) => ReactNode }) {
   const id = useId()

@@ -29,7 +29,7 @@ export function LogHistogram({ buckets, height, hour, onPick }: { buckets: Bucke
               aria-label={label}
               title={label}
               onClick={() => onPick(picked ? undefined : bucket.start)}
-              className={cn('flex h-full min-w-0 flex-1 flex-col-reverse justify-start hover:bg-accent max-lg:pointer-events-none', hour !== undefined && !picked && 'opacity-35')}
+              className={cn('flex h-full min-w-0 flex-1 flex-col-reverse justify-start hover:bg-accent max-lg:pointer-events-none', hour !== undefined && !picked && 'dimmed')}
             >
               <span className="w-full bg-foreground/40" style={{ height: px(bucket.other) }} />
               <span className="w-full bg-level-warning" style={{ height: px(bucket.warnings) }} />

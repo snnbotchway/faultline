@@ -259,3 +259,8 @@
   overflow-x: auto;
   scrollbar-width: none;
 }
+
+/* What a pick in a chart leaves out: the other hours of the log chart, the other kinds of a request. */
+@utility dimmed {
+  opacity: 30%;
+}

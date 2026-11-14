@@ -30,14 +30,14 @@ function RequestSplit({ rows, outside, total, kind }: { rows: SpanRow[]; outside
             'mono grid min-w-1 place-items-center overflow-hidden text-xs',
             SHADES[index % SHADES.length],
             SHADE_TEXT[index % SHADES.length],
-            kind && kindOf(row.op) !== kind && 'opacity-25',
+            kind && kindOf(row.op) !== kind && 'dimmed',
           )}
           style={{ width: `${(row.time / total) * 100}%` }}
         >
           {row.time / total > NUMBERED_FROM ? index + 1 : ''}
         </span>
       ))}
-      {outside > 0 && <span className={cn('min-w-1 border', kind && 'opacity-25')} style={{ width: `${(outside / total) * 100}%` }} />}
+      {outside > 0 && <span className={cn('min-w-1 border', kind && 'dimmed')} style={{ width: `${(outside / total) * 100}%` }} />}
     </div>
   )
 }

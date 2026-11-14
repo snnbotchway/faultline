@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrototypeInboxRouteImport } from './routes/prototype.inbox'
+import { Route as PrototypeIssueRouteImport } from './routes/prototype.issue'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrototypeInboxRoute = PrototypeInboxRouteImport.update({
+  id: '/prototype/inbox',
+  path: '/prototype/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrototypeIssueRoute = PrototypeIssueRouteImport.update({
+  id: '/prototype/issue',
+  path: '/prototype/issue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/prototype/inbox': typeof PrototypeInboxRoute
+  '/prototype/issue': typeof PrototypeIssueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/prototype/inbox': typeof PrototypeInboxRoute
+  '/prototype/issue': typeof PrototypeIssueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/prototype/inbox': typeof PrototypeInboxRoute
+  '/prototype/issue': typeof PrototypeIssueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/prototype/inbox' | '/prototype/issue'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/prototype/inbox' | '/prototype/issue'
+  id: '__root__' | '/' | '/prototype/inbox' | '/prototype/issue'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrototypeInboxRoute: typeof PrototypeInboxRoute
+  PrototypeIssueRoute: typeof PrototypeIssueRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prototype/inbox': {
+      id: '/prototype/inbox'
+      path: '/prototype/inbox'
+      fullPath: '/prototype/inbox'
+      preLoaderRoute: typeof PrototypeInboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prototype/issue': {
+      id: '/prototype/issue'
+      path: '/prototype/issue'
+      fullPath: '/prototype/issue'
+      preLoaderRoute: typeof PrototypeIssueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrototypeInboxRoute: PrototypeInboxRoute,
+  PrototypeIssueRoute: PrototypeIssueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,17 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
-import { issueEventQuery, type Issue } from '@/api/issues'
+import { issueEventQuery, type Issue, type IssueStatus } from '@/api/issues'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { crumbText, crumbsOf, frameFile, throwingFrame } from './event'
 import { exact } from './format'
-import { Skeleton } from './parts'
 import { ContextLines } from './stack-trace'
+import { statusActions, type StatusView } from './status'
 
 const LAST_CRUMBS = 4
 
+export type RowHandlers = {
+  toggle: (id: string) => void
+  unfold: (id: string) => void
+  assign: (id: string) => void
+  setStatus: (id: string, status: IssueStatus) => void
+}
+
 // The unfolded row: enough of the latest event to decide what to do without leaving the list.
-export function Dossier({ org, issue, children }: { org: string; issue: Issue; children?: ReactNode }) {
+export function Dossier({ org, issue, view, canWrite, handlers }: { org: string; issue: Issue; view: StatusView; canWrite: boolean; handlers: RowHandlers }) {
   const event = useQuery(issueEventQuery(org, issue.id))
   const frame = event.data && throwingFrame(event.data)
   const crumbs = event.data ? crumbsOf(event.data).slice(-LAST_CRUMBS) : []
@@ -65,7 +72,18 @@ export function Dossier({ org, issue, children }: { org: string; issue: Issue; c
           <p className="mono text-muted-foreground">{issue.culprit}</p>
         )}
         <div className="mt-4 flex justify-end gap-1.5">
-          {children}
+          {canWrite && (
+            <>
+              {statusActions(view).map((action, index) => (
+                <Button key={action.status} size="sm" variant={index === 0 ? 'default' : 'outline'} onClick={() => handlers.setStatus(issue.id, action.status)}>
+                  {action.action}
+                </Button>
+              ))}
+              <Button size="sm" onClick={() => handlers.assign(issue.id)}>
+                Assign
+              </Button>
+            </>
+          )}
           <Button size="sm" asChild>
             <Link to="/$org/issues/$issueId" params={{ org, issueId: issue.id }}>
               Open

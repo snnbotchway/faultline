@@ -133,7 +133,10 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   const move = (step: number) => {
     const index = cursor ? loadedIds.indexOf(cursor) : -1
     const next = loadedIds[Math.max(0, Math.min(loadedIds.length - 1, index + step))]
-    if (next) setCursor(next)
+    if (!next) return
+    setCursor(next)
+    // Focus follows the cursor, so a screen reader reads the row and Enter opens it as the link it is.
+    document.querySelector<HTMLElement>(`[data-issue="${next}"] a`)?.focus({ preventScroll: true })
   }
 
   const { toggle, extendTo } = selection

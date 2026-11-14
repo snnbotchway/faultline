@@ -52,7 +52,7 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
     if (current) ref.current?.scrollIntoView({ block: 'nearest' })
   }, [current])
   return (
-    <li ref={ref} className="scroll-mt-28 scroll-mb-20 border-b">
+    <li ref={ref} data-issue={issue.id} className="scroll-mt-28 scroll-mb-20 border-b">
       <div
         className={cn(
           'relative grid items-center pr-3 transition-colors duration-100 lg:pr-4',

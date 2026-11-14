@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
-import { SessionStatus, sessionQuery } from '@/api/auth'
 import {
   IssueLevel,
+  TagKey,
   issueActions,
-  issueCommentsQuery,
   issueHashesQuery,
   issueKeys,
   issueTagsQuery,
@@ -14,11 +13,10 @@ import {
 } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Textarea } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { failed } from '@/lib/notice'
 import { cn } from '@/lib/utils'
-import { crumbText, crumbsOf, requestOf, valueText, type Crumb } from './event'
+import { crumbKind, crumbText, crumbsOf, requestOf, valueText, type Crumb } from './event'
 import { levelColor } from './levels'
 import { ago, exact, hourLabel } from './format'
 import { DEFAULT_QUERY, withFilter } from './search'
@@ -63,18 +61,18 @@ export function Timeline({ event, title }: { event: IssueEvent; title: string })
           </li>
         )}
         {shown.map((crumb, index) => (
-          <li key={index} className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 border-b px-3 py-1.5 lg:grid-cols-[64px_96px_minmax(0,1fr)]">
+          <li key={index} className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 border-b px-3 py-2 lg:grid-cols-[64px_96px_minmax(0,1fr)]">
             <span className="text-right text-muted-foreground">{crumbTime(crumb, errorAt)}</span>
             <span className={cn('truncate max-lg:hidden', crumb.level === IssueLevel.error || crumb.level === IssueLevel.warning ? levelColor(crumb.level) : 'text-muted-foreground')}>
-              {crumb.category ?? crumb.type}
+              {crumbKind(crumb)}
             </span>
             <span className="min-w-0 break-words">
-              <span className="text-muted-foreground lg:hidden">{crumb.category ?? crumb.type} </span>
+              <span className="text-muted-foreground lg:hidden">{crumbKind(crumb)} </span>
               {crumbText(crumb)}
             </span>
           </li>
         ))}
-        <li className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 bg-hit px-3 py-1.5 font-semibold lg:grid-cols-[64px_96px_minmax(0,1fr)]">
+        <li className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 bg-hit px-3 py-2 font-semibold lg:grid-cols-[64px_96px_minmax(0,1fr)]">
           <span className="text-right">0.0s</span>
           <span className="max-lg:hidden">threw</span>
           <span className="min-w-0 break-words">{title}</span>
@@ -118,7 +116,7 @@ export function RequestSection({ event }: { event: IssueEvent }) {
     <Section title="Request">
       <div className="border">
         <p className="mono flex gap-3 px-3 py-2">
-          <span className="font-semibold">{request.method ?? 'GET'}</span>
+          {request.method && <span className="font-semibold">{request.method}</span>}
           <span className="min-w-0 break-all">{request.url}</span>
         </p>
         {!!request.query?.length && (
@@ -144,7 +142,7 @@ export function RequestSection({ event }: { event: IssueEvent }) {
 const TOP_VALUES = 4
 
 // The backend builds the `browser` tag as "name version" and writes "None" when the SDK sent no version.
-const tagLabel = (key: string, value: string) => (key === 'browser' ? value.replace(/ None$/, '') : value)
+const tagLabel = (key: string, value: string) => (key === TagKey.browser ? value.replace(/ None$/, '') : value)
 
 // Clicking a value opens the inbox filtered to it.
 export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
@@ -156,7 +154,7 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
       <div className="space-y-3">
         {tags.data.map((tag) => (
           <div key={tag.key}>
-            <h3 className="mono mb-0.5 text-muted-foreground">{tag.key}</h3>
+            <h3 className="mono mb-1 text-muted-foreground">{tag.key}</h3>
             <ul>
               {tag.topValues.slice(0, TOP_VALUES).map((top) => (
                 <li key={top.value}>
@@ -164,9 +162,9 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
                     to="/$org/issues"
                     params={{ org }}
                     search={{ query: withFilter(DEFAULT_QUERY, tag.key, top.value) }}
-                    className="mono relative flex min-h-6 items-center gap-3 pr-1.5 hover:bg-accent max-lg:min-h-11"
+                    className="mono relative flex min-h-6 items-center gap-3 pr-2 hover:bg-accent max-lg:min-h-11"
                   >
-                    <span className="absolute inset-y-0.5 left-12 bg-foreground/10" style={{ width: `calc((100% - 3rem) * ${top.count / Math.max(1, tag.totalValues)})` }} aria-hidden />
+                    <span className="absolute inset-y-1 left-12 bg-foreground/10" style={{ width: `calc((100% - 3rem) * ${top.count / Math.max(1, tag.totalValues)})` }} aria-hidden />
                     <span className="relative w-9 shrink-0 text-right text-muted-foreground">{Math.round((top.count / Math.max(1, tag.totalValues)) * 100)}%</span>
                     <span className="relative min-w-0 flex-1 truncate">{tagLabel(tag.key, top.name || top.value)}</span>
                   </Link>
@@ -208,128 +206,6 @@ export function ContextRail({ event }: { event: IssueEvent }) {
   )
 }
 
-export function Comments({ org, issueId, canManage }: { org: string; issueId: string; canManage: boolean }) {
-  const queryClient = useQueryClient()
-  const comments = useQuery(issueCommentsQuery(org, issueId))
-  const session = useQuery(sessionQuery).data
-  const me = session?.status === SessionStatus.authenticated ? String(session.user.id) : undefined
-  const [text, setText] = useState('')
-  const [editing, setEditing] = useState<{ id: number; text: string }>()
-  const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: issueKeys.comments(org, issueId) })
-    void queryClient.invalidateQueries({ queryKey: [...issueKeys.all(org), 'list'] })
-  }
-  const add = useMutation({
-    mutationFn: () => issueActions.comment(org, issueId, text.trim()),
-    onSuccess: () => {
-      setText('')
-      refresh()
-    },
-    onError: (error) => failed(error, 'add the comment'),
-  })
-  const edit = useMutation({
-    mutationFn: (comment: { id: number; text: string }) => issueActions.editComment(org, issueId, comment.id, comment.text.trim()),
-    onSuccess: () => {
-      setEditing(undefined)
-      refresh()
-    },
-    onError: (error) => failed(error, 'save the comment'),
-  })
-  const remove = useMutation({
-    mutationFn: (id: number) => issueActions.deleteComment(org, issueId, id),
-    onSuccess: refresh,
-    onError: (error) => failed(error, 'delete the comment'),
-  })
-  const [removing, setRemoving] = useState<number>()
-
-  return (
-    <Section title="Comments" count={comments.data?.length}>
-      <ul className="space-y-4">
-        {comments.data?.map((comment) => {
-          const id = comment.id
-          if (id == null) return null
-          const mine = canManage || (me !== undefined && String(comment.user?.id) === me)
-          return (
-            <li key={id} className="border-l pl-3">
-              <p className="mono flex flex-wrap items-center gap-x-3 text-muted-foreground">
-                <span className="text-foreground">{comment.user?.email ?? 'Someone'}</span>
-                <time dateTime={comment.dateCreated} title={exact(comment.dateCreated)}>
-                  {ago(comment.dateCreated)}
-                </time>
-                {mine && editing?.id !== id && (
-                  <span className="ml-auto flex gap-3 font-sans text-sm">
-                    {removing === id ? (
-                      <>
-                        <button type="button" className="font-medium text-destructive hover:underline" onClick={() => remove.mutate(id)}>
-                          Delete comment
-                        </button>
-                        <button type="button" className="hover:text-foreground" onClick={() => setRemoving(undefined)}>
-                          Keep
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button type="button" className="hover:text-foreground" onClick={() => setEditing({ id, text: comment.data.text ?? '' })}>
-                          Edit
-                        </button>
-                        <button type="button" className="hover:text-destructive" onClick={() => setRemoving(id)}>
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </span>
-                )}
-              </p>
-              {editing && editing.id === id ? (
-                <form
-                  className="mt-2"
-                  onSubmit={(event) => {
-                    event.preventDefault()
-                    if (editing.text.trim()) edit.mutate(editing)
-                  }}
-                >
-                  <Textarea autoFocus rows={3} value={editing.text} onChange={(event) => setEditing({ ...editing, text: event.target.value })} aria-label="Edit comment" />
-                  <div className="mt-2 flex gap-2">
-                    <Button type="submit" variant="default" size="sm" disabled={edit.isPending}>
-                      Save
-                    </Button>
-                    <Button size="sm" onClick={() => setEditing(undefined)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              ) : (
-                <p className="prose-text mt-1 max-w-[72ch] whitespace-pre-wrap">{comment.data.text}</p>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-      <form
-        className={cn(comments.data?.length ? 'mt-4' : '')}
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (text.trim()) add.mutate()
-        }}
-      >
-        <Textarea
-          rows={2}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          onKeyDown={(event) => (event.metaKey || event.ctrlKey) && event.key === 'Enter' && text.trim() && add.mutate()}
-          placeholder="Add a comment"
-          aria-label="Add a comment"
-        />
-        {text.trim() && (
-          <Button type="submit" size="sm" className="mt-2" disabled={add.isPending} aria-busy={add.isPending}>
-            Comment
-          </Button>
-        )}
-      </form>
-    </Section>
-  )
-}
-
 export function UserReports({ org, issueId }: { org: string; issueId: string }) {
   const reports = useQuery(issueUserReportsQuery(org, issueId)).data
   if (!reports?.length) return null
@@ -345,7 +221,7 @@ export function UserReports({ org, issueId }: { org: string; issueId: string }) 
                 {ago(report.dateCreated)}
               </time>
             </p>
-            <p className="prose-text mt-1 max-w-[72ch] whitespace-pre-wrap">{report.comments}</p>
+            <p className="prose-text mt-1 whitespace-pre-wrap">{report.comments}</p>
           </li>
         ))}
       </ul>

@@ -25,6 +25,10 @@ export type AssigneeType = (typeof AssigneeType)[keyof typeof AssigneeType]
 export const EventEntryType = { exception: 'exception', breadcrumbs: 'breadcrumbs', request: 'request', message: 'message' } as const
 export type EventEntryType = (typeof EventEntryType)[keyof typeof EventEntryType]
 
+// Tags the screens read by name.
+export const TagKey = { userId: 'user.id', userEmail: 'user.email', browser: 'browser' } as const
+export type TagKey = (typeof TagKey)[keyof typeof TagKey]
+
 export const StatsPeriod = { day: '24h', fortnight: '14d' } as const
 export type StatsPeriod = (typeof StatsPeriod)[keyof typeof StatsPeriod]
 

@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { issueEventQuery, type Issue, type IssueStatus } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { crumbText, crumbsOf, frameFile, throwingFrame } from './event'
+import { crumbKind, crumbText, crumbsOf, frameFile, throwingFrame } from './event'
 import { exact } from './format'
 import { ContextLines } from './stack-trace'
 import { ACTION, statusActions, type StatusView } from './status'
@@ -32,7 +32,7 @@ export function Dossier({ org, issue, view, canWrite, handlers }: { org: string;
           <ol className="mono space-y-1">
             {crumbs.map((crumb, index) => (
               <li key={index} className="flex gap-3">
-                <span className="w-20 shrink-0 truncate text-muted-foreground">{crumb.category}</span>
+                <span className="w-20 shrink-0 truncate text-muted-foreground">{crumbKind(crumb)}</span>
                 <span className="min-w-0 truncate">{crumbText(crumb)}</span>
               </li>
             ))}
@@ -61,7 +61,7 @@ export function Dossier({ org, issue, view, canWrite, handlers }: { org: string;
           <Skeleton className="h-28" />
         ) : frame ? (
           <div className="border">
-            <p className="mono truncate border-b bg-muted/60 px-3 py-1.5">
+            <p className="mono truncate border-b bg-muted/60 px-3 py-2">
               {frameFile(frame)}
               {frame.lineNo != null && `:${frame.lineNo}`}
               {frame.function && <span className="text-muted-foreground"> in {frame.function}</span>}
@@ -71,7 +71,7 @@ export function Dossier({ org, issue, view, canWrite, handlers }: { org: string;
         ) : (
           <p className="mono text-muted-foreground">{issue.culprit}</p>
         )}
-        <div className="mt-4 flex justify-end gap-1.5">
+        <div className="mt-4 flex justify-end gap-2">
           {canWrite && (
             <>
               {statusActions(view).map((action, index) => (

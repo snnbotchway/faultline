@@ -65,6 +65,9 @@ export function crumbText(crumb: Crumb): string {
     .join(' ')
 }
 
+// What kind of step a breadcrumb is: its category, or else its type.
+export const crumbKind = (crumb: Crumb) => crumb.category ?? crumb.type
+
 export const frameFile = (frame: Frame) => frame.filename ?? frame.module ?? frame.absPath ?? '?'
 
 // Tag, header and variable values arrive as strings or as structured data.

@@ -5,7 +5,6 @@ import { account, emailsQuery } from '@/api/account'
 import { Feature, instanceSettingsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { useAction } from '@/features/account/use-action'
-import { notify } from '@/lib/notice'
 
 // Shown above every page while the address the user signs in with is unverified and the instance can mail a link.
 export function VerifyEmailBanner() {
@@ -14,10 +13,7 @@ export function VerifyEmailBanner() {
   const [sent, setSent] = useState(false)
   const send = useAction(() => account.sendVerification(primary!.email), {
     action: 'send the verification email',
-    onDone: () => {
-      setSent(true)
-      notify(`Verification email sent to ${primary!.email}`)
-    },
+    onDone: () => setSent(true),
   })
   if (!primary || primary.isVerified || !canSend) return null
   return (

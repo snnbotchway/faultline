@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { MfaType } from './auth'
 import { ApiError, allauthAccount, api, orgPath, unwrap } from './client'
+import { ACCOUNT_REFRESH_MS } from './organizations'
 import { MAX_PAGE_SIZE, fetchAllPages } from './pagination'
 import type { components as AllauthComponents } from './schema/allauth'
 import type { components } from './schema/openapi'
@@ -42,7 +43,7 @@ export const emailsQuery = queryOptions({
   queryKey: accountKeys.emails,
   queryFn: async () => unwrap(await api.GET('/api/0/users/{user_id}/emails/', me)),
   // The shell's banner follows verification done in another tab or on the phone.
-  refetchInterval: 5 * 60_000,
+  refetchInterval: ACCOUNT_REFRESH_MS,
 })
 
 // What stops the account being deleted. The backend refuses an owner of any organization, and anyone whose

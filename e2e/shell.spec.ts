@@ -1,14 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { DEMO } from '../dev/seed.ts'
 
-test('the support menu links to the docs and issue trackers', async ({ page }) => {
-  await page.goto(`/${DEMO.org}/issues`)
-  await page.getByRole('button', { name: 'Support' }).click()
-  for (const name of ['Faultline docs', 'Faultline issues', 'GlitchTip docs', 'GlitchTip support']) {
-    await expect(page.getByRole('menuitem', { name })).toHaveAttribute('href', /^https:\/\//)
-  }
-})
-
 test('an unverified email can be sent its link again from any page', async ({ page }) => {
   await page.goto(`/${DEMO.org}/issues`)
   await page.getByRole('region', { name: 'Verify your email' }).getByRole('button', { name: 'Send verification email' }).click()

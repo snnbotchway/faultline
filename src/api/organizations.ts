@@ -42,7 +42,7 @@ export const hasScope = (access: Access, scope: Scope) => !!access && access.inc
 // Instance settings change rarely; the user, their organizations and the open organization (access, throttling)
 // change when someone else edits them, so the shell keeps all of them fresh while the tab is in view.
 const SETTINGS_REFRESH_MS = 30 * 60_000
-const ACCOUNT_REFRESH_MS = 5 * 60_000
+export const ACCOUNT_REFRESH_MS = 5 * 60_000
 
 export const organizationKeys = {
   all: ['organizations'] as const,

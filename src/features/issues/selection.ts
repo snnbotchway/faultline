@@ -38,9 +38,10 @@ export function useSelection(scope: string) {
       }),
     [scope],
   )
-  // Shift-click: ticks every row from the last one ticked or unticked down to this one.
+  // Shift-click: gives every row from the last one ticked or unticked to this one the state this
+  // row's box takes, so a range unticks as well as ticks.
   const extendTo = useCallback(
-    (id: string, order: readonly string[]) =>
+    (id: string, order: readonly string[], checked: boolean) =>
       setStored((previous) => {
         const ids = previous.scope === scope ? previous.ids : NONE
         const range = previous.scope === scope && previous.anchor ? idsBetween(order, previous.anchor, id) : []
@@ -49,7 +50,12 @@ export function useSelection(scope: string) {
           if (!next.delete(id)) next.add(id)
           return { scope, ids: next, all: false, anchor: id }
         }
-        return { scope, ids: new Set([...ids, ...range]), all: false, anchor: id }
+        const next = new Set(ids)
+        for (const rangeId of range) {
+          if (checked) next.add(rangeId)
+          else next.delete(rangeId)
+        }
+        return { scope, ids: next, all: false, anchor: id }
       }),
     [scope],
   )

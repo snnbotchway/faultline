@@ -140,7 +140,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   const { setStatus: changeStatus } = actions
   const handlers: RowHandlers = useMemo(
     () => ({
-      toggle: (id, range) => (range ? extendTo(id, loadedIds) : toggle(id)),
+      toggle: (id, range, checked) => (range ? extendTo(id, loadedIds, checked) : toggle(id)),
       unfold: (id) => setUnfolded((open) => (open === id ? undefined : id)),
       assign: (id) => setAssigning(oneIssue(id)),
       setStatus: (id, status) => void changeStatus(oneIssue(id), status),

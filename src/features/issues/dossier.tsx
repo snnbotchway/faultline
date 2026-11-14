@@ -12,7 +12,7 @@ import { ACTION, statusActions, type StatusView } from './status'
 const LAST_CRUMBS = 4
 
 export type RowHandlers = {
-  toggle: (id: string, range: boolean) => void
+  toggle: (id: string, range: boolean, checked: boolean) => void
   unfold: (id: string) => void
   assign: (id: string) => void
   setStatus: (id: string, status: IssueStatus) => void

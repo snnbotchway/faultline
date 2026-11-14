@@ -1,7 +1,8 @@
+import { act, renderHook } from '@testing-library/react'
 import { expect, test } from 'vitest'
 import { IssueStatus, type Issue } from '@/api/issues'
 import type { Row } from './inbox-row'
-import { idsBetween, selectionOffer } from './selection'
+import { idsBetween, selectionOffer, useSelection } from './selection'
 import { Trend } from './trend'
 
 const row = (id: string, project = '1'): Row => ({ issue: { id, project: { id: project } } as Issue, buckets: [], trend: Trend.ongoing })
@@ -29,4 +30,14 @@ test('shift-click covers the rows between two clicks, in either direction, and n
   expect(idsBetween(order, 'b', 'd')).toEqual(['b', 'c', 'd'])
   expect(idsBetween(order, 'e', 'c')).toEqual(['c', 'd', 'e'])
   expect(idsBetween(order, 'a', 'zzz')).toEqual([])
+})
+
+test('a shift-click range takes the state of the box clicked, so it unticks as well as ticks', () => {
+  const order = ['a', 'b', 'c', 'd']
+  const { result } = renderHook(() => useSelection('scope'))
+  act(() => result.current.toggle('a'))
+  act(() => result.current.extendTo('c', order, true))
+  expect([...result.current.ids].sort()).toEqual(['a', 'b', 'c'])
+  act(() => result.current.extendTo('b', order, false))
+  expect([...result.current.ids]).toEqual(['a'])
 })

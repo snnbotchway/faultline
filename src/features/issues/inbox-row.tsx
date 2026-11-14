@@ -67,7 +67,10 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
             hit
             checked={selected}
             onClick={(event) => (shift.current = event.shiftKey)}
-            onCheckedChange={() => handlers.toggle(issue.id, shift.current)} aria-label={`Select ${issue.shortId}`} className="relative z-10 lg:mx-auto" />
+            onCheckedChange={(checked) => handlers.toggle(issue.id, shift.current, checked === true)}
+            aria-label={`Select ${issue.shortId}`}
+            className="relative z-10 lg:mx-auto"
+          />
         ) : (
           <span />
         )}

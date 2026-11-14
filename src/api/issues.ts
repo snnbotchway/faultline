@@ -1,6 +1,6 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
-import { api, unwrap } from './client'
-import { toPage, type Page } from './pagination'
+import { api, orgPath, unwrap } from './client'
+import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
 import type { components, operations } from './schema/openapi'
 
 type Schemas = components['schemas']
@@ -20,8 +20,7 @@ export const StatsPeriod = { day: '24h', fortnight: '14d' } as const
 export type StatsPeriod = (typeof StatsPeriod)[keyof typeof StatsPeriod]
 
 const PAGE_SIZE = 50
-const org = (slug: string) => ({ organization_id_or_slug: slug })
-const issuePath = (slug: string, id: string | number) => ({ ...org(slug), issue_id: Number(id) })
+const issuePath = (slug: string, id: string) => ({ ...orgPath(slug), issue_id: Number(id) })
 
 export const issueKeys = {
   all: (slug: string) => ['issues', slug] as const,
@@ -36,7 +35,7 @@ export const issueListQuery = (slug: string, filters: IssueFilters) =>
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }): Promise<Page<Issue>> => {
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/', {
-        params: { path: org(slug), query: { ...filters, limit: PAGE_SIZE, cursor: pageParam } },
+        params: { path: orgPath(slug), query: { ...filters, limit: PAGE_SIZE, cursor: pageParam } },
       })
       return toPage(unwrap(result), result.response)
     },
@@ -50,7 +49,7 @@ export const issueStatsQuery = (slug: string, ids: string[], period: StatsPeriod
     queryFn: async () =>
       unwrap(
         await api.GET('/api/0/organizations/{organization_id_or_slug}/issues-stats/', {
-          params: { path: org(slug), query: { groups: ids.map(Number), statsPeriod: period } },
+          params: { path: orgPath(slug), query: { groups: ids.map(Number), statsPeriod: period } },
         }),
       ),
   })
@@ -109,10 +108,10 @@ export const issueTagsQuery = (slug: string, id: string) =>
 export const issueCommentsQuery = (slug: string, id: string) =>
   queryOptions({
     queryKey: [...issueKeys.detail(slug, id), 'comments'],
-    queryFn: async () =>
-      unwrap(
-        await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/comments/', {
-          params: { path: issuePath(slug, id) },
+    queryFn: () =>
+      fetchAllPages((cursor) =>
+        api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/comments/', {
+          params: { path: issuePath(slug, id), query: { cursor, limit: MAX_PAGE_SIZE } },
         }),
       ),
   })
@@ -120,10 +119,10 @@ export const issueCommentsQuery = (slug: string, id: string) =>
 export const issueUserReportsQuery = (slug: string, id: string) =>
   queryOptions({
     queryKey: [...issueKeys.detail(slug, id), 'user-reports'],
-    queryFn: async () =>
-      unwrap(
-        await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/user-reports/', {
-          params: { path: issuePath(slug, id) },
+    queryFn: () =>
+      fetchAllPages((cursor) =>
+        api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/user-reports/', {
+          params: { path: issuePath(slug, id), query: { cursor, limit: MAX_PAGE_SIZE } },
         }),
       ),
   })
@@ -131,39 +130,46 @@ export const issueUserReportsQuery = (slug: string, id: string) =>
 export const issueHashesQuery = (slug: string, id: string) =>
   queryOptions({
     queryKey: [...issueKeys.detail(slug, id), 'hashes'],
-    queryFn: async () =>
-      unwrap(
-        await api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/hashes/', {
-          params: { path: issuePath(slug, id) },
+    queryFn: () =>
+      fetchAllPages((cursor) =>
+        api.GET('/api/0/organizations/{organization_id_or_slug}/issues/{issue_id}/hashes/', {
+          params: { path: issuePath(slug, id), query: { cursor, limit: MAX_PAGE_SIZE } },
         }),
       ),
   })
 
-// Raw JSON is a plain API URL, opened in a new tab.
 export const rawEventUrl = (slug: string, id: string, eventId: string) =>
-  `/api/0/organizations/${slug}/issues/${id}/events/${eventId}/json/`
+  `/api/0/organizations/${encodeURIComponent(slug)}/issues/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/json/`
 
 // Bulk actions take explicit ids, or the current filters to act on every match.
 export type IssueSelection = { ids: string[] } | { filters: IssueFilters }
 
-function selectionQuery(selection: IssueSelection) {
-  return 'ids' in selection ? { id: selection.ids.map(Number) } : selection.filters
+// The backend treats a request without ids as "every match", and the client drops
+// empty arrays, so an empty selection must never reach it.
+export function selectionQuery(selection: IssueSelection) {
+  if (!('ids' in selection)) return selection.filters
+  const id = selection.ids.map(Number)
+  if (id.length === 0 || id.some((n) => !Number.isInteger(n))) throw new Error('Select at least one issue.')
+  return { id }
 }
 
 export const issueActions = {
   update: async (slug: string, selection: IssueSelection, body: IssueUpdate) =>
     unwrap(
       await api.PUT('/api/0/organizations/{organization_id_or_slug}/issues/', {
-        params: { path: org(slug), query: selectionQuery(selection) },
+        params: { path: orgPath(slug), query: selectionQuery(selection) },
         body,
       }),
     ),
   // The newest issue survives; all issues must be in one project.
-  merge: async (slug: string, ids: string[]) => issueActions.update(slug, { ids }, { merge: 1 }),
+  merge: async (slug: string, ids: string[]) => {
+    if (ids.length < 2) throw new Error('Select at least two issues to merge.')
+    return issueActions.update(slug, { ids }, { merge: 1 })
+  },
   remove: async (slug: string, selection: IssueSelection) =>
     unwrap(
       await api.DELETE('/api/0/organizations/{organization_id_or_slug}/issues/', {
-        params: { path: org(slug), query: selectionQuery(selection) },
+        params: { path: orgPath(slug), query: selectionQuery(selection) },
       }),
     ),
   updateOne: async (slug: string, id: string, body: IssueUpdate) =>

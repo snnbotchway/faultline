@@ -1,6 +1,6 @@
 # GlitchTip 7.0.0: backend integration reference for Faultline
 
-Verified against a live 7.0.0 instance (`localhost:8600`, demo user) and source:
+Verified against a live 7.0.0 instance (the dev backend in `dev/compose.yml`, seeded demo user) and source:
 
 | Tag | Repo | Commit | Notes |
 |---|---|---|---|
@@ -169,10 +169,12 @@ Other filters: `GET /organizations/{org}/environments/` and `/projects/{org}/{pr
 
 ### 3.2 Bulk update / delete / merge
 
+**A request without `id` acts on every issue matching the filters, for update, merge and delete alike.** openapi-fetch drops an empty `id=[]`, so the client must refuse an empty selection itself (`selectionQuery` in `src/api/issues.ts`).
+
 | Action | Request | Body | Notes |
 |---|---|---|---|
 | Update selected | `PUT /organizations/{org}/issues/?id=1&id=2` | `{"status":"resolved"\|"unresolved"\|"ignored"}` | Also accepts `muted` (= ignored) and `resolvedInNextRelease`. Response echoes the payload (`{status,...}`); stock reads `data.status` |
-| Update all matches | `PUT /organizations/{org}/issues/?project=..&query=..&start=..&end=..&environment=..` (no `id`) | `{"status":...}` | **First 50 applied synchronously, the rest queued** (`BE apps/issue_events/api/issues.py:552-614`, `limit = 50`). Stock patches the visible rows locally rather than refetching. Pin the id set (`id__lte max_id`) so new issues are not caught |
+| Update all matches | `PUT /organizations/{org}/issues/?project=..&query=..&start=..&end=..&environment=..` (no `id`) | `{"status":...}` | **First 50 applied synchronously, the rest queued** (`BE apps/issue_events/api/issues.py:552-614`, `limit = 50`). Stock patches the visible rows locally rather than refetching. The backend freezes the matching set (`id__lte max_id`), so issues that arrive meanwhile are not caught |
 | Merge | `PUT .../issues/?id=1&id=2&id=3` | `{"merge":1}` | Same project only, else 400 `Cannot merge issues from different projects`. The newest id (highest) survives. Needs 2+ ids |
 | Single issue | `PUT /organizations/{org}/issues/{id}/` (or `PUT /issues/{id}/`) | `{"status":"resolved","statusDetails":{"inNextRelease":true}}` or `{"inRelease":"1.2.0"}` | Response `{status, statusDetails}`; `statusDetails.inRelease` set when it pinned a release. `inNextRelease` needs a single project (400 otherwise). Any non-resolved status clears the pinned release |
 | Assign | same PUT | `{"assignedTo":"user:<id>"\|"team:<slug>"\|"<email>"\|""}` | Backend supports it; no stock UI |

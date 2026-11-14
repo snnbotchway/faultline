@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import {
+  IssueLevel,
   TagKey,
   issueActions,
   issueHashesQuery,
@@ -56,7 +57,7 @@ function crumbTime(crumb: Crumb, errorAt: number) {
   return before >= 0 && before < HOUR_MS ? `-${(before / 1000).toFixed(1)}s` : hourLabel(at / 1000)
 }
 
-export function Timeline({ event, title }: { event: IssueEvent; title: string }) {
+export function Timeline({ event, title, level }: { event: IssueEvent; title: string; level: string }) {
   const crumbs = crumbsOf(event)
   const [all, setAll] = useState(false)
   const shown = all ? crumbs : crumbs.slice(-SHOWN_CRUMBS)
@@ -75,7 +76,7 @@ export function Timeline({ event, title }: { event: IssueEvent; title: string })
         {shown.map((crumb, index) => (
           <li key={index} className="grid grid-cols-[64px_12px_minmax(0,1fr)] gap-x-3 border-b px-3 py-2 lg:grid-cols-[64px_12px_96px_minmax(0,1fr)]">
             <span className="text-right text-muted-foreground">{crumbTime(crumb, errorAt)}</span>
-            <span className="flex h-[1lh] items-center">{crumb.level && <LevelGlyph level={crumb.level} />}</span>
+            <span className="flex h-[1lh] items-center"><LevelGlyph level={crumb.level || IssueLevel.info} /></span>
             <span className="truncate text-muted-foreground max-lg:hidden">
               {crumbKind(crumb)}
             </span>
@@ -87,7 +88,9 @@ export function Timeline({ event, title }: { event: IssueEvent; title: string })
         ))}
         <li className="grid grid-cols-[64px_12px_minmax(0,1fr)] gap-x-3 bg-hit px-3 py-2 font-semibold lg:grid-cols-[64px_12px_96px_minmax(0,1fr)]">
           <span className="text-right">0.0s</span>
-          <span />
+          <span className="flex h-[1lh] items-center">
+            <LevelGlyph level={level} />
+          </span>
           <span className="max-lg:hidden">threw</span>
           <span className="min-w-0 break-words">{title}</span>
         </li>

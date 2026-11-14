@@ -10,5 +10,6 @@ export const hasWords = (text: string, words: string[]) => {
   return words.every((word) => lower.includes(word))
 }
 
-// A release as people say it: a commit hash, alone or after `package@`, cut to its first seven characters like Git does.
-export const releaseName = (version: string) => version.replace(/(^|@)([0-9a-f]{7})[0-9a-f]{5,33}$/i, '$1$2')
+// A release as people say it: a full commit hash (40 hex characters for SHA-1, 64 for SHA-256, with at least one
+// letter so a long date or build number is left alone), alone or after `package@`, cut to its first seven like Git does.
+export const releaseName = (version: string) => version.replace(/(^|@)(?=[0-9a-f]*[a-f])([0-9a-f]{7})(?:[0-9a-f]{33}|[0-9a-f]{57})$/i, '$1$2')

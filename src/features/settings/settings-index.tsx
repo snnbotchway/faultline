@@ -6,7 +6,7 @@ import { ORGANIZATION_NAME_MAX, Scope, instanceSettingsQuery, membersQuery, orga
 import { signInAppsQuery } from '@/api/sign-in-apps'
 import { stale } from '@/api/stale'
 import { PageBar } from '@/components/shell/app-shell'
-import { Button } from '@/components/ui/button'
+import { RowButton } from '@/components/ui/row-button'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
 import { useHotkeys } from '@/lib/hotkeys'
@@ -181,9 +181,9 @@ export function SettingsIndex({ org }: { org: string }) {
                 <Row
                   label="Delete organization"
                   action={
-                    <Button variant="destructive" onClick={() => setDeleting(true)}>
+                    <RowButton danger onClick={() => setDeleting(true)}>
                       Delete
-                    </Button>
+                    </RowButton>
                   }
                 />
               </Group>

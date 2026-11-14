@@ -9,6 +9,7 @@ import { TEAM_SLUG_MAX, teamActions, teamMembersQuery, type Team } from '@/api/t
 import { stale } from '@/api/stale'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
+import { RowButton } from '@/components/ui/row-button'
 import { Input, Select } from '@/components/ui/input'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -126,9 +127,9 @@ function TeamRow(props: RowProps) {
           </span>
         </span>
         {me && canChange(me.id) && (
-          <Button className="relative z-10 w-16" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
+          <RowButton className="relative z-10" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
             {team.isMember ? 'Leave' : 'Join'}
-          </Button>
+          </RowButton>
         )}
         <FoldChevron open={open} />
       </div>
@@ -178,9 +179,9 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
               <Tag>You</Tag>
             ) : (
               canChange(member.id) && (
-                <Button variant="ghost" disabled={removeMember.pending} onClick={() => removeMember.run(member)}>
+                <RowButton danger disabled={removeMember.pending} onClick={() => removeMember.run(member)}>
                   Remove
-                </Button>
+                </RowButton>
               )
             )}
           </div>
@@ -207,9 +208,9 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
               {project.slug}
             </Link>
             {linkProjects && (
-              <Button variant="ghost" onClick={() => setUnlinking(project.slug ?? '')}>
+              <RowButton danger onClick={() => setUnlinking(project.slug ?? '')}>
                 Remove
-              </Button>
+              </RowButton>
             )}
           </div>
         ))}

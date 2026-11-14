@@ -8,6 +8,7 @@ import type { Project } from '@/api/projects'
 import { teamActions, teamMembersQuery, type Team } from '@/api/teams'
 import { stale } from '@/api/stale'
 import { Button } from '@/components/ui/button'
+import { RowButton } from '@/components/ui/row-button'
 import { Input } from '@/components/ui/input'
 import { ago, exact } from '@/features/issues/format'
 import { failed, notify } from '@/lib/notice'
@@ -138,9 +139,7 @@ function MemberRow(props: RowProps) {
         {summary}
         <span className="flex w-16 shrink-0 justify-end">
           {mine && member.role !== OrgRole.owner && (
-            <Button onClick={() => setLeaving(true)}>
-              Leave
-            </Button>
+            <RowButton onClick={() => setLeaving(true)}>Leave</RowButton>
           )}
         </span>
         {leaving && <RemoveMember org={org} member={member} mine onClose={() => setLeaving(false)} />}

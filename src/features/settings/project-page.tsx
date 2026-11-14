@@ -16,6 +16,7 @@ import {
 } from '@/api/projects'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
+import { RowButton } from '@/components/ui/row-button'
 import { Input, Select } from '@/components/ui/input'
 import { useTitle } from '@/lib/title'
 import { useAccess } from './access'
@@ -173,9 +174,9 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
           <Row
             label="Delete project"
             action={
-              <Button variant="destructive" onClick={() => setDeleting(true)}>
+              <RowButton danger onClick={() => setDeleting(true)}>
                 Delete
-              </Button>
+              </RowButton>
             }
           />
         </Group>

@@ -33,9 +33,10 @@ export function aiPayload(event: IssueEvent, where: Where): string {
 
 // Copies the event, and says once that an agent can read events over MCP when the instance offers it.
 export async function copyForAi(event: IssueEvent, where: Omit<Where, 'instance' | 'eventUrl'>, features: readonly string[] | undefined) {
-  const instance = window.location.origin
+  // GlitchTip runs under the same base, so that is where an agent finds its API and MCP.
+  const instance = `${window.location.origin}${BASE_PATH}`
   // The event's own address: on the issue's first tab the page shows whichever event is newest.
-  const eventUrl = issueAddress(instance, where.org, where.issueId, event.id)
+  const eventUrl = issueAddress(window.location.origin, where.org, where.issueId, event.id)
   await navigator.clipboard.writeText(aiPayload(event, { ...where, instance, eventUrl }))
   if (!features?.includes(Feature.mcp) || localStorage.getItem(MCP_HINT_KEY) === 'true') {
     notify('Copied for AI')

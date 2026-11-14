@@ -105,7 +105,7 @@ Instance-license endpoints (`/api/0/instance-license/`, `/support-link/`) need a
 
 ### 1.6 Account errors (live, 7.0.0)
 
-Faultline never shows the backend's sentences. It words each error by allauth's `code` (`src/api/sign-in-errors.ts` for the password and code steps, `src/api/form-errors.ts` for everything else) and by GlitchTip's `detail` string, and logs the raw body.
+Faultline never shows the backend's sentences. It words each error by allauth's `code` and by GlitchTip's `detail` string (`src/api/form-errors.ts`), and logs the raw body.
 
 | Where | Answer |
 |---|---|
@@ -121,6 +121,10 @@ Faultline never shows the backend's sentences. It words each error by allauth's 
 | `POST /api/0/wizard-set-token/` | 422 when `hash` is not 64 characters; 400 `Token not found` for an unknown or used hash |
 | `POST /api/0/api-tokens/` | Accepts an empty `label` and an empty `scopes` list; Faultline requires both |
 | `PUT /api/0/users/me/` | Needs `options` in the body (422 `missing` otherwise); `name` is at most 255 characters |
+| `DELETE .../account/providers` | 400 `no_password`, `no_verified_email` or `disconnect_last` when disconnecting would leave no way to sign in; `account_not_found` |
+| `POST .../auth/provider/redirect` with `process=connect` | A failed connection comes back to the `callback_url` with `?error=…&error_process=connect` |
+| Any `.../account/*` endpoint after the session ended | 401 whose `flows` has nothing `is_pending`. Faultline treats that as signed out; sign-in endpoints keep their own 401 handling. `ACCOUNT_REAUTHENTICATION_TIMEOUT` equals the session age, so no `reauthenticate` flow appears in practice |
+| `POST .../auth/2fa/authenticate` after the pending sign-in expired | 401 with no pending flow, the same as signed out |
 
 ---
 

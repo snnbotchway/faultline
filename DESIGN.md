@@ -86,7 +86,7 @@ Rules:
 - 4px grid: every gap, padding, margin and size is a multiple of 4px. No half steps (`gap-1.5`, `px-2.5`) and no one-off pixel values. Horizontal page padding is 12px on a phone and 16px from 768px.
 - A list's checkbox column is 44px wide, the `check` spacing token; text that lines up with the row titles is indented by it (`pl-check`).
 - Bars are 44px tall. Desktop rows are 36 to 52px (a two-line issue row is 52px); controls are 28 to 36px.
-- On touch layouts every tap target is at least 44 by 44px, including checkboxes, whose visible box stays 16px.
+- On touch layouts every tap target is at least 44 by 44px, including checkboxes, whose visible box stays 16px. A button drawn 36px tall in a bar or a group heading reaches 44px through `touch-hit`.
 - Radius is 0 everywhere.
 - Surfaces are separated by 1px hairlines, not shadows. Only things that float above the page (menus, dialogs, the palette) cast a shadow, and they all cast the same one: the `shadow-float` token.
 - No coloured side stripes on rows or cards. Selection is a fill; the current row is a fill plus the focus outline.
@@ -135,14 +135,14 @@ The inbox and the issue page draw events the same way.
 
 ## Settings
 
-- **One index.** `/:org/settings` lists everything that can be set: the organization, its people, its projects, the server. Its search finds a setting, project or person by any word; `Enter` opens the first match.
+- **One index.** `/:org/settings` lists everything that can be set: the organization, its people, its sign-in apps, its projects, the server. Its search finds a setting, project or person by any word; `Enter` opens the first match.
 - **Rows.** A setting is a row: name, current value, then what it does. A chevron right leads to a page, a chevron down unfolds the row in place with one field and Save, a row with neither only reports. A setting the backend will not change is left out, not shown disabled.
 - **Short tasks are dialogs** (invite, new team, new key, confirm). A dialog that deletes something with data behind it asks for its name to be typed.
 - **Danger** is the last group on a page and holds only destructive rows.
 - **Tabs** show one panel at a time and each has an address. The project page opens on Set up until the first event arrives, then on General.
 - **Machine text is never cut.** A DSN, an invite link, an email address and a code sample wrap inside their box; each copyable value has its Copy button in the same box.
 - **Waiting** for something from outside (the first event) is a status line with an icon, not a control: dashed while waiting, `ok` when it arrives, with the main button leading on.
-- **Permissions.** Controls the user's role cannot use are absent. A list they can read but not change is a plain list with no rows that unfold.
+- **Permissions.** Controls the user's role cannot use are absent. A list they can read but not change has no controls in its rows, and a row unfolds only when it has more to show.
 - No help paragraphs under fields. What a role may do is behind "Compare roles", beside the control.
 
 ## Command palette
@@ -209,6 +209,5 @@ Designed at 390px, checked at 375px.
 
 ## Not built yet
 
-- Alerts, and with them the project's Alerts tab and the alert count on project rows.
-- Sign-in apps (single sign-on) for an organization.
+- Alerts, and with them the project's Alerts tab; until then `?tab=alerts` says it is not built.
 - The server-stored theme preference; the theme is per browser for now.

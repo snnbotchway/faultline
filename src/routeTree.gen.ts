@@ -9,50 +9,331 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppOrgRouteRouteImport } from './routes/_app/$org/route'
+import { Route as AppOrgIndexRouteImport } from './routes/_app/$org/index'
+import { Route as AppOrgSectionRouteRouteImport } from './routes/_app/$org/$section/route'
+import { Route as AppOrgSectionSplatRouteImport } from './routes/_app/$org/$section/$'
+import { Route as AppOrgIssuesIndexRouteImport } from './routes/_app/$org/issues/index'
+import { Route as AppOrgProjectIssuesIssueIdRouteImport } from './routes/_app/$org/$project/issues/$issueId'
+import { Route as AppOrgIssuesIssueIdIndexRouteImport } from './routes/_app/$org/issues/$issueId/index'
+import { Route as AppOrgIssuesIssueIdEventsEventIdRouteImport } from './routes/_app/$org/issues/$issueId/events/$eventId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppOrgRouteRoute = AppOrgRouteRouteImport.update({
+  id: '/$org',
+  path: '/$org',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppOrgIndexRoute = AppOrgIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgSectionRouteRoute = AppOrgSectionRouteRouteImport.update({
+  id: '/$section',
+  path: '/$section',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgSectionSplatRoute = AppOrgSectionSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => AppOrgSectionRouteRoute,
+} as any)
+const AppOrgIssuesIndexRoute = AppOrgIssuesIndexRouteImport.update({
+  id: '/issues/',
+  path: '/issues/',
+  getParentRoute: () => AppOrgRouteRoute,
+} as any)
+const AppOrgProjectIssuesIssueIdRoute =
+  AppOrgProjectIssuesIssueIdRouteImport.update({
+    id: '/$project/issues/$issueId',
+    path: '/$project/issues/$issueId',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgIssuesIssueIdIndexRoute =
+  AppOrgIssuesIssueIdIndexRouteImport.update({
+    id: '/issues/$issueId/',
+    path: '/issues/$issueId/',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgIssuesIssueIdEventsEventIdRoute =
+  AppOrgIssuesIssueIdEventsEventIdRouteImport.update({
+    id: '/issues/$issueId/events/$eventId',
+    path: '/issues/$issueId/events/$eventId',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/$org': typeof AppOrgRouteRouteWithChildren
+  '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/$org/': typeof AppOrgIndexRoute
+  '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/$org/issues/': typeof AppOrgIssuesIndexRoute
+  '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
+  '/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/': typeof AppIndexRoute
+  '/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/$org': typeof AppOrgIndexRoute
+  '/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/$org/issues': typeof AppOrgIssuesIndexRoute
+  '/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
+  '/$org/issues/$issueId': typeof AppOrgIssuesIssueIdIndexRoute
+  '/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_app/$org': typeof AppOrgRouteRouteWithChildren
+  '/_app/': typeof AppIndexRoute
+  '/_app/$org/$section': typeof AppOrgSectionRouteRouteWithChildren
+  '/_app/$org/': typeof AppOrgIndexRoute
+  '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
+  '/_app/$org/issues/': typeof AppOrgIssuesIndexRoute
+  '/_app/$org/$project/issues/$issueId': typeof AppOrgProjectIssuesIssueIdRoute
+  '/_app/$org/issues/$issueId/': typeof AppOrgIssuesIssueIdIndexRoute
+  '/_app/$org/issues/$issueId/events/$eventId': typeof AppOrgIssuesIssueIdEventsEventIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/reset-password'
+    | '/$org'
+    | '/$org/$section'
+    | '/$org/'
+    | '/$org/$section/$'
+    | '/$org/issues/'
+    | '/$org/$project/issues/$issueId'
+    | '/$org/issues/$issueId/'
+    | '/$org/issues/$issueId/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/login'
+    | '/register'
+    | '/reset-password'
+    | '/'
+    | '/$org/$section'
+    | '/$org'
+    | '/$org/$section/$'
+    | '/$org/issues'
+    | '/$org/$project/issues/$issueId'
+    | '/$org/issues/$issueId'
+    | '/$org/issues/$issueId/events/$eventId'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/register'
+    | '/reset-password'
+    | '/_app/$org'
+    | '/_app/'
+    | '/_app/$org/$section'
+    | '/_app/$org/'
+    | '/_app/$org/$section/$'
+    | '/_app/$org/issues/'
+    | '/_app/$org/$project/issues/$issueId'
+    | '/_app/$org/issues/$issueId/'
+    | '/_app/$org/issues/$issueId/events/$eventId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRouteRoute: typeof AppRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/$org': {
+      id: '/_app/$org'
+      path: '/$org'
+      fullPath: '/$org'
+      preLoaderRoute: typeof AppOrgRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/$org/': {
+      id: '/_app/$org/'
+      path: '/'
+      fullPath: '/$org/'
+      preLoaderRoute: typeof AppOrgIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/$section': {
+      id: '/_app/$org/$section'
+      path: '/$section'
+      fullPath: '/$org/$section'
+      preLoaderRoute: typeof AppOrgSectionRouteRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/$section/$': {
+      id: '/_app/$org/$section/$'
+      path: '/$'
+      fullPath: '/$org/$section/$'
+      preLoaderRoute: typeof AppOrgSectionSplatRouteImport
+      parentRoute: typeof AppOrgSectionRouteRoute
+    }
+    '/_app/$org/issues/': {
+      id: '/_app/$org/issues/'
+      path: '/issues'
+      fullPath: '/$org/issues/'
+      preLoaderRoute: typeof AppOrgIssuesIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/$project/issues/$issueId': {
+      id: '/_app/$org/$project/issues/$issueId'
+      path: '/$project/issues/$issueId'
+      fullPath: '/$org/$project/issues/$issueId'
+      preLoaderRoute: typeof AppOrgProjectIssuesIssueIdRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/issues/$issueId/': {
+      id: '/_app/$org/issues/$issueId/'
+      path: '/issues/$issueId'
+      fullPath: '/$org/issues/$issueId/'
+      preLoaderRoute: typeof AppOrgIssuesIssueIdIndexRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
+    '/_app/$org/issues/$issueId/events/$eventId': {
+      id: '/_app/$org/issues/$issueId/events/$eventId'
+      path: '/issues/$issueId/events/$eventId'
+      fullPath: '/$org/issues/$issueId/events/$eventId'
+      preLoaderRoute: typeof AppOrgIssuesIssueIdEventsEventIdRouteImport
+      parentRoute: typeof AppOrgRouteRoute
     }
   }
 }
 
+interface AppOrgSectionRouteRouteChildren {
+  AppOrgSectionSplatRoute: typeof AppOrgSectionSplatRoute
+}
+
+const AppOrgSectionRouteRouteChildren: AppOrgSectionRouteRouteChildren = {
+  AppOrgSectionSplatRoute: AppOrgSectionSplatRoute,
+}
+
+const AppOrgSectionRouteRouteWithChildren =
+  AppOrgSectionRouteRoute._addFileChildren(AppOrgSectionRouteRouteChildren)
+
+interface AppOrgRouteRouteChildren {
+  AppOrgSectionRouteRoute: typeof AppOrgSectionRouteRouteWithChildren
+  AppOrgIndexRoute: typeof AppOrgIndexRoute
+  AppOrgIssuesIndexRoute: typeof AppOrgIssuesIndexRoute
+  AppOrgProjectIssuesIssueIdRoute: typeof AppOrgProjectIssuesIssueIdRoute
+  AppOrgIssuesIssueIdIndexRoute: typeof AppOrgIssuesIssueIdIndexRoute
+  AppOrgIssuesIssueIdEventsEventIdRoute: typeof AppOrgIssuesIssueIdEventsEventIdRoute
+}
+
+const AppOrgRouteRouteChildren: AppOrgRouteRouteChildren = {
+  AppOrgSectionRouteRoute: AppOrgSectionRouteRouteWithChildren,
+  AppOrgIndexRoute: AppOrgIndexRoute,
+  AppOrgIssuesIndexRoute: AppOrgIssuesIndexRoute,
+  AppOrgProjectIssuesIssueIdRoute: AppOrgProjectIssuesIssueIdRoute,
+  AppOrgIssuesIssueIdIndexRoute: AppOrgIssuesIssueIdIndexRoute,
+  AppOrgIssuesIssueIdEventsEventIdRoute: AppOrgIssuesIssueIdEventsEventIdRoute,
+}
+
+const AppOrgRouteRouteWithChildren = AppOrgRouteRoute._addFileChildren(
+  AppOrgRouteRouteChildren,
+)
+
+interface AppRouteRouteChildren {
+  AppOrgRouteRoute: typeof AppOrgRouteRouteWithChildren
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppOrgRouteRoute: AppOrgRouteRouteWithChildren,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRouteRoute: AppRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

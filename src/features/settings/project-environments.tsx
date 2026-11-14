@@ -8,7 +8,7 @@ import { Group, ROW, RowSkeleton } from './parts'
 
 export function Environments({ org, slug, environments, write }: { org: string; slug: string; environments?: ProjectEnvironment[]; write: boolean }) {
   const toggle = useChange('change the environment', ({ name, hidden }: { name: string; hidden: boolean }) => projectActions.setEnvironmentHidden(org, slug, name, hidden), {
-    stale: [stale.project(org, slug)],
+    stale: [stale.project(org, slug), stale.environments(org)],
     failure: Failure.asNotice,
   })
   if (!environments) return <RowSkeleton rows={3} />

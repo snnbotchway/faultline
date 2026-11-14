@@ -48,7 +48,8 @@ export const projectEnvironmentsQuery = (org: string, project: string) =>
     queryFn: () =>
       fetchAllPages((cursor) =>
         api.GET('/api/0/projects/{organization_id_or_slug}/{project_slug}/environments/', {
-          params: { path: projectPath(org, project), query: { cursor, limit: MAX_PAGE_SIZE } },
+          // The backend lists only shown environments unless asked for all, and a hidden one must stay here to be shown again.
+          params: { path: projectPath(org, project), query: { cursor, limit: MAX_PAGE_SIZE, visibility: 'all' } },
         }),
       ),
   })

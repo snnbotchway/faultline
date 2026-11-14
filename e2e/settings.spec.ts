@@ -28,11 +28,22 @@ test('a new project opens on its set-up step, which shows its first event when i
   const [, key, projectId] = /dsn="https?:\/\/([0-9a-f]{32})@[^/]+\/(\d+)"/.exec((await snippet.textContent()) ?? '')!
   const sent = await page.request.post(`/api/${projectId}/store/`, {
     headers: { 'x-sentry-auth': `Sentry sentry_version=7, sentry_key=${key}, sentry_client=faultline-e2e/1.0` },
-    data: { event_id: crypto.randomUUID().replaceAll('-', ''), message: 'first event from e2e', level: 'error', platform: 'python' },
+    data: { event_id: crypto.randomUUID().replaceAll('-', ''), message: 'first event from e2e', level: 'error', platform: 'python', environment: 'e2e-staging' },
   })
   expect(sent.ok()).toBe(true)
   await expect(page.getByRole('status').filter({ hasText: 'First event received' })).toBeVisible({ timeout: 30_000 })
   await expect(page.getByRole('link', { name: 'Open issue' })).toBeVisible()
+
+  // The event's environment can be hidden, and stays listed so it can be shown again.
+  await page.getByRole('link', { name: 'Environments' }).click()
+  const shown = page.getByRole('switch', { name: 'Show e2e-staging' })
+  await expect(shown).toBeChecked()
+  await shown.click()
+  await expect(shown).not.toBeChecked()
+  await page.reload()
+  await expect(shown).not.toBeChecked()
+  await shown.click()
+  await expect(shown).toBeChecked()
 
   await page.getByRole('link', { name: 'General' }).click()
   await page.getByRole('button', { name: 'Delete' }).click()

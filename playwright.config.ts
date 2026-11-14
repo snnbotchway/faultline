@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 // Runs against the Faultline image (`bun run backend:up --profile app`) or any
-// Faultline URL in FAULTLINE_URL, backed by a seeded GlitchTip.
+// Faultline URL in FAULTLINE_URL, backed by a seeded GlitchTip. The sub-path test
+// uses the image served under /faultline/, at FAULTLINE_SUBPATH_URL.
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
@@ -15,7 +16,12 @@ export default defineConfig({
   projects: [
     { name: 'setup', testMatch: /global\.setup\.ts/ },
     { name: 'desktop', testIgnore: /sub-path/, use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/demo.json' }, dependencies: ['setup'] },
-    // The image served under /faultline/; it signs in through the page and seeds nothing itself.
-    { name: 'subpath', testMatch: /sub-path/, use: { ...devices['Desktop Chrome'] }, dependencies: ['setup'] },
+    // Signs in through the page and seeds nothing itself.
+    {
+      name: 'subpath',
+      testMatch: /sub-path/,
+      use: { ...devices['Desktop Chrome'], baseURL: process.env.FAULTLINE_SUBPATH_URL ?? 'http://localhost:8640/faultline/' },
+      dependencies: ['setup'],
+    },
   ],
 })

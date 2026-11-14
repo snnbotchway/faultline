@@ -59,7 +59,7 @@ Set GlitchTip's `GLITCHTIP_DOMAIN` to Faultline's public URL, so the links in al
 |---|---|---|
 | `BACKEND_URL` | (required) | Where the GlitchTip web service listens, as Faultline's container sees it, e.g. `http://glitchtip:8000`. |
 | `PORT` | `8080` | Port Faultline listens on inside the container. |
-| `BASE_PATH` | (empty) | Serve Faultline and the backend paths under a prefix, e.g. `/faultline`, for a proxy that shares one host between apps. Letters, digits and `. _ ~ - /` only. GlitchTip's own HTML pages (`/admin`, OAuth consent) still link to root paths. |
+| `BASE_PATH` | (empty) | Serve Faultline and the backend paths under a prefix, e.g. `/faultline`, for a proxy that shares one host between apps. Letters, digits and `. _ ~ - /` only. Give GlitchTip the same `BASE_PATH`, and set its `GLITCHTIP_DOMAIN` to the URL with the prefix (`https://example.com/faultline`), so its admin, emails and DSNs use the prefix too. Faultline writes the prefix into a copy of the app under `/tmp`, so a read-only root filesystem needs a tmpfs there. |
 
 Performance needs GlitchTip's cold storage for span breakdowns, weekly trends and repeated queries: set `GLITCHTIP_ENABLE_DUCKDB=true` and `GLITCHTIP_COLD_STORAGE_DIR` (on a volume) or a storage bucket on the GlitchTip service. Without it the screens ask users to have an admin turn on "request details". See [docs/compatibility.md](docs/compatibility.md#cold-storage-for-performance).
 

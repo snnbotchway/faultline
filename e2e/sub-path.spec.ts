@@ -1,11 +1,9 @@
 import { expect, test } from '@playwright/test'
 import { DEMO } from '../dev/seed.ts'
 
-// The image served under /faultline/ (compose service `faultline-subpath`).
-const base = process.env.FAULTLINE_SUBPATH_URL ?? 'http://localhost:8640/faultline/'
-
+// The image served under /faultline/ in front of a GlitchTip with the same BASE_PATH; the project's baseURL ends in it.
 test('signs in, reads data and reloads a deep link under a base path', async ({ page }) => {
-  await page.goto(`${base}${DEMO.org}/releases`)
+  await page.goto(`${DEMO.org}/releases`)
   await expect(page).toHaveURL(/\/faultline\/login\?next=/)
 
   await page.getByLabel('Email').fill(DEMO.email)

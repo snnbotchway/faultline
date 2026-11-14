@@ -20,7 +20,7 @@ All notable changes to Faultline are listed here. The format follows
 - A banner under the top bar while your primary email is unverified, with a button to send the link again.
 - A notice, once per session, when an organization is over its event limit and dropping events.
 - Your theme choice is saved to your account, so it follows you to another browser; this browser's copy stays the fallback.
-- `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps.
+- `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps. Give GlitchTip the same `BASE_PATH`.
 
 ### Changed
 
@@ -30,6 +30,7 @@ All notable changes to Faultline are listed here. The format follows
 
 - The environment filter lists only the environments of the chosen projects, and drops a choice they do not have.
 - "Resolve in next release" works on 7.0.0, names the release the issue was tied to (or says none was found) with an Undo, and the issue's status shows that release; it used to be refused by the bulk route.
+- The image tells browsers to check for a new page on every load, so a new release shows without a hard refresh, and a missing script file is a 404 instead of the page.
 
 ## [0.2.1] - 2026-11-14
 

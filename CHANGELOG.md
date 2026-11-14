@@ -22,6 +22,7 @@ All notable changes to Faultline are listed here. The format follows
 - A banner under the top bar while the open organization is dropping some of its new events, with the share dropped and who can change it.
 - Your theme choice is saved to your account, so it follows you to another browser; this browser's copy stays the fallback.
 - `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps. Give GlitchTip the same `BASE_PATH`.
+- Usage, under Settings (the stock `/:org/settings/subscription` path): the errors, transactions, logs and uptime checks an organization took in over the last 30 days, a day at a time on one axis. Pick a day to see its figures, unfold errors or transactions to see which project sent them, and see what share of new events the organization and each project drop.
 
 ### Changed
 

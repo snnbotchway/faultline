@@ -134,6 +134,11 @@ Uptime draws checks and downtime on the same rules:
 - **Check bars.** One bar per check, oldest first, scaled to the peak response, or to the timeout once any check was slow, with a line at the slow threshold. A passed check is the foreground at reduced strength, a slow one `level-warning`, a failed one full height in `destructive`: here red means a failure and nothing else.
 - **Releases** are drawn as on the issue charts.
 
+Usage draws what an organization took in on the same rules:
+
+- **One row a kind.** All events, then errors, transactions, logs and uptime checks, each a row of daily bars on one 30-day axis that is labelled once, in a header that stays under the page bar. Each row is scaled to its own peak and labelled with it; a project's bars under a kind are scaled to that kind's peak, so projects compare.
+- **Picking a day.** A click, a tap or a drag on any chart picks the nearest day, and every figure on the page becomes that day's. The picked column is a band in `selected` with its bar in full `foreground`, and the rest is `dimmed`. The header names the day in place of the period, with previous and next chevrons and a button back to all 30 days.
+
 ## Components
 
 - **Buttons.** Outline is the default. One filled (`primary`) button per view marks the main action. Destructive is outlined in red and fills on hover. Labels are verbs in sentence case.
@@ -199,6 +204,7 @@ The groups are listed in this order.
 | `[` / `]` | issue | older / newer event |
 | `/` | performance, logs | focus search |
 | `j` / `k` | performance, logs | next / previous transaction or log (desktop, where it opens beside the list) |
+| `←` / `→` | usage | the day before / after the picked one |
 | `Esc` | everywhere | close, clear the selection, leave a field |
 
 Plain keys do nothing while the user is typing or a menu or dialog is open. `Enter` and `Space` belong to a focused button, link or menu item, so they never also run a page shortcut.

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ChevronsUpDown, Ellipsis, LogOut, Monitor, Moon, Search, Sun, UserRound } from 'lucide-react'
+import { ChevronsUpDown, Ellipsis, FolderKanban, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, UserRound, Users, UsersRound } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { SessionStatus, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, organizationsQuery, type Feature } from '@/api/organizations'
@@ -32,6 +32,14 @@ const THEMES = [
   { value: Theme.light, label: 'Light', icon: Sun },
   { value: Theme.dark, label: 'Dark', icon: Moon },
 ]
+
+// The organization's own pages, one click from its name: the org menu and the command palette both list them.
+const ORG_PAGES = [
+  { label: 'Projects', to: '/$org/projects', icon: FolderKanban },
+  { label: 'Members', to: '/$org/settings/members', icon: Users },
+  { label: 'Teams', to: '/$org/settings/teams', icon: UsersRound },
+  { label: 'Settings', to: '/$org/settings', icon: Settings },
+] as const
 
 function useSections(): Section[] {
   const features = useQuery(instanceSettingsQuery).data?.enabledFeatures as Feature[] | undefined
@@ -90,10 +98,11 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const session = useQuery(sessionQuery).data
   const email = session?.status === SessionStatus.authenticated ? (session.user.email ?? session.user.display ?? '') : ''
   const leave = useSignOut()
+  const canCreate = useQuery(instanceSettingsQuery).data?.enableOrganizationCreation
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b px-3 md:px-4">
-      <Link to="/$org/issues" params={{ org }} aria-label="Faultline" className="flex h-11 items-center">
+      <Link to="/" aria-label="Faultline, all projects" className="flex h-11 items-center">
         <Wordmark />
       </Link>
       <div className="flex min-w-0 items-center gap-1">
@@ -105,6 +114,26 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
           <DropdownMenuContent>
             <DropdownMenuLabel>Organization</DropdownMenuLabel>
             <OrgItems org={org} />
+            <DropdownMenuSeparator />
+            {ORG_PAGES.map((page) => (
+              <DropdownMenuItem key={page.to} asChild>
+                <Link to={page.to} params={{ org }}>
+                  <page.icon />
+                  {page.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+            {canCreate && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/organizations/new">
+                    <Plus />
+                    New organization
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
         {inbox && (
@@ -236,6 +265,12 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
         label: section.label,
         run: () => void navigate(sectionLink(org, section)),
       })),
+    ...ORG_PAGES.filter((page) => page.label !== 'Settings').map((page) => ({
+      id: `go:${page.to}`,
+      group: CommandGroup.goTo,
+      label: page.label,
+      run: () => void navigate({ to: page.to, params: { org } }),
+    })),
     ...organizations
       .filter((organization) => organization.slug !== org)
       .map((organization) => ({

@@ -1,27 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { organizationsQuery } from '@/api/organizations'
-import { Screen } from '@/components/shell/app-shell'
-import { BareShell } from '@/features/account/shell'
-import { LAST_ORG_KEY } from '@/lib/session'
-import { useTitle } from '@/lib/title'
+import { createFileRoute } from '@tanstack/react-router'
+import { ProjectList } from '@/features/projects/project-list'
 
-export const Route = createFileRoute('/_app/')({
-  beforeLoad: async ({ context }) => {
-    const organizations = await context.queryClient.ensureQueryData(organizationsQuery)
-    const last = localStorage.getItem(LAST_ORG_KEY)
-    const organization = organizations.find((o) => o.slug === last) ?? organizations[0]
-    if (organization) throw redirect({ to: '/$org/issues', params: { org: organization.slug }, replace: true })
-  },
-  component: NoOrganization,
-})
-
-function NoOrganization() {
-  useTitle()
-  return (
-    <BareShell>
-      <Screen title="No organization yet">
-        <p className="prose-text text-muted-foreground">Ask an owner to invite you to theirs.</p>
-      </Screen>
-    </BareShell>
-  )
-}
+export const Route = createFileRoute('/_app/_home/')({ component: ProjectList })

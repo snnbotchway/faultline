@@ -14,7 +14,7 @@ export const SECTIONS: Section[] = [
 ]
 
 // Stock paths that exist but have no nav entry of their own yet.
-export const OTHER_SECTION_PATHS = ['projects', 'performance']
+export const OTHER_SECTION_PATHS = ['performance']
 
 // On a phone the first four fit the tab bar; the rest sit behind "more".
 export const TAB_PATHS = ['issues', 'releases', 'uptime-monitors', 'alerts']

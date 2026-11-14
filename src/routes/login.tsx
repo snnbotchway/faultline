@@ -2,7 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { SessionStatus, auth, isBackendPage, redirectToProvider, safeNext, sessionQuery, type Session } from '@/api/auth'
-import { fieldErrors } from '@/api/client'
+import { fieldErrors, formErrors } from '@/api/client'
+import { explain } from '@/api/errors'
 import { instanceSettingsQuery } from '@/api/organizations'
 import { Mark } from '@/components/mark'
 import { Button } from '@/components/ui/button'
@@ -75,7 +76,7 @@ function Login() {
     } catch (error) {
       const fields = fieldErrors(error)
       setErrors(fields)
-      if (Object.keys(fields).length === 0) setMessage(error instanceof Error ? error.message : 'Something went wrong. Try again.')
+      if (Object.keys(fields).length === 0) setMessage(formErrors(error)[0] ?? explain(error, 'sign you in'))
     } finally {
       setBusy(false)
     }
@@ -115,7 +116,6 @@ function Login() {
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
                   autoComplete="one-time-code"
-                  inputMode="numeric"
                   autoFocus
                   required
                   aria-invalid={!!errors.code}

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { explain } from '@/api/errors'
 
 // One short message at a time, for an action whose result the screen cannot show by itself (usually a failure).
 let current: { id: number; text: string; error: boolean } | undefined
@@ -16,7 +17,8 @@ export function notify(text: string, error = false) {
   }, SHOWN_FOR)
 }
 
-export const failed = (error: unknown) => notify(error instanceof Error && error.message ? error.message : "That didn't work. Try again.", true)
+// `action` completes "Couldn't …": "resolve the issue".
+export const failed = (error: unknown, action: string) => notify(explain(error, action), true)
 
 export function useNotice() {
   return useSyncExternalStore(

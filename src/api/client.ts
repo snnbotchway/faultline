@@ -75,6 +75,12 @@ export function fieldErrors(error: unknown): Record<string, string> {
   )
 }
 
+// allauth's messages that belong to no field; they are written for the person signing in.
+export function formErrors(error: unknown): string[] {
+  if (!(error instanceof ApiError)) return []
+  return allauthErrors(error.body).flatMap((e) => (!e.param && e.message ? [e.message] : []))
+}
+
 export const orgPath = (slug: string) => ({ organization_id_or_slug: slug })
 
 export type ApiResult<T> = { data?: T; error?: unknown; response: Response }

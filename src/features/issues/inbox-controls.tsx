@@ -2,7 +2,14 @@ import { ArrowDownWideNarrow, CalendarDays, ChevronDown, Search } from 'lucide-r
 import { useState, type FormEvent, type RefObject } from 'react'
 import type { IssueSort } from '@/api/issues'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
 import { cn } from '@/lib/utils'
 import { DEFAULT_SORT, SORTS, TIME_RANGES, rangeStart, timeRange, type InboxSearch } from './search'
@@ -111,23 +118,26 @@ export function TimeRangeMenu({
   onChange: (range: Pick<InboxSearch, 'start' | 'end'>) => void
 }) {
   const range = timeRange(search)
+  // The backend filters the range on when an issue was first seen, not on recent activity.
+  const label = `First seen: ${range.label}`
   const custom = range.days === undefined && (search.start !== undefined || search.end !== undefined)
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild={!chip} className={chip ? CHIP : undefined} aria-label={`Time range: ${range.label}`}>
+      <DropdownMenuTrigger asChild={!chip} className={chip ? CHIP : undefined} aria-label={label}>
         {chip ? (
           <>
-            {range.label}
+            {label}
             <ChevronDown className="size-3 text-muted-foreground" />
           </>
         ) : (
           <Button variant="ghost" size="sm">
             <CalendarDays />
-            {range.label}
+            {label}
           </Button>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuLabel>First seen</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={custom ? '' : String(range.days ?? ANY_TIME)}
           onValueChange={(value) => onChange({ start: value === ANY_TIME ? undefined : rangeStart(Number(value)), end: undefined })}

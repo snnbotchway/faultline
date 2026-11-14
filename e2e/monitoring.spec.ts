@@ -15,6 +15,24 @@ test('the uptime list puts a monitor that is down first, and its page says since
   await expect(page.getByRole('region', { name: 'Alerts', exact: true })).toContainText('Downtime and spikes')
 })
 
+test('a monitor page says how much of the day it was up and pages through every check', async ({ page }) => {
+  await page.goto(uptime)
+  await row(page, 'Checkout API').getByRole('link').click()
+  await expect(page.getByRole('region', { name: 'Downtime' })).toContainText(/\d+(\.\d)?% up in the last 24 hours/)
+
+  const checks = page.getByRole('region', { name: 'Checks', exact: true })
+  const rows = checks.getByRole('row')
+  await expect(rows.nth(1)).toBeVisible()
+  const first = await rows.count()
+  await checks.getByRole('button', { name: 'More checks' }).click()
+  await expect.poll(() => rows.count()).toBeGreaterThan(first)
+
+  await checks.getByRole('radio', { name: 'Incidents only' }).click()
+  await expect(checks.getByRole('row').filter({ hasText: 'Wrong status' }).first()).toBeVisible()
+  await expect(checks.getByRole('row').filter({ hasText: 'Up' }).first()).toBeVisible()
+  await expect(checks.getByRole('button', { name: 'More checks' })).toHaveCount(0)
+})
+
 test('a monitor is created, edited and deleted', async ({ page }) => {
   const name = `Health ${unique()}`
   await page.goto(uptime)

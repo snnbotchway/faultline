@@ -29,7 +29,6 @@ export function ProjectList({ org }: { org?: string }) {
   const organizations = useQuery(organizationsQuery)
   const last = useLastOrganization()
   const slugs = org ? [org] : (organizations.data ?? []).map((organization) => organization.slug)
-  // Organizations are named by their name, which can change; the slug stays in addresses.
   const nameOf = (slug: string) => organizations.data?.find((organization) => organization.slug === slug)?.name ?? slug
   const lists = useQueries({ queries: slugs.map((slug) => projectsQuery(slug)) })
   const [query, setQuery] = useState('')

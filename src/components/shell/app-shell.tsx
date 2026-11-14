@@ -98,7 +98,6 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const sections = useSections()
   const theme = useTheme()
   const session = useQuery(sessionQuery).data
-  // The name, which the organization can change; its slug in the address is fixed when it is made.
   const organizationName = useQuery(organizationsQuery).data?.find((organization) => organization.slug === org)?.name ?? org
   const email = session?.status === SessionStatus.authenticated ? (session.user.email ?? session.user.display ?? '') : ''
   const leave = useSignOut()

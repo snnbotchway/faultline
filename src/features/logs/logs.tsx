@@ -15,7 +15,7 @@ import { hitsText, plural } from '@/lib/format'
 import { isDesktop, useIsDesktop } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { SPAN_LIMIT, useCounts, useLogs } from './data'
+import { followsFilters, useCounts, useLogs } from './data'
 import { ActiveFilters, Facets } from './filters'
 import { clockTime, dayOf, fullTime, preview } from './format'
 import { LogHistogram } from './histogram'
@@ -83,6 +83,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
   const { list, open } = logs
   const active = facetCount(search)
   const narrowed = isNarrowed(search)
+  const chartFollows = followsFilters(search)
   const clear = () => set(NO_FILTERS)
 
   const move = (step: number) => {
@@ -141,10 +142,29 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
               <h2 className="label-caps">Logs per hour</h2>
               {logs.total && <span className="mono font-semibold">{plural(hitsText(logs.total), 'log')}</span>}
             </div>
-            <LogHistogram buckets={logs.buckets} height={HISTOGRAM_HEIGHT} hour={search.hour} onPick={(hour) => set({ hour, log: undefined })} />
+            {!chartFollows && <p className="mb-2 text-sm text-muted-foreground">The chart counts every log in the window; the search, host and trace don't narrow it.</p>}
+            <LogHistogram buckets={logs.buckets} height={HISTOGRAM_HEIGHT} hour={search.hour} dim={!chartFollows} onPick={(hour) => set({ hour, log: undefined })} />
           </div>
           <ActiveFilters logs={logs} search={search} set={set} />
-          {logs.spanCapped && <p className="border-b px-3 py-2 text-muted-foreground md:px-4">Searched the first {SPAN_LIMIT} logs of this trace for this span.</p>}
+          {logs.missing && (
+            <div className="flex items-center gap-2 border-b px-3 py-2 md:px-4 lg:hidden">
+              <p className="flex-1">This log no longer exists.</p>
+              <Button variant="ghost" size="icon-touch" aria-label="Close" onClick={() => set({ log: undefined })}>
+                <X />
+              </Button>
+            </div>
+          )}
+          {logs.spanPartial &&
+            (list.isFetchNextPageError ? (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-3 py-2 md:px-4">
+                <p className="text-muted-foreground">Searched the first {logs.loaded.length} logs of this trace for this span. The rest didn't load.</p>
+                <Button size="sm" className="max-lg:h-11" onClick={() => void list.fetchNextPage()}>
+                  Try again
+                </Button>
+              </div>
+            ) : (
+              <p className="border-b px-3 py-2 text-muted-foreground md:px-4">Searched the first {logs.loaded.length} logs of this trace for this span.</p>
+            ))}
           {list.isPending ? (
             <SkeletonRows />
           ) : hasStatus(list.error, HttpStatus.forbidden) ? (
@@ -211,6 +231,17 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
             </div>
           )}
         </div>
+        {logs.missing && (
+          <aside aria-label="Log" className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
+            <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-card px-4">
+              <p className="flex-1 font-semibold">This log no longer exists</p>
+              <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => set({ log: undefined })}>
+                <X />
+              </Button>
+            </div>
+            <p className="px-4 py-4 text-muted-foreground">It may have been removed when its retention ran out.</p>
+          </aside>
+        )}
         {open && (
           <aside aria-label="Log" className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
             <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-card px-4">

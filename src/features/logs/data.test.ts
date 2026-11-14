@@ -53,13 +53,13 @@ describe('a project count', () => {
 
 describe('the total above the logs', () => {
   const hits = { n: 1000, capped: true }
-  const base = { hits, buckets: undefined, spanLogs: 0, spanLoading: false, spanCapped: false }
+  const base = { hits, buckets: undefined, spanLogs: 0, spanLoading: false, spanPartial: false }
 
   it("counts a span's logs once its trace's have loaded, and says there may be more past the limit", () => {
     const span = { traceId: 't', spanId: 's' }
-    expect(totalOf({ ...base, search: span, spanLogs: 3, spanLoading: true })).toBeUndefined()
+    expect(totalOf({ ...base, search: span, spanLoading: true })).toBeUndefined()
     expect(totalOf({ ...base, search: span, spanLogs: 3 })).toEqual({ n: 3, capped: false })
-    expect(totalOf({ ...base, search: span, spanLogs: 3, spanCapped: true })).toEqual({ n: 3, capped: true })
+    expect(totalOf({ ...base, search: span, spanLogs: 3, spanPartial: true })).toEqual({ n: 3, capped: true })
   })
 
   it('takes the hourly statistics when they can answer, and the list count when they cannot', () => {

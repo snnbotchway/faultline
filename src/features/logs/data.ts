@@ -1,7 +1,8 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { LogLevel, LogResourceType, PAGE_SIZE, logHitsQuery, logListQuery, logQuery, logResourcesQuery, logStatsQuery, type LogEvent, type LogFilters, type LogStats } from '@/api/logs'
-import { projectsQuery } from '@/api/organizations'
+import { LogLevel, LogResourceType, logHitsQuery, logListQuery, logQuery, logResourcesQuery, logStatsQuery, type LogEvent, type LogFilters, type LogStats } from '@/api/logs'
+import { hasStatus, HttpStatus } from '@/api/client'
+import { projectSlug, projectsQuery } from '@/api/organizations'
 import type { Hits } from '@/lib/format'
 import { HOUR } from '@/lib/time'
 import { hourEnd, rangeOf, type LogSearch } from './search'
@@ -10,7 +11,8 @@ export type Bucket = { start: number; errors: number; warnings: number; other: n
 export const bucketTotal = (bucket: Bucket) => bucket.errors + bucket.warnings + bucket.other
 
 const exact = (n: number): Hits => ({ n, capped: false })
-const sum = (stats: LogStats | undefined) => stats && exact(stats.series.reduce((total, series) => total + series.data.reduce((a, b) => a + b, 0), 0))
+const add = (values: number[]) => values.reduce((a, b) => a + b, 0)
+const sum = (stats: LogStats | undefined) => stats && exact(add(stats.series.map((series) => add(series.data))))
 
 // One bucket per hour of the window, ending with the current hour, with the backend's counts per level
 // sorted into errors (and fatal), warnings and the rest. `now` is in milliseconds.
@@ -30,20 +32,22 @@ export function hourly(stats: LogStats | undefined, hours: number, now: number):
   return buckets
 }
 
-// A span's logs are picked from at most this many pages of its trace's.
+// A span's logs are picked from at most this many pages of its trace's (1000 logs).
 const SPAN_PAGES = 5
-export const SPAN_LIMIT = SPAN_PAGES * PAGE_SIZE
+
+// Whether the hourly statistics answer for the list: they cannot apply a text search, a host or a trace.
+export const followsFilters = (search: LogSearch) => !search.query && !search.host && !search.traceId
 
 // The number above the list. The statistics are exact, so they are used whenever they can answer:
 // `buckets` is given only once they have loaded. A span's logs are counted from its trace's, so the
-// count waits for those to load, and says it may be more once they stop at the limit.
-export function totalOf({ search, hits, buckets, spanLogs, spanLoading, spanCapped }: { search: LogSearch; hits: Hits | undefined; buckets: Bucket[] | undefined; spanLogs: number; spanLoading: boolean; spanCapped: boolean }): Hits | undefined {
+// count waits for those to load, and says it may be more when not all of them were searched.
+export function totalOf({ search, hits, buckets, spanLogs, spanLoading, spanPartial }: { search: LogSearch; hits: Hits | undefined; buckets: Bucket[] | undefined; spanLogs: number; spanLoading: boolean; spanPartial: boolean }): Hits | undefined {
   if (search.spanId) {
     if (spanLoading) return undefined
-    return { n: spanLogs, capped: spanCapped }
+    return { n: spanLogs, capped: spanPartial }
   }
-  if (search.query || search.host || search.traceId || !buckets) return hits
-  if (search.hour === undefined) return exact(buckets.reduce((all, bucket) => all + bucketTotal(bucket), 0))
+  if (!followsFilters(search) || !buckets) return hits
+  if (search.hour === undefined) return exact(add(buckets.map(bucketTotal)))
   const picked = buckets.find((bucket) => bucket.start === search.hour)
   return picked ? exact(bucketTotal(picked)) : hits
 }
@@ -76,13 +80,16 @@ export function useLogs(org: string, search: LogSearch) {
   const resources = useQuery(logResourcesQuery(org)).data
   const projects = useQuery(projectsQuery(org)).data
 
-  // The backend cannot filter by span, so a span's logs are picked from its trace's, up to a limit.
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = list
+  // The backend cannot filter by span, so a span's logs are picked from its trace's, up to a limit. A page
+  // that fails stops the paging; the span then counts what did load, and the screen offers to go on.
+  const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } = list
   const pages = list.data?.pages.length ?? 0
-  const spanCapped = !!search.spanId && hasNextPage && pages >= SPAN_PAGES
+  const spanPaging = !!search.spanId && hasNextPage && pages < SPAN_PAGES && !isFetchNextPageError
   useEffect(() => {
-    if (search.spanId && hasNextPage && !isFetchingNextPage && pages < SPAN_PAGES) void fetchNextPage()
-  }, [search.spanId, hasNextPage, isFetchingNextPage, fetchNextPage, pages])
+    if (spanPaging && !isFetchingNextPage) void fetchNextPage()
+  }, [spanPaging, isFetchingNextPage, fetchNextPage])
+  // Searched only part of the trace: up to the limit, or until a page failed.
+  const spanPartial = !!search.spanId && hasNextPage && !spanPaging
 
   const loaded = useMemo(() => list.data?.pages.flatMap((page) => page.items) ?? [], [list.data])
   const logs = useMemo(() => (search.spanId ? loaded.filter((log) => log.spanID === search.spanId) : loaded), [loaded, search.spanId])
@@ -92,12 +99,13 @@ export function useLogs(org: string, search: LogSearch) {
 
   // A link may open a log that the list has not loaded.
   const listed = logs.find((log) => log.id === search.log)
-  const fetched = useQuery({ ...logQuery(org, search.log ?? ''), enabled: !!search.log && !listed && !list.isPending }).data
-  const open = search.log ? (listed ?? fetched) : undefined
+  const fetched = useQuery({ ...logQuery(org, search.log ?? ''), enabled: !!search.log && !listed && !list.isPending })
+  const open = search.log ? (listed ?? fetched.data) : undefined
+  const missing = !!search.log && !listed && hasStatus(fetched.error, HttpStatus.notFound)
 
   const first = list.data?.pages[0]
   const hits: Hits | undefined = first?.hits === undefined ? undefined : { n: first.hits, capped: first.maxHits !== undefined && first.hits >= first.maxHits }
-  const total = totalOf({ search, hits, buckets: stats.data && buckets, spanLogs: logs.length, spanLoading: hasNextPage && !spanCapped, spanCapped })
+  const total = totalOf({ search, hits, buckets: stats.data && buckets, spanLogs: logs.length, spanLoading: list.isPending || spanPaging, spanPartial })
 
   const { services, environments, hosts } = useMemo(() => {
     const names = (type: LogResourceType) =>
@@ -121,9 +129,10 @@ export function useLogs(org: string, search: LogSearch) {
     environments,
     hosts,
     loaded,
-    spanCapped,
+    spanPartial,
+    missing,
     projects: projects ?? [],
-    projectOf: (log: LogEvent) => projects?.find((project) => Number(project.id) === log.projectId)?.slug ?? undefined,
+    projectOf: (log: LogEvent) => projectSlug(projects, log.projectId),
   }
 }
 
@@ -134,7 +143,7 @@ export const CountState = { loading: 'loading', unavailable: 'unavailable', coun
 export type CountState = (typeof CountState)[keyof typeof CountState]
 export type Count = { state: typeof CountState.loading } | { state: typeof CountState.unavailable } | { state: typeof CountState.counted; hits: Hits }
 
-const LOADING: Count = { state: CountState.loading }
+export const LOADING: Count = { state: CountState.loading }
 const UNAVAILABLE: Count = { state: CountState.unavailable }
 const counted = (hits: Hits | undefined): Count => (hits ? { state: CountState.counted, hits } : LOADING)
 
@@ -156,10 +165,10 @@ export function projectCount({ stats, withLogs, filtered, complete }: { stats: C
 // picking it leaves that many logs. Levels, services, environments and projects come from the hourly
 // statistics, which cannot apply a text search, a host or a trace; with one of those set they are not
 // available rather than wrong. Hosts are counted by the list itself, which the backend stops at its
-// limit, and cannot pick out a span. Nothing is fetched while `visible` is false.
+// limit. Nothing is fetched while `visible` is false.
 export function useCounts(org: string, logs: Logs, search: LogSearch, visible: boolean) {
   const { scope, filters, services, environments, hosts, projects, loaded, list } = logs
-  const statistical = visible && !search.query && !search.host && !search.traceId && !search.spanId
+  const statistical = visible && followsFilters(search) && !search.spanId
   const range: LogFilters = useMemo(
     () => (search.hour === undefined ? scope : { ...scope, start: filters.start, end: filters.end }),
     [scope, search.hour, filters.start, filters.end],
@@ -171,7 +180,9 @@ export function useCounts(org: string, logs: Logs, search: LogSearch, visible: b
   const byService = useQueries({ queries: stats(services.slice(0, COUNTED).map((service) => ({ ...range, service }))) })
   const byEnvironment = useQueries({ queries: stats(environments.slice(0, COUNTED).map((environment) => ({ ...range, environment }))) })
   const byProject = useQueries({ queries: stats(countedProjects.map((project) => ({ ...range, project: [Number(project.id)] }))) })
-  const hostsCounted = visible && !search.spanId
+  // Hosts are counted by the list, which can apply a host, but they show a dash with the rest under a
+  // search, trace or span, so one marker says "not counted" across the filters.
+  const hostsCounted = visible && !search.query && !search.traceId && !search.spanId
   const byHost = useQueries({ queries: hostsCounted ? hosts.slice(0, COUNTED).map((host) => ({ ...logHitsQuery(org, { ...filters, host }), ...COUNT_FRESH })) : [] })
 
   // While hidden nothing is fetched, and nothing shows either.
@@ -183,7 +194,7 @@ export function useCounts(org: string, logs: Logs, search: LogSearch, visible: b
     level: (level: LogLevel): Count => {
       if (!statistical || !byLevel.data) return fromStats(undefined)
       const series = byLevel.data.series.find((item) => item.name === level)
-      return counted(exact(series ? series.data.reduce((a, b) => a + b, 0) : 0))
+      return counted(exact(series ? add(series.data) : 0))
     },
     service: keyed(services, listed(byService)),
     environment: keyed(environments, listed(byEnvironment)),

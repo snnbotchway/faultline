@@ -9,14 +9,14 @@ const DAY_HOURS = 24
 const MIN_BAR = 2
 
 // Logs per hour on a zero baseline, errors and warnings stacked on the rest in their level colours, with
-// a key in the level shapes. An hour is as fine as the backend counts. With a pointer, picking a bar
-// narrows the list to that hour.
-export function LogHistogram({ buckets, height, hour, onPick }: { buckets: Bucket[]; height: number; hour: number | undefined; onPick: (hour: number | undefined) => void }) {
-  const peak = Math.max(1, ...buckets.map(bucketTotal))
+// a key in the level shapes. An hour is as fine as the backend counts. Picking a bar narrows the list to
+// that hour; `dim` fades the chart when it does not follow the list's filters.
+export function LogHistogram({ buckets, height, hour, dim, onPick }: { buckets: Bucket[]; height: number; hour: number | undefined; dim: boolean; onPick: (hour: number | undefined) => void }) {
+  const peak = Math.max(0, ...buckets.map(bucketTotal))
   const px = (count: number) => (count <= 0 ? 0 : Math.max(MIN_BAR, Math.round((count / peak) * height)))
   const first = buckets[0]!.start
   return (
-    <div>
+    <div className={cn(dim && 'dimmed')}>
       <div className="flex items-end gap-px border-b border-grid" style={{ height: height + 1 }} role="group" aria-label="Logs per hour">
         {buckets.map((bucket) => {
           const picked = hour === bucket.start
@@ -29,7 +29,7 @@ export function LogHistogram({ buckets, height, hour, onPick }: { buckets: Bucke
               aria-label={label}
               title={label}
               onClick={() => onPick(picked ? undefined : bucket.start)}
-              className={cn('flex h-full min-w-0 flex-1 flex-col-reverse justify-start hover:bg-accent max-lg:pointer-events-none', hour !== undefined && !picked && 'dimmed')}
+              className={cn('flex h-full min-w-0 flex-1 flex-col-reverse justify-start hover:bg-accent', hour !== undefined && !picked && 'dimmed')}
             >
               <span className="w-full bg-foreground/40" style={{ height: px(bucket.other) }} />
               <span className="w-full bg-level-warning" style={{ height: px(bucket.warnings) }} />
@@ -45,7 +45,7 @@ export function LogHistogram({ buckets, height, hour, onPick }: { buckets: Bucke
           error
           <LogLevelGlyph level={LogLevel.warn} />
           warn
-          <span className="ml-2">peak {peak}/hour</span>
+          <span className="ml-2">{peak > 0 ? `peak ${peak}/hour` : 'no logs'}</span>
         </span>
         <span>Now</span>
       </div>

@@ -1,10 +1,11 @@
 import { Check, X } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { projectSlug } from '@/api/organizations'
 import { Skeleton } from '@/components/ui/skeleton'
 import { hourLabel } from '@/features/issues/format'
 import { hitsText } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { CountState, type Count, type Counts, type Logs } from './data'
+import { CountState, LOADING, type Count, type Counts, type Logs } from './data'
 import { LogLevelGlyph } from './level'
 import { LEVELS, hourEnd, toggleLevel, type LogSearch, type SetSearch } from './search'
 
@@ -45,7 +46,7 @@ function Facet({ label, items, counts, current, onPick }: { label: string; items
         {items.map((item) => {
           const on = item.value === current
           return (
-            <FilterValue key={item.value} role="radio" on={on} count={counts[item.value] ?? { state: CountState.loading }} onClick={() => onPick(on ? undefined : item.value)}>
+            <FilterValue key={item.value} role="radio" on={on} count={counts[item.value] ?? LOADING} onClick={() => onPick(on ? undefined : item.value)}>
               <span className="truncate">{item.label}</span>
             </FilterValue>
           )
@@ -101,7 +102,7 @@ export function ActiveFilters({ logs, search, set }: { logs: Logs; search: LogSe
     ...(search.host ? [{ label: 'host', value: search.host, clear: { host: undefined }, inRail: true }] : []),
     ...(search.project ?? []).map((id) => ({
       label: 'project',
-      value: logs.projects.find((project) => Number(project.id) === id)?.slug ?? String(id),
+      value: projectSlug(logs.projects, id) ?? String(id),
       clear: { project: undefined },
       inRail: true,
     })),

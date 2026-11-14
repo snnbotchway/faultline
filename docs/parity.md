@@ -148,7 +148,7 @@ Where Faultline differs on purpose:
 General tab:
 - [x] Rename (`PUT` `{name}`); needs `canWriteProject`. Server errors map onto the field.
 - [x] Platform autocomplete (validates against the platform list, `PUT` `{name, platform}`).
-- [x] "Your notifications" link to `/profile/notifications`. **Faultline:** the page it opens comes with the account screens.
+- [x] "Your notifications" link to `/profile/notifications`.
 - [x] Delete project (`canAdminProject`), confirms, then returns to the list.
 - [x] Non-member admin note: "You can manage X as an organization admin". **Faultline:** a "Your access" row.
 

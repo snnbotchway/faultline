@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ChevronRight } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
@@ -19,11 +18,10 @@ import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
 import { useTitle } from '@/lib/title'
-import { cn } from '@/lib/utils'
 import { useAccess } from './access'
 import { useChange } from './change'
 import { TeamChecklist } from './fields'
-import { DeleteDialog, Field, FoldRow, Group, InlineForm, ROW, ROW_LABEL, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
+import { DeleteDialog, Field, FoldRow, Group, InlineForm, LinkRow, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
 import { teamList } from './labels'
 import { useFold } from './rows'
 import { PLATFORMS, platformName, shownPlatform, storedPlatform } from './platforms'
@@ -167,12 +165,7 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
       <Group label="You">
         {/* Someone who manages the project through their organization role sees no team of theirs above. */}
         {write && !project.isMember && <Row label="Your access" value="Through your organization role, not a team" />}
-        {/* The notification settings belong to the account, so this is a full page load away. */}
-        <a href="/profile/notifications" className={cn(ROW, 'hover:bg-accent')}>
-          <span className={ROW_LABEL}>Your notifications</span>
-          <span className="min-w-0 flex-1 text-muted-foreground">Alerts from this project</span>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-        </a>
+        <LinkRow label="Your notifications" value="Alerts from this project" to="/profile/notifications" />
       </Group>
       {admin && (
         <Group label="Danger">

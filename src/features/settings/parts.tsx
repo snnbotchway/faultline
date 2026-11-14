@@ -50,7 +50,7 @@ export function GroupAction({ className, ...props }: React.ComponentProps<typeof
 }
 
 export const ROW = 'flex min-h-12 w-full items-center gap-3 border-b px-3 text-left md:px-4 lg:min-h-11'
-export const ROW_LABEL = 'w-36 shrink-0 font-medium lg:w-52'
+const ROW_LABEL = 'w-36 shrink-0 font-medium lg:w-52'
 
 // Whether a row is unfolded, for rows built outside `FoldRow`.
 export const FoldChevron = ({ open }: { open: boolean }) => (

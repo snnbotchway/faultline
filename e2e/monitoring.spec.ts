@@ -21,16 +21,31 @@ test('a monitor page says how much of the day it was up and pages through every 
   await expect(page.getByRole('region', { name: 'Downtime' })).toContainText(/\d+(\.\d)?% up in the last 24 hours/)
 
   const checks = page.getByRole('region', { name: 'Checks', exact: true })
-  const rows = checks.getByRole('row')
-  await expect(rows.nth(1)).toBeVisible()
-  const first = await rows.count()
-  await checks.getByRole('button', { name: 'More checks' }).click()
-  await expect.poll(() => rows.count()).toBeGreaterThan(first)
+  const times = checks.locator('tbody time')
+  await expect(checks).toContainText('1–25 of')
+  const newest = await times.first().getAttribute('datetime')
+  await checks.getByRole('button', { name: 'Older checks' }).click()
+  await expect(checks).toContainText('26–50 of')
+  await expect(times.first()).not.toHaveAttribute('datetime', newest!)
+  await checks.getByRole('button', { name: 'Newer checks' }).click()
+  await expect(checks).toContainText('1–25 of')
 
   await checks.getByRole('radio', { name: 'Incidents only' }).click()
   await expect(checks.getByRole('row').filter({ hasText: 'Wrong status' }).first()).toBeVisible()
   await expect(checks.getByRole('row').filter({ hasText: 'Up' }).first()).toBeVisible()
-  await expect(checks.getByRole('button', { name: 'More checks' })).toHaveCount(0)
+  await expect(checks.getByRole('button', { name: 'Older checks' })).toHaveCount(0)
+  // The check where the current outage began is among every check too.
+  const outage = await times.first().getAttribute('datetime')
+  await checks.getByRole('radio', { name: 'All' }).click()
+  const began = checks.locator(`tbody time[datetime="${outage}"]`)
+  await expect(checks).toContainText('1–25 of')
+  // A backend seeded a while ago has had more checks since, so the outage may be pages back.
+  for (let pages = 0; pages < 20 && !(await began.isVisible()); pages++) {
+    const top = await times.first().getAttribute('datetime')
+    await checks.getByRole('button', { name: 'Older checks' }).click()
+    await expect(times.first()).not.toHaveAttribute('datetime', top!)
+  }
+  await expect(began).toBeVisible()
 })
 
 test('a monitor is created, edited and deleted', async ({ page }) => {

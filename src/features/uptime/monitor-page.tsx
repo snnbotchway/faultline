@@ -1,11 +1,11 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { StatsPeriod } from '@/api/issues'
 import { projectAlertsQuery } from '@/api/alerts'
 import { explain, isNotFound } from '@/api/errors'
-import { isHttp, monitorActions, monitorChangesQuery, monitorChecksQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
+import { CHECKS_PAGE_SIZE, isHttp, monitorActions, monitorChangesQuery, monitorChecksQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
 import { canWriteProjects, organizationQuery, projectSlug, projectsQuery } from '@/api/organizations'
 import { canOpenRelease, recentReleasesQuery, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
@@ -407,13 +407,23 @@ function DowntimeRow({
 // Every check, newest first, a page at a time; "Incidents only" keeps the ones where the monitor went down or came back.
 function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; now: number }) {
   const [view, setView] = useState<ChecksView>(ChecksView.all)
-  const checks = useInfiniteQuery(monitorChecksQuery(org, monitor.id, view === ChecksView.incidents))
-  const items = checks.data?.pages.flatMap((page) => page.items) ?? []
-  const { hits, maxHits } = checks.data?.pages[0] ?? {}
+  // The cursor of each page opened so far, from the newest; the last is the page shown.
+  const [cursors, setCursors] = useState<(string | undefined)[]>([undefined])
+  const checks = useQuery(monitorChecksQuery(org, monitor.id, view === ChecksView.incidents, cursors.at(-1)))
+  const items = checks.data?.items ?? []
+  const { hits, maxHits } = checks.data ?? {}
+  const older = checks.data?.cursors.next
   // The backend counts no further than its cap.
   const total = hits === undefined ? undefined : `${hits}${maxHits !== undefined && hits >= maxHits ? '+' : ''}`
+  const offset = (cursors.length - 1) * CHECKS_PAGE_SIZE
+  // Until the page asked for is in, the one shown belongs to another page or view.
+  const stale = checks.isPlaceholderData
+  const show = (to: ChecksView) => {
+    setView(to)
+    setCursors([undefined])
+  }
   return (
-    <Section label="Checks" className="mt-8" action={<Segmented label="Show checks" value={view} options={CHECKS_VIEWS} onChange={setView} />}>
+    <Section label="Checks" className="mt-8" action={<Segmented label="Show checks" value={view} options={CHECKS_VIEWS} onChange={show} />}>
       {checks.isPending ? (
         <Skeleton className="mt-3 h-40" />
       ) : checks.isError ? (
@@ -426,7 +436,7 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
       ) : items.length === 0 ? (
         <p className="py-4 text-muted-foreground">{view === ChecksView.incidents ? 'No incidents recorded.' : 'No checks yet.'}</p>
       ) : (
-        <table className={cn('w-full', checks.isPlaceholderData && 'opacity-60')}>
+        <table className={cn('w-full', stale && 'opacity-60')}>
           <caption className="sr-only">{total} checks, newest first</caption>
           <thead>
             <tr className="label-caps h-9 text-left">
@@ -464,15 +474,21 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
           </tbody>
         </table>
       )}
-      {checks.hasNextPage && (
-        <Button className="mt-3" aria-busy={checks.isFetchingNextPage} disabled={checks.isFetchingNextPage} onClick={() => void checks.fetchNextPage()}>
-          More checks
-        </Button>
-      )}
-      {total !== undefined && items.length > 0 && (
-        <p className="mono mt-2 text-muted-foreground">
-          {items.length} of {total}
-        </p>
+      {items.length > 0 && (cursors.length > 1 || older) && (
+        <div className="mt-2 flex items-center justify-between gap-4">
+          <p className={cn('mono text-muted-foreground', stale && 'invisible')}>
+            {offset + 1}–{offset + items.length}
+            {total !== undefined && ` of ${total}`}
+          </p>
+          <div className="flex shrink-0 items-center">
+            <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={stale || !older} onClick={() => setCursors([...cursors, older])} aria-label="Older checks">
+              <ChevronLeft />
+            </Button>
+            <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={stale || cursors.length === 1} onClick={() => setCursors(cursors.slice(0, -1))} aria-label="Newer checks">
+              <ChevronRight />
+            </Button>
+          </div>
+        </div>
       )}
     </Section>
   )

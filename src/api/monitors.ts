@@ -108,26 +108,28 @@ export const monitorChangesQuery = (slug: string, id: number, lastChange: string
       ),
   })
 
-const CHECKS_PAGE_SIZE = 25
+export const CHECKS_PAGE_SIZE = 25
 
 /**
- * Every check of a monitor, newest first, a page at a time (the backend keeps the newest 1000).
+ * One page of a monitor's checks, newest first, from `cursor` (the newest page without one).
  * `changesOnly` asks for the checks where the monitor went down or came back, the backend's
- * `is_change`. `hits` on a page is the count of checks that match.
+ * `is_change`; without it every check comes back, changes too. `hits` on a page is the count of
+ * checks that match, which the backend stops counting at `maxHits`; it keeps checks for as many days
+ * as its retention allows, so there can be many more.
  */
-export const monitorChecksQuery = (slug: string, id: number, changesOnly: boolean) =>
-  infiniteQueryOptions({
-    queryKey: monitorKeys.checks(slug, id, changesOnly),
-    initialPageParam: undefined as string | undefined,
-    refetchInterval: REFRESH_EVERY,
+export const monitorChecksQuery = (slug: string, id: number, changesOnly: boolean, cursor?: string) =>
+  queryOptions({
+    queryKey: [...monitorKeys.checks(slug, id, changesOnly), cursor ?? null],
+    // Only the newest page gains checks: a cursor marks a check, and its page holds the ones before it.
+    staleTime: cursor === undefined ? 0 : Infinity,
+    refetchInterval: cursor === undefined ? REFRESH_EVERY : false,
     placeholderData: keepPreviousData,
-    queryFn: async ({ pageParam }): Promise<Page<Check>> => {
+    queryFn: async (): Promise<Page<Check>> => {
       const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/monitors/{monitor_id}/checks/', {
-        params: { path: monitorPath(slug, id), query: { is_change: changesOnly, limit: CHECKS_PAGE_SIZE, cursor: pageParam } },
+        params: { path: monitorPath(slug, id), query: { is_change: changesOnly ? true : undefined, limit: CHECKS_PAGE_SIZE, cursor } },
       })
       return toPage(unwrap(result), result.response)
     },
-    getNextPageParam: (page) => page.cursors.next,
   })
 
 export const statusPagesQuery = (slug: string) =>

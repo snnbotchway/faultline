@@ -121,7 +121,7 @@ function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mecha
   const parts = [
     mechanism.type && { text: mechanism.type },
     mechanism.handled != null && { text: mechanism.handled ? 'handled' : 'unhandled', error: !mechanism.handled },
-    caughtIn && { text: String(caughtIn) },
+    caughtIn != null && { text: valueText(caughtIn) },
     ...Object.entries(data).map(([key, item]) => ({ text: `${key}=${valueText(item)}` })),
   ].filter((part): part is { text: string; error?: boolean } => !!part)
   if (parts.length === 0 && !mechanism.description) return null

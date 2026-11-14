@@ -255,6 +255,7 @@ function TagValues({ org, tag }: { org: string; tag: IssueTag }) {
       </h3>
       <ul>
         {shown.map(row)}
+        {open && more.map(row)}
         {more.length > 0 && (
           <li>
             <button
@@ -263,11 +264,10 @@ function TagValues({ org, tag }: { org: string; tag: IssueTag }) {
               aria-expanded={open}
               className="flex min-h-6 w-full items-center pl-12 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground max-lg:min-h-11"
             >
-              {more.length} more
+              {open ? 'Show fewer' : `${more.length} more`}
             </button>
           </li>
         )}
-        {open && more.map(row)}
         {facets.other > 0 && (
           <li className="mono relative flex min-h-6 items-center gap-3 pr-2 text-muted-foreground max-lg:min-h-11">
             <Share share={facets.other} flat={false}>
@@ -333,7 +333,7 @@ export function UserReports({ org, issueId }: { org: string; issueId: string }) 
     <Section title="User reports" count={reports.length}>
       <ul className="space-y-4">
         {reports.map((report) => {
-          const who = report.name || report.email
+          const who = report.name || report.email || 'Anonymous'
           const open = { to: '/$org/issues/$issueId/events/$eventId', params: { org, issueId, eventId: report.eventID } } as const
           return (
             <li

@@ -5,6 +5,13 @@ All notable changes to Faultline are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Uptime monitors: a list grouped by down, flapping, slow, up and waiting, with each monitor's downtime over 24 hours or 14 days and releases marked on it; a monitor page with its downtime and releases on one strip, downtime periods with the release before each, latest checks, response times, heartbeat address and the alert rules that cover it; new and edit in a dialog.
+- Status pages: list them with the monitors on each and a link to copy; a server admin, who can add monitors to one, can also create one.
+- Alert rules for every project on one page, with an editor for conditions, environments and recipients, and a test send; and a project's own rules as its Alerts tab, on the stock `?tab=alerts&alert=` address, so links in old emails open the right rule.
+- Releases: a list grouped by day under the events chart, with new issues, deploys and commits per release; a release page with its projects' errors over two weeks, the issues it brought, deploys, commits and files, where someone allowed to manage releases can delete a file.
+
 ## [0.1.1] - 2026-11-14
 
 Tested against GlitchTip 7.0.0.
@@ -38,10 +45,6 @@ The first release. Tested against GlitchTip 7.0.0.
 - Create an organization, and a system info page.
 - Performance (`/:org/performance/transaction-groups`): transactions ranked by the time they take, with tabs for repeated queries, those slower this week (and the release they slowed down at) and failing ones. A transaction shows its all-time figures, a 7-day chart and where an average request spends its time; on a desktop it opens beside the list. Breakdowns, charts and repeated queries need GlitchTip's cold storage.
 - Logs (`/:org/logs`): search, filters by level, service, environment, host and project with counts, a time window and logs per hour, a log's attributes, and the other logs in its trace.
-- Uptime monitors: a list grouped by down, flapping, slow, up and waiting, with each monitor's downtime over 24 hours or 14 days and releases marked on it; a monitor page with its downtime and releases on one strip, downtime periods with the release before each, latest checks, response times, heartbeat address and the alert rules that cover it; new and edit in a dialog.
-- Status pages: list them with the monitors on each and a link to copy; a server admin, who can add monitors to one, can also create one.
-- Alert rules for every project on one page, with an editor for conditions, environments and recipients, and a test send; and a project's own rules as its Alerts tab, on the stock `?tab=alerts&alert=` address, so links in old emails open the right rule.
-- Releases: a list grouped by day under the events chart, with new issues, deploys and commits per release; a release page with its projects' errors over two weeks, the issues it brought, deploys, commits and files, where someone allowed to manage releases can delete a file.
 
 [Unreleased]: https://github.com/snnbotchway/faultline/compare/v0.1.1...HEAD
 [0.1.1]: https://github.com/snnbotchway/faultline/compare/v0.1.0...v0.1.1

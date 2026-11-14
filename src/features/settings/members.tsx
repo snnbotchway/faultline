@@ -47,11 +47,15 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
   const write = can(Scope.memberWrite)
   const words = searchWords(query)
   const shown = members?.filter((member) => hasWords(`${member.user?.name ?? ''} ${member.email}`, words))
+  // In the page bar on a desktop; on a phone the bar has no room, so it heads the list.
+  const find = (className: string) => (
+    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a member" aria-label="Find a member" className={className} />
+  )
 
   return (
     <>
       <SettingsBar org={org} title="Members">
-        <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a member" aria-label="Find a member" className="h-8 w-56 max-lg:hidden" />
+        {find('h-8 w-56 max-lg:hidden')}
         {write && (
           // The filled button is the page's main action; while a row is open that is the row's Save.
           <Button variant={openId ? 'outline' : 'default'} size="bar" onClick={() => void navigate({ to: '/$org/settings/members/new', params: { org }, replace: true })}>
@@ -61,6 +65,7 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
         )}
       </SettingsBar>
       <Sheet>
+        <div className="border-b px-3 py-2 lg:hidden">{find('h-9')}</div>
         {!shown ? (
           <RowSkeleton />
         ) : (

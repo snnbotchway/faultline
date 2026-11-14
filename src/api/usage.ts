@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { inTurns } from '@/lib/in-turns'
 import { api, orgPath, unwrap } from './client'
 import type { components } from './schema/openapi'
 
@@ -89,24 +90,6 @@ export function usageHours(now: number): { start: string; end: string } {
   const end = Math.floor(now / HOUR_MS) * HOUR_MS
   const start = Math.ceil((now - USAGE_DAYS * 24 * HOUR_MS) / HOUR_MS) * HOUR_MS
   return { start: new Date(start).toISOString(), end: new Date(end).toISOString() }
-}
-
-/** Runs at most `max` of the calls given to it at a time, in the order they came. */
-export function inTurns(max: number) {
-  let running = 0
-  const waiting: (() => void)[] = []
-  return async <T>(call: () => Promise<T>): Promise<T> => {
-    if (running < max) running++
-    else await new Promise<void>((resolve) => waiting.push(resolve))
-    try {
-      return await call()
-    } finally {
-      // The slot passes straight to the next call, so a new one cannot jump the queue.
-      const next = waiting.shift()
-      if (next) next()
-      else running--
-    }
-  }
 }
 
 // GlitchTip 7.0.0 answers one `stats_v2` request at a time per worker, so more at once only queue there and hold up

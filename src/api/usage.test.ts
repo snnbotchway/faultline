@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { countsByDay, inTurns, toUsageCounts, totalOf, usageHours } from './usage'
+import { countsByDay, toUsageCounts, totalOf, usageHours } from './usage'
 
 test('logs and uptime checks are shown as what arrived, ten for every one the backend bills, and always whole', () => {
   // The figures GlitchTip 7.0.0 returned for 1,168 logs and 105 uptime checks, float noise included.
@@ -16,31 +16,4 @@ test("hourly counts land on the day the server's own time zone puts them in, and
 
 test('the hours asked for are the ones that start inside the 30 days', () => {
   expect(usageHours(Date.parse('2026-11-14T22:40:39Z'))).toEqual({ start: '2026-10-15T23:00:00.000Z', end: '2026-11-14T22:00:00.000Z' })
-})
-
-test('calls wait for a turn, run in the order they came, and a failed one frees its turn', async () => {
-  const turns = inTurns(2)
-  const started: number[] = []
-  const finish: (() => void)[] = []
-  const calls = [0, 1, 2, 3].map((id) =>
-    turns(
-      () =>
-        new Promise<number>((resolve, reject) => {
-          started.push(id)
-          finish[id] = () => (id === 0 ? reject(new Error('failed')) : resolve(id))
-        }),
-    ),
-  )
-  const settled = Promise.allSettled(calls)
-  await Promise.resolve()
-  expect(started).toEqual([0, 1])
-  finish[0]!()
-  await new Promise((resolve) => setTimeout(resolve))
-  expect(started).toEqual([0, 1, 2])
-  finish[1]!()
-  await new Promise((resolve) => setTimeout(resolve))
-  expect(started).toEqual([0, 1, 2, 3])
-  finish[2]!()
-  finish[3]!()
-  expect((await settled).map((result) => result.status)).toEqual(['rejected', 'fulfilled', 'fulfilled', 'fulfilled'])
 })

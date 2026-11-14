@@ -145,6 +145,9 @@ export const TRANSACTIONS: Record<string, TransactionShape[]> = {
     },
   ],
   'web-app': [
+    // The same name as the API's health check, in another project: the backend's trends and breakdowns
+    // cannot tell the two apart.
+    { name: '/api/health/', op: 'http.server', method: 'GET', perDay: 60, own: [1, 3], spans: [{ op: 'cache.get', description: 'health', ms: [1, 2] }] },
     {
       name: '/dashboard',
       op: 'pageload',

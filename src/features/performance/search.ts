@@ -1,5 +1,5 @@
 import type { TransactionSort } from '@/api/performance'
-import { projectIds } from '@/lib/search'
+import { projectIds, searchText as text } from '@/lib/search'
 
 export const View = { all: 'all', repeated: 'repeated', slower: 'slower', failing: 'failing' } as const
 export type View = (typeof View)[keyof typeof View]
@@ -33,7 +33,6 @@ export type PerformanceSearch = {
   pattern?: string
 }
 
-const text = (value: unknown) => (typeof value === 'string' && value ? value : typeof value === 'number' ? String(value) : undefined)
 
 // `sort` is what the stock UI calls `order`, so its links keep their sorting.
 export function validatePerformanceSearch(search: Record<string, unknown>): PerformanceSearch {

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { compact } from '@/features/issues/format'
-import { isDesktop } from '@/lib/layout'
+import { openBeside } from '@/lib/layout'
 import { cn } from '@/lib/utils'
 import type { Repeat } from './data'
 import { formatMs, formatPercent, formatTimes } from './format'
@@ -43,19 +43,24 @@ function RepeatPane({ org, repeat, onOpen }: { org: string; repeat: Repeat; onOp
       <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <SectionLabel>One request</SectionLabel>
         <span className="mono">
-          <span className="font-semibold">{formatMs(repeat.perRequest)}</span> of {formatMs(repeat.request)}
+          <span className="font-semibold">{formatMs(repeat.perRequest)}</span>
+          {repeat.request !== undefined && ` of ${formatMs(repeat.request)}`}
         </span>
       </div>
-      <div className="mt-2 flex h-7 border" aria-hidden>
-        <span className="flex gap-px" style={{ width: `${repeat.share * 100}%` }}>
-          {Array.from({ length: Math.min(MAX_TICKS, Math.round(repeat.spansPerTxn)) }, (_, index) => (
-            <span key={index} className="min-w-px flex-1 bg-foreground/55" />
-          ))}
-        </span>
-      </div>
+      {repeat.share === undefined ? (
+        <p className="mt-2 text-sm text-muted-foreground">More than one transaction has this name, so its share of a request is unknown.</p>
+      ) : (
+        <div className="mt-2 flex h-7 border" aria-hidden>
+          <span className="flex gap-px" style={{ width: `${repeat.share * 100}%` }}>
+            {Array.from({ length: Math.min(MAX_TICKS, Math.round(repeat.spansPerTxn)) }, (_, index) => (
+              <span key={index} className="min-w-px flex-1 bg-foreground/55" />
+            ))}
+          </span>
+        </div>
+      )}
 
       <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-        <Stat label="Share of request">{formatPercent(repeat.share * 100)}</Stat>
+        {repeat.share !== undefined && <Stat label="Share of request">{formatPercent(repeat.share * 100)}</Stat>}
         <Stat label="Each run">{formatMs(repeat.avgDuration)}</Stat>
         <Stat label="Requests, 7 days">{compact(repeat.transactionCount)}</Stat>
         <Stat label="Total, 7 days">{formatMs(repeat.totalTime)}</Stat>
@@ -65,12 +70,7 @@ function RepeatPane({ org, repeat, onOpen }: { org: string; repeat: Repeat; onOp
           <Link
             to="/$org/performance/transaction-groups/$groupId"
             params={{ org, groupId: String(group.id) }}
-            onClick={(event) => {
-              // A desktop shows the transaction beside the list it belongs to.
-              if (!isDesktop() || event.metaKey || event.ctrlKey || event.shiftKey) return
-              event.preventDefault()
-              onOpen(String(group.id))
-            }}
+            onClick={(event) => openBeside(event, () => onOpen(String(group.id)))}
           >
             Open transaction
             <ChevronRight />
@@ -115,7 +115,7 @@ export function RepeatedQueries({
   }
   return (
     <div className="flex flex-1 items-start">
-      <div className={cn('min-w-0 flex-1 lg:max-w-[46%] lg:border-r', picked && 'max-lg:hidden')}>
+      <div className={cn('min-w-0 flex-1 lg:max-w-list lg:border-r', picked && 'max-lg:hidden')}>
         <div className="flex items-end justify-between gap-3 border-b px-3 py-2 md:px-4">
           <span className="label-caps">Runs per request, 7 days</span>
           <span className="label-caps shrink-0 text-right">Per request</span>
@@ -142,7 +142,7 @@ export function RepeatedQueries({
                   </span>
                   <span className="mono text-right tabular-nums">
                     <span className="block font-semibold">{formatMs(repeat.perRequest)}</span>
-                    <span className="text-muted-foreground">{formatPercent(repeat.share * 100)}</span>
+                    {repeat.share !== undefined && <span className="text-muted-foreground">{formatPercent(repeat.share * 100)}</span>}
                   </span>
                 </Link>
               </li>
@@ -150,7 +150,7 @@ export function RepeatedQueries({
           })}
         </ul>
       </div>
-      <aside className={cn('min-w-0 flex-1 lg:sticky lg:top-11 lg:h-[calc(100dvh-2.75rem)] lg:overflow-y-auto', !picked && 'max-lg:hidden')} aria-label="Repeated query">
+      <aside className={cn('min-w-0 flex-1 lg:side-pane', !picked && 'max-lg:hidden')} aria-label="Repeated query">
         <Link
           to="/$org/performance/transaction-groups"
           params={{ org }}

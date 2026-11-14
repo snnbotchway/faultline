@@ -71,8 +71,11 @@ describe('share of request', () => {
     expect(share).toBeCloseTo(0.363, 3)
   })
 
-  it('is all of it when the query alone takes longer than the average, or the average is unknown', () => {
+  it('is all of it when the query alone takes longer than the average', () => {
     expect(shareOfRequest({ spansPerTxn: 50, avgDuration: 40 }, 1500).share).toBe(1)
-    expect(shareOfRequest({ spansPerTxn: 50, avgDuration: 40 }, undefined).share).toBe(1)
+  })
+
+  it('is unknown without the transaction, as when its name is shared', () => {
+    expect(shareOfRequest({ spansPerTxn: 50, avgDuration: 40 }, undefined)).toEqual({ perRequest: 2000 })
   })
 })

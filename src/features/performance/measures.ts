@@ -1,7 +1,7 @@
 import type { NPlusOnePattern, SpanGroup, TransactionGroup, TrendDay } from '@/api/performance'
 import type { Axis, Mark } from '@/features/issues/trend'
+import { DAY } from '@/lib/time'
 
-const DAY = 86_400
 export const WEEK = 7
 
 // Seven daily buckets ending today, on the backend's (UTC) day boundaries.
@@ -14,7 +14,10 @@ const utc = (date: string) => Date.parse(/Z|[+-]\d\d:?\d\d$/.test(date) ? date :
 
 // Time spent in spans per request, for each day of the axis. The backend counts a request once per span
 // group it touched, so its daily request count is too high by the number of span groups; `spanGroups`
-// undoes that. Without it the values are only good for comparing one day with another.
+// undoes that. Without it the values are only good for comparing one day with another. The trend has
+// no count per span group, so a day on which a request starts touching a new span group counts more
+// requests than ran, and its time per request reads low: a regression that adds a query looks smaller
+// than it is.
 export function spanTimePerRequest(trend: TrendDay[] | undefined, axis: Axis, spanGroups = 1): number[] {
   const time = Array.from({ length: axis.count }, () => 0)
   for (const day of trend ?? []) {
@@ -76,10 +79,12 @@ export function averageRequest(group: Pick<TransactionGroup, 'count' | 'avgDurat
   return { rows, total, outside: total - inSpans }
 }
 
-// How much of one request a repeated query takes, from 0 to 1.
-export function shareOfRequest(pattern: Pick<NPlusOnePattern, 'spansPerTxn' | 'avgDuration'>, average: number | undefined) {
+// How much of one request a repeated query takes, from 0 to 1, and how long that request is: the
+// transaction's average, or the query's own time when that is longer. Unknown without the average.
+export function shareOfRequest(pattern: Pick<NPlusOnePattern, 'spansPerTxn' | 'avgDuration'>, average: number | undefined): { perRequest: number; request?: number; share?: number } {
   const perRequest = pattern.spansPerTxn * pattern.avgDuration
-  const request = Math.max(average ?? 0, perRequest)
+  if (average === undefined) return { perRequest }
+  const request = Math.max(average, perRequest)
   return { perRequest, request, share: request > 0 ? perRequest / request : 0 }
 }
 

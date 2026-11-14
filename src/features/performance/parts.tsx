@@ -7,7 +7,7 @@ import { Trace } from '@/features/issues/trace'
 import { Trend, type Axis, type Mark } from '@/features/issues/trend'
 import { cn } from '@/lib/utils'
 import type { Transaction } from './data'
-import { formatMs, formatPercent, formatTimes } from './format'
+import { formatFactor, formatMs, formatPercent, formatTimes } from './format'
 import type { Regression } from './measures'
 
 // An identifier that may wrap after a dot, underscore, slash or colon, and never in the middle of a word.
@@ -38,7 +38,7 @@ export function Slower({ slower, since }: { slower: Regression; since?: string }
     <span className="flex items-center gap-1 text-sm">
       <TrendingUp className="size-3 shrink-0 text-trend-spiking" />
       <span>
-        <span className="mono font-semibold">{slower.factor.toFixed(1)}×</span> slower{since ? ` since ${since}` : ' this week'}
+        <span className="mono font-semibold">{formatFactor(slower.factor)}</span> slower{since ? ` since ${since}` : ' this week'}
       </span>
     </span>
   )
@@ -119,9 +119,11 @@ export function WeekChart({ buckets, marks, axis, slower, height, className }: {
   const peak = Math.max(...buckets, 0)
   return (
     <div className={cn('flex', className)} role="img" aria-label={`Time in spans per request for each of the last ${axis.count} days, peak ${formatMs(peak)}`}>
-      <div className={cn('mono flex shrink-0 flex-col justify-between pt-5 pr-2 text-right text-xs text-muted-foreground', AXIS_WIDTH)} style={{ height: height + 21 }} aria-hidden>
-        <span className="-translate-y-1/2">{formatMs(peak)}</span>
-        <span className="translate-y-1/2">0</span>
+      <div className={cn('mono shrink-0 pt-5 pr-2 text-right text-xs text-muted-foreground', AXIS_WIDTH)} aria-hidden>
+        <div className="flex flex-col justify-between" style={{ height }}>
+          <span className="-translate-y-1/2">{formatMs(peak)}</span>
+          <span className="translate-y-1/2">0</span>
+        </div>
       </div>
       <div className="min-w-0 flex-1" aria-hidden>
         <div className="relative pt-5">

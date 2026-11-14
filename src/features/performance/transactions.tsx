@@ -3,12 +3,15 @@ import { ArrowDownWideNarrow } from 'lucide-react'
 import { ProjectMenu } from '@/components/project-menu'
 import { SearchField } from '@/components/search-field'
 import { CommandGroup, useCommands } from '@/components/shell/commands'
-import { PageBar, Screen } from '@/components/shell/app-shell'
+import { ListPageBar } from '@/components/list-page-bar'
+import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { compact, plural } from '@/features/issues/format'
+import { Skeleton } from '@/components/ui/skeleton'
+import { compact } from '@/features/issues/format'
+import { plural } from '@/lib/format'
 import { useHotkeys } from '@/lib/hotkeys'
-import { isDesktop } from '@/lib/layout'
+import { isDesktop, openBeside } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useTransactions, type Repeat, type Transaction, type Transactions } from './data'
@@ -28,6 +31,47 @@ type Measure = (typeof Measure)[keyof typeof Measure]
 const measureOf = (order: ReturnType<typeof transactionSort>): Measure =>
   order?.includes('avg_duration') ? Measure.duration : order?.includes('count') ? Measure.requests : Measure.time
 
+const requests = (transaction: Transaction) => plural(compact(transaction.group.count), 'request')
+const typical = (transaction: Transaction) => `typical ${formatMs(transaction.group.p50 ?? 0)}`
+const slow = (transaction: Transaction) => `slow ${formatMs(transaction.group.p95 ?? 0)}`
+const total = (transaction: Transaction) => `total ${formatMs(transaction.totalTime)}`
+
+type MeasureView = {
+  // The labels above the rows, left and right.
+  headings: [string, string]
+  // The row's figure, at the right of its name.
+  figure: (transaction: Transaction) => string
+  // The row's bar, scaled to the largest in the list. Without it the row draws typical to slow durations.
+  size?: (transaction: Transaction) => number
+  // Whether the bar's size is a share, written as a percentage beside it.
+  percent: boolean
+  // The other figures, under the bar.
+  details: ((transaction: Transaction) => string)[]
+}
+
+const MEASURES: Record<Measure, MeasureView> = {
+  [Measure.time]: {
+    headings: ['Share of time spent', 'Total, all time'],
+    figure: (transaction) => formatMs(transaction.totalTime),
+    size: (transaction) => transaction.share,
+    percent: true,
+    details: [requests, typical, slow],
+  },
+  [Measure.duration]: {
+    headings: ['Typical to slow', 'Slow, all time'],
+    figure: (transaction) => formatMs(transaction.group.p95 ?? 0),
+    percent: false,
+    details: [requests, typical, total],
+  },
+  [Measure.requests]: {
+    headings: ['Requests', 'All time'],
+    figure: (transaction) => compact(transaction.group.count),
+    size: (transaction) => transaction.group.count,
+    percent: false,
+    details: [typical, slow, total],
+  },
+}
+
 const VIEWS: { view: View; label: string; test?: (transaction: Transaction) => boolean }[] = [
   { view: View.all, label: 'All' },
   { view: View.repeated, label: 'Repeated queries' },
@@ -41,7 +85,7 @@ const matches = (repeat: Repeat, query: string | undefined) => {
 }
 
 function sortRepeats(repeats: Repeat[], order: RepeatOrder | undefined) {
-  if (order === RepeatOrder.share) return [...repeats].sort((a, b) => b.share - a.share)
+  if (order === RepeatOrder.share) return [...repeats].sort((a, b) => (b.share ?? -1) - (a.share ?? -1))
   if (order === RepeatOrder.total) return [...repeats].sort((a, b) => b.totalTime - a.totalTime)
   return repeats
 }
@@ -50,10 +94,10 @@ type Go = (patch: Partial<PerformanceSearch>) => void
 
 // What to look at: everything, the queries that repeat, or the transactions with a problem. One row
 // that scrolls sideways when it does not fit.
-function Views({ org, search, counts, go }: { org: string; search: PerformanceSearch; counts: Record<View, number>; go: Go }) {
+function Views({ org, search, counts, go }: { org: string; search: PerformanceSearch; counts: Record<View, number | undefined>; go: Go }) {
   const current = search.view ?? View.all
   return (
-    <div className="flex items-center gap-1 overflow-x-auto border-b px-3 py-2 [scrollbar-width:none] md:px-4">
+    <div className="scroll-row flex items-center gap-1 border-b px-3 py-2 md:px-4">
       <nav className="flex shrink-0 items-center gap-1" aria-label="Show">
         {VIEWS.map(({ view, label }) => {
           const on = view === current
@@ -68,12 +112,13 @@ function Views({ org, search, counts, go }: { org: string; search: PerformanceSe
               aria-current={on ? 'page' : undefined}
               className={cn('flex h-7 shrink-0 items-center gap-2 border px-3 text-sm max-lg:h-11', on ? 'border-foreground bg-foreground text-background' : 'bg-card hover:bg-accent')}
             >
-              {label} <span className={cn('mono', !on && 'text-muted-foreground')}>{counts[view]}</span>
+              {label}
+              {counts[view] === undefined ? <Skeleton className="h-3 w-4" /> : <span className={cn('mono', !on && 'text-muted-foreground')}>{counts[view]}</span>}
             </Link>
           )
         })}
       </nav>
-      <ProjectMenu org={org} project={search.project?.[0]} onChange={(project) => go({ project: project === undefined ? undefined : [project], group: undefined, pattern: undefined })} className="lg:ml-auto" />
+      <ProjectMenu org={org} value={search.project} onChange={(project) => go({ project, group: undefined, pattern: undefined })} className="lg:ml-auto" />
     </div>
   )
 }
@@ -100,51 +145,35 @@ function SortMenu({ orders, order, onChange }: { orders: { value: string; label:
   )
 }
 
-const HEADINGS: Record<Measure, [string, string]> = {
-  [Measure.time]: ['Share of time spent', 'Total, all time'],
-  [Measure.duration]: ['Typical to slow', 'Slow, all time'],
-  [Measure.requests]: ['Requests', 'All time'],
-}
-
-function TransactionRow({ org, transaction, measure, peak, current, onOpen }: { org: string; transaction: Transaction; measure: Measure; peak: number; current: boolean; onOpen: () => void }) {
+function TransactionRow({ org, transaction, measure, peak, current, onOpen }: { org: string; transaction: Transaction; measure: MeasureView; peak: number; current: boolean; onOpen: () => void }) {
   const { group } = transaction
-  const p50 = group.p50 ?? 0
-  const p95 = group.p95 ?? 0
-  const figure = { [Measure.time]: formatMs(transaction.totalTime), [Measure.duration]: formatMs(p95), [Measure.requests]: compact(group.count) }[measure]
-  const length = measure === Measure.time ? transaction.share / peak : group.count / peak
   return (
     <li className="border-b">
       <Link
         to="/$org/performance/transaction-groups/$groupId"
         params={{ org, groupId: String(group.id) }}
-        onClick={(event) => {
-          // A desktop has room for the transaction beside the list.
-          if (!isDesktop() || event.metaKey || event.ctrlKey || event.shiftKey) return
-          event.preventDefault()
-          onOpen()
-        }}
+        onClick={(event) => openBeside(event, onOpen)}
         aria-current={current ? 'true' : undefined}
         className={cn('block px-3 py-3 md:px-4', current ? 'lg:bg-selected' : 'hover:bg-accent/60')}
       >
         <span className="flex items-baseline gap-3">
           <TransactionName group={group} className="break-words lg:truncate" />
-          <span className="mono ml-auto shrink-0 font-semibold tabular-nums">{figure}</span>
+          <span className="mono ml-auto shrink-0 font-semibold tabular-nums">{measure.figure(transaction)}</span>
         </span>
         <span className="mt-2 flex items-center gap-3">
-          {measure === Measure.duration ? (
-            <DurationBar p50={p50} p95={p95} className="flex-1" />
-          ) : (
+          {measure.size ? (
             <span className="relative h-2 flex-1 border-b border-grid" aria-hidden>
-              <span className="absolute bottom-0 left-0 h-2 bg-foreground/55" style={{ width: `${Math.max(0.5, length * 100)}%` }} />
+              <span className="absolute bottom-0 left-0 h-2 bg-foreground/55" style={{ width: `${Math.max(0.5, (measure.size(transaction) / peak) * 100)}%` }} />
             </span>
+          ) : (
+            <DurationBar p50={group.p50 ?? 0} p95={group.p95 ?? 0} className="flex-1" />
           )}
-          <span className="mono w-14 shrink-0 text-right text-muted-foreground tabular-nums">{measure === Measure.time && formatPercent(transaction.share * 100)}</span>
+          <span className="mono w-14 shrink-0 text-right text-muted-foreground tabular-nums">{measure.percent && formatPercent(transaction.share * 100)}</span>
         </span>
         <span className="mono mt-1 flex flex-wrap gap-x-3 text-muted-foreground">
-          {measure !== Measure.requests && <span>{plural(compact(group.count), 'request')}</span>}
-          <span>typical {formatMs(p50)}</span>
-          {measure !== Measure.duration && <span>slow {formatMs(p95)}</span>}
-          {measure !== Measure.time && <span>total {formatMs(transaction.totalTime)}</span>}
+          {measure.details.map((detail, index) => (
+            <span key={index}>{detail(transaction)}</span>
+          ))}
           <span>{transaction.project}</span>
         </span>
         <Signals transaction={transaction} className="mt-1" />
@@ -154,9 +183,10 @@ function TransactionRow({ org, transaction, measure, peak, current, onOpen }: { 
 }
 
 function TransactionList({ org, search, data, rows, go }: { org: string; search: PerformanceSearch; data: Transactions; rows: Transaction[]; go: Go }) {
-  const measure = measureOf(transactionSort(search))
+  const measure = MEASURES[measureOf(transactionSort(search))]
   const open = rows.find((row) => String(row.group.id) === search.group) ?? rows[0]
-  const peak = measure === Measure.time ? Math.max(...data.transactions.map((item) => item.share), Number.EPSILON) : Math.max(...data.transactions.map((item) => item.group.count), 1)
+  const { size } = measure
+  const peak = size ? Math.max(...data.transactions.map(size), Number.EPSILON) : 1
   const move = (step: number) => {
     const next = rows[Math.max(0, Math.min(rows.length - 1, rows.findIndex((row) => row === open) + step))]
     if (next && isDesktop()) go({ group: String(next.group.id) })
@@ -182,17 +212,17 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
     if (view === View.failing) return <Screen title="No transaction is failing" />
     return <Screen title="No project has sent transactions yet" />
   }
-  const [left, right] = HEADINGS[measure]
+  const [left, right] = measure.headings
   return (
     <div className="flex flex-1 items-start">
-      <div className="min-w-0 flex-1 lg:max-w-[46%] lg:border-r">
+      <div className="min-w-0 flex-1 lg:max-w-list lg:border-r">
         <div className="border-b px-3 py-2 md:px-4">
           <div className="flex items-end justify-between gap-3">
             <span className="label-caps">{left}</span>
             <span className="label-caps shrink-0 text-right">{right}</span>
           </div>
           {/* Clear of the rows' right-hand column, so the scale lines up with their bars. */}
-          {measure === Measure.duration && <DurationScale className="mt-1 mr-17" />}
+          {!size && <DurationScale className="mt-1 mr-17" />}
         </div>
         <ul aria-label="Transactions">
           {rows.map((transaction) => (
@@ -209,7 +239,7 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
         </ul>
       </div>
       {open && (
-        <aside className="sticky top-11 hidden h-[calc(100dvh-2.75rem)] min-w-0 flex-1 overflow-y-auto lg:block" aria-label="Transaction">
+        <aside className="side-pane hidden min-w-0 flex-1 lg:block" aria-label="Transaction">
           <TransactionPane org={org} groupId={String(open.group.id)} key={open.group.id} />
         </aside>
       )}
@@ -220,7 +250,8 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
 export function Performance({ org, search }: { org: string; search: PerformanceSearch }) {
   useTitle('Performance')
   const navigate = useNavigate()
-  const data = useTransactions(org, search)
+  // The search box searches queries in that tab, so it does not narrow the transactions they belong to.
+  const data = useTransactions(org, search.view === View.repeated ? { ...search, query: undefined } : search)
   const go: Go = (patch) => void navigate({ to: '/$org/performance/transaction-groups', params: { org }, search: { ...search, ...patch }, replace: true })
 
   const view = search.view ?? View.all
@@ -233,10 +264,10 @@ export function Performance({ org, search }: { org: string; search: PerformanceS
     data.repeats.filter((repeat) => matches(repeat, search.query)),
     repeatOrder(search),
   )
-  const counts: Record<View, number> = {
+  const counts: Record<View, number | undefined> = {
     [View.all]: data.transactions.length,
-    [View.repeated]: repeats.length,
-    [View.slower]: data.transactions.filter((item) => item.slower).length,
+    [View.repeated]: data.countingRepeats ? undefined : repeats.length,
+    [View.slower]: data.countingSlower ? undefined : data.transactions.filter((item) => item.slower).length,
     [View.failing]: data.transactions.filter((item) => item.failing).length,
   }
   const order = repeated ? repeatOrder(search) : transactionSort(search)
@@ -251,8 +282,7 @@ export function Performance({ org, search }: { org: string; search: PerformanceS
 
   return (
     <>
-      <PageBar className="max-lg:h-auto max-lg:flex-wrap max-lg:gap-y-0 max-lg:pb-2">
-        <h1 className="shrink-0 font-semibold max-lg:flex max-lg:h-11 max-lg:items-center">Performance</h1>
+      <ListPageBar title="Performance">
         <SearchField
           key={`${repeated} ${search.query}`}
           query={search.query}
@@ -265,7 +295,7 @@ export function Performance({ org, search }: { org: string; search: PerformanceS
           order={order}
           onChange={(value) => go({ order: [...SORTS, ...REPEAT_ORDERS].find((item) => item.value === value)?.value, group: undefined, pattern: undefined })}
         />
-      </PageBar>
+      </ListPageBar>
       <Views org={org} search={search} counts={counts} go={go} />
       {data.loading ? (
         <SkeletonRows />

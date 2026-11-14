@@ -74,7 +74,7 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
       </Screen>
     )
   if (!detail) return <SkeletonRows rows={6} />
-  const { group, request, time, slower, since } = detail
+  const { group, request, time, slower, since, shared } = detail
   const kinds = [...new Set(request.rows.map((row) => kindOf(row.op)))]
   const hasSpans = request.rows.length > 0
   return (
@@ -97,6 +97,7 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
 
       {hasSpans ? (
         <>
+          {shared && <p className="mt-6 text-sm text-muted-foreground">The chart and spans also count the other transactions named <span className="mono text-foreground">{group.transaction}</span>.</p>}
           <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <SectionLabel>Time in spans per request, 7 days</SectionLabel>
             {slower && <Slower slower={slower} since={since} />}

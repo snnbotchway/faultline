@@ -56,3 +56,24 @@ test('two selected issues are resolved together', async ({ page }) => {
   await page.getByRole('button', { name: 'Unresolved', exact: true }).click()
   await expect(row(page, 'Biometric prompt was cancelled')).toBeVisible()
 })
+
+test('shift-click ticks the rows between two clicks', async ({ page }) => {
+  await page.goto(`${inbox}?query=`)
+  const boxes = page.getByRole('listitem').getByRole('checkbox')
+  await boxes.nth(0).click()
+  await boxes.nth(3).click({ modifiers: ['Shift'] })
+  await expect(page.getByRole('toolbar', { name: 'Selection' })).toContainText('4 selected')
+})
+
+test('the search syntax is one click away, and a custom range is sent as UTC', async ({ page }) => {
+  await page.goto(inbox)
+  await page.getByRole('button', { name: 'Search syntax' }).click()
+  await expect(page.getByText('level:error')).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  await page.getByRole('button', { name: /First seen/ }).click()
+  await page.getByRole('menuitem', { name: 'Custom range' }).click()
+  await page.getByLabel('From').fill('2020-01-02T03:04')
+  await page.getByRole('button', { name: 'Apply' }).click()
+  await expect(page).toHaveURL(/start=2020-01-0[1-3]T\d{2}%3A04%3A00Z/)
+})

@@ -41,7 +41,6 @@ export function UsagePage({ org }: { org: string }) {
   const [hovered, setHovered] = useState<number>()
   const row = useFold()
   const days = usage.data
-  const totals = period.data
   const step = (by: -1 | 1) => days && setPinned(stepDay(pinned, by, days.length))
   useHotkeys({ ArrowLeft: () => step(-1), ArrowRight: () => step(1), Escape: () => setPinned(undefined) })
 
@@ -55,7 +54,7 @@ export function UsagePage({ org }: { org: string }) {
         </Screen>
       </>
     )
-  if (!days || !totals || !organization || !projects)
+  if (!days || !period.data || !organization || !projects)
     return (
       <>
         {bar}
@@ -65,6 +64,7 @@ export function UsagePage({ org }: { org: string }) {
       </>
     )
 
+  const { counts: totals, now } = period.data
   const organizationRate = organizationDropRate(organization)
   const drops = (
     <DropRows org={org} organization={organizationRate} accepting={organization.isAcceptingEvents} projects={projects} open={row.is(DROPPED)} onToggle={() => row.toggle(DROPPED)} />
@@ -142,6 +142,7 @@ export function UsagePage({ org }: { org: string }) {
                   organizationRate={organizationRate}
                   days={days}
                   picked={picked}
+                  now={now}
                   peak={Math.max(...buckets, 0)}
                   total={counts[kind]}
                 />

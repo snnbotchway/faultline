@@ -27,6 +27,7 @@ export function ProjectRows({
   organizationRate,
   days,
   picked,
+  now,
   peak,
   total,
 }: {
@@ -36,6 +37,7 @@ export function ProjectRows({
   organizationRate: number
   days: UsageDay[]
   picked: number | undefined
+  now: number
   peak: number
   total: number
 }) {
@@ -43,7 +45,7 @@ export function ProjectRows({
   // A project that never sent an event has none to count, so it goes last and is not asked about.
   const ordered = projects.toSorted((a, b) => Number(!a.firstEvent) - Number(!b.firstEvent))
   const shown = everyProject ? ordered : ordered.slice(0, FIRST_PROJECTS)
-  const results = useQueries({ queries: shown.map((project) => ({ ...projectUsageQuery(org, kind, project.id), enabled: !!project.firstEvent })) })
+  const results = useQueries({ queries: shown.map((project) => ({ ...projectUsageQuery(org, kind, project.id, now), enabled: !!project.firstEvent })) })
   const pickedDate = picked === undefined ? undefined : days[picked]?.date
 
   const rows = shown

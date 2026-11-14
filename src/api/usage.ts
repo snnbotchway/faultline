@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { inTurns } from '@/lib/in-turns'
 import { api, orgPath, unwrap } from './client'
 import type { components } from './schema/openapi'
@@ -36,7 +36,7 @@ const usageKeys = {
   all: (org: string) => ['organizations', org, 'usage'] as const,
   period: (org: string) => [...usageKeys.all(org), 'period'] as const,
   days: (org: string) => [...usageKeys.all(org), 'days'] as const,
-  project: (org: string, kind: ProjectKind, id: string) => [...usageKeys.all(org), 'projects', kind, id] as const,
+  project: (org: string, kind: ProjectKind, id: string, now: number) => [...usageKeys.all(org), 'projects', kind, id, now] as const,
 }
 
 const STALE_MS = 60_000
@@ -44,13 +44,16 @@ const STALE_MS = 60_000
 export const USAGE_DAYS = 30
 
 // What an organization took in over the 30 days ending now, the figure stock shows. Without billing the backend's
-// period is those 30 days.
+// period is those 30 days. `now` is the server's clock as it counted, so the projects are asked about the same 30 days.
 export const usagePeriodQuery = (org: string) =>
   queryOptions({
     queryKey: usageKeys.period(org),
     staleTime: STALE_MS,
-    queryFn: async () =>
-      toUsageCounts(unwrap(await api.GET('/api/0/stripe/subscriptions/{organization_id_or_slug}/events_count/period/', { params: { path: orgPath(org) } }))),
+    queryFn: async () => {
+      const result = await api.GET('/api/0/stripe/subscriptions/{organization_id_or_slug}/events_count/period/', { params: { path: orgPath(org) } })
+      const now = Date.parse(result.response.headers.get('Date') ?? '')
+      return { counts: toUsageCounts(unwrap(result)), now: Number.isNaN(now) ? Date.now() : now }
+    },
   })
 
 /**
@@ -97,13 +100,14 @@ export function usageHours(now: number): { start: string; end: string } {
 const projectTurns = inTurns(4)
 
 /**
- * One kind's daily counts for one project over the usage period. Hourly, because the backend's daily buckets count
- * only each day's first hour.
+ * One kind's daily counts for one project over the 30 days before `now`, the period's own clock, so they refetch with
+ * the period and add up to its total. Hourly, because the backend's daily buckets count only each day's first hour.
  */
-export const projectUsageQuery = (org: string, kind: ProjectKind, id: string) =>
+export const projectUsageQuery = (org: string, kind: ProjectKind, id: string, now: number) =>
   queryOptions({
-    queryKey: usageKeys.project(org, kind, id),
-    staleTime: STALE_MS,
+    queryKey: usageKeys.project(org, kind, id, now),
+    staleTime: Infinity,
+    placeholderData: keepPreviousData,
     // A retry waits its turn behind the other projects; the row offers its own after one.
     retry: 1,
     queryFn: ({ signal }) =>
@@ -112,7 +116,7 @@ export const projectUsageQuery = (org: string, kind: ProjectKind, id: string) =>
         const category = kind === UsageKind.errors ? 'error' : 'transaction'
         const { intervals, groups } = unwrap(
           await api.GET('/api/0/organizations/{organization_id_or_slug}/stats_v2/', {
-            params: { path: orgPath(org), query: { category, field: FIELD, interval: '1h', project: [Number(id)], ...usageHours(Date.now()) } },
+            params: { path: orgPath(org), query: { category, field: FIELD, interval: '1h', project: [Number(id)], ...usageHours(now) } },
             signal,
           }),
         ) as unknown as StatsResponse

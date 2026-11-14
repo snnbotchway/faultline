@@ -38,7 +38,7 @@ export function SettingsIndex({ org }: { org: string }) {
   const projects = useQuery(projectsQuery(org)).data
   const version = useQuery(instanceSettingsQuery).data?.version
   const usagePeriod = useQuery(usagePeriodQuery(org)).data
-  const usage = usagePeriod && `${plural(exactCount(totalOf(usagePeriod)), 'event')} in the last ${USAGE_DAYS} days`
+  const usage = usagePeriod && `${plural(exactCount(totalOf(usagePeriod.counts)), 'event')} in the last ${USAGE_DAYS} days`
   const signInApps = useQuery({ ...signInAppsQuery(org), enabled: can(Scope.orgWrite) }).data
   const [query, setQuery] = useState('')
   const [deleting, setDeleting] = useState(false)

@@ -24,6 +24,7 @@ export const logKeys = {
   all: (slug: string) => ['logs', slug] as const,
   list: (slug: string, filters: LogFilters) => [...logKeys.all(slug), 'list', filters] as const,
   detail: (slug: string, id: string) => [...logKeys.all(slug), 'detail', id] as const,
+  hits: (slug: string, filters: LogFilters) => [...logKeys.all(slug), 'hits', filters] as const,
   stats: (slug: string, filters: LogFilters) => [...logKeys.all(slug), 'stats', filters] as const,
   resources: (slug: string) => [...logKeys.all(slug), 'resources'] as const,
 }
@@ -40,6 +41,17 @@ export const logListQuery = (slug: string, filters: LogFilters) =>
       return toPage(unwrap(result), result.response)
     },
     getNextPageParam: (page) => page.cursors.next,
+  })
+
+// How many logs match, without fetching them. The backend stops counting at `maxHits`.
+export const logHitsQuery = (slug: string, filters: LogFilters) =>
+  queryOptions({
+    queryKey: logKeys.hits(slug, filters),
+    queryFn: async () => {
+      const result = await api.GET('/api/0/organizations/{organization_id_or_slug}/logs/', { params: { path: orgPath(slug), query: { ...filters, limit: 1 } } })
+      const { hits = 0, maxHits } = toPage(unwrap(result), result.response)
+      return { hits, capped: maxHits !== undefined && hits >= maxHits }
+    },
   })
 
 export const logQuery = (slug: string, id: string) =>

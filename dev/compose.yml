@@ -32,7 +32,8 @@ services:
       <<: *env
       VALKEY_URL: redis://valkey:6379/0
     # Kept on a volume so the spans outlive the container. Mounted on /tmp, which the image makes
-    # writable for its user; a new directory would belong to root.
+    # writable for its user; a new directory would belong to root. A plain `docker compose down` keeps
+    # this volume while Postgres starts empty; `bun run backend:down` removes both for a clean reset.
     volumes: [cold-storage:/tmp]
     ports: ["127.0.0.1:${GLITCHTIP_PORT:-8600}:8000"]
     healthcheck:

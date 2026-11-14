@@ -222,6 +222,8 @@ Easy to miss:
 
 - [ ] Environment filter and time range. Not built: GlitchTip 7.0.0 accepts `environment`, `start` and `end` on the list and ignores them, so every figure covers all environments and all time.
 - Faultline adds the time spent per transaction, tabs for repeated queries (`/n-plus-one/`), transactions slower this week (`/trend/`, with the release they slowed down at) and failing ones, the 7-day duration chart, and the transaction beside the list on a desktop. The stock `sort` parameter is read as Faultline's `order`, so old links keep their order.
+- "Slower this week" checks the 100 transactions that took the most time in all, one trend request each. It compares time in spans per request, and the backend's trend has no count per span group: a day on which requests start running a new query counts more requests than ran, so a regression that adds a query reads smaller than it is.
+- Transactions that share a name (in two projects, or with two methods) share one trend, span breakdown and set of repeated queries, because the backend keys those by name alone. Faultline does not flag such a transaction as slower or link repeated queries to it, and its breakdown says it includes the others.
 - Backend limits: the list's figures are all-time and its percentiles approximate. Breakdowns, trends and repeated queries cover the last 7 days and need cold storage (`GLITCHTIP_ENABLE_DUCKDB` and a storage directory or bucket); without it they are empty and the screens say so. GlitchTip keeps no individual transactions, so there is no waterfall: a breakdown is the average request's time per span group, in no order.
 
 ---

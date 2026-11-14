@@ -1,4 +1,5 @@
 import { infiniteQueryOptions, queryOptions, type InfiniteData, type QueryClient, type QueryKey } from '@tanstack/react-query'
+import { withBase } from './base'
 import { api, orgPath, unwrap } from './client'
 import { MAX_PAGE_SIZE, fetchAllPages, toPage, type Page } from './pagination'
 import type { components, operations } from './schema/openapi'
@@ -171,7 +172,7 @@ export const issueHashesQuery = (slug: string, id: string) =>
   })
 
 export const rawEventUrl = (slug: string, id: string, eventId: string) =>
-  `/api/0/organizations/${encodeURIComponent(slug)}/issues/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/json/`
+  withBase(`/api/0/organizations/${encodeURIComponent(slug)}/issues/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/json/`)
 
 // Bulk actions take explicit ids, or the current filters to act on every match.
 export type IssueSelection = { ids: string[] } | { filters: IssueFilters }

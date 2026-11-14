@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { BACKEND_PATHS } from './backend-paths'
+import { withBase } from './base'
 import { ApiError, HttpStatus, allauth, csrfToken, unwrap, type ApiResult } from './client'
 import type { components } from './schema/allauth'
 
@@ -98,10 +99,10 @@ export type AuthProcess = (typeof AuthProcess)[keyof typeof AuthProcess]
 export function redirectToProvider(provider: string, callbackUrl: string, process: AuthProcess = AuthProcess.login) {
   const form = document.createElement('form')
   form.method = 'POST'
-  form.action = '/_allauth/browser/v1/auth/provider/redirect'
+  form.action = withBase('/_allauth/browser/v1/auth/provider/redirect')
   const token = csrfToken()
   if (!token) throw new Error('Reload the page, then try signing in again.')
-  const fields = { provider, process, callback_url: callbackUrl, csrfmiddlewaretoken: token }
+  const fields = { provider, process, callback_url: withBase(callbackUrl), csrfmiddlewaretoken: token }
   for (const [name, value] of Object.entries(fields)) {
     const input = document.createElement('input')
     input.type = 'hidden'

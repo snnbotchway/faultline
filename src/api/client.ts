@@ -1,4 +1,5 @@
 import createClient, { type Middleware } from 'openapi-fetch'
+import { BASE_PATH } from './base'
 import type { components as AllauthComponents, paths as AllauthPaths } from './schema/allauth'
 import type { paths } from './schema/openapi'
 
@@ -93,11 +94,11 @@ export function unwrap<T>({ data, error, response }: ApiResult<T>): T {
   return data as T
 }
 
-export const api = createClient<paths>({ baseUrl: '/', credentials: 'same-origin' })
+export const api = createClient<paths>({ baseUrl: BASE_PATH, credentials: 'same-origin' })
 api.use(csrf, signedOut, unreachable)
 
 const allauthClient = (...middleware: Middleware[]) => {
-  const client = createClient<AllauthPaths>({ baseUrl: '/', credentials: 'same-origin' })
+  const client = createClient<AllauthPaths>({ baseUrl: BASE_PATH, credentials: 'same-origin' })
   client.use(csrf, ...middleware, unreachable)
   return client
 }

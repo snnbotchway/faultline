@@ -2,13 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BASE_PATH } from './api/base'
 import { setSignedOutHandler } from './api/client'
 import './index.css'
 import { forgetSession } from './lib/session'
 import { routeTree } from './routeTree.gen'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000 } } })
-const router = createRouter({ routeTree, context: { queryClient }, defaultPreload: 'intent' })
+const router = createRouter({ routeTree, context: { queryClient }, defaultPreload: 'intent', basepath: BASE_PATH || '/' })
 
 declare module '@tanstack/react-router' {
   interface Register {

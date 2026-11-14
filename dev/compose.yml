@@ -43,11 +43,21 @@ services:
   faultline:
     profiles: [app]
     build: ..
-    image: faultline:dev
+    image: faultline:${FAULTLINE_TAG:-dev}
     depends_on:
       web: { condition: service_healthy }
     environment:
       BACKEND_URL: http://web:8000
     ports: ["127.0.0.1:${FAULTLINE_PORT:-8620}:8080"]
+  # The same image under a base path, for the sub-path e2e test.
+  faultline-subpath:
+    profiles: [app]
+    image: faultline:${FAULTLINE_TAG:-dev}
+    depends_on:
+      faultline: { condition: service_started }
+    environment:
+      BACKEND_URL: http://web:8000
+      BASE_PATH: /faultline
+    ports: ["127.0.0.1:${FAULTLINE_SUBPATH_PORT:-8640}:8080"]
 volumes:
   cold-storage:

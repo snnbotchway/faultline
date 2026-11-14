@@ -14,6 +14,8 @@ export default defineConfig({
   },
   projects: [
     { name: 'setup', testMatch: /global\.setup\.ts/ },
-    { name: 'desktop', use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/demo.json' }, dependencies: ['setup'] },
+    { name: 'desktop', testIgnore: /sub-path/, use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/demo.json' }, dependencies: ['setup'] },
+    // The image served under /faultline/; it signs in through the page and seeds nothing itself.
+    { name: 'subpath', testMatch: /sub-path/, use: { ...devices['Desktop Chrome'] }, dependencies: ['setup'] },
   ],
 })

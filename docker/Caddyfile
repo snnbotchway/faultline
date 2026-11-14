@@ -10,18 +10,35 @@
 :{$PORT:8080} {
 	encode zstd gzip
 
-	# Backend paths, mirrored from src/api/backend-paths.ts.
-	@backend path /api /api/* /_allauth /_allauth/* /accounts /accounts/* /oauth /oauth/* /mcp /mcp/* /.well-known /.well-known/* /admin /admin/* /static /static/* /media /media/* /status-pages /status-pages/* /v1/logs /v1/logs/* /_health /_health/*
-	handle @backend {
-		reverse_proxy {$BACKEND_URL}
+	handle /_faultline/health {
+		respond "ok"
+	}
+
+	# BASE_PATH is empty or `/some/path`; docker/entrypoint.sh normalises it and writes it into the build.
+	@bare expression `{env.BASE_PATH} != '' && {path} == {env.BASE_PATH}`
+	redir @bare {env.BASE_PATH}/ 308
+
+	handle_path {$BASE_PATH}/* {
+		# Backend paths, mirrored from src/api/backend-paths.ts.
+		@backend path /api /api/* /_allauth /_allauth/* /accounts /accounts/* /oauth /oauth/* /mcp /mcp/* /.well-known /.well-known/* /admin /admin/* /static /static/* /media /media/* /status-pages /status-pages/* /v1/logs /v1/logs/* /_health /_health/*
+		handle @backend {
+			reverse_proxy {$BACKEND_URL} {
+				# The backend knows nothing of the prefix, so its redirects point at the root.
+				header_down Location ^/([^/].*)?$ {env.BASE_PATH}/$1
+			}
+		}
+
+		handle {
+			root * /tmp/srv
+			header /assets/* Cache-Control "public, max-age=31536000, immutable"
+			header /index.html Cache-Control "no-cache"
+			try_files {path} /index.html
+			file_server
+		}
 	}
 
 	handle {
-		root * /srv
-		header /assets/* Cache-Control "public, max-age=31536000, immutable"
-		header /index.html Cache-Control "no-cache"
-		try_files {path} /index.html
-		file_server
+		respond "Not found" 404
 	}
 
 	header {

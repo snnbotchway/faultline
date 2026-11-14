@@ -2,6 +2,7 @@ import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { redirect, useRouter } from '@tanstack/react-router'
 import type { FormEvent } from 'react'
 import { SessionStatus, auth, isBackendPage, redirectToProvider, safeNext, sessionQuery, type Session } from '@/api/auth'
+import { withBase } from '@/api/base'
 import { useFormRequest } from '@/lib/use-form-request'
 import { ANONYMOUS } from '@/lib/session'
 
@@ -21,7 +22,7 @@ export async function sendSignedInOn(queryClient: QueryClient, next: string | un
   const session = await queryClient.ensureQueryData(sessionQuery)
   if (session.status !== SessionStatus.authenticated) return
   const target = safeNext(next) ?? '/'
-  if (isBackendPage(target)) window.location.assign(target)
+  if (isBackendPage(target)) window.location.assign(withBase(target))
   else throw redirect({ href: target, replace: true })
 }
 

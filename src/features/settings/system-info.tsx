@@ -9,7 +9,7 @@ const FEATURES: { feature: Feature; label: string }[] = [
   { feature: Feature.email, label: 'Email' },
   { feature: Feature.uptime, label: 'Uptime monitors' },
   { feature: Feature.logs, label: 'Logs' },
-  { feature: Feature.mcp, label: 'MCP server' },
+  { feature: Feature.mcp, label: 'AI assistant access' },
 ]
 
 // What this server is and what it has switched on. Nothing here can be changed from the browser.

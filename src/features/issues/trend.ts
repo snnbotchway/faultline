@@ -71,9 +71,10 @@ export function releaseMarks(releases: { shortVersion: string; dateCreated: stri
     .sort((a, b) => a.at - b.at)
 }
 
-export type MarkLabel = { at: number; text: string; end: boolean }
+// `left` is where the label starts, in pixels from the chart's left edge.
+export type MarkLabel = { at: number; text: string; left: number }
 
-// Labels are text-xs Plex Mono: 0.6em a character. Each has the 4px padding of `pl-1`/`pr-1` in `MarkLabels`, then an
+// Labels are text-xs Plex Mono: 0.6em a character. Each has the 4px padding of `pl-1` in `MarkLabels`, then an
 // 8px gap before the next.
 const LABEL_CHAR = 7.2
 const LABEL_SPACE = 4 + 8
@@ -85,11 +86,11 @@ export function markLabels(marks: Mark[], width: number): MarkLabel[] {
   type Group = { at: number; version: string; count: number }
   const groups: Group[] = []
   const text = (group: Group) => (group.count > 1 ? `${group.version} +${group.count - 1}` : group.version)
-  // A label starts at its mark, or ends there when it would run past the right edge of the chart.
+  // A label starts at its mark, moved left as far as it needs to stay on the chart, but never past its left edge.
   const span = (group: Group) => {
-    const x = group.at * width
     const size = text(group).length * LABEL_CHAR + LABEL_SPACE
-    return x + size > width ? { from: x - size, to: x, end: true } : { from: x, to: x + size, end: false }
+    const from = Math.max(0, Math.min(group.at * width, width - size))
+    return { from, to: from + size }
   }
   for (const mark of marks) {
     let newer: Group = { at: mark.at, version: mark.version, count: 1 }
@@ -103,7 +104,7 @@ export function markLabels(marks: Mark[], width: number): MarkLabel[] {
       older = groups.at(-2)
     }
   }
-  return groups.map((group) => ({ at: group.at, text: text(group), end: span(group).end }))
+  return groups.map((group) => ({ at: group.at, text: text(group), left: span(group).from }))
 }
 
 export const axisStartLabel = (period: StatsPeriod, start: number) => (period === StatsPeriod.day ? hourLabel(start) : dayLabel(start))

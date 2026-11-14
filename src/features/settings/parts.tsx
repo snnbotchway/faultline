@@ -313,7 +313,9 @@ export function CopyButton({
   return (
     <Button
       variant={inBox ? 'ghost' : 'outline'}
-      className={cn(inBox && 'h-auto self-stretch border-0 border-l border-l-border bg-card -outline-offset-2 max-lg:h-auto', className)}
+      // In a box it takes the box's height, so it has no size of its own.
+      size={inBox ? null : undefined}
+      className={cn(inBox && 'self-stretch border-0 border-l border-l-border bg-card px-3 -outline-offset-2', className)}
       onClick={() => void copy().catch((error: unknown) => onError?.(error))}
       {...props}
     >

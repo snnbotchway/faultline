@@ -155,17 +155,18 @@ export function toggleAll() {
 
 // --- routing -----------------------------------------------------------------
 
-export type Variant = 'a' | 'b' | 'c'
+export type Variant = 'a' | 'b' | 'c' | 'd'
 export const VARIANTS: { key: Variant; name: string }[] = [
   { key: 'a', name: 'Ledger' },
   { key: 'b', name: 'Triage' },
   { key: 'c', name: 'Seismograph' },
+  { key: 'd', name: 'Fieldbook' },
 ]
 export type ProtoSearch = { variant?: Variant; theme?: 'dark' | 'light'; id?: string; bar?: number }
 
 export function validateSearch(s: Record<string, unknown>): ProtoSearch {
   return {
-    variant: s.variant === 'b' || s.variant === 'c' ? s.variant : s.variant === 'a' ? 'a' : undefined,
+    variant: s.variant === 'b' || s.variant === 'c' || s.variant === 'd' ? s.variant : s.variant === 'a' ? 'a' : undefined,
     theme: s.theme === 'dark' ? 'dark' : s.theme === 'light' ? 'light' : undefined,
     id: s.id === undefined ? undefined : String(s.id),
     bar: s.bar === 0 ? 0 : undefined,
@@ -190,6 +191,7 @@ export function useProto() {
       void navigate({ to: '/prototype/issue', search: { ...search, id } })
     },
     toInbox: () => void navigate({ to: '/prototype/inbox', search: { ...search, id: undefined } }),
+    toSettings: () => void navigate({ to: '/prototype/settings', search: { ...search, id: undefined } }),
     setSearch: (patch: ProtoSearch) =>
       void navigate({ to: '.', search: { ...search, ...patch }, replace: true }),
   }

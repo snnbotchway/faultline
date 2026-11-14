@@ -5,6 +5,8 @@
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/600.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
 
 .proto {
   min-height: 100dvh;
@@ -170,3 +172,57 @@
   --lv-info: oklch(0.72 0.09 235);
   --ok: oklch(0.75 0.13 150);
 }
+
+/* D · Fieldbook: C's chart paper and typewriter face, with stronger greys, a
+   12px floor, and IBM Plex Sans for prose (help text, descriptions, comments). */
+.vd {
+  --f-sans: 'IBM Plex Mono', ui-monospace, monospace;
+  --f-prose: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius: 0rem;
+  font-size: 13px;
+  --background: oklch(0.972 0.012 85);
+  --card: oklch(0.992 0.007 85);
+  --foreground: oklch(0.22 0.012 60);
+  --muted: oklch(0.94 0.014 85);
+  --muted-foreground: oklch(0.42 0.018 70);
+  --accent: oklch(0.935 0.016 85);
+  --border: oklch(0.84 0.018 85);
+  --primary: oklch(0.22 0.012 60);
+  --primary-foreground: oklch(0.985 0.008 85);
+  --sidebar: var(--background);
+  --brand: oklch(0.54 0.2 33);
+  --brand-fg: oklch(0.99 0.008 85);
+  --row-on: oklch(0.925 0.035 60);
+  --code-bg: oklch(0.955 0.013 85);
+  --hit: oklch(0.92 0.045 33);
+  --grid: oklch(0.905 0.018 85);
+  --lv-error: oklch(0.54 0.2 33);
+  --lv-warning: oklch(0.62 0.15 75);
+  --lv-info: oklch(0.5 0.1 235);
+  --ok: oklch(0.47 0.11 150);
+}
+.dark .vd {
+  --background: oklch(0.16 0.006 70);
+  --card: oklch(0.195 0.007 70);
+  --foreground: oklch(0.93 0.02 85);
+  --muted: oklch(0.22 0.008 70);
+  --muted-foreground: oklch(0.77 0.022 80);
+  --accent: oklch(0.245 0.01 70);
+  --border: oklch(0.33 0.012 70);
+  --primary: oklch(0.93 0.02 85);
+  --primary-foreground: oklch(0.16 0.006 70);
+  --brand: oklch(0.8 0.16 68);
+  --brand-fg: oklch(0.18 0.03 68);
+  --row-on: oklch(0.27 0.035 68);
+  --code-bg: oklch(0.14 0.006 70);
+  --hit: oklch(0.29 0.065 40);
+  --grid: oklch(0.24 0.008 70);
+  --lv-error: oklch(0.74 0.17 40);
+  --lv-warning: oklch(0.84 0.15 85);
+  --lv-info: oklch(0.76 0.09 235);
+  --ok: oklch(0.78 0.13 150);
+}
+.vd .prose { font-family: var(--f-prose); font-size: 14px; line-height: 1.55; }
+/* Shared blocks were sized for A to C; D never goes below 12px. */
+.vd .text-\[10\.5px\], .vd .text-\[11px\], .vd .text-\[11\.5px\] { font-size: 12px; }

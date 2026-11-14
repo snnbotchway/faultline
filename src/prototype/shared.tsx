@@ -240,7 +240,11 @@ function useCommands(proto: Proto): Command[] {
       { group: 'Actions', label: `Ignore ${subject}`, keys: 'I', run: () => act('ignore') },
       { group: 'Actions', label: `Assign ${subject} to me`, keys: 'A', run: () => act('assign') },
       { group: 'Actions', label: 'Merge selected issues', keys: 'M', run: () => set({ selected: [] }) },
-      ...nav.map((label) => ({ group: 'Go to', label, run: () => proto.toInbox() })),
+      ...nav.map((label) => ({
+        group: 'Go to',
+        label,
+        run: () => (label === 'Settings' && proto.variant === 'd' ? proto.toSettings() : proto.toInbox()),
+      })),
       ...PROJECT_OPTIONS.map((p) => ({
         group: 'Project',
         label: p.label,
@@ -273,19 +277,31 @@ export function PaletteBody({
   prefix,
   className,
   inputClassName,
+  listClassName,
+  lower,
 }: {
   proto: Proto
   prefix?: ReactNode
   className?: string
   inputClassName?: string
+  listClassName?: string
+  /** Variant D: lowercase labels, and projects only once the user types. */
+  lower?: boolean
 }) {
-  const commands = useCommands(proto)
+  const all = useCommands(proto)
+  const commands = useMemo(
+    () =>
+      lower
+        ? all.map((c) => ({ ...c, group: c.group.toLowerCase(), label: c.group === 'Issues' ? c.label : c.label.charAt(0).toLowerCase() + c.label.slice(1) }))
+        : all,
+    [all, lower],
+  )
   const [q, setQ] = useState('')
   const [at, setAt] = useState(0)
   const shown = useMemo(() => {
     const words = q.toLowerCase().split(/\s+/).filter(Boolean)
     const hit = commands.filter((c) => words.every((w) => `${c.group} ${c.label} ${c.hint ?? ''}`.toLowerCase().includes(w)))
-    return q ? hit : hit.filter((c) => c.group !== 'Issues')
+    return q ? hit : hit.filter((c) => c.group.toLowerCase() !== 'issues' && !(lower && c.group === 'project'))
   }, [commands, q])
   const run = (c?: Command) => {
     set({ palette: false })
@@ -313,18 +329,18 @@ export function PaletteBody({
             } else if (e.key === 'Enter') run(shown[at])
             else if (e.key === 'Escape') set({ palette: false })
           }}
-          placeholder="Run a command or find an issue"
+          placeholder={lower ? 'run a command or find an issue' : 'Run a command or find an issue'}
           className="h-11 min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-muted-foreground"
         />
         <Kbd>esc</Kbd>
       </div>
-      <div className="max-h-[52vh] overflow-y-auto p-1">
+      <div className={cn('max-h-[52vh] overflow-y-auto p-1', listClassName)}>
         {shown.map((c, i) => {
           const head = c.group !== lastGroup
           lastGroup = c.group
           return (
             <div key={`${c.group}${c.label}`}>
-              {head && <div className="px-2 pt-2 pb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{c.group}</div>}
+              {head && <div className={cn('px-2 pt-2 pb-1 text-[11px] font-medium tracking-wide text-muted-foreground', !lower && 'uppercase')}>{c.group}</div>}
               <button
                 onMouseEnter={() => setAt(i)}
                 onClick={() => run(c)}
@@ -346,7 +362,7 @@ export function PaletteBody({
   )
 }
 
-export function ModalPalette({ proto, className }: { proto: Proto; className?: string }) {
+export function ModalPalette({ proto, className, lower, listClassName }: { proto: Proto; className?: string; lower?: boolean; listClassName?: string }) {
   const { palette } = useStore()
   if (!palette) return null
   return (
@@ -355,7 +371,7 @@ export function ModalPalette({ proto, className }: { proto: Proto; className?: s
         onMouseDown={(e) => e.stopPropagation()}
         className={cn('mx-auto w-full max-w-[600px] overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-2xl', className)}
       >
-        <PaletteBody proto={proto} />
+        <PaletteBody proto={proto} lower={lower} listClassName={listClassName} />
       </div>
     </div>
   )

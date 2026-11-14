@@ -264,3 +264,16 @@ export const EVENTS = eventsRaw
     browser: tagOf(e, 'browser.name'),
   }))
   .sort((a, b) => b.at - a.at)
+
+export const MEMBERS = membersRaw.map((m) => ({ email: m.email, role: m.roleName, joined: new Date(m.dateCreated).getTime() }))
+export const PROJECT_DETAILS = projectsRaw.map((p) => ({
+  id: p.id,
+  slug: p.slug,
+  platform: p.platform,
+  scrubIp: p.scrubIPAddresses,
+  throttle: p.eventThrottleRate,
+  teams: p.teams.map((t) => t.slug),
+  created: new Date(p.dateCreated).getTime(),
+  // SYNTHETIC: client keys are not in the fixtures.
+  dsn: `https://4f1c9a7e2b5d4c38a6e0d1b7c9f2a3e${p.id}@faultline.example.com/${p.id}`,
+}))

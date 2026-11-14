@@ -63,6 +63,7 @@ export function ProjectList({ org }: { org?: string }) {
     <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a project" aria-label="Find a project" className={className} />
   )
   const create = target && <NewProjectButton org={target} />
+  const empty = !loading && total === 0
 
   return (
     <>
@@ -70,9 +71,9 @@ export function ProjectList({ org }: { org?: string }) {
         <h1 className="font-semibold">Projects</h1>
         {org && <span className="mono text-muted-foreground">{org}</span>}
         {find('h-8 w-56 max-lg:hidden')}
-        <span className="ml-auto">{create}</span>
+        {!empty && <span className="ml-auto">{create}</span>}
       </PageBar>
-      {!loading && total === 0 ? (
+      {empty ? (
         <Screen title="No projects yet">{create}</Screen>
       ) : (
         <>

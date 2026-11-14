@@ -6,6 +6,7 @@ import { projectUsageQuery, type ProjectKind, type UsageDay } from '@/api/usage'
 import { RowButton } from '@/components/ui/row-button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LevelGlyph } from '@/features/issues/level'
+import { plural } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { DayBars } from './day-bars'
 import { FIGURES, GRID, PROJECT_ROW, ProjectRow, SHARE, SLOT } from './usage-rows'
@@ -18,8 +19,9 @@ const BAR_HEIGHT = 16
 /**
  * The projects behind one kind, busiest first as their counts arrive, each drawn on the kind's own scale so their
  * bars compare. Busiest is on the pinned day, or over the whole period: a day under the pointer changes the figures
- * but never the order. Shares are of the kind's total, and what no listed project accounts for (a deleted one, say) is one
- * line at the end once every project has answered.
+ * but never the order. Shares are of the kind's total, and what no listed project accounts for (one not shown yet, or
+ * a deleted one) is one line once every listed project has answered. Projects that never sent an event are one line
+ * at the end, and are not asked about.
  */
 export function ProjectRows({
   org,
@@ -45,10 +47,10 @@ export function ProjectRows({
   total: number
 }) {
   const [everyProject, setEveryProject] = useState(false)
-  // A project that never sent an event has none to count, so it goes last and is not asked about.
-  const ordered = projects.toSorted((a, b) => Number(!a.firstEvent) - Number(!b.firstEvent))
-  const shown = everyProject ? ordered : ordered.slice(0, FIRST_PROJECTS)
-  const results = useQueries({ queries: shown.map((project) => ({ ...projectUsageQuery(org, kind, project.id, now), enabled: !!project.firstEvent })) })
+  const active = projects.filter((project) => project.firstEvent)
+  const quiet = projects.length - active.length
+  const shown = everyProject ? active : active.slice(0, FIRST_PROJECTS)
+  const results = useQueries({ queries: shown.map((project) => projectUsageQuery(org, kind, project.id, now)) })
   const countOn = (byDay: Record<string, number>, index: number | undefined) => {
     const date = index === undefined ? undefined : days[index]?.date
     return date ? (byDay[date] ?? 0) : Object.values(byDay).reduce((sum, value) => sum + value, 0)
@@ -57,13 +59,13 @@ export function ProjectRows({
   const rows = shown
     .map((project, index) => {
       const result = results[index]!
-      const byDay = project.firstEvent ? result.data : {}
+      const byDay = result.data
       if (!byDay) return { project, result }
       return { project, result, count: countOn(byDay, picked), order: countOn(byDay, pinned), buckets: days.map((day) => byDay[day.date] ?? 0) }
     })
     .toSorted((a, b) => (b.order ?? -1) - (a.order ?? -1))
   const counted = rows.reduce((sum, row) => sum + (row.count ?? 0), 0)
-  const rest = shown.length === projects.length && rows.every((row) => row.count !== undefined) ? total - counted : 0
+  const rest = rows.every((row) => row.count !== undefined) ? total - counted : 0
 
   return (
     <ul aria-label={`${KIND_LABEL[kind]} by project`}>
@@ -129,11 +131,16 @@ export function ProjectRows({
           </span>
         </li>
       )}
-      {shown.length < projects.length && (
+      {shown.length < active.length && (
         <li className="border-t">
           <button type="button" className="flex min-h-11 w-full cursor-pointer items-center px-3 text-left text-sm font-medium hover:bg-accent md:px-4 lg:min-h-9" onClick={() => setEveryProject(true)}>
-            Show all {projects.length} projects
+            Show all {active.length} projects
           </button>
+        </li>
+      )}
+      {quiet > 0 && (
+        <li className={cn(GRID, PROJECT_ROW, 'text-muted-foreground')}>
+          <span>{plural(quiet, 'project')} with no events yet</span>
         </li>
       )}
     </ul>

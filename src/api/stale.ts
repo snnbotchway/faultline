@@ -14,9 +14,9 @@ export const stale = {
   members: (org: string): QueryFilters => ({ queryKey: organizationKeys.members(org) }),
   // The list of teams and each team's members.
   teams: (org: string): QueryFilters => ({ queryKey: organizationKeys.teams(org) }),
-  // The list of projects and each project's own page.
   // The environments the scope filter offers: each one while any project shows it.
   environments: (org: string): QueryFilters => ({ queryKey: organizationKeys.environments(org) }),
+  // The list of projects and each project's own page.
   projects: (org: string): QueryFilters => ({ queryKey: organizationKeys.projects(org) }),
   project: (org: string, project: string): QueryFilters => ({ queryKey: projectKeys.detail(org, project) }),
   projectEnvironments: (org: string, project: string): QueryFilters => ({ queryKey: projectKeys.environments(org, project) }),

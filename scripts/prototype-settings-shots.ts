@@ -17,7 +17,7 @@ const shots = (variant: string): Shot[] => [
   { screen: 'settings', path: '/demo-co/settings' },
   { screen: 'more', path: '/', query: 'open=more', sizes: [390], viewportOnly: true },
   { screen: 'project-general', path: `${P}/web-app`, bothThemes: true },
-  { screen: 'project-keys', path: `${P}/web-app`, query: 'tab=dsn', bothThemes: true, scrollTo: variant === 'a' ? undefined : '#dsn' },
+  { screen: 'project-keys', path: `${P}/web-app`, query: 'tab=dsn', bothThemes: true, scrollTo: variant === 'a' || variant === 'd' ? undefined : '#dsn', viewportOnly: variant === 'd' },
   { screen: 'key-dialog', path: `${P}/web-app`, query: 'tab=dsn&open=key', viewportOnly: true },
   { screen: 'members', path: '/demo-co/settings/members' },
   { screen: 'member', path: '/demo-co/settings/members/3', viewportOnly: variant === 'c' },
@@ -29,13 +29,20 @@ const shots = (variant: string): Shot[] => [
   variant === 'c'
     ? { screen: 'sdk-setup', path: `${P}/billing-worker` }
     : { screen: 'sdk-setup', path: `${P}/new`, query: 'created=billing-worker&tab=go' },
-  { screen: 'members-as-member', path: '/demo-co/settings/members', query: 'as=member', sizes: [1440] },
-  ...(variant === 'c' ? [{ screen: 'org-menu', path: '/', sizes: [1440 as Size], viewportOnly: true, click: '[aria-label="Organization"]' }] : []),
-  ...(variant === 'b' ? [{ screen: 'settings-search', path: '/demo-co/settings', query: 'q=limit' }] : []),
+  { screen: 'members-as-member', path: '/demo-co/settings/members', query: 'as=member', sizes: variant === 'd' ? undefined : [1440] },
+  ...(variant === 'd'
+    ? [
+        { screen: 'sdk-setup-arrived', path: `${P}/new`, query: 'created=billing-worker&tab=go&open=arrived' },
+        { screen: 'teams-as-member', path: '/demo-co/settings/teams', query: 'as=member' },
+        { screen: 'roles', path: '/demo-co/settings/members/new', viewportOnly: true, click: 'text=Compare roles' },
+      ]
+    : []),
+  ...(variant === 'c' || variant === 'd' ? [{ screen: 'org-menu', path: '/', sizes: [1440 as Size], viewportOnly: true, click: '[aria-label="Organization"]' }] : []),
+  ...(variant === 'b' || variant === 'd' ? [{ screen: 'settings-search', path: '/demo-co/settings', query: 'q=limit' }] : []),
 ]
 
 mkdirSync(OUT, { recursive: true })
-const variants = process.argv.slice(2).length ? process.argv.slice(2) : ['a', 'b', 'c']
+const variants = process.argv.slice(2).length ? process.argv.slice(2) : ['a', 'b', 'c', 'd']
 const only = process.env.ONLY?.split(',')
 const browser = await chromium.launch()
 const written: string[] = []

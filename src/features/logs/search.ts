@@ -1,7 +1,7 @@
-import { LogLevel } from '@/api/logs'
-import { projectIds } from '@/lib/search'
+import { LogLevel, type LogEvent } from '@/api/logs'
+import { projectIds, searchText as text } from '@/lib/search'
+import { HOUR } from '@/lib/time'
 
-const HOUR = 3600
 export const RANGES = [
   { value: '1h', label: 'Last hour', hours: 1 },
   { value: '6h', label: 'Last 6 hours', hours: 6 },
@@ -14,6 +14,8 @@ const DEFAULT_RANGE: Range = '24h'
 // Most severe first.
 export const LEVELS: LogLevel[] = [LogLevel.fatal, LogLevel.error, LogLevel.warn, LogLevel.info, LogLevel.debug, LogLevel.trace]
 const isLevel = (value: unknown): value is LogLevel => LEVELS.some((level) => level === value)
+// A log's level as the backend sent it; one this app does not know is drawn as debug, as issues are.
+export const levelOf = (log: Pick<LogEvent, 'level'>): LogLevel => (isLevel(log.level) ? log.level : LogLevel.debug)
 
 export type LogSearch = {
   query?: string
@@ -32,8 +34,10 @@ export type LogSearch = {
   log?: string
 }
 
-const text = (value: unknown) => (typeof value === 'string' && value ? value : typeof value === 'number' ? String(value) : undefined)
 const integer = (value: unknown) => (value !== undefined && Number.isInteger(Number(value)) ? Number(value) : undefined)
+
+// Changes the search in the URL.
+export type SetSearch = (patch: Partial<LogSearch>) => void
 
 export function validateLogSearch(search: Record<string, unknown>): LogSearch {
   const level = (Array.isArray(search.level) ? search.level : search.level === undefined ? [] : [search.level]).filter(isLevel)

@@ -1,29 +1,31 @@
 import { useNavigate } from '@tanstack/react-router'
 import { CalendarDays, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { HttpStatus, hasStatus } from '@/api/client'
 import type { LogEvent } from '@/api/logs'
 import { SearchField } from '@/components/search-field'
-import { PageBar, Screen } from '@/components/shell/app-shell'
+import { ListPageBar } from '@/components/list-page-bar'
+import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
-import { isDesktop } from '@/lib/layout'
+import { hitsText, plural } from '@/lib/format'
+import { isDesktop, useIsDesktop } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useCounts, useLogs } from './data'
 import { ActiveFilters, Facets } from './filters'
-import { clockTime, countText, dayOf, fullTime, preview } from './format'
+import { clockTime, dayOf, fullTime, preview } from './format'
 import { LogHistogram } from './histogram'
 import { LogLevelGlyph } from './level'
 import { LogActions, LogFields } from './log-detail'
-import { NO_FILTERS, RANGES, facetCount, isNarrowed, rangeOf, type LogSearch } from './search'
+import { NO_FILTERS, RANGES, facetCount, isNarrowed, levelOf, rangeOf, type LogSearch, type SetSearch } from './search'
 
 const HISTOGRAM_HEIGHT = 64
 
-function RangeMenu({ search, set }: { search: LogSearch; set: (patch: Partial<LogSearch>) => void }) {
+function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
   const range = rangeOf(search)
   return (
     <DropdownMenu>
@@ -62,7 +64,7 @@ function SkeletonRows() {
 function LevelAndTime({ log, className }: { log: LogEvent; className?: string }) {
   return (
     <p className={cn('mono flex min-w-0 items-center gap-2', className)}>
-      <LogLevelGlyph level={log.level} />
+      <LogLevelGlyph level={levelOf(log)} />
       <span className="font-semibold">{log.level}</span>
       <span className="truncate text-muted-foreground">{fullTime(log.timestamp)}</span>
     </p>
@@ -72,9 +74,12 @@ function LevelAndTime({ log, className }: { log: LogEvent; className?: string })
 export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
   useTitle('Logs')
   const navigate = useNavigate()
-  const set = (patch: Partial<LogSearch>) => void navigate({ to: '/$org/logs', params: { org }, search: { ...search, ...patch }, replace: true })
+  const set: SetSearch = (patch) => void navigate({ to: '/$org/logs', params: { org }, search: { ...search, ...patch }, replace: true })
   const logs = useLogs(org, search)
-  const counts = useCounts(org, logs)
+  const desktop = useIsDesktop()
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  // Counted only where the filters show: the rail on a desktop, the Filters dialog on a phone.
+  const counts = useCounts(org, logs, search, desktop || filtersOpen)
   const { list, open } = logs
   const active = facetCount(search)
   const narrowed = isNarrowed(search)
@@ -89,8 +94,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
 
   return (
     <>
-      <PageBar className="max-lg:h-auto max-lg:flex-wrap max-lg:gap-y-0 max-lg:pb-2">
-        <h1 className="shrink-0 font-semibold max-lg:flex max-lg:h-11 max-lg:items-center">Logs</h1>
+      <ListPageBar title="Logs">
         <SearchField
           key={search.query}
           query={search.query}
@@ -100,7 +104,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
         />
         <div className="ml-auto flex items-center gap-2">
           <div className="flex lg:hidden">
-            <Dialog>
+            <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="h-11">
                   <SlidersHorizontal />
@@ -114,16 +118,16 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
               </DialogContent>
             </Dialog>
             {active > 0 && (
-              <Button size="sm" className="size-11 border-l-0 px-0" aria-label="Clear filters" onClick={clear}>
+              <Button size="icon-touch" className="border-l-0" aria-label="Clear filters" onClick={clear}>
                 <X />
               </Button>
             )}
           </div>
           <RangeMenu search={search} set={set} />
         </div>
-      </PageBar>
+      </ListPageBar>
       <div className="flex flex-1 items-start">
-        <aside className="sticky top-11 hidden h-[calc(100dvh-2.75rem)] w-60 shrink-0 overflow-y-auto border-r px-2 py-4 lg:block" aria-label="Filters">
+        <aside className="side-pane hidden w-60 shrink-0 border-r px-2 py-4 lg:block" aria-label="Filters">
           <Facets logs={logs} search={search} counts={counts} set={set} />
           {narrowed && (
             <Button variant="ghost" size="sm" className="mt-4 w-full" onClick={clear}>
@@ -135,11 +139,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
           <div className="border-b px-3 py-3 md:px-4">
             <div className="mb-2 flex items-baseline justify-between gap-3">
               <h2 className="label-caps">Logs per hour</h2>
-              {logs.total && (
-                <span className="mono text-muted-foreground">
-                  <span className="font-semibold text-foreground">{countText(logs.total)}</span> {logs.total.n === 1 && !logs.total.capped ? 'log' : 'logs'}
-                </span>
-              )}
+              {logs.total && <span className="mono font-semibold">{plural(hitsText(logs.total), 'log')}</span>}
             </div>
             <LogHistogram buckets={logs.buckets} height={HISTOGRAM_HEIGHT} hour={search.hour} onPick={(hour) => set({ hour, log: undefined })} />
           </div>
@@ -173,7 +173,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
                         )}
                       >
                         <span className="text-muted-foreground tabular-nums">{clockTime(log.timestamp)}</span>
-                        <LogLevelGlyph level={log.level} className="mt-1" />
+                        <LogLevelGlyph level={levelOf(log)} className="mt-1" />
                         <span className="min-w-0 max-lg:col-span-4 max-lg:row-start-2 max-lg:mt-1">
                           <span className="block break-words whitespace-pre-wrap">{log.body}</span>
                           <span className="mt-1 flex flex-wrap gap-x-3 text-muted-foreground">
@@ -211,7 +211,7 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
           )}
         </div>
         {open && (
-          <aside aria-label="Log" className="sticky top-11 hidden h-[calc(100dvh-2.75rem)] w-96 shrink-0 overflow-y-auto border-l lg:block xl:w-104">
+          <aside aria-label="Log" className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
             <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-card px-4">
               <LevelAndTime log={open} className="flex-1" />
               <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => set({ log: undefined })}>

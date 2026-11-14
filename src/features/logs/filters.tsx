@@ -1,28 +1,42 @@
 import { Check, X } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { hourLabel } from '@/features/issues/format'
+import { hitsText } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { Counts, Count, Logs } from './data'
-import { countText } from './format'
+import { Uncounted, type Count, type Counts, type Logs } from './data'
 import { LogLevelGlyph } from './level'
-import { LEVELS, hourEnd, toggleLevel, type LogSearch } from './search'
+import { LEVELS, hourEnd, toggleLevel, type LogSearch, type SetSearch } from './search'
 
-type Set = (patch: Partial<LogSearch>) => void
 const ROW = 'mono flex h-8 w-full items-center gap-2 px-2 text-left hover:bg-accent max-lg:h-11'
 
-function Value({ role, on, count, onClick, children }: { role: 'checkbox' | 'radio'; on: boolean; count: Count | undefined; onClick: () => void; children: ReactNode }) {
+// A filter value's count: a placeholder while it loads, a dash where it cannot be counted.
+function CountLabel({ count }: { count: Count }) {
+  if (count === undefined) return <Skeleton className="h-3 w-6" />
+  if (count === Uncounted.unavailable)
+    return (
+      <span title="Not counted" aria-label="not counted">
+        –
+      </span>
+    )
+  return hitsText(count)
+}
+
+function FilterValue({ role, on, count, onClick, children }: { role: 'checkbox' | 'radio'; on: boolean; count: Count; onClick: () => void; children: ReactNode }) {
   return (
     <li>
       <button type="button" role={role} aria-checked={on} onClick={onClick} className={cn(ROW, on && 'bg-selected font-semibold')}>
         {children}
-        <span className={cn('ml-auto shrink-0 tabular-nums', !on && 'text-muted-foreground')}>{countText(count)}</span>
+        <span className={cn('ml-auto shrink-0 tabular-nums', !on && 'text-muted-foreground')}>
+          <CountLabel count={count} />
+        </span>
         <Check className={cn('size-3 shrink-0', !on && 'invisible')} />
       </button>
     </li>
   )
 }
 
-function Facet({ label, items, counts, current, onPick }: { label: string; items: { value: string; label: string }[]; counts: Record<string, Count | undefined>; current: string | undefined; onPick: (value: string | undefined) => void }) {
+function Facet({ label, items, counts, current, onPick }: { label: string; items: { value: string; label: string }[]; counts: Record<string, Count>; current: string | undefined; onPick: (value: string | undefined) => void }) {
   if (items.length === 0) return null
   return (
     <section className="mt-4" role="radiogroup" aria-label={label}>
@@ -31,9 +45,9 @@ function Facet({ label, items, counts, current, onPick }: { label: string; items
         {items.map((item) => {
           const on = item.value === current
           return (
-            <Value key={item.value} role="radio" on={on} count={counts[item.value]} onClick={() => onPick(on ? undefined : item.value)}>
+            <FilterValue key={item.value} role="radio" on={on} count={counts[item.value]} onClick={() => onPick(on ? undefined : item.value)}>
               <span className="truncate">{item.label}</span>
-            </Value>
+            </FilterValue>
           )
         })}
       </ul>
@@ -41,26 +55,26 @@ function Facet({ label, items, counts, current, onPick }: { label: string; items
   )
 }
 
-const same = (values: string[]) => values.map((value) => ({ value, label: value }))
+const asItems = (values: string[]) => values.map((value) => ({ value, label: value }))
 
 // Everything the list can be narrowed by, each value with how many logs it would leave.
-export function Facets({ logs, search, counts, set }: { logs: Logs; search: LogSearch; counts: Counts; set: Set }) {
+export function Facets({ logs, search, counts, set }: { logs: Logs; search: LogSearch; counts: Counts; set: SetSearch }) {
   return (
     <>
       <section role="group" aria-label="Level">
         <h2 className="label-caps px-2">Level</h2>
         <ul className="mt-1">
           {LEVELS.map((level) => (
-            <Value key={level} role="checkbox" on={!!search.level?.includes(level)} count={counts.level[level] ?? { n: 0, capped: false }} onClick={() => set({ level: toggleLevel(search, level), log: undefined })}>
+            <FilterValue key={level} role="checkbox" on={!!search.level?.includes(level)} count={counts.level(level)} onClick={() => set({ level: toggleLevel(search, level), log: undefined })}>
               <LogLevelGlyph level={level} />
               <span>{level}</span>
-            </Value>
+            </FilterValue>
           ))}
         </ul>
       </section>
-      <Facet label="Service" items={same(logs.services)} counts={counts.service} current={search.service} onPick={(service) => set({ service, log: undefined })} />
-      <Facet label="Environment" items={same(logs.environments)} counts={counts.environment} current={search.environment} onPick={(environment) => set({ environment, log: undefined })} />
-      <Facet label="Host" items={same(logs.hosts)} counts={counts.host} current={search.host} onPick={(host) => set({ host, log: undefined })} />
+      <Facet label="Service" items={asItems(logs.services)} counts={counts.service} current={search.service} onPick={(service) => set({ service, log: undefined })} />
+      <Facet label="Environment" items={asItems(logs.environments)} counts={counts.environment} current={search.environment} onPick={(environment) => set({ environment, log: undefined })} />
+      <Facet label="Host" items={asItems(logs.hosts)} counts={counts.host} current={search.host} onPick={(host) => set({ host, log: undefined })} />
       <Facet
         label="Project"
         items={logs.projects.map((project) => ({ value: String(project.id), label: project.slug ?? String(project.id) }))}
@@ -76,7 +90,7 @@ const SHORT_ID = 8
 
 // The filters in force, each removable. One row that scrolls sideways. A desktop shows the ones its
 // rail of filters does not already mark.
-export function ActiveFilters({ logs, search, set }: { logs: Logs; search: LogSearch; set: Set }) {
+export function ActiveFilters({ logs, search, set }: { logs: Logs; search: LogSearch; set: SetSearch }) {
   const chips: { label: string; value: string; clear: Partial<LogSearch>; inRail?: boolean }[] = [
     ...(search.traceId ? [{ label: 'trace', value: search.traceId.slice(0, SHORT_ID), clear: { traceId: undefined, spanId: undefined } }] : []),
     ...(search.spanId ? [{ label: 'span', value: search.spanId.slice(0, SHORT_ID), clear: { spanId: undefined } }] : []),

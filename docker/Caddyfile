@@ -11,7 +11,7 @@
 	encode zstd gzip
 
 	# Backend paths, mirrored from src/api/backend-paths.ts.
-	@backend path /api /api/* /_allauth /_allauth/* /accounts /accounts/* /oauth /oauth/* /mcp /mcp/* /.well-known /.well-known/* /admin /admin/* /static /static/* /media /media/* /status-pages /status-pages/* /v1 /v1/* /_health /_health/*
+	@backend path /api /api/* /_allauth /_allauth/* /accounts /accounts/* /oauth /oauth/* /mcp /mcp/* /.well-known /.well-known/* /admin /admin/* /static /static/* /media /media/* /status-pages /status-pages/* /v1/logs /v1/logs/* /_health /_health/*
 	handle @backend {
 		reverse_proxy {$BACKEND_URL}
 	}

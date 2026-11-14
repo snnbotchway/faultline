@@ -11,6 +11,6 @@ export const BACKEND_PATHS = [
   '/static', // admin and status page assets
   '/media',
   '/status-pages', // public, server-rendered
-  '/v1', // OTLP log ingest
+  '/v1/logs', // OTLP log ingest
   '/_health',
 ] as const

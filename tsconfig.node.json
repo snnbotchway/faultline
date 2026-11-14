@@ -20,5 +20,5 @@
     "noFallthroughCasesInSwitch": true,
     "strict": true
   },
-  "include": ["vite.config.ts", "src/api/backend-paths.ts", "dev", "scripts"]
+  "include": ["vite.config.ts", "src/api/backend-paths.ts", "dev", "scripts", "docker"]
 }

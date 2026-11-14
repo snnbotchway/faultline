@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
@@ -10,6 +11,7 @@ const backend = process.env.BACKEND_URL ?? 'http://localhost:8600'
 export default defineConfig({
   plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  test: { environment: 'jsdom', include: ['src/**/*.test.{ts,tsx}', 'docker/**/*.test.ts'] },
   server: {
     port: 5190,
     proxy: Object.fromEntries(

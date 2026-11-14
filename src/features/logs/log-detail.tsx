@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { failed, notify } from '@/lib/notice'
 import { cn } from '@/lib/utils'
-import { plainKey } from './format'
-import { NO_FILTERS, type LogSearch } from './search'
+import { attributes } from './format'
+import { NO_FILTERS, type LogSearch, type SetSearch } from './search'
 
-type Set = (patch: Partial<LogSearch>) => void
 
 const TRANSACTION = 'transaction'
 const shown = (value: unknown) => (typeof value === 'string' ? value : JSON.stringify(value))
@@ -25,7 +24,7 @@ async function copy(log: LogEvent) {
 }
 
 // The main thing to do with a log, and the rest behind one menu beside it.
-export function LogActions({ log, search, set }: { log: LogEvent; search: LogSearch; set: Set }) {
+export function LogActions({ log, search, set }: { log: LogEvent; search: LogSearch; set: SetSearch }) {
   const service = log.service && search.service !== log.service ? log.service : undefined
   const host = log.host && search.host !== log.host ? log.host : undefined
   const traceId = log.traceID && search.traceId !== log.traceID ? log.traceID : undefined
@@ -83,9 +82,6 @@ export function LogFields({ org, log, project, search, className }: { org: strin
     ['host', log.host],
     ['project', project],
   ].filter((field): field is [string, string] => !!field[1])
-  const attributes = Object.entries(log.data ?? {})
-    .map(([key, value]): [string, unknown] => [plainKey(key), value])
-    .sort(([a], [b]) => a.localeCompare(b))
   const trace = (spanId?: string) => ({ to: '/$org/logs', params: { org }, search: { range: search.range, project: search.project, traceId: log.traceID ?? undefined, spanId } }) as const
   return (
     <dl className={cn('mono grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3', className)}>
@@ -108,7 +104,7 @@ export function LogFields({ org, log, project, search, className }: { org: strin
           </Link>
         </Field>
       )}
-      {attributes.map(([key, value]) => (
+      {attributes(log).map(([key, value]) => (
         <Field key={key} name={key}>
           {key === TRANSACTION && typeof value === 'string' ? (
             <Link to="/$org/performance/transaction-groups" params={{ org }} search={{ query: value }} className={LINK}>

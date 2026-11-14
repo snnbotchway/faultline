@@ -17,7 +17,8 @@ const BAR_HEIGHT = 16
 
 /**
  * The projects behind one kind, busiest first as their counts arrive, each drawn on the kind's own scale so their
- * bars compare. Shares are of the kind's total, and what no listed project accounts for (a deleted one, say) is one
+ * bars compare. Busiest is on the pinned day, or over the whole period: a day under the pointer changes the figures
+ * but never the order. Shares are of the kind's total, and what no listed project accounts for (a deleted one, say) is one
  * line at the end once every project has answered.
  */
 export function ProjectRows({
@@ -27,6 +28,7 @@ export function ProjectRows({
   organizationRate,
   days,
   picked,
+  pinned,
   now,
   peak,
   total,
@@ -37,6 +39,7 @@ export function ProjectRows({
   organizationRate: number
   days: UsageDay[]
   picked: number | undefined
+  pinned: number | undefined
   now: number
   peak: number
   total: number
@@ -46,17 +49,19 @@ export function ProjectRows({
   const ordered = projects.toSorted((a, b) => Number(!a.firstEvent) - Number(!b.firstEvent))
   const shown = everyProject ? ordered : ordered.slice(0, FIRST_PROJECTS)
   const results = useQueries({ queries: shown.map((project) => ({ ...projectUsageQuery(org, kind, project.id, now), enabled: !!project.firstEvent })) })
-  const pickedDate = picked === undefined ? undefined : days[picked]?.date
+  const countOn = (byDay: Record<string, number>, index: number | undefined) => {
+    const date = index === undefined ? undefined : days[index]?.date
+    return date ? (byDay[date] ?? 0) : Object.values(byDay).reduce((sum, value) => sum + value, 0)
+  }
 
   const rows = shown
     .map((project, index) => {
       const result = results[index]!
       const byDay = project.firstEvent ? result.data : {}
       if (!byDay) return { project, result }
-      const count = pickedDate ? (byDay[pickedDate] ?? 0) : Object.values(byDay).reduce((sum, value) => sum + value, 0)
-      return { project, result, count, buckets: days.map((day) => byDay[day.date] ?? 0) }
+      return { project, result, count: countOn(byDay, picked), order: countOn(byDay, pinned), buckets: days.map((day) => byDay[day.date] ?? 0) }
     })
-    .toSorted((a, b) => (b.count ?? -1) - (a.count ?? -1))
+    .toSorted((a, b) => (b.order ?? -1) - (a.order ?? -1))
   const counted = rows.reduce((sum, row) => sum + (row.count ?? 0), 0)
   const rest = shown.length === projects.length && rows.every((row) => row.count !== undefined) ? total - counted : 0
 

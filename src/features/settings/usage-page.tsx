@@ -37,10 +37,14 @@ export function UsagePage({ org }: { org: string }) {
   const projects = useQuery(projectsQuery(org)).data
   const paid = useQuery(instanceSettingsQuery).data?.iPaidForGlitchTip === true
   const licenseEmail = useQuery({ ...licenseEmailQuery, enabled: paid }).data
-  const [pinned, setPinned] = useState<number>()
+  // By date, so the same day stays picked when the days refetch.
+  const [pinnedDate, setPinnedDate] = useState<string>()
   const [hovered, setHovered] = useState<number>()
   const row = useFold()
   const days = usage.data
+  const found = days?.findIndex((day) => day.date === pinnedDate) ?? -1
+  const pinned = found < 0 ? undefined : found
+  const setPinned = (index: number | undefined) => setPinnedDate(index === undefined ? undefined : days?.[index]?.date)
   const step = (by: -1 | 1) => days && setPinned(stepDay(pinned, by, days.length))
   useHotkeys({ ArrowLeft: () => step(-1), ArrowRight: () => step(1), Escape: () => setPinned(undefined) })
 
@@ -142,6 +146,7 @@ export function UsagePage({ org }: { org: string }) {
                   organizationRate={organizationRate}
                   days={days}
                   picked={picked}
+                  pinned={pinned}
                   now={now}
                   peak={Math.max(...buckets, 0)}
                   total={counts[kind]}

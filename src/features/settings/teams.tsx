@@ -48,7 +48,7 @@ export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
   const open = (slug?: string) =>
     void navigate(slug ? { to: '/$org/settings/teams/$team/$tab', params: { org, team: slug, tab: TeamTab.members }, replace: true } : { to: '/$org/settings/teams', params: { org }, replace: true })
   const create = write && (
-    <Button variant="default" size="sm" className="max-lg:h-9 touch-hit" onClick={() => setCreating(true)}>
+    <Button variant="default" size="bar" onClick={() => setCreating(true)}>
       <Plus />
       New team
     </Button>
@@ -123,7 +123,7 @@ function TeamRow(props: RowProps) {
           </span>
         </span>
         {me && canChange(me.id) && (
-          <Button size="sm" className="relative z-10 w-16 max-lg:h-9 touch-hit" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
+          <Button size="bar" className="relative z-10 w-16" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
             {team.isMember ? 'Leave' : 'Join'}
           </Button>
         )}
@@ -167,7 +167,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
               <Tag>You</Tag>
             ) : (
               canChange(member.id) && (
-                <Button size="sm" variant="ghost" className="max-lg:h-11" disabled={removeMember.pending} onClick={() => removeMember.run(member.id)}>
+                <Button variant="ghost" disabled={removeMember.pending} onClick={() => removeMember.run(member.id)}>
                   Remove
                 </Button>
               )
@@ -196,7 +196,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
               {project.slug}
             </Link>
             {linkProjects && (
-              <Button size="sm" variant="ghost" className="max-lg:h-11" disabled={removeProject.pending} onClick={() => removeProject.run(project.slug ?? '')}>
+              <Button variant="ghost" disabled={removeProject.pending} onClick={() => removeProject.run(project.slug ?? '')}>
                 Remove
               </Button>
             )}
@@ -217,11 +217,11 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
       </section>
       {write && (
         <div className="flex gap-2 lg:col-span-2">
-          <Button className="max-lg:h-11" onClick={() => setRenaming(true)}>
+          <Button onClick={() => setRenaming(true)}>
             Rename
           </Button>
           {admin && (
-            <Button variant="destructive" className="max-lg:h-11" onClick={() => setDeleting(true)}>
+            <Button variant="destructive" onClick={() => setDeleting(true)}>
               Delete team
             </Button>
           )}

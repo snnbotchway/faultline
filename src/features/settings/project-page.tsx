@@ -57,7 +57,7 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
       <>
         <SettingsBar org={org} title={slug} mono />
         <Screen title="No such project">
-          <Button asChild className="max-lg:h-11">
+          <Button asChild>
             <Link to="/$org/settings" params={{ org }}>
               Back to settings
             </Link>
@@ -73,7 +73,7 @@ export function ProjectPage({ org, slug, tab }: { org: string; slug: string; tab
     <>
       <SettingsBar org={org} title={slug} mono>
         {project.data?.firstEvent && (
-          <Button asChild size="sm" className="max-lg:h-9 touch-hit">
+          <Button asChild size="bar">
             <Link to="/$org/issues" params={{ org }} search={{ project: [Number(project.data.id)] }}>
               Issues
             </Link>
@@ -178,7 +178,7 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
           <Row
             label="Delete project"
             action={
-              <Button variant="destructive" size="sm" className="max-lg:h-9 touch-hit" onClick={() => setDeleting(true)}>
+              <Button variant="destructive" size="bar" onClick={() => setDeleting(true)}>
                 Delete
               </Button>
             }
@@ -312,7 +312,7 @@ function Keys({ org, slug, keys, write, admin }: { org: string; slug: string; ke
             <Field label="DSN">{() => <CopyField value={key.dsn.public ?? ''} label={`DSN of ${keyName(key)}`} />}</Field>
             {key.dsn.security && <Field label="Security report address">{() => <CopyField value={key.dsn.security!} label="Security report address" />}</Field>}
             {admin && (
-              <Button variant="destructive" className="self-start max-lg:h-11" onClick={() => setDeleting(key)}>
+              <Button variant="destructive" className="self-start" onClick={() => setDeleting(key)}>
                 Delete key
               </Button>
             )}

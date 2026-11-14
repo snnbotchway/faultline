@@ -16,7 +16,9 @@ const buttonVariants = cva(
       },
       size: {
         sm: 'h-7 px-3',
-        default: 'h-8 px-3',
+        // Drawn 36px tall in a bar or a group heading on touch, with a 44px target.
+        bar: 'h-7 px-3 max-lg:h-9 touch-hit',
+        default: 'h-8 px-3 max-lg:h-11',
         lg: 'h-9 px-4',
         touch: 'h-11 px-4',
         icon: 'size-8',

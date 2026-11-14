@@ -46,7 +46,7 @@ export function Group({ label, action, children }: { label: string; action?: Rea
 
 // A button in a group's heading: "New key", "Invite members".
 export function GroupAction({ className, ...props }: React.ComponentProps<typeof Button>) {
-  return <Button size="sm" variant="ghost" className={cn('max-lg:h-9 touch-hit', className)} {...props} />
+  return <Button size="bar" variant="ghost" className={className} {...props} />
 }
 
 export const ROW = 'flex min-h-12 w-full items-center gap-3 border-b px-3 text-left md:px-4 lg:min-h-11'
@@ -156,10 +156,10 @@ export function InlineForm({
       {children}
       {error && <FormError>{error}</FormError>}
       <div className="flex gap-2">
-        <Button type="submit" variant="default" className="max-lg:h-11" disabled={disabled || pending} aria-busy={pending}>
+        <Button type="submit" variant="default" disabled={disabled || pending} aria-busy={pending}>
           Save
         </Button>
-        <Button className="max-lg:h-11" onClick={onCancel}>
+        <Button onClick={onCancel}>
           Cancel
         </Button>
       </div>
@@ -212,15 +212,15 @@ export function FormDialog({
           <div className="flex shrink-0 justify-end gap-2 border-t px-4 py-3">
             {submit ? (
               <>
-                <Button className="max-lg:h-11" onClick={onClose}>
+                <Button onClick={onClose}>
                   Cancel
                 </Button>
-                <Button type="submit" variant={destructive ? 'destructive' : 'default'} className="max-lg:h-11" disabled={disabled || pending} aria-busy={pending}>
+                <Button type="submit" variant={destructive ? 'destructive' : 'default'} disabled={disabled || pending} aria-busy={pending}>
                   {submit}
                 </Button>
               </>
             ) : (
-              <Button variant="default" className="max-lg:h-11" onClick={onClose}>
+              <Button variant="default" onClick={onClose}>
                 Done
               </Button>
             )}

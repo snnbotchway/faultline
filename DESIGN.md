@@ -86,7 +86,7 @@ Rules:
 - 4px grid: every gap, padding, margin and size is a multiple of 4px. No half steps (`gap-1.5`, `px-2.5`) and no one-off pixel values. Horizontal page padding is 12px on a phone and 16px from 768px.
 - A list's checkbox column is 44px wide, the `check` spacing token; text that lines up with the row titles is indented by it (`pl-check`).
 - Bars are 44px tall. Desktop rows are 36 to 52px (a two-line issue row is 52px); controls are 28 to 36px.
-- On touch layouts every tap target is at least 44 by 44px, including checkboxes, whose visible box stays 16px. A button drawn 36px tall in a bar or a group heading reaches 44px through `touch-hit`.
+- On touch layouts every tap target is at least 44 by 44px, including checkboxes, whose visible box stays 16px. Buttons are 44px tall on touch layouts (the default size); one in a bar or a group heading uses the `bar` size, drawn 36px tall with its target padded to 44px by `touch-hit`.
 - Radius is 0 everywhere.
 - Surfaces are separated by 1px hairlines, not shadows. Only things that float above the page (menus, dialogs, the palette) cast a shadow, and they all cast the same one: the `shadow-float` token.
 - No coloured side stripes on rows or cards. Selection is a fill; the current row is a fill plus the focus outline.

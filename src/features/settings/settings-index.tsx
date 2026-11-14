@@ -179,7 +179,7 @@ export function SettingsIndex({ org }: { org: string }) {
                 <Row
                   label="Delete organization"
                   action={
-                    <Button variant="destructive" size="sm" className="max-lg:h-9 touch-hit" onClick={() => setDeleting(true)}>
+                    <Button variant="destructive" size="bar" onClick={() => setDeleting(true)}>
                       Delete
                     </Button>
                   }

@@ -90,7 +90,7 @@ function Arrived({ org, projectId, firstEvent }: { org: string; projectId: strin
             <LevelGlyph level={issue.level} className="mt-1 shrink-0" />
             <span className="min-w-0 break-words">{issue.title}</span>
           </span>
-          <Button asChild variant="default" className="max-lg:h-11">
+          <Button asChild variant="default">
             <Link to="/$org/issues/$issueId" params={{ org, issueId: issue.id }}>
               Open issue
             </Link>

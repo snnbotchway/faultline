@@ -29,7 +29,7 @@ export function NewOrganization() {
           {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={ORGANIZATION_NAME_MAX} autoComplete="organization" />}
         </Field>
         {create.error && <FormError>{create.error}</FormError>}
-        <Button type="submit" variant="default" className="max-lg:h-11 lg:self-start" disabled={!name.trim() || create.pending} aria-busy={create.pending}>
+        <Button type="submit" variant="default" className="lg:self-start" disabled={!name.trim() || create.pending} aria-busy={create.pending}>
           Create organization
         </Button>
       </form>

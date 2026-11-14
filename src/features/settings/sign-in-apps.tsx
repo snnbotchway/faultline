@@ -58,10 +58,10 @@ export function SignInApps({ org }: { org: string }) {
               <dd className="mono [overflow-wrap:anywhere]">{app.clientID}</dd>
             </dl>
             <div className="flex gap-2">
-              <Button className="max-lg:h-11" onClick={() => setEditing(app)}>
+              <Button onClick={() => setEditing(app)}>
                 Edit
               </Button>
-              <Button variant="destructive" className="max-lg:h-11" onClick={() => setDeleting(app)}>
+              <Button variant="destructive" onClick={() => setDeleting(app)}>
                 Delete
               </Button>
             </div>

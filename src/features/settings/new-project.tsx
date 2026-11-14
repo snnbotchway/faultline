@@ -100,7 +100,7 @@ export function NewProject({ org }: { org: string }) {
             </Field>
           )}
           {create.error && <FormError>{create.error}</FormError>}
-          <Button type="submit" variant="default" className="max-lg:h-11 lg:self-start" disabled={!teams || create.pending} aria-busy={create.pending}>
+          <Button type="submit" variant="default" className="lg:self-start" disabled={!teams || create.pending} aria-busy={create.pending}>
             Create project
           </Button>
         </div>

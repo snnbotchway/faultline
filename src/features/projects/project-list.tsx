@@ -39,7 +39,7 @@ export function ProjectList({ org }: { org?: string }) {
     return (
       <Screen title="No organization yet">
         {canCreateOrganization ? (
-          <Button asChild variant="default" className="max-lg:h-11">
+          <Button asChild variant="default">
             <Link to="/organizations/new">Create an organization</Link>
           </Button>
         ) : (
@@ -121,7 +121,7 @@ function NewProjectButton({ org }: { org: string }) {
   const can = useAccess(org)
   if (!can(Scope.projectWrite)) return null
   return (
-    <Button asChild variant="default" size="sm" className="max-lg:h-9 touch-hit">
+    <Button asChild variant="default" size="bar">
       <Link to="/$org/settings/projects/new" params={{ org }}>
         <Plus />
         New project

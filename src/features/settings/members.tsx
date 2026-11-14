@@ -53,7 +53,7 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
         <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a member" aria-label="Find a member" className="h-8 w-56 max-lg:hidden" />
         {write && (
           // The filled button is the page's main action; while a row is open that is the row's Save.
-          <Button variant={openId ? 'outline' : 'default'} size="sm" className="max-lg:h-9 touch-hit" onClick={() => void navigate({ to: '/$org/settings/members/new', params: { org }, replace: true })}>
+          <Button variant={openId ? 'outline' : 'default'} size="bar" onClick={() => void navigate({ to: '/$org/settings/members/new', params: { org }, replace: true })}>
             <Plus />
             Invite members
           </Button>
@@ -131,7 +131,7 @@ function MemberRow(props: RowProps) {
         {summary}
         <span className="flex w-16 shrink-0 justify-end">
           {mine && member.role !== OrgRole.owner && (
-            <Button size="sm" className="max-lg:h-9 touch-hit" onClick={() => setLeaving(true)}>
+            <Button size="bar" onClick={() => setLeaving(true)}>
               Leave
             </Button>
           )}
@@ -188,22 +188,22 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
       </div>
       {save.error && <FormError>{save.error}</FormError>}
       <div className="flex flex-wrap gap-2">
-        <Button variant="default" className="max-lg:h-11" disabled={save.pending || (role === member.role && !added.length && !removed.length)} aria-busy={save.pending} onClick={() => save.run()}>
+        <Button variant="default" disabled={save.pending || (role === member.role && !added.length && !removed.length)} aria-busy={save.pending} onClick={() => save.run()}>
           Save
         </Button>
         {member.pending && <CopyButton text={() => memberActions.inviteLink(org, member)} label="Copy invite link" onError={(error) => failed(error, 'copy the invite link')} />}
         {member.pending && emailOn && (
-          <Button className="max-lg:h-11" disabled={resend.pending} aria-busy={resend.pending} onClick={() => resend.run()}>
+          <Button disabled={resend.pending} aria-busy={resend.pending} onClick={() => resend.run()}>
             Send invite again
           </Button>
         )}
         {owner && !member.pending && !mine && (
-          <Button className="max-lg:h-11" onClick={() => setAsking(Question.transfer)}>
+          <Button onClick={() => setAsking(Question.transfer)}>
             Transfer ownership
           </Button>
         )}
         {(!mine || member.role !== OrgRole.owner) && (
-          <Button variant="destructive" className="max-lg:h-11 lg:ml-auto" onClick={() => setAsking(Question.remove)}>
+          <Button variant="destructive" className="lg:ml-auto" onClick={() => setAsking(Question.remove)}>
             {mine ? 'Leave organization' : member.pending ? 'Cancel invite' : 'Remove'}
           </Button>
         )}

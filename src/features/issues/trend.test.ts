@@ -46,6 +46,7 @@ describe('time axis', () => {
 })
 
 describe('release labels', () => {
+  // Widths are chosen against the label size estimate in trend.ts (7.2px a character, 12px around each label).
   const mark = (at: number, version: string) => ({ at, version })
 
   it('names each release that has room for its label', () => {

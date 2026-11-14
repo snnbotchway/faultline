@@ -82,16 +82,17 @@ const LABEL_SPACE = 4 + 8
 // placed at the oldest and named after the newest with a count of the others.
 export function markLabels(marks: Mark[], width: number): MarkLabel[] {
   if (width <= 0) return []
-  const groups: { at: number; version: string; count: number }[] = []
-  const text = (group: (typeof groups)[number]) => (group.count > 1 ? `${group.version} +${group.count - 1}` : group.version)
+  type Group = { at: number; version: string; count: number }
+  const groups: Group[] = []
+  const text = (group: Group) => (group.count > 1 ? `${group.version} +${group.count - 1}` : group.version)
   // A label starts at its mark, or ends there when it would run past the right edge of the chart.
-  const span = (group: (typeof groups)[number]) => {
+  const span = (group: Group) => {
     const x = group.at * width
     const size = text(group).length * LABEL_CHAR + LABEL_SPACE
     return x + size > width ? { from: x - size, to: x, end: true } : { from: x, to: x + size, end: false }
   }
   for (const mark of marks) {
-    let newer = { at: mark.at, version: mark.version, count: 1 }
+    let newer: Group = { at: mark.at, version: mark.version, count: 1 }
     groups.push(newer)
     let older = groups.at(-2)
     while (older && span(older).to > span(newer).from) {

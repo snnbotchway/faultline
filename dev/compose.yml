@@ -10,6 +10,9 @@ x-env: &env
   ENABLE_USER_REGISTRATION: "true"
   ENABLE_ORGANIZATION_CREATION: "true"
   EMAIL_URL: consolemail://
+  # Span breakdowns, N+1 detection, span groups and transaction trends are read from cold storage.
+  GLITCHTIP_ENABLE_DUCKDB: "true"
+  GLITCHTIP_COLD_STORAGE_DIR: /tmp/cold-storage
 services:
   postgres:
     image: postgres:17

@@ -19,7 +19,7 @@ export const DEMO = {
   ],
 } as const
 
-class Session {
+export class Session {
   private cookies = new Map<string, string>()
   private base: string
   constructor(base: string) {
@@ -56,7 +56,7 @@ class Session {
   }
 }
 
-async function signIn(s: Session) {
+export async function signIn(s: Session) {
   await s.request('GET', '/_allauth/browser/v1/config')
   const creds = { email: DEMO.email, password: DEMO.password }
   const login = await s.request('POST', '/_allauth/browser/v1/auth/login', creds)

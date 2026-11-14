@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { auth } from '@/api/auth'
 import { ApiError, HttpStatus } from '@/api/client'
-import { formProblems, type FormProblems } from '@/api/form-errors'
 import { Feature, instanceSettingsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { Field, FormAlert } from '@/components/ui/field'
@@ -11,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { AuthFrame, AuthLinks } from '@/features/auth/frame'
 import { SUBMIT } from '@/features/auth/forms'
 import { useCountdown } from '@/lib/countdown'
-import { checkForm, fieldNames, focusFirstProblem, hasProblems } from '@/lib/form-check'
+import { useFormRequest } from '@/lib/use-form-request'
 
 export const Route = createFileRoute('/reset-password')({
   loader: ({ context }) => context.queryClient.ensureQueryData(instanceSettingsQuery),
@@ -36,9 +35,8 @@ function ResetPassword() {
   const settings = useQuery(instanceSettingsQuery).data
   const [email, setEmail] = useState('')
   const [step, setStep] = useState<Step>(Step.form)
-  const [busy, setBusy] = useState(false)
-  const [problems, setProblems] = useState<FormProblems>({ fields: {} })
   const [wait, startWait] = useCountdown()
+  const request = useFormRequest('send the reset link')
 
   // A server that cannot send email cannot send a reset link either.
   if (settings && !settings.enabledFeatures.includes(Feature.email))
@@ -48,41 +46,29 @@ function ResetPassword() {
       </AuthFrame>
     )
 
-  function show(form: HTMLFormElement | null, found: FormProblems) {
-    setProblems(found)
-    focusFirstProblem(form, found)
-  }
-
-  // From the form, or again from the "sent" step, which has no form.
-  async function send(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault()
-    const form = event?.currentTarget ?? null
-    const caught = form ? checkForm(form) : { fields: {} }
-    show(form, caught)
-    if (hasProblems(caught)) return
-    setBusy(true)
+  // From the form, or again from the "sent" step. Any other failure goes back to the form to show it.
+  async function sendLink() {
     try {
       await auth.requestPasswordReset(email.trim())
-      setStep(Step.sent)
-      startWait(RESEND_AFTER)
     } catch (error) {
-      if (error instanceof ApiError && error.status === HttpStatus.tooManyRequests) return setStep(Step.limited)
-      show(form, formProblems(error, 'send the reset link', form ? fieldNames(form) : []))
-      setStep(Step.form)
-    } finally {
-      setBusy(false)
+      const limited = error instanceof ApiError && error.status === HttpStatus.tooManyRequests
+      setStep(limited ? Step.limited : Step.form)
+      if (limited) return
+      throw error
     }
+    setStep(Step.sent)
+    startWait(RESEND_AFTER)
   }
 
   if (step === Step.form)
     return (
       <AuthFrame title="Reset password">
-        <form noValidate className="space-y-4" onSubmit={(event) => void send(event)}>
-          <FormAlert>{problems.message}</FormAlert>
-          <Field label="Email" error={problems.fields.email}>
+        <form noValidate className="space-y-4" onSubmit={(event) => void request.submit(event, sendLink)}>
+          <FormAlert>{request.problems.message}</FormAlert>
+          <Field label="Email" error={request.problems.fields.email}>
             {(field) => <Input {...field} name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" autoFocus required className="h-10" />}
           </Field>
-          <Button type="submit" variant="default" className={SUBMIT} disabled={busy} aria-busy={busy}>
+          <Button type="submit" variant="default" className={SUBMIT} disabled={request.busy} aria-busy={request.busy}>
             Send reset link
           </Button>
         </form>
@@ -107,7 +93,7 @@ function ResetPassword() {
         )}
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button className="max-lg:h-11" disabled={busy || (!limited && wait > 0)} aria-busy={busy} onClick={() => void send()}>
+        <Button className="max-lg:h-11" disabled={request.busy || (!limited && wait > 0)} aria-busy={request.busy} onClick={() => void request.send(sendLink)}>
           {!limited && wait > 0 ? (
             <>
               Send again in <span className="mono">{wait}s</span>

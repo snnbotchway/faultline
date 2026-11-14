@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { SessionStatus, auth } from '@/api/auth'
-import { formProblems, isExpiredLink } from '@/api/form-errors'
+import { isExpiredLink } from '@/api/form-errors'
 import { Button } from '@/components/ui/button'
 import { Field, FormAlert, PasswordInput } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,14 +19,16 @@ function SetNewPassword() {
   const queryClient = useQueryClient()
   const usable = useQuery({ queryKey: ['auth', 'reset-key', key], queryFn: () => auth.resetKeyIsValid(key), staleTime: Infinity, retry: false })
   const [expired, setExpired] = useState(false)
-  const form = useSessionForm((error, shown) => {
-    setExpired(isExpiredLink(error))
-    return formProblems(error, 'set your password', shown)
-  })
+  const form = useSessionForm('set your password')
   const [password, setPassword] = useState('')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    const session = await form.submit(event, () => auth.resetPassword({ key, password }))
+    const session = await form.submit(event, () =>
+      auth.resetPassword({ key, password }).catch((error: unknown) => {
+        setExpired(isExpiredLink(error))
+        throw error
+      }),
+    )
     if (!session) return
     queryClient.removeQueries({ queryKey: ['auth', 'reset-key'] })
     // Signing in continues on its own page: straight to the second step, or with the new password.

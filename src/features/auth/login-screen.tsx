@@ -2,20 +2,19 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { SessionStatus, auth, sessionQuery } from '@/api/auth'
-import { signInProblems } from '@/api/sign-in-errors'
 import { instanceSettingsQuery, loginSettingsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { Field, FormAlert } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { AuthFrame, AuthLinks, AuthNote } from './frame'
 import { SUBMIT, SignInForm } from './forms'
-import { LoginNotice, formFailure, useSessionForm } from './session-form'
+import { LoginNotice, useSessionForm } from './session-form'
 import { SocialButtons } from './social'
 import { TwoStepCheck } from './two-step'
 
 // A provider signed the person in but gave no email address, so the account cannot be created until they give one.
 function ProviderSignup({ provider }: { provider: string | undefined }) {
-  const form = useSessionForm(formFailure('create your account'))
+  const form = useSessionForm('create your account')
   const [email, setEmail] = useState('')
   async function submit(event: FormEvent<HTMLFormElement>) {
     await form.proceed(await form.submit(event, () => auth.providerSignup(email.trim())))
@@ -48,12 +47,13 @@ export function LoginScreen({ next, org, notice }: { next: string | undefined; o
   const session = useQuery(sessionQuery).data
   const settings = useQuery(instanceSettingsQuery).data
   const orgSettings = useQuery({ ...loginSettingsQuery(org ?? ''), enabled: !!org }).data
-  const form = useSessionForm(signInProblems)
+  const form = useSessionForm('sign you in')
+  const [timedOut, setTimedOut] = useState(false)
 
   if (session?.status === SessionStatus.mfaPending)
     return (
       <AuthFrame title="Two-step verification">
-        <TwoStepCheck types={session.mfaTypes} />
+        <TwoStepCheck types={session.mfaTypes} onTimedOut={() => setTimedOut(true)} />
       </AuthFrame>
     )
   if (session?.status === SessionStatus.providerSignup) return <ProviderSignup provider={session.provider} />
@@ -63,7 +63,13 @@ export function LoginScreen({ next, org, notice }: { next: string | undefined; o
       {org && <p className="mono -mt-3 mb-5 text-muted-foreground">{org}</p>}
       {notice === LoginNotice.passwordChanged && <AuthNote>Password changed. Sign in with the new one.</AuthNote>}
       {notice === LoginNotice.socialFailed && <FormAlert className="mb-4">That sign-in didn't go through. Try again, or use your email and password.</FormAlert>}
-      <SignInForm onSession={(result) => void form.proceed(result)} />
+      {timedOut && <FormAlert className="mb-4">Sign-in timed out. Sign in again.</FormAlert>}
+      <SignInForm
+        onSession={(result) => {
+          setTimedOut(false)
+          void form.proceed(result)
+        }}
+      />
       <SocialButtons apps={org ? orgSettings?.socialApps : settings?.socialApps} next={next} />
       <AuthLinks>
         <Button variant="link" asChild>

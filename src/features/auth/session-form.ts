@@ -1,9 +1,8 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { redirect, useRouter } from '@tanstack/react-router'
-import { useState, type FormEvent } from 'react'
+import type { FormEvent } from 'react'
 import { SessionStatus, auth, isBackendPage, redirectToProvider, safeNext, sessionQuery, type Session } from '@/api/auth'
-import { formProblems, type FormProblems } from '@/api/form-errors'
-import { checkForm, fieldNames, focusFirstProblem, hasProblems } from '@/lib/form-check'
+import { useFormRequest } from '@/lib/use-form-request'
 import { ANONYMOUS } from '@/lib/session'
 
 // Something the sign-in page should say when another screen sends the person to it.
@@ -34,44 +33,22 @@ export function continueWithProvider(provider: string, next: string | undefined)
 }
 
 /**
- * Runs one step of signing in and keeps the session in step with the backend's answer. `found` is what the form
- * caught before sending; `explainFailure` words the backend's refusal. Problems go under their fields, focus moves
- * to the first one, and anything else becomes `message`.
+ * Runs one step of signing in and keeps the session in step with the backend's answer. `action` completes
+ * "Couldn't …". Problems go under their fields, focus moves to the first one, and anything else becomes `message`.
  */
-export function useSessionForm(explainFailure: (error: unknown, shown: readonly string[]) => FormProblems) {
+export function useSessionForm(action: string) {
   const queryClient = useQueryClient()
   const router = useRouter()
-  const [busy, setBusy] = useState(false)
-  const [problems, setProblems] = useState<FormProblems>({ fields: {} })
+  const form = useFormRequest(action)
 
-  function show(form: HTMLFormElement | null, found: FormProblems) {
-    setProblems(found)
-    focusFirstProblem(form, found)
+  async function remember(request: () => Promise<Session>) {
+    const session = await request()
+    queryClient.setQueryData(sessionQuery.queryKey, session)
+    return session
   }
 
-  async function run(request: () => Promise<Session>, form: HTMLFormElement | null = null): Promise<Session | undefined> {
-    setBusy(true)
-    show(form, { fields: {} })
-    try {
-      const session = await request()
-      queryClient.setQueryData(sessionQuery.queryKey, session)
-      return session
-    } catch (error) {
-      show(form, explainFailure(error, form ? fieldNames(form) : []))
-      return undefined
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>, request: () => Promise<Session>, found?: FormProblems): Promise<Session | undefined> {
-    event.preventDefault()
-    const form = event.currentTarget
-    const caught = found ?? checkForm(form)
-    if (!hasProblems(caught)) return run(request, form)
-    show(form, caught)
-    return undefined
-  }
+  const run = async (request: () => Promise<Session>) => (await form.send(() => remember(request)))?.value
+  const submit = async (event: FormEvent<HTMLFormElement>, request: () => Promise<Session>) => (await form.submit(event, () => remember(request)))?.value
 
   // Lets the route's guard send a signed-in person on to `next`.
   const proceed = (session: Session | undefined) => (session?.status === SessionStatus.authenticated ? router.invalidate() : undefined)
@@ -79,11 +56,8 @@ export function useSessionForm(explainFailure: (error: unknown, shown: readonly 
   async function startOver() {
     await auth.logout()
     queryClient.setQueryData(sessionQuery.queryKey, ANONYMOUS)
-    setProblems({ fields: {} })
+    form.clear()
   }
 
-  return { busy, errors: problems.fields, message: problems.message, clearMessage: () => setProblems({ fields: {} }), run, submit, proceed, startOver }
+  return { busy: form.busy, errors: form.problems.fields, message: form.problems.message, clearMessage: form.clear, run, submit, proceed, startOver }
 }
-
-// Words a failed step that is not the password or code check, which use `signInProblems`.
-export const formFailure = (action: string) => (error: unknown, shown: readonly string[]) => formProblems(error, action, shown)

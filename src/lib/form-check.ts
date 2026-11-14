@@ -1,4 +1,4 @@
-import type { FormProblems } from '@/api/form-errors'
+import { FormText, type FormProblems } from '@/api/form-errors'
 
 const controls = (form: HTMLFormElement) =>
   [...form.elements].filter((element): element is HTMLInputElement | HTMLTextAreaElement => element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)
@@ -13,12 +13,15 @@ export const fieldNames = (form: HTMLFormElement) => controls(form).flatMap((con
 export function checkForm(form: HTMLFormElement): FormProblems {
   const fields: FormProblems['fields'] = {}
   for (const control of controls(form)) {
-    const { validity, name } = control
+    const { name, minLength, maxLength } = control
+    const value = control.value.trim()
     if (!name || fields[name]) continue
-    if (validity.valueMissing || (control.required && !control.value.trim())) fields[name] = 'Fill this in.'
-    else if (validity.typeMismatch && control.type === 'email') fields[name] = 'Enter a valid email address.'
-    else if (validity.tooShort) fields[name] = `Use ${control.minLength} or more characters.`
-    else if (validity.tooLong) fields[name] = `Use ${control.maxLength} characters or fewer.`
+    if (!value) {
+      if (control.required) fields[name] = FormText.required
+    } else if (control.type === 'email' && control.validity.typeMismatch) fields[name] = FormText.invalidEmail
+    // The browser only flags lengths the user typed, so they are counted here.
+    else if (minLength > 0 && value.length < minLength) fields[name] = FormText.tooShort(minLength)
+    else if (maxLength > 0 && value.length > maxLength) fields[name] = FormText.tooLong(maxLength)
   }
   return { fields }
 }

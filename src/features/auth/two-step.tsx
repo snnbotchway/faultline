@@ -1,7 +1,6 @@
 import { KeyRound } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { MfaType, auth } from '@/api/auth'
-import { SignInField, checkCode, signInProblems } from '@/api/sign-in-errors'
+import { MfaType, SessionStatus, auth, type Session } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Field, FormAlert } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -21,8 +20,9 @@ const codeLabel = (types: MfaType[]) => {
 }
 
 // The second step of signing in: a code from the authenticator app, a recovery code, or a security key.
-export function TwoStepCheck({ types }: { types: MfaType[] }) {
-  const form = useSessionForm(signInProblems)
+// `onTimedOut` runs when the backend has dropped the half-finished sign-in, so it must start again.
+export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedOut: () => void }) {
+  const form = useSessionForm('check that code')
   const [code, setCode] = useState('')
   const [key, setKey] = useState<KeyState>(KeyState.idle)
   const waiting = useRef<AbortController | null>(null)
@@ -32,9 +32,14 @@ export function TwoStepCheck({ types }: { types: MfaType[] }) {
   // Stop the browser's prompt if the person leaves this step.
   useEffect(() => () => waiting.current?.abort(), [])
 
+  async function finish(session: Session | undefined) {
+    if (session?.status === SessionStatus.anonymous) onTimedOut()
+    await form.proceed(session)
+  }
+
   async function verify(event: FormEvent<HTMLFormElement>) {
     waiting.current?.abort()
-    await form.proceed(await form.submit(event, () => auth.mfaCode(code.trim()), checkCode(code)))
+    await finish(await form.submit(event, () => auth.mfaCode(code.trim())))
   }
 
   async function tryKey() {
@@ -47,7 +52,7 @@ export function TwoStepCheck({ types }: { types: MfaType[] }) {
       const session = await form.run(() => auth.webauthnAuthenticate(credential))
       // `run` reports a key the backend refused; that also counts as the key not working.
       setKey(session ? KeyState.idle : KeyState.failed)
-      await form.proceed(session)
+      await finish(session)
     } catch {
       // Stopping the wait is not a failure. Anything else is: the prompt was dismissed, timed out, or the key is not this account's.
       setKey(controller.signal.aborted ? KeyState.idle : KeyState.failed)
@@ -68,11 +73,12 @@ export function TwoStepCheck({ types }: { types: MfaType[] }) {
             {(field) => (
               <Input
                 {...field}
-                name={SignInField.code}
+                name="code"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
                 autoComplete="one-time-code"
                 autoFocus
+                required
                 className="h-10 font-mono tracking-[0.2em]"
               />
             )}

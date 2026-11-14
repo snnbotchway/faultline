@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { auth, type Session } from '@/api/auth'
-import { SignInField, checkSignIn, signInProblems } from '@/api/sign-in-errors'
 import { Button } from '@/components/ui/button'
 import { Field, FormAlert, PasswordInput } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { formFailure, useSessionForm } from './session-form'
+import { useSessionForm } from './session-form'
 
 export const SUBMIT = 'h-10 w-full max-lg:h-11'
 // The backend's rule; shown because the person cannot see it otherwise.
@@ -20,26 +19,26 @@ type Props = {
 
 function useCredentials(email = '') {
   const [value, setValue] = useState({ email, password: '' })
-  return { value, set: (field: SignInField) => (event: { target: { value: string } }) => setValue({ ...value, [field]: event.target.value }) }
+  return { value, set: (field: keyof typeof value) => (event: { target: { value: string } }) => setValue({ ...value, [field]: event.target.value }) }
 }
 
 export function SignInForm({ email, action = 'Sign in', onSession }: Props) {
-  const form = useSessionForm(signInProblems)
+  const form = useSessionForm('sign you in')
   const { value, set } = useCredentials(email)
   return (
     <form
       noValidate
       className="space-y-4"
       onSubmit={(event) =>
-        void form.submit(event, () => auth.login({ email: value.email.trim(), password: value.password }), checkSignIn(value)).then((session) => session && onSession(session))
+        void form.submit(event, () => auth.login({ email: value.email.trim(), password: value.password })).then((session) => session && onSession(session))
       }
     >
       <FormAlert>{form.message}</FormAlert>
       <Field label="Email" error={form.errors.email}>
-        {(field) => <Input {...field} name={SignInField.email} type="email" value={value.email} onChange={set(SignInField.email)} autoComplete="username" autoFocus={!email} className="h-10" />}
+        {(field) => <Input {...field} name="email" type="email" value={value.email} onChange={set('email')} autoComplete="username" autoFocus={!email} required className="h-10" />}
       </Field>
       <Field label="Password" error={form.errors.password}>
-        {(field) => <PasswordInput {...field} name={SignInField.password} value={value.password} onChange={set(SignInField.password)} autoComplete="current-password" autoFocus={!!email} />}
+        {(field) => <PasswordInput {...field} name="password" value={value.password} onChange={set('password')} autoComplete="current-password" autoFocus={!!email} required />}
       </Field>
       <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>
         {action}
@@ -49,7 +48,7 @@ export function SignInForm({ email, action = 'Sign in', onSession }: Props) {
 }
 
 export function SignUpForm({ email, action = 'Create account', onSession }: Props) {
-  const form = useSessionForm(formFailure('create your account'))
+  const form = useSessionForm('create your account')
   const { value, set } = useCredentials(email)
   return (
     <form
@@ -59,10 +58,10 @@ export function SignUpForm({ email, action = 'Create account', onSession }: Prop
     >
       <FormAlert>{form.message}</FormAlert>
       <Field label="Email" error={form.errors.email}>
-        {(field) => <Input {...field} name={SignInField.email} type="email" value={value.email} onChange={set(SignInField.email)} autoComplete="username" autoFocus={!email} required className="h-10" />}
+        {(field) => <Input {...field} name="email" type="email" value={value.email} onChange={set('email')} autoComplete="username" autoFocus={!email} required className="h-10" />}
       </Field>
       <Field label="Password" aside={PASSWORD_RULE} error={form.errors.password}>
-        {(field) => <PasswordInput {...field} name={SignInField.password} value={value.password} onChange={set(SignInField.password)} autoComplete="new-password" autoFocus={!!email} required minLength={8} />}
+        {(field) => <PasswordInput {...field} name="password" value={value.password} onChange={set('password')} autoComplete="new-password" autoFocus={!!email} required minLength={8} />}
       </Field>
       <Button type="submit" variant="default" className={SUBMIT} disabled={form.busy} aria-busy={form.busy}>
         {action}

@@ -1,0 +1,308 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { HeartPulse, Globe, Plug, Radio, Send, X, type LucideIcon } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { ApiError } from '@/api/client'
+import { MonitorRefusal, MonitorType, monitorActions, monitorKeys, type Monitor, type MonitorDetail, type MonitorInput } from '@/api/monitors'
+import { projectEnvironmentsQuery, projectsQuery } from '@/api/organizations'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Field } from '@/components/ui/field'
+import { Input, Select } from '@/components/ui/input'
+import { withScheme } from '@/features/alerts/recipient-kinds'
+import { failed, notify } from '@/lib/notice'
+import { cn } from '@/lib/utils'
+import { every } from './format'
+import { CopyField } from './parts'
+
+const TYPES: { value: MonitorType; label: string; icon: LucideIcon }[] = [
+  { value: MonitorType.get, label: 'GET', icon: Globe },
+  { value: MonitorType.post, label: 'POST', icon: Send },
+  { value: MonitorType.ping, label: 'Ping', icon: Radio },
+  { value: MonitorType.port, label: 'Port', icon: Plug },
+  { value: MonitorType.heartbeat, label: 'Heartbeat', icon: HeartPulse },
+]
+const INTERVALS = [60, 120, 300, 900, 3600, 86_400]
+const THRESHOLDS = [1, 2, 3, 5]
+const MAX_TIMEOUT = 60
+const DEFAULT_TIMEOUT = 20
+
+const isHttp = (type: MonitorType) => type === MonitorType.get || type === MonitorType.post
+const ADDRESS: Partial<Record<MonitorType, { label: string; noun: string; placeholder: string }>> = {
+  [MonitorType.get]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com/health' },
+  [MonitorType.post]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com/health' },
+  [MonitorType.ping]: { label: 'Host', noun: 'host', placeholder: 'example.com' },
+  [MonitorType.port]: { label: 'Host and port', noun: 'host and port', placeholder: 'db.example.com:5432' },
+}
+
+type Draft = { name: string; type: MonitorType; url: string; status: string; body: string; interval: number; timeout: string; threshold: number; project: string; environment: string }
+
+const draftFrom = (monitor?: MonitorDetail): Draft => ({
+  name: monitor?.name ?? '',
+  type: TYPES.some((type) => type.value === monitor?.monitorType) ? (monitor!.monitorType as MonitorType) : MonitorType.get,
+  url: monitor?.url ?? '',
+  status: String(monitor?.expectedStatus ?? 200),
+  body: monitor?.expectedBody ?? '',
+  interval: monitor?.interval ?? 60,
+  timeout: String(monitor?.timeout ?? DEFAULT_TIMEOUT),
+  threshold: monitor?.confirmationThreshold ?? 1,
+  project: monitor?.projectID ?? '',
+  environment: monitor?.environmentID ? String(monitor.environmentID) : '',
+})
+
+const whole = (text: string, min: number, max: number) => /^\d+$/.test(text.trim()) && Number(text) >= min && Number(text) <= max
+
+function validate(draft: Draft): Partial<Record<'name' | 'url' | 'status' | 'timeout', string>> {
+  const errors: Partial<Record<'name' | 'url' | 'status' | 'timeout', string>> = {}
+  if (!draft.name.trim()) errors.name = 'Give the monitor a name.'
+  const url = draft.url.trim()
+  if (draft.type !== MonitorType.heartbeat && !url) errors.url = `Enter the ${ADDRESS[draft.type]!.noun} to check.`
+  else if (draft.type === MonitorType.port && !/^[^\s:/]+:\d{1,5}$/.test(url.replace(/^\w+:\/\//, ''))) errors.url = 'Enter a host and port, such as db.example.com:5432.'
+  if (isHttp(draft.type) && !whole(draft.status, 100, 599)) errors.status = 'A status code, such as 200.'
+  if (draft.type !== MonitorType.heartbeat && !whole(draft.timeout, 1, MAX_TIMEOUT)) errors.timeout = `From 1 to ${MAX_TIMEOUT}.`
+  return errors
+}
+
+const detailOf = (error: unknown) => (error instanceof ApiError && error.body && typeof error.body === 'object' && 'detail' in error.body ? error.body.detail : undefined)
+
+// The backend's refusals of an address, in the user's words.
+function addressError(error: unknown): string | undefined {
+  const detail = detailOf(error)
+  if (detail === MonitorRefusal.privateAddress) return 'This address is on a private network. Monitors can only check public addresses.'
+  if (detail === MonitorRefusal.badAddress) return 'Enter a full address, such as https://example.com/health.'
+  if (detail === MonitorRefusal.badPort) return 'Enter a host and port, such as db.example.com:5432.'
+  return undefined
+}
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div role="group" aria-label={label} className="grid gap-x-5 gap-y-3 border-b py-4 last:border-b-0 sm:grid-cols-[96px_minmax(0,1fr)]">
+      <span className="label-caps sm:pt-1">{label}</span>
+      <div className="flex min-w-0 flex-col gap-4">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * Add a monitor, or change one. A heartbeat's address is made by the backend, so after creating one
+ * the dialog shows it to copy instead of closing.
+ */
+export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: string; monitor?: MonitorDetail; onClose: () => void; onCreated: (monitor: Monitor) => void }) {
+  const queryClient = useQueryClient()
+  const [draft, setDraft] = useState(() => draftFrom(monitor))
+  const [tried, setTried] = useState(false)
+  const [created, setCreated] = useState<Monitor>()
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }))
+  const projects = useQuery(projectsQuery(org)).data
+  const slug = projects?.find((project) => project.id === draft.project)?.slug
+  const environments = useQuery({ ...projectEnvironmentsQuery(org, slug ?? ''), enabled: !!slug }).data
+  const heartbeat = draft.type === MonitorType.heartbeat
+  const errors = validate(draft)
+  const shown = (key: keyof typeof errors) => (tried ? errors[key] : undefined)
+
+  const save = useMutation({
+    mutationFn: () => {
+      const url = draft.url.trim()
+      const body: MonitorInput = {
+        name: draft.name.trim(),
+        monitorType: draft.type,
+        url: heartbeat ? '' : isHttp(draft.type) ? withScheme(url) : url.replace(/^\w+:\/\//, ''),
+        expectedStatus: isHttp(draft.type) ? Number(draft.status) : null,
+        expectedBody: isHttp(draft.type) ? draft.body : '',
+        interval: draft.interval,
+        timeout: heartbeat ? null : Number(draft.timeout),
+        confirmationThreshold: heartbeat ? 1 : draft.threshold,
+        project: draft.project || null,
+        environmentID: draft.project && draft.environment ? Number(draft.environment) : null,
+      }
+      return monitor?.id ? monitorActions.update(org, monitor.id, body) : monitorActions.create(org, body)
+    },
+    onSuccess: (saved) => {
+      void queryClient.invalidateQueries({ queryKey: monitorKeys.all(org) })
+      if (monitor) onClose()
+      else if (saved.monitorType === MonitorType.heartbeat) setCreated(saved)
+      else onCreated(saved)
+    },
+    onError: (error) => {
+      if (addressError(error)) return
+      const detail = detailOf(error)
+      if (typeof detail === 'string' && detail.startsWith(MonitorRefusal.limit)) notify('This organization has as many monitors as it may have. Delete one to add another.', true)
+      else failed(error, 'save the monitor')
+    },
+  })
+  const refused = addressError(save.error)
+  const intervals = INTERVALS.includes(draft.interval) ? INTERVALS : [...INTERVALS, draft.interval].sort((a, b) => a - b)
+
+  const header = (title: string) => (
+    <div className="flex h-11 shrink-0 items-center justify-between border-b pr-2 pl-4">
+      <DialogTitle className="truncate text-base">{title}</DialogTitle>
+      <DialogClose aria-label="Close" title="Close" className="grid size-8 shrink-0 cursor-pointer place-items-center hover:bg-accent max-lg:size-11">
+        <X className="size-4" />
+      </DialogClose>
+    </div>
+  )
+
+  return (
+    <Dialog open onOpenChange={(next) => !next && (created ? onCreated(created) : onClose())}>
+      <DialogContent aria-describedby={undefined} onOpenAutoFocus={(event) => event.preventDefault()} className="top-[4vh] flex max-h-[92vh] max-w-2xl flex-col">
+        {created ? (
+          <>
+            {header(`${created.name} is ready`)}
+            <div className="flex flex-col gap-3 p-4">
+              <p>Call this address every {every(created.interval)}.</p>
+              <CopyField value={created.heartbeatEndpoint ?? ''} label="Heartbeat address" />
+            </div>
+            <div className="flex justify-end border-t p-3">
+              <Button variant="default" className="max-lg:h-11" onClick={() => onCreated(created)}>
+                Open monitor
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {header(monitor ? `Edit ${monitor.name}` : 'New monitor')}
+            <form
+              noValidate
+              className="flex min-h-0 flex-col"
+              onSubmit={(event) => {
+                event.preventDefault()
+                setTried(true)
+                if (Object.keys(errors).length === 0) save.mutate()
+              }}
+            >
+              <div className="min-h-0 overflow-y-auto px-4">
+                <Group label="Check">
+                  <div role="radiogroup" aria-label="Type" className="grid grid-cols-5 border bg-card">
+                    {TYPES.map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={draft.type === type.value}
+                        onClick={() => set('type', type.value)}
+                        className={cn(
+                          'flex h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 border-r text-sm font-medium -outline-offset-2 last:border-r-0',
+                          draft.type === type.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                        )}
+                      >
+                        <type.icon className="size-4" strokeWidth={1.8} />
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                  {heartbeat ? (
+                    monitor?.heartbeatEndpoint && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm font-medium">Address to call</span>
+                        <CopyField value={monitor.heartbeatEndpoint} label="Heartbeat address" />
+                      </div>
+                    )
+                  ) : (
+                    <Field label={ADDRESS[draft.type]!.label} error={shown('url') ?? refused}>
+                      {(props) => (
+                        <Input
+                          {...props}
+                          className="font-mono"
+                          inputMode="url"
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          value={draft.url}
+                          placeholder={ADDRESS[draft.type]!.placeholder}
+                          onChange={(event) => {
+                            set('url', event.target.value)
+                            save.reset()
+                          }}
+                        />
+                      )}
+                    </Field>
+                  )}
+                  <Field label="Name" error={shown('name')}>
+                    {(props) => <Input {...props} value={draft.name} onChange={(event) => set('name', event.target.value)} />}
+                  </Field>
+                </Group>
+                {isHttp(draft.type) && (
+                  <Group label="Expect">
+                    <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
+                      <Field label="Status" error={shown('status')}>
+                        {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.status} onChange={(event) => set('status', event.target.value)} />}
+                      </Field>
+                      <Field label="Page contains">{(props) => <Input {...props} value={draft.body} onChange={(event) => set('body', event.target.value)} />}</Field>
+                    </div>
+                  </Group>
+                )}
+                <Group label="Schedule">
+                  <div className={cn('grid gap-3', heartbeat ? 'grid-cols-1 sm:max-w-48' : 'grid-cols-2 sm:grid-cols-3')}>
+                    <Field label={heartbeat ? 'A heartbeat every' : 'Every'}>
+                      {(props) => (
+                        <Select {...props} value={draft.interval} onChange={(event) => set('interval', Number(event.target.value))}>
+                          {intervals.map((seconds) => (
+                            <option key={seconds} value={seconds}>
+                              {every(seconds)}
+                            </option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+                    {!heartbeat && (
+                      <>
+                        <Field label="Timeout (seconds)" error={shown('timeout')}>
+                          {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.timeout} onChange={(event) => set('timeout', event.target.value)} />}
+                        </Field>
+                        <Field label="Down after">
+                          {(props) => (
+                            <Select {...props} value={draft.threshold} onChange={(event) => set('threshold', Number(event.target.value))}>
+                              {(THRESHOLDS.includes(draft.threshold) ? THRESHOLDS : [...THRESHOLDS, draft.threshold].sort((a, b) => a - b)).map((count) => (
+                                <option key={count} value={count}>
+                                  {count} failed
+                                </option>
+                              ))}
+                            </Select>
+                          )}
+                        </Field>
+                      </>
+                    )}
+                  </div>
+                </Group>
+                <Group label="Belongs to">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Project">
+                      {(props) => (
+                        <Select {...props} className="font-mono" value={draft.project} onChange={(event) => setDraft((current) => ({ ...current, project: event.target.value, environment: '' }))}>
+                          <option value="">None</option>
+                          {projects?.map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {project.slug}
+                            </option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+                    <Field label="Environment">
+                      {(props) => (
+                        <Select {...props} className="font-mono" value={draft.environment} disabled={!draft.project} onChange={(event) => set('environment', event.target.value)}>
+                          <option value="">Any</option>
+                          {environments?.map((environment) => (
+                            <option key={environment.id} value={environment.id ?? ""}>
+                              {environment.name}
+                            </option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+                  </div>
+                </Group>
+              </div>
+              <div className="flex shrink-0 justify-end gap-2 border-t p-3">
+                <Button className="max-lg:h-11" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="default" className="max-lg:h-11" aria-busy={save.isPending} disabled={save.isPending}>
+                  {monitor ? 'Save monitor' : 'Create monitor'}
+                </Button>
+              </div>
+            </form>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}

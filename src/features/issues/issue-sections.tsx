@@ -21,15 +21,26 @@ import { cookiesOf, crumbKind, crumbText, crumbsOf, cspOf, requestOf, valueText,
 import { levelColor } from './levels'
 import { ago, exact, hourLabel } from './format'
 import { DEFAULT_QUERY, withFilter } from './search'
-import { isUrl, tagFacets } from './tags'
+import { SHOWN_VALUES, isUrl, pathOf, sharedOrigin, tagFacets, type Facets, type IssueTag } from './tags'
 
-export function Section({ title, count, className, children }: { title: string; count?: number; className?: string; children: ReactNode }) {
+// `actions` sit at the end of the label's row, such as the controls that change how the section is shown.
+export function Section({ title, count, actions, className, children }: { title: string; count?: number; actions?: ReactNode; className?: string; children: ReactNode }) {
+  const heading = (
+    <h2 className={cn('label-caps flex gap-2 font-semibold text-foreground', !actions && 'mb-2')}>
+      {title}
+      {count !== undefined && <span className="font-normal text-muted-foreground">{count}</span>}
+    </h2>
+  )
   return (
     <section className={className}>
-      <h2 className="label-caps mb-2 flex gap-2 font-semibold text-foreground">
-        {title}
-        {count !== undefined && <span className="font-normal text-muted-foreground">{count}</span>}
-      </h2>
+      {actions ? (
+        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+          {heading}
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{actions}</div>
+        </div>
+      ) : (
+        heading
+      )}
       {children}
     </section>
   )
@@ -193,6 +204,78 @@ function Share({ share, flat, children }: { share: number; flat: boolean; childr
   )
 }
 
+type TagRowValue = Facets['rows'][number]
+
+function TagValue({ org, tagKey, row, flat, origin }: { org: string; tagKey: string; row: TagRowValue; flat: boolean; origin?: string }) {
+  return (
+    <li className="flex items-center">
+      <Link
+        to="/$org/issues"
+        params={{ org }}
+        search={{ query: withFilter(DEFAULT_QUERY, tagKey, row.value) }}
+        title={row.value}
+        className="mono relative flex min-h-6 min-w-0 flex-1 items-center gap-3 pr-2 hover:bg-accent max-lg:min-h-11"
+      >
+        <Share share={row.share} flat={flat}>
+          {origin ? pathOf(row.value) : tagLabel(tagKey, row.name)}
+        </Share>
+      </Link>
+      {isUrl(row.value) && (
+        <a
+          href={row.value}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Open ${row.value} in a new tab`}
+          title="Open in a new tab"
+          className="grid size-6 shrink-0 place-items-center text-muted-foreground hover:bg-accent hover:text-foreground max-lg:size-11"
+        >
+          <ExternalLink className="size-3" />
+        </a>
+      )}
+    </li>
+  )
+}
+
+function TagValues({ org, tag }: { org: string; tag: IssueTag }) {
+  const [open, setOpen] = useState(false)
+  const facets = tagFacets(tag)
+  const origin = sharedOrigin(facets.rows.map((row) => row.value))
+  const shown = facets.rows.slice(0, SHOWN_VALUES)
+  const more = facets.rows.slice(SHOWN_VALUES)
+  const row = (item: TagRowValue) => <TagValue key={item.value} org={org} tagKey={tag.key} row={item} flat={facets.flat} origin={origin} />
+  return (
+    <div>
+      <h3 className="mono mb-1 flex min-w-0 gap-2 text-muted-foreground">
+        <span className="shrink-0">{tag.key}</span>
+        {origin && <span className="truncate">{origin}</span>}
+      </h3>
+      <ul>
+        {shown.map(row)}
+        {more.length > 0 && (
+          <li>
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              aria-expanded={open}
+              className="flex min-h-6 w-full items-center pl-12 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground max-lg:min-h-11"
+            >
+              {more.length} more
+            </button>
+          </li>
+        )}
+        {open && more.map(row)}
+        {facets.other > 0 && (
+          <li className="mono relative flex min-h-6 items-center gap-3 pr-2 text-muted-foreground max-lg:min-h-11">
+            <Share share={facets.other} flat={false}>
+              other
+            </Share>
+          </li>
+        )}
+      </ul>
+    </div>
+  )
+}
+
 // Clicking a value opens the inbox filtered to it; a value that is a web address also opens on its own.
 export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
   const tags = useQuery(issueTagsQuery(org, issueId))
@@ -201,48 +284,9 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
   return (
     <Section title="Tags">
       <div className="space-y-3">
-        {tags.data.map((tag) => {
-          const facets = tagFacets(tag)
-          return (
-            <div key={tag.key}>
-              <h3 className="mono mb-1 text-muted-foreground">{tag.key}</h3>
-              <ul>
-                {facets.rows.map((top) => (
-                  <li key={top.value} className="flex items-center">
-                    <Link
-                      to="/$org/issues"
-                      params={{ org }}
-                      search={{ query: withFilter(DEFAULT_QUERY, tag.key, top.value) }}
-                      className="mono relative flex min-h-6 min-w-0 flex-1 items-center gap-3 pr-2 hover:bg-accent max-lg:min-h-11"
-                    >
-                      <Share share={top.share} flat={facets.flat}>
-                        {tagLabel(tag.key, top.name)}
-                      </Share>
-                    </Link>
-                    {isUrl(top.value) && (
-                      <a
-                        href={top.value}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Open ${top.value} in a new tab`}
-                        className="grid size-6 shrink-0 place-items-center text-muted-foreground hover:bg-accent hover:text-foreground max-lg:size-11"
-                      >
-                        <ExternalLink className="size-3" />
-                      </a>
-                    )}
-                  </li>
-                ))}
-                {facets.other > 0 && (
-                  <li className="mono relative flex min-h-6 items-center gap-3 pr-2 text-muted-foreground max-lg:min-h-11">
-                    <Share share={facets.other} flat={false}>
-                      other
-                    </Share>
-                  </li>
-                )}
-              </ul>
-            </div>
-          )
-        })}
+        {tags.data.map((tag) => (
+          <TagValues key={tag.key} org={org} tag={tag} />
+        ))}
       </div>
     </Section>
   )

@@ -49,9 +49,18 @@ test('an event reads as plain text, oldest call first, with how it was caught an
 test('a tag shows its commonest values and an "other" bar, and a web address opens on its own', async ({ page }) => {
   await openIssue(page, 'WEB-APP-1')
   const users = page.locator('div').filter({ has: page.getByRole('heading', { name: 'user.id' }) }).last()
-  await expect(users.getByRole('listitem')).toHaveCount(11)
+  await expect(users.getByRole('link')).toHaveCount(4)
+  await users.getByRole('button', { name: '6 more' }).click()
+  await expect(users.getByRole('link')).toHaveCount(10)
   await expect(users.getByRole('listitem').last()).toContainText('other')
   await expect(page.getByRole('link', { name: /^Open https:\/\/app\.example\.com\/quotes\/.* in a new tab$/ }).first()).toHaveAttribute('target', '_blank')
+})
+
+test('an issue fits a phone screen without scrolling sideways', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openIssue(page, 'WEB-APP-1')
+  await expect(page.getByRole('heading', { name: 'Tags' })).toBeVisible()
+  expect(await page.evaluate<boolean>('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true)
 })
 
 test('the way back to the list keeps the issue\'s project', async ({ page }) => {

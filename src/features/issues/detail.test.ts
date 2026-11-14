@@ -4,7 +4,7 @@ import { aiPayload } from './copy-for-ai'
 import { cookiesOf } from './event'
 import { languageOf, piecesOf } from './highlight'
 import { rawTrace } from './raw-trace'
-import { tagFacets } from './tags'
+import { sharedOrigin, tagFacets } from './tags'
 
 const value = (name: string, count: number) => ({ name, value: name, count, key: 'user.id' })
 
@@ -20,6 +20,12 @@ test('a tag shows its ten commonest values and sums the rest into "other"', () =
 test('a tag with one value is flat and has no "other"', () => {
   const facets = tagFacets({ topValues: [value('production', 5)], totalValues: 5, uniqueValues: 1 })
   expect(facets).toMatchObject({ flat: true, other: 0 })
+})
+
+test('web addresses on one site share an origin, so their rows can show just the paths', () => {
+  expect(sharedOrigin(['https://app.example.com/quotes/new', 'https://app.example.com/quotes/review?x=1'])).toBe('https://app.example.com')
+  expect(sharedOrigin(['https://app.example.com/a', 'https://admin.example.com/a'])).toBeUndefined()
+  expect(sharedOrigin(['https://app.example.com/a', 'not a url'])).toBeUndefined()
 })
 
 test('a token that runs over several lines keeps its colour on each one, and entities are decoded', () => {

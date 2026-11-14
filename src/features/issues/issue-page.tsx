@@ -389,7 +389,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           {(data.userReportCount ?? 0) > 0 && <UserReports org={org} issueId={issueId} />}
           {canAdmin && <Fingerprints org={org} issueId={issueId} />}
         </div>
-        <aside className="space-y-6 max-lg:border-t max-lg:pt-5 lg:border-l lg:pl-6">
+        <aside className="min-w-0 space-y-6 max-lg:border-t max-lg:pt-5 lg:border-l lg:pl-6">
           <TagsRail org={org} issueId={issueId} />
           {event.data && <ContextRail event={event.data} />}
         </aside>

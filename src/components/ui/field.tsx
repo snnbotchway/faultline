@@ -36,7 +36,7 @@ export function Field({ label, aside, error, className, children }: { label: str
 export function FieldError({ id, className, children }: { id?: string; className?: string; children: ReactNode }) {
   if (!children) return null
   return (
-    <p id={id} className={cn('prose-text text-destructive', className)} role="alert">
+    <p id={id} className={cn('text-sm text-destructive', className)} role="alert">
       {children}
     </p>
   )

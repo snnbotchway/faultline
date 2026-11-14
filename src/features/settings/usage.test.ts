@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { dayAt, dropRange, effectiveDropRate, rangeText, share, stepDay } from './usage'
+import { dayAt, dropRange, effectiveDropRate, organizationDropRate, rangeText, share, stepDay } from './usage'
 
 test("a project's rate applies to what the organization's rate let through", () => {
   expect(effectiveDropRate(25, 10)).toBe(33)
@@ -12,6 +12,11 @@ test('either rate at 100 drops everything, and two partial rates never read as e
   expect(effectiveDropRate(100, 0)).toBe(100)
   expect(effectiveDropRate(5, 100)).toBe(100)
   expect(effectiveDropRate(99, 99)).toBe(99)
+})
+
+test('an organization that is not accepting events drops every one, whatever its rate', () => {
+  expect(organizationDropRate({ eventThrottleRate: 0, isAcceptingEvents: false })).toBe(100)
+  expect(organizationDropRate({ eventThrottleRate: 25, isAcceptingEvents: true })).toBe(25)
 })
 
 test('the headline rate is one figure when every project drops the same share and a range when they differ', () => {

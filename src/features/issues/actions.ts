@@ -1,7 +1,8 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { AssigneeType, IssueStatus, cachedIssueLists, issueActions, issueKeys, type Issue, type IssueSelection, type IssueUpdate } from '@/api/issues'
-import { failed } from '@/lib/notice'
+import { failed, notify } from '@/lib/notice'
+import { releaseName } from '@/lib/text'
 import { statusOf } from './search'
 import { StatusView } from './status'
 
@@ -74,8 +75,25 @@ export function useIssueActions(org: string) {
     const noun = (target: Target) => (target.ids.length === 1 && 'ids' in target.selection ? 'the issue' : 'the issues')
     return {
       setStatus: (target: Target, status: IssueStatus) => update(target, { status }, { status }, `update ${noun(target)}`),
-      resolveInNextRelease: (target: Target) =>
-        update(target, { status: IssueStatus.resolved }, { status: IssueStatus.resolved, statusDetails: { inNextRelease: true } }, `resolve ${noun(target)}`),
+      // The bulk route refuses this without a project and does not say which release it pinned, so one issue goes by its own route.
+      resolveInNextRelease: async (target: Target) => {
+        const [id] = target.ids
+        if (!id || target.ids.length > 1 || !('ids' in target.selection)) throw new Error('Resolve in the next release works on one issue at a time.')
+        let release: string | null | undefined
+        const done = await runAction(
+          queryClient,
+          org,
+          target,
+          { status: IssueStatus.resolved },
+          async () => {
+            const issue = await issueActions.updateOne(org, id, { status: IssueStatus.resolved, statusDetails: { inNextRelease: true } })
+            release = issue.statusDetails?.inRelease
+          },
+          'resolve the issue',
+        )
+        if (done) notify(release ? `Resolved as of release ${releaseName(release)}.` : 'Resolved. No release was found to tie it to.')
+        return done
+      },
       assign: (target: Target, assignee: Assignee | null) => update(target, { assignedTo: assignee }, { assignedTo: assigneeRef(assignee) }, `assign ${noun(target)}`),
       // The newest issue survives a merge. The lists are refetched, and so is each merged issue, whose page is gone or has grown.
       merge: (ids: string[]) => runAction(queryClient, org, { selection: { ids }, ids }, {}, () => issueActions.merge(org, ids), 'merge the issues'),

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, Ellipsis } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, Copy, Ellipsis } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { IssueStatus, StatsPeriod, TagKey, issueEventQuery, issueQuery, issueStatsQuery, issueTagsQuery, rawEventUrl, type IssueDetail } from '@/api/issues'
-import { canAdminEvents, canWriteEvents, organizationQuery } from '@/api/organizations'
+import { canAdminEvents, canWriteEvents, instanceSettingsQuery, organizationQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { CommandGroup, useCommands, type Command } from '@/components/shell/commands'
@@ -13,17 +13,18 @@ import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
-import { notify } from '@/lib/notice'
+import { failed, notify } from '@/lib/notice'
 import { releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { oneIssue, useIssueActions } from './actions'
 import { AssignDialog, AssigneeBadge } from './assignee'
 import { Comments } from './comments'
+import { copyForAi } from './copy-for-ai'
 import { DeleteIssuesDialog } from './dialogs'
-import { errorParts, exceptionsOf, messageOf } from './event'
+import { cspOf, errorParts, exceptionsOf, messageOf } from './event'
 import { ago, brief, compact, exact } from './format'
-import { ContextRail, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
+import { ContextRail, CspSection, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
 import { LevelGlyph } from './level'
 import { StackTrace } from './stack-trace'
 import { ACTION, STATUS, isStatus, statusActions } from './status'
@@ -109,6 +110,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const access = useQuery(organizationQuery(org)).data?.access
   const canWrite = canWriteEvents(access)
   const canAdmin = canAdminEvents(access)
+  const settings = useQuery(instanceSettingsQuery).data
   const actions = useIssueActions(org)
   const [assigning, setAssigning] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -126,6 +128,9 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const older = event.data?.previousEventID
   const newer = event.data?.nextEventID
   const rawUrl = event.data ? rawEventUrl(org, issueId, event.data.id) : undefined
+  const copyAi = () => {
+    if (event.data) copyForAi(event.data, { instanceName: settings?.glitchtipInstanceName, org, issueId }, settings?.enabledFeatures).catch((error: unknown) => failed(error, 'copy the event'))
+  }
   const copyLink = () => void navigator.clipboard.writeText(`${window.location.origin}/${org}/issues/${issueId}`).then(() => notify('Link copied'))
 
   useHotkeys({
@@ -146,6 +151,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
     ...(older ? [{ id: 'issue:older', group: CommandGroup.issue, label: 'Older event', keys: '[', run: () => toEvent(older) }] : []),
     ...(newer ? [{ id: 'issue:newer', group: CommandGroup.issue, label: 'Newer event', keys: ']', run: () => toEvent(newer) }] : []),
     { id: 'issue:copy', group: CommandGroup.issue, label: 'Copy link', run: copyLink },
+    ...(event.data ? [{ id: 'issue:copy-ai', group: CommandGroup.issue, label: 'Copy event for AI', run: copyAi }] : []),
     ...(rawUrl ? [{ id: 'issue:json', group: CommandGroup.issue, label: 'Open raw event', run: () => void window.open(rawUrl, '_blank') }] : []),
     ...(canWrite ? [{ id: 'issue:delete', group: CommandGroup.issue, label: 'Delete issue', run: () => setDeleting(true) }] : []),
   ]
@@ -153,7 +159,12 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
 
   const bar = (
     <PageBar>
-      <Link to="/$org/issues" params={{ org }} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground max-lg:h-11">
+      <Link
+        to="/$org/issues"
+        params={{ org }}
+        search={data ? { project: [Number(data.project.id)] } : undefined}
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground max-lg:h-11"
+      >
         <ChevronLeft className="size-4" />
         Issues
       </Link>
@@ -304,7 +315,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
             <p className="text-muted-foreground">This event didn't load.</p>
           ) : (
             <>
-              <div className="flex items-center gap-2 border-b pb-2">
+              <div className="flex flex-wrap items-center gap-x-2 border-b pb-2">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
                   <span className="label-caps font-semibold text-foreground">Event</span>
                   <span className="mono" title={event.data.eventID}>
@@ -316,6 +327,10 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                   </time>
                 </div>
                 <div className="ml-auto flex shrink-0 items-center">
+                  <Button variant="ghost" size="bar" onClick={copyAi}>
+                    <Copy />
+                    Copy for AI
+                  </Button>
                   <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!older} onClick={() => toEvent(older)} aria-label="Older event">
                     <ChevronLeft />
                   </Button>
@@ -344,7 +359,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                 </div>
                 {exceptions.length > 0 ? (
                   <Section title="Stack trace">
-                    <StackTrace exceptions={exceptions} />
+                    <StackTrace exceptions={exceptions} platform={event.data.platform} />
                   </Section>
                 ) : (
                   message && (
@@ -353,6 +368,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                     </Section>
                   )
                 )}
+                {cspOf(event.data) && <CspSection event={event.data} />}
                 <div className="order-3 empty:hidden">
                   <RequestSection event={event.data} />
                 </div>

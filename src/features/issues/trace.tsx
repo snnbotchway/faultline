@@ -56,7 +56,7 @@ export function MarkLabels({ marks }: { marks: Mark[] }) {
       {markLabels(marks, width).map((label) => (
         <span
           key={label.at}
-          className={cn('absolute top-0 font-mono text-xs whitespace-nowrap text-muted-foreground', label.end ? '-translate-x-full pr-1' : 'pl-1')}
+          className={cn('absolute top-0 max-w-full truncate font-mono text-xs whitespace-nowrap text-muted-foreground', label.end ? '-translate-x-full pr-1' : 'pl-1')}
           style={{ left: `${label.at * 100}%` }}
         >
           {label.text}

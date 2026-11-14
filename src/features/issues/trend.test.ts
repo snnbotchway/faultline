@@ -58,8 +58,10 @@ describe('release labels', () => {
     expect(markLabels(marks, 6000).map((label) => label.text)).toEqual(['2.3.0', 'a30f472', '71b3d06', 'c2f9e10'])
   })
 
-  it('ends a label at its mark near the right edge, so it stays on the chart', () => {
+  it('ends a label at its mark when it would run past the right edge, so it stays on the chart', () => {
     expect(markLabels([mark(0.95, '2.4.0')], 600)).toEqual([{ at: 0.95, text: '2.4.0', end: true }])
+    expect(markLabels([mark(0.7, 'a30f472'), mark(0.72, '71b3d06')], 260)).toEqual([{ at: 0.7, text: '71b3d06 +1', end: true }])
+    expect(markLabels([mark(0.7, '2.4.0')], 600)).toEqual([{ at: 0.7, text: '2.4.0', end: false }])
   })
 
   it('folds a label at the right edge into the one before when they would meet', () => {

@@ -77,8 +77,6 @@ export type MarkLabel = { at: number; text: string; end: boolean }
 // 8px gap before the next.
 const LABEL_CHAR = 7.2
 const LABEL_SPACE = 4 + 8
-// Past this point a label ends at its mark, so it stays on the chart.
-const LABEL_END = 0.8
 
 // The labels of the marks on a chart `width` pixels wide. Releases whose labels would run into each other share one,
 // placed at the oldest and named after the newest with a count of the others.
@@ -86,10 +84,11 @@ export function markLabels(marks: Mark[], width: number): MarkLabel[] {
   if (width <= 0) return []
   const groups: { at: number; version: string; count: number }[] = []
   const text = (group: (typeof groups)[number]) => (group.count > 1 ? `${group.version} +${group.count - 1}` : group.version)
+  // A label starts at its mark, or ends there when it would run past the right edge of the chart.
   const span = (group: (typeof groups)[number]) => {
     const x = group.at * width
     const size = text(group).length * LABEL_CHAR + LABEL_SPACE
-    return group.at > LABEL_END ? { from: x - size, to: x } : { from: x, to: x + size }
+    return x + size > width ? { from: x - size, to: x, end: true } : { from: x, to: x + size, end: false }
   }
   for (const mark of marks) {
     let newer = { at: mark.at, version: mark.version, count: 1 }
@@ -103,7 +102,7 @@ export function markLabels(marks: Mark[], width: number): MarkLabel[] {
       older = groups.at(-2)
     }
   }
-  return groups.map((group) => ({ at: group.at, text: text(group), end: group.at > LABEL_END }))
+  return groups.map((group) => ({ at: group.at, text: text(group), end: span(group).end }))
 }
 
 export const axisStartLabel = (period: StatsPeriod, start: number) => (period === StatsPeriod.day ? hourLabel(start) : dayLabel(start))

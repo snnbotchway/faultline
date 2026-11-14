@@ -76,8 +76,8 @@ function OrgItems({ org }: { org: string }) {
   return (
     <DropdownMenuRadioGroup value={org} onValueChange={(slug) => void navigate({ to: '/$org/issues', params: { org: slug } })}>
       {organizations.map((organization) => (
-        <DropdownMenuRadioItem key={organization.slug} value={organization.slug} className="mono">
-          {organization.slug}
+        <DropdownMenuRadioItem key={organization.slug} value={organization.slug}>
+          {organization.name}
         </DropdownMenuRadioItem>
       ))}
     </DropdownMenuRadioGroup>
@@ -97,6 +97,8 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const sections = useSections()
   const theme = useTheme()
   const session = useQuery(sessionQuery).data
+  // The name, which the organization can change; its slug in the address is fixed when it is made.
+  const organizationName = useQuery(organizationsQuery).data?.find((organization) => organization.slug === org)?.name ?? org
   const email = session?.status === SessionStatus.authenticated ? (session.user.email ?? session.user.display ?? '') : ''
   const leave = useSignOut()
   const canCreate = useQuery(instanceSettingsQuery).data?.enableOrganizationCreation
@@ -110,7 +112,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
       <div className="flex min-w-0 items-center gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger className="flex h-7 min-w-0 items-center gap-2 px-2 text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-11" aria-label="Organization">
-            <span className="mono truncate">{org}</span>
+            <span className="truncate">{organizationName}</span>
             <ChevronsUpDown className="size-3 shrink-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -279,7 +281,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
       .map((organization) => ({
         id: `org:${organization.slug}`,
         group: CommandGroup.organization,
-        label: `Switch to ${organization.slug}`,
+        label: `Switch to ${organization.name}`,
         run: () => void navigate({ to: '/$org/issues', params: { org: organization.slug } }),
       })),
     ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => setTheme(t.value) })),

@@ -11,6 +11,10 @@ import { useTitle } from '@/lib/title'
 import { EventsChart } from './events-chart'
 
 // How many unresolved issues a release brought, when the one page of newest issues covers it.
+// Every row's time column is as wide as the longest time of day, so the release names line up
+// in locales whose clock grows, such as "10:15 a.m." beside "9:05 a.m.".
+const WIDEST_CLOCKS = [new Date(2000, 0, 1, 10, 58), new Date(2000, 0, 1, 22, 58)].map(clock)
+
 function newIssues(counts: NewIssueCounts | undefined, release: Release): number | undefined {
   if (!counts) return undefined
   const known = counts.complete || (counts.since !== undefined && Date.parse(release.dateCreated) >= Date.parse(counts.since))
@@ -86,9 +90,16 @@ export function ReleaseList({ org }: { org: string }) {
                         className="grid grid-cols-[minmax(64px,max-content)_minmax(0,1fr)] gap-x-3 px-3 py-3 transition-colors duration-100 hover:bg-accent/60 lg:grid-cols-[minmax(72px,max-content)_minmax(0,1fr)] lg:px-4"
                       >
                         {/* The day heading says how long ago; the row gives the time of that day (DESIGN.md, Copy). */}
-                        <time className="mono whitespace-nowrap text-muted-foreground" dateTime={release.dateCreated} title={exact(release.dateCreated)}>
-                          {clock(release.dateCreated)}
-                        </time>
+                        <span className="mono grid whitespace-nowrap text-muted-foreground *:[grid-area:1/1]">
+                          <time dateTime={release.dateCreated} title={exact(release.dateCreated)}>
+                            {clock(release.dateCreated)}
+                          </time>
+                          {WIDEST_CLOCKS.map((time) => (
+                            <span key={time} aria-hidden className="invisible">
+                              {time}
+                            </span>
+                          ))}
+                        </span>
                         <span className="min-w-0">
                           <span className="flex items-baseline gap-3">
                             <span className="mono min-w-0 truncate font-semibold" title={release.version}>

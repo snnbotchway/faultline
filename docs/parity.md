@@ -210,6 +210,7 @@ Easy to miss:
 - [x] Version path segment must be URL-encoded (versions can contain `/`, `@`). A version with `/` can't be opened at all (the backend answers 404 for it); its page says so.
 - [ ] Project chip strips the `slug@` prefix when the version already starts with it.
 - [ ] Stock UI is read-only: no create release, deploys, commits, file delete or source-map upload (CLI/API only).
+- Note: the events-per-day chart adds up the backend's hourly buckets, which start on the UTC hour, into the viewer's days. In a time zone with a half-hour offset (India, parts of Australia) each day's first or last half hour lands in the neighbouring day. Left as is.
 
 ---
 

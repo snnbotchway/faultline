@@ -13,6 +13,9 @@ export const SECTIONS: Section[] = [
   { path: 'settings', label: 'Settings', icon: Settings },
 ]
 
+// Pages outside any organization's path that still belong to one of its sections, by their first path segment.
+export const SECTION_OF_PAGE: Record<string, string> = { 'system-info': 'settings' }
+
 // Stock paths that exist but have no nav entry of their own yet.
 export const OTHER_SECTION_PATHS = ['performance']
 

@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils'
 import { palette, CommandGroup, useCommands, type Command } from './commands'
 import { Palette } from './palette'
 import { ScopeFilters } from './scope-filters'
-import { SECTIONS, TAB_PATHS, sectionLink, type Section } from './sections'
+import { SECTIONS, SECTION_OF_PAGE, TAB_PATHS, sectionLink, type Section } from './sections'
 
 const THEMES = [
   { value: Theme.system, label: 'System', icon: Monitor },
@@ -251,7 +251,8 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
 
 export function AppShell({ org, children }: { org: string; children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const [, , current, ...deeper] = pathname.split('/')
+  const [, first = '', inOrg, ...deeper] = pathname.split('/')
+  const current = SECTION_OF_PAGE[first] ?? inOrg
   const sections = useSections()
   const organizations = useQuery(organizationsQuery).data ?? []
   const navigate = useNavigate()
@@ -259,7 +260,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
 
   const commands: Command[] = [
     ...sections
-      .filter((section) => section.path !== current || deeper.length > 0)
+      .filter((section) => section.path !== inOrg || deeper.length > 0)
       .map((section) => ({
         id: `go:${section.path}`,
         group: CommandGroup.goTo,

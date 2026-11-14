@@ -8,15 +8,12 @@ test("a project's rate applies to what the organization's rate let through", () 
   expect(effectiveDropRate(0, 0)).toBe(0)
 })
 
-test('either rate at 100 drops everything, and two partial rates never read as everything', () => {
+test('either rate at 100, or an organization not accepting events, drops everything, and two partial rates never read as everything', () => {
   expect(effectiveDropRate(100, 0)).toBe(100)
   expect(effectiveDropRate(5, 100)).toBe(100)
   expect(effectiveDropRate(99, 99)).toBe(99)
-})
-
-test('an organization that is not accepting events drops every one, whatever its rate', () => {
-  expect(organizationDropRate({ eventThrottleRate: 0, isAcceptingEvents: false })).toBe(100)
-  expect(organizationDropRate({ eventThrottleRate: 25, isAcceptingEvents: true })).toBe(25)
+  expect(effectiveDropRate(organizationDropRate({ eventThrottleRate: 0, isAcceptingEvents: false }), 0)).toBe(100)
+  expect(effectiveDropRate(organizationDropRate({ eventThrottleRate: 25, isAcceptingEvents: true }), 0)).toBe(25)
 })
 
 test('the headline rate is one figure when every project drops the same share and a range when they differ', () => {
@@ -47,6 +44,5 @@ test('stepping moves a day at a time and stops at the ends; with no day picked i
 test('a share too small to round to one percent still shows', () => {
   expect(share(2, 38)).toBe('5%')
   expect(share(1, 4810)).toBe('<1%')
-  expect(share(0, 4810)).toBe('0%')
-  expect(share(0, 0)).toBe('0%')
+  expect([share(0, 4810), share(0, 0)]).toEqual(['0%', '0%'])
 })

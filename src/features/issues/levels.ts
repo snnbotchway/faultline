@@ -12,7 +12,7 @@ const LEVEL: Record<IssueLevel, { color: string; shape: Shape }> = {
   [IssueLevel.debug]: { color: 'text-level-debug', shape: Shape.ring },
 }
 
-const isLevel = (level: string): level is IssueLevel => level in LEVEL
+const isLevel = (level: string): level is IssueLevel => Object.hasOwn(LEVEL, level)
 
 // How a level is drawn; a level this app does not know is drawn as debug.
 export const levelStyle = (level: string) => (isLevel(level) ? LEVEL[level] : LEVEL[IssueLevel.debug])

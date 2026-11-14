@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ChevronRight, Plus } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { ApiError } from '@/api/client'
 import { Scope, projectsQuery, teamsQuery } from '@/api/organizations'
 import { stale } from '@/api/stale'
 import {
-  PROJECT_KEY_NAME_MAX,
   PROJECT_NAME_MAX,
   projectActions,
   projectEnvironmentsQuery,
@@ -19,16 +18,17 @@ import {
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { Failure, useAccess, useChange } from './access'
-import { Confirm, TeamChecklist } from './fields'
-import { CopyField, DeleteDialog, Field, FoldRow, FormDialog, Group, GroupAction, InlineForm, ROW, ROW_LABEL, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
+import { useAccess, useChange } from './access'
+import { TeamChecklist } from './fields'
+import { DeleteDialog, Field, FoldRow, Group, InlineForm, ROW, ROW_LABEL, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
 import { teamList } from './labels'
 import { useFold } from './rows'
 import { OTHER_PLATFORM, PLATFORMS, platformName } from './platforms'
 import { ProjectSetup } from './project-setup'
+import { Environments } from './project-environments'
+import { Keys } from './project-keys'
 import { ProjectTab } from './project-tabs'
 
 /**
@@ -279,110 +279,5 @@ function DeleteProject({ org, slug, onClose }: { org: string; slug: string; onCl
       pending={remove.pending}
       error={remove.error}
     />
-  )
-}
-
-/* ---------- client keys ---------- */
-
-const keyName = (key: ProjectKey) => key.name || key.label || 'Unnamed key'
-
-// GlitchTip 7.0.0 ignores changes to a key and does not enforce a key's rate limit, so a key is only made, read and deleted.
-function Keys({ org, slug, keys, write, admin }: { org: string; slug: string; keys?: ProjectKey[]; write: boolean; admin: boolean }) {
-  const row = useFold(keys?.length === 1 ? keys[0]!.id : undefined)
-  const [creating, setCreating] = useState(false)
-  const [deleting, setDeleting] = useState<ProjectKey>()
-  const remove = useChange('delete the key', (key: ProjectKey) => projectActions.removeKey(org, slug, key.id), { stale: [stale.project(org, slug)], onDone: () => setDeleting(undefined) })
-  return (
-    <>
-      <Group
-        label="Client keys"
-        action={
-          write && (
-            <GroupAction onClick={() => setCreating(true)}>
-              <Plus />
-              New key
-            </GroupAction>
-          )
-        }
-      >
-        {!keys && <RowSkeleton rows={2} />}
-        {keys?.length === 0 && <Row label="No client keys" />}
-        {keys?.map((key) => (
-          <FoldRow key={key.id} label={keyName(key)} mono value={key.dsn.public} open={row.is(key.id)} onToggle={() => row.toggle(key.id)}>
-            <Field label="DSN">{() => <CopyField value={key.dsn.public ?? ''} label={`DSN of ${keyName(key)}`} />}</Field>
-            {key.dsn.security && <Field label="Security report address">{() => <CopyField value={key.dsn.security!} label="Security report address" />}</Field>}
-            {admin && (
-              <Button variant="destructive" className="self-start" onClick={() => setDeleting(key)}>
-                Delete key
-              </Button>
-            )}
-          </FoldRow>
-        ))}
-      </Group>
-      {creating && <NewKeyDialog org={org} slug={slug} onClose={() => setCreating(false)} />}
-      <Confirm
-        open={!!deleting}
-        onClose={() => {
-          setDeleting(undefined)
-          remove.clear()
-        }}
-        title={`Delete ${deleting ? keyName(deleting) : 'key'}?`}
-        confirm="Delete key"
-        destructive
-        onConfirm={() => deleting && remove.run(deleting)}
-        pending={remove.pending}
-        error={remove.error}
-      >
-        Anything still sending with this key's DSN stops being recorded.
-      </Confirm>
-    </>
-  )
-}
-
-function NewKeyDialog({ org, slug, onClose }: { org: string; slug: string; onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [checked, setChecked] = useState(false)
-  const save = useChange('create the key', () => projectActions.createKey(org, slug, name.trim()), { stale: [stale.project(org, slug)], onDone: onClose })
-  const submit = () => {
-    setChecked(true)
-    if (name.trim()) save.run()
-  }
-  return (
-    <FormDialog open onClose={onClose} title="New client key" submit="Create key" onSubmit={submit} pending={save.pending} error={save.error}>
-      <Field label="Name" error={checked && !name.trim() ? 'Give the key a name.' : undefined}>
-        {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={PROJECT_KEY_NAME_MAX} autoComplete="off" />}
-      </Field>
-    </FormDialog>
-  )
-}
-
-/* ---------- environments ---------- */
-
-function Environments({ org, slug, environments, write }: { org: string; slug: string; environments?: ProjectEnvironment[]; write: boolean }) {
-  const toggle = useChange('change the environment', ({ name, hidden }: { name: string; hidden: boolean }) => projectActions.setEnvironmentHidden(org, slug, name, hidden), {
-    stale: [stale.project(org, slug)],
-    failure: Failure.asNotice,
-  })
-  if (!environments) return <RowSkeleton rows={3} />
-  if (!environments.length) return <Screen title="No environments yet" />
-  return (
-    <Group label="Environments" action={<span className="label-caps pr-2 md:pr-3">Shown</span>}>
-      {environments.map((environment) => (
-        <div key={environment.name} className={ROW}>
-          <span className={cn('mono min-w-0 flex-1 break-words', environment.isHidden && 'text-muted-foreground')}>{environment.name}</span>
-          {write ? (
-            <Switch
-              aria-label={`Show ${environment.name}`}
-              className="-mr-1"
-              checked={!environment.isHidden}
-              disabled={toggle.pending}
-              onCheckedChange={(shown) => toggle.run({ name: environment.name, hidden: !shown })}
-            />
-          ) : (
-            <span className="text-sm text-muted-foreground">{environment.isHidden ? 'No' : 'Yes'}</span>
-          )}
-        </div>
-      ))}
-    </Group>
   )
 }

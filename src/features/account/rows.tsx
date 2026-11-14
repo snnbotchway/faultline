@@ -43,14 +43,3 @@ export function ControlRow({ name, children }: { name: string; children: ReactNo
 export function Tag({ warning, children }: { warning?: boolean; children: ReactNode }) {
   return <span className={cn('shrink-0 border px-2 text-xs leading-5', warning && 'border-level-warning text-level-warning')}>{children}</span>
 }
-
-// A small action inside a list row. `danger` is for the ones that take something away: delete, remove, disconnect, revoke.
-export function RowButton({ danger, className, ...props }: { danger?: boolean } & ComponentProps<'button'>) {
-  return (
-    <button
-      type="button"
-      className={cn('min-h-8 shrink-0 cursor-pointer text-right text-sm font-medium hover:underline disabled:opacity-50 max-lg:min-h-11 max-lg:min-w-11', danger && 'text-destructive', className)}
-      {...props}
-    />
-  )
-}

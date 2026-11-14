@@ -3,7 +3,8 @@ import { account, accountKeys, type EmailAddress } from '@/api/account'
 import { FIELD_BUTTON, Field, FieldError, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { TaskDialog } from '@/components/ui/task-dialog'
-import { RowButton, Tag } from './rows'
+import { RowButton } from '@/components/ui/row-button'
+import { Tag } from './rows'
 import { useAction } from './use-action'
 
 const refresh = [accountKeys.emails, accountKeys.user]

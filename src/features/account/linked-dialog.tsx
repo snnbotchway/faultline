@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { TaskDialog } from '@/components/ui/task-dialog'
 import { FULL_BUTTON, FieldError } from '@/components/ui/field'
 import { providerName } from './format'
-import { RowButton } from './rows'
+import { RowButton } from '@/components/ui/row-button'
 import { useAction } from './use-action'
 
 type SocialApp = InstanceSettings['socialApps'][number]

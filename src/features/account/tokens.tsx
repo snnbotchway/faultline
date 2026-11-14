@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ConfirmDialog, TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { CopyButton } from './copy-button'
 import { day } from './format'
-import { RowButton } from './rows'
+import { RowButton } from '@/components/ui/row-button'
 import { LEVEL_LABELS, RELEASES_LABEL, RESOURCE_LABELS, scopeWords } from './scopes'
 import { useAction } from './use-action'
 

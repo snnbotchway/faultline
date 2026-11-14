@@ -12,7 +12,7 @@ import { createSecurityKey, supportsSecurityKeys } from '@/lib/webauthn'
 import { CopyButton } from './copy-button'
 import { day } from './format'
 import { QrCode } from './qr'
-import { RowButton } from './rows'
+import { RowButton } from '@/components/ui/row-button'
 import { cn } from '@/lib/utils'
 import { useAction } from './use-action'
 

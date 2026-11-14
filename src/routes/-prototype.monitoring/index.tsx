@@ -2,7 +2,7 @@
 // src/routes/_app/$org/$section/route.tsx when a variant has been picked.
 //
 // Three variants of uptime monitors, status pages, alert rules and releases, switchable with
-// ?variant=a|b|c, mounted on the real /:org/... paths so they sit inside the app shell.
+// ?variant=a|b|c|d (d is the picked mix), mounted on the real /:org/... paths so they sit inside the app shell.
 // Data is stubbed in the backend's shapes (data.ts); nothing is saved.
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect } from 'react'
@@ -14,6 +14,7 @@ import { VARIANTS, useProto } from './shared'
 import { VariantA } from './variant-a'
 import { VariantB } from './variant-b'
 import { VariantC } from './variant-c'
+import { VariantD } from './variant-d'
 
 export const PROTOTYPE_SECTIONS = ['uptime-monitors', 'alerts', 'releases', 'settings']
 
@@ -117,7 +118,7 @@ export function MonitoringPrototype() {
   const screen = resolve(path, params)
   useTitle(typeof screen === 'string' ? undefined : 'Prototype')
   if (screen === 'not-built') return <NotBuilt name="Settings" />
-  const Variant = variant === 'b' ? VariantB : variant === 'c' ? VariantC : VariantA
+  const Variant = { a: VariantA, b: VariantB, c: VariantC, d: VariantD }[variant]
   return (
     <>
       {screen === 'not-found' ? <Screen title="Nothing at this address" /> : <Variant {...screen} />}

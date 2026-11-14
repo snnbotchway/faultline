@@ -81,9 +81,10 @@ const SPECS: Spec[] = [
   },
   {
     id: 6, name: 'Search', type: MonitorType.get, url: 'https://demo.example/search?q=ping', interval: 60, timeout: 5, status: 200, body: 'results',
-    project: 'web-app', env: 'production', base: 1900, spread: 900, spikes: 0.18,
+    project: 'web-app', env: 'production', base: 2100, spread: 1300, spikes: 0.12,
     outages: [
-      { ago: 2 * HOUR + 10 * MIN, lasts: 4 * MIN, reason: 1 }, { ago: 7 * HOUR, lasts: 3 * MIN, reason: 1 }, { ago: 29 * HOUR, lasts: 9 * MIN, reason: 1 },
+      { ago: 38 * MIN, lasts: 3 * MIN, reason: 1 }, { ago: 2 * HOUR + 10 * MIN, lasts: 4 * MIN, reason: 1 }, { ago: 4 * HOUR + 30 * MIN, lasts: 2 * MIN, reason: 1 },
+      { ago: 7 * HOUR, lasts: 3 * MIN, reason: 1 }, { ago: 29 * HOUR, lasts: 9 * MIN, reason: 1 },
       { ago: 4 * DAY, lasts: 12 * MIN, reason: 1 }, { ago: 6 * DAY + 5 * HOUR, lasts: 5 * MIN, reason: 1 }, { ago: 11 * DAY, lasts: 17 * MIN, reason: 1 },
     ],
   },
@@ -116,7 +117,8 @@ function build(spec: Spec): Monitor {
         const ago = index * spec.interval * 1000
         const outage = downAt(ago)
         const spike = spec.spikes && rand() < spec.spikes ? spec.base * (0.8 + rand()) : 0
-        const time = outage?.reason === 1 ? (spec.timeout ?? 20) * 1000 : Math.round(spec.base + rand() * spec.spread + spike)
+        const limit = (spec.timeout ?? 20) * 1000
+        const time = outage?.reason === 1 ? limit : Math.min(Math.round(spec.base + rand() * spec.spread + spike), limit * 0.96)
         return { startCheck: iso(ago), isUp: !outage, reason: outage ? outage.reason : null, responseTime: spec.type === MonitorType.heartbeat ? null : time }
       })
   const changes: Check[] = spec.outages
@@ -189,6 +191,34 @@ export function responseNow(monitor: Monitor): number | undefined {
   const times = monitor.checks.filter((check) => check.isUp && check.responseTime != null).map((check) => check.responseTime as number)
   if (!times.length) return undefined
   return [...times].sort((a, b) => a - b)[Math.floor(times.length / 2)]
+}
+
+// The backend has no "slow" or "flapping" state; these are read off the checks it does return.
+// Slow: a check that passed but took more than half of the monitor's timeout.
+const SLOW_SHARE = 0.5
+export const slowOver = (monitor: Pick<Monitor, 'timeout'>) => (monitor.timeout ? monitor.timeout * 1000 * SLOW_SHARE : undefined)
+export function isSlow(check: Check, monitor: Pick<Monitor, 'timeout'>): boolean {
+  const over = slowOver(monitor)
+  return check.isUp && over !== undefined && (check.responseTime ?? 0) > over
+}
+
+// Flapping: up now, but it went down at least this many times in the last 24 hours.
+const FLAPPING_FROM = 3
+export function flapping(monitor: Monitor): { count: number; since: number } | undefined {
+  if (!monitor.isUp) return undefined
+  const recent = incidents(monitor).filter((outage) => outage.from > NOW - DAY)
+  return recent.length >= FLAPPING_FROM ? { count: recent.length, since: recent.at(-1)!.from } : undefined
+}
+
+export const Health = { down: 'down', flapping: 'flapping', slow: 'slow', up: 'up', waiting: 'waiting' } as const
+export type Health = (typeof Health)[keyof typeof Health]
+export function healthOf(monitor: Monitor): Health {
+  if (monitor.isUp === null) return Health.waiting
+  if (!monitor.isUp) return Health.down
+  if (flapping(monitor)) return Health.flapping
+  const typical = responseNow(monitor)
+  const over = slowOver(monitor)
+  return typical !== undefined && over !== undefined && typical > over ? Health.slow : Health.up
 }
 
 export const PROJECTS = ['web-app', 'payments-api', 'mobile']

@@ -25,6 +25,7 @@ export const VARIANTS = [
   { key: 'a', name: 'Ledger' },
   { key: 'b', name: 'Console' },
   { key: 'c', name: 'Logbook' },
+  { key: 'd', name: 'Mix' },
 ] as const
 export type VariantKey = (typeof VARIANTS)[number]['key']
 

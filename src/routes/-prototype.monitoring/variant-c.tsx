@@ -862,7 +862,7 @@ function RuleEditor({ rule, pickProject = false, onClose }: { rule: Alert; pickP
   )
 }
 
-function AddRecipient({ hasEmail, onAdd }: { hasEmail: boolean; onAdd: (recipient: Recipient) => void }) {
+export function AddRecipient({ hasEmail, onAdd }: { hasEmail: boolean; onAdd: (recipient: Recipient) => void }) {
   const [open, setOpen] = useState(false)
   const [type, setType] = useState<RecipientType>()
   const [url, setUrl] = useState('')
@@ -1007,7 +1007,7 @@ function IssueRows({ issues }: { issues: ReleaseIssue[] }) {
   )
 }
 
-function ReleasePage({ release }: { release: Release }) {
+export function ReleasePage({ release }: { release: Release }) {
   const issues = releaseIssues(release.version)
   const fresh = issues.filter((issue) => issue.firstSeenHere)
   const known = issues.filter((issue) => !issue.firstSeenHere)

@@ -9,7 +9,6 @@ const MCP_GUIDE = 'https://glitchtip.com/documentation/mcp'
 
 type Where = { instance: string; instanceName?: string | null; org: string; issueId: string; eventUrl: string }
 
-// The event as markdown an assistant can read: where it came from, then its JSON.
 export function aiPayload(event: IssueEvent, where: Where): string {
   return [
     'GlitchTip error event',
@@ -30,13 +29,15 @@ export function aiPayload(event: IssueEvent, where: Where): string {
 // Copies the event, and says once that an agent can read events over MCP when the instance offers it.
 export async function copyForAi(event: IssueEvent, where: Omit<Where, 'instance' | 'eventUrl'>, features: readonly string[] | undefined) {
   const instance = window.location.origin
-  await navigator.clipboard.writeText(aiPayload(event, { ...where, instance, eventUrl: window.location.href }))
+  // The event's own address: on the issue's first tab the page shows whichever event is newest.
+  const eventUrl = `${instance}/${where.org}/issues/${where.issueId}/events/${event.id}`
+  await navigator.clipboard.writeText(aiPayload(event, { ...where, instance, eventUrl }))
   if (!features?.includes(McpFeature) || localStorage.getItem(MCP_HINT_KEY) === 'true') {
     notify('Copied for AI')
     return
   }
   localStorage.setItem(MCP_HINT_KEY, 'true')
-  notify('Copied. Your agent can also read this event, its logs and traces over MCP, with no pasting.', false, {
+  notify('Copied. Skip the pasting with MCP.', false, {
     label: 'Set up MCP',
     run: () => void window.open(`${MCP_GUIDE}#instance=${encodeURIComponent(instance)}`, '_blank', 'noreferrer'),
   })

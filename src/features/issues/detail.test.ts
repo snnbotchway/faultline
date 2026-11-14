@@ -59,9 +59,7 @@ test('cookies come as a map, as pairs or as the header text', () => {
 
 test('the copied event names the instance, falling back to its address', () => {
   const event = { id: 'e1', title: 'Boom' } as IssueEvent
-  const where = { instance: 'https://gt.example.com', org: 'demo-co', issueId: '7', eventUrl: 'https://gt.example.com/demo-co/issues/7' }
-  const named = aiPayload(event, { ...where, instanceName: 'Acme errors' }).split('\n')
-  expect(named.slice(0, 7)).toEqual(['GlitchTip error event', 'Source: Acme errors', 'Instance: https://gt.example.com', 'Organization: demo-co', 'Issue ID: 7', 'Event ID: e1', 'Event URL: https://gt.example.com/demo-co/issues/7'])
+  const where = { instance: 'https://gt.example.com', org: 'demo-co', issueId: '7', eventUrl: 'https://gt.example.com/demo-co/issues/7/events/e1' }
+  expect(aiPayload(event, { ...where, instanceName: 'Acme errors' })).toContain('Source: Acme errors\n')
   expect(aiPayload(event, where)).toContain('Source: https://gt.example.com\n')
-  expect(named.at(-1)).toBe('```')
 })

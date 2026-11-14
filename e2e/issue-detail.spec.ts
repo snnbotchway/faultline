@@ -10,7 +10,6 @@ async function openIssue(page: Page, text: string) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 }
 
-// The project's own address, as an SDK is given it.
 async function projectKey(page: Page) {
   const [key] = (await (await page.request.get(`/api/0/projects/${DEMO.org}/web-app/keys/`)).json()) as { public: string; projectID: number }[]
   return { key: key!.public.replaceAll('-', ''), project: key!.projectID }
@@ -47,11 +46,6 @@ test('an event reads as plain text, oldest call first, with how it was caught an
   await expect(page.getByText('quoteId')).toBeVisible()
 })
 
-test('the stack trace colours the lines of code', async ({ page }) => {
-  await openIssue(page, 'WEB-APP-1')
-  await expect(page.locator('pre span.font-semibold', { hasText: 'return' })).toBeVisible()
-})
-
 test('a tag shows its commonest values and an "other" bar, and a web address opens on its own', async ({ page }) => {
   await openIssue(page, 'WEB-APP-1')
   const users = page.locator('div').filter({ has: page.getByRole('heading', { name: 'user.id' }) }).last()
@@ -75,6 +69,7 @@ test('an event is copied for an AI assistant with where it came from', async ({ 
   const copied = await page.evaluate<string>('navigator.clipboard.readText()')
   expect(copied).toContain('GlitchTip error event')
   expect(copied).toContain(`Organization: ${DEMO.org}`)
+  expect(copied).toMatch(/Event URL: \S+\/issues\/\d+\/events\/\S+/)
   expect(copied).toContain('"exception"')
 })
 

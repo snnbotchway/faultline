@@ -1,27 +1,15 @@
 import { Check, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { projectSlug } from '@/api/organizations'
-import { Skeleton } from '@/components/ui/skeleton'
+import { CountLabel } from '@/components/count-label'
 import { hourLabel } from '@/features/issues/format'
-import { hitsText } from '@/lib/format'
+import { LOADING, type Count } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { CountState, LOADING, type Count, type Counts, type Logs } from './data'
+import type { Counts, Logs } from './data'
 import { LogLevelGlyph } from './level'
 import { LEVELS, hourEnd, toggleLevel, type LogSearch, type SetSearch } from './search'
 
 const ROW = 'mono flex h-8 w-full items-center gap-2 px-2 text-left hover:bg-accent max-lg:h-11'
-
-// A filter value's count: a placeholder while it loads, a dash where it cannot be counted.
-function CountLabel({ count }: { count: Count }) {
-  if (count.state === CountState.loading) return <Skeleton className="h-3 w-6" />
-  if (count.state === CountState.unavailable) return (
-      <>
-        <span aria-hidden>–</span>
-        <span className="sr-only">not counted</span>
-      </>
-    )
-  return hitsText(count.hits)
-}
 
 function FilterValue({ role, on, count, onClick, children }: { role: 'checkbox' | 'radio'; on: boolean; count: Count; onClick: () => void; children: ReactNode }) {
   return (

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { CountState, hourly, projectCount, totalOf } from './data'
+import { CountState } from '@/lib/format'
+import { hourly, projectCount, totalOf } from './data'
 
 const now = Date.parse('2026-11-14T12:30:00Z')
 

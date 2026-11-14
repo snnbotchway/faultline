@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { LogLevel, LogResourceType, logHitsQuery, logListQuery, logQuery, logResourcesQuery, logStatsQuery, type LogEvent, type LogFilters, type LogStats } from '@/api/logs'
 import { hasStatus, HttpStatus } from '@/api/client'
 import { projectSlug, projectsQuery } from '@/api/organizations'
-import type { Hits } from '@/lib/format'
+import { LOADING, UNAVAILABLE, counted, type Count, type Hits } from '@/lib/format'
 import { HOUR } from '@/lib/time'
 import { hourEnd, rangeOf, type LogSearch } from './search'
 
@@ -137,15 +137,6 @@ export function useLogs(org: string, search: LogSearch) {
 }
 
 export type Logs = ReturnType<typeof useLogs>
-
-// A count beside a filter value: still loading, how many logs picking it leaves, or not available.
-export const CountState = { loading: 'loading', unavailable: 'unavailable', counted: 'counted' } as const
-export type CountState = (typeof CountState)[keyof typeof CountState]
-export type Count = { state: typeof CountState.loading } | { state: typeof CountState.unavailable } | { state: typeof CountState.counted; hits: Hits }
-
-export const LOADING: Count = { state: CountState.loading }
-const UNAVAILABLE: Count = { state: CountState.unavailable }
-const counted = (hits: Hits | undefined): Count => (hits ? { state: CountState.counted, hits } : LOADING)
 
 // Each count is a request of its own, so only the first values of a long list are counted.
 const COUNTED = 10

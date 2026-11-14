@@ -136,9 +136,10 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
   const fresh = !project.firstEvent
   // Each row costs four requests, so a long list asks only for the rows that come on screen.
   const [ref, seen] = useSeen<HTMLLIElement>()
-  const activity = useQuery({ ...projectActivityQuery(org, project.id), enabled: seen && !fresh }).data
+  // Coming back to the tab would ask again for every row at once; the 60 s cache is fresh enough.
+  const activity = useQuery({ ...projectActivityQuery(org, project.id), enabled: seen && !fresh, refetchOnWindowFocus: false }).data
   const lastSeen = activity?.lastSeen
-  const alerts = useQuery({ ...projectAlertCountQuery(org, slug), enabled: seen }).data
+  const alerts = useQuery({ ...projectAlertCountQuery(org, slug), enabled: seen, refetchOnWindowFocus: false }).data
   return (
     <li ref={ref} className={cn(GRID, 'relative min-h-14 border-b hover:bg-accent')}>
       {fresh ? (

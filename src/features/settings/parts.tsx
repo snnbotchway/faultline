@@ -284,12 +284,15 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
   )
 }
 
+// How long a copy button says "Copied".
+const COPIED_MS = 1500
+
 function useCopy(text: string | (() => Promise<string>)) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     await navigator.clipboard.writeText(typeof text === 'string' ? text : await text())
     setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    setTimeout(() => setCopied(false), COPIED_MS)
   }
   return { copied, copy }
 }

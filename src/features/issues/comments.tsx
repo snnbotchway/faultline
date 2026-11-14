@@ -5,7 +5,7 @@ import { issueActions, issueCommentsQuery, issueKeys } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { failed } from '@/lib/notice'
-import { ago, exact } from '@/lib/format'
+import { ago, exact } from './format'
 import { Section } from './issue-sections'
 
 // The issue's comments. Anyone can add one; its author, or someone who manages the organization, can change it.

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { releaseName } from '@/lib/text'
 import { crumbKind, crumbText, crumbsOf, frameFile, throwingFrame } from './event'
-import { exact } from '@/lib/format'
+import { exact } from './format'
 import { ContextLines } from './stack-trace'
 import { ACTION, statusActions, type StatusView } from './status'
 

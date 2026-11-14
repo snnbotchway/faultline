@@ -6,7 +6,7 @@ import { projectAlertsQuery } from '@/api/alerts'
 import { ApiError } from '@/api/client'
 import { explain } from '@/api/errors'
 import { isHttp, monitorActions, monitorChangesQuery, monitorKeys, monitorQuery, type MonitorDetail } from '@/api/monitors'
-import { canWriteProjects, organizationQuery, projectsQuery } from '@/api/organizations'
+import { canWriteProjects, organizationQuery, projectSlug, projectsQuery } from '@/api/organizations'
 import { recentReleasesQuery, type Release } from '@/api/releases'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { CRUMB_LINK, Crumbs } from '@/components/shell/crumbs'
@@ -17,8 +17,8 @@ import { Section, Stat } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
-import { releaseBefore, shortName } from '@/lib/axis'
-import { ago, brief, clock, exact } from '@/lib/format'
+import { releaseBefore, shortName } from '@/features/issues/trend'
+import { ago, brief, clock, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { every, responseText, span } from './format'
@@ -106,10 +106,9 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
 
 function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetail; now: number }) {
   const changes = useQuery(monitorChangesQuery(org, monitor.id, monitor.lastChange))
-  const projects = useQuery(projectsQuery(org)).data
-  const project = projects?.find((candidate) => candidate.id === monitor.projectID && candidate.slug)
-  const releases = (useQuery(recentReleasesQuery(org)).data ?? []).filter((release) => !project || release.projects.some((other) => other.slug === project.slug))
-  const alerts = useQuery({ ...projectAlertsQuery(org, project?.slug ?? ''), enabled: !!project })
+  const project = projectSlug(useQuery(projectsQuery(org)).data, monitor.projectID ? Number(monitor.projectID) : undefined)
+  const releases = (useQuery(recentReleasesQuery(org)).data ?? []).filter((release) => !project || release.projects.some((other) => other.slug === project))
+  const alerts = useQuery({ ...projectAlertsQuery(org, project ?? ''), enabled: !!project })
   const rules = (alerts.data ?? []).filter((rule) => rule.uptime)
   // Which downtime is unfolded: the ongoing one until the user picks, and none once they fold it.
   const [unfolded, setUnfolded] = useState<number | null | undefined>()
@@ -128,7 +127,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
     ['Text', monitor.expectedBody || null],
     ['Timeout', monitor.timeout ? `${monitor.timeout}s` : null],
     ['Down after', heartbeat ? null : `${monitor.confirmationThreshold} failed`],
-    ['Project', project?.slug ?? monitor.projectName],
+    ['Project', project ?? monitor.projectName],
     ['Environment', monitor.envName],
   ]
 
@@ -207,7 +206,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
               <ul>
                 {rules.map((rule) => (
                   <li key={rule.id} className="border-b">
-                    <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project!.slug!, alert: rule.id! }} className="block py-2 hover:bg-accent/60">
+                    <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project!, alert: rule.id! }} className="block py-2 hover:bg-accent/60">
                       <span className="block font-medium">{rule.name}</span>
                       <span className="block text-sm text-muted-foreground">{rule.alertRecipients.map((recipient) => recipientMeta(recipient).label).join(', ')}</span>
                     </Link>
@@ -218,7 +217,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
               <p className="py-3 text-muted-foreground">
                 Nobody hears when this goes down.{' '}
                 {project ? (
-                  <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project.slug!, alert: RuleEditor.new }} className="text-brand hover:underline">
+                  <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project, alert: RuleEditor.new }} className="text-brand hover:underline">
                     Add a rule
                   </Link>
                 ) : (

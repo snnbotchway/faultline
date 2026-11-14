@@ -1,4 +1,4 @@
-import { DAY } from '@/lib/time'
+import { DAY_MS } from '@/lib/time'
 
 const STEPS: [number, string][] = [
   [60, 's'],
@@ -37,7 +37,7 @@ export const hourLabel = (seconds: number) => clock(new Date(seconds * 1000))
 
 // `Today`, `Yesterday`, or the date, in the viewer's time zone.
 export function dayName(time: Date, now: Date): string {
-  const days = Math.floor((new Date(now).setHours(24, 0, 0, 0) - time.getTime()) / DAY)
+  const days = Math.floor((new Date(now).setHours(24, 0, 0, 0) - time.getTime()) / DAY_MS)
   return days === 0 ? 'Today' : days === 1 ? 'Yesterday' : dayFormat.format(time)
 }
 

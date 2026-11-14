@@ -17,7 +17,8 @@ import { Section, Stat } from '@/components/ui/section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
-import { releaseBefore, shortName } from '@/features/issues/trend'
+import { releaseBefore } from '@/features/issues/trend'
+import { releaseName } from '@/lib/text'
 import { ago, brief, clock, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -282,7 +283,7 @@ function DowntimeRow({ monitor, period, now, unfolded, onToggle, before, notifie
   const details: { label: string; value: string; title?: string }[] = [
     { label: 'Went down', value: brief(new Date(period.from)) },
     { label: 'Came back', value: period.ongoing ? 'Not yet' : brief(new Date(period.to)) },
-    { label: 'Release before', value: before ? `${shortName(before.version)}, ${span(period.from - Date.parse(before.dateCreated))} earlier` : 'None', title: before?.version },
+    { label: 'Release before', value: before ? `${releaseName(before.version)}, ${span(period.from - Date.parse(before.dateCreated))} earlier` : 'None', title: before?.version },
     { label: 'Notified', value: notified },
   ]
   return (

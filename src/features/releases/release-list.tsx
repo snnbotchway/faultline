@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { releaseMarks, spanAxis } from '@/features/issues/trend'
 import { clock, compact, dayLabel, dayName, exact, noun } from '@/features/issues/format'
-import { plural } from '@/lib/text'
+import { plural, releaseName } from '@/lib/text'
 import { ReleaseTrace } from '@/features/issues/trace'
 import { DAY_MS } from '@/lib/time'
 import { useTitle } from '@/lib/title'
@@ -96,7 +96,7 @@ export function ReleaseList({ org }: { org: string }) {
                         <span className="min-w-0">
                           <span className="flex items-baseline gap-3">
                             <span className="mono min-w-0 truncate font-semibold" title={release.version}>
-                              {release.version}
+                              {releaseName(release.version)}
                             </span>
                             {fresh !== undefined && fresh > 0 && (
                               <span className="shrink-0 text-trend-new">

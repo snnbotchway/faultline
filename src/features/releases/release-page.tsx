@@ -14,9 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
 import { explain } from '@/api/errors'
 import { errorParts } from '@/features/issues/event'
-import { shortName } from '@/features/issues/trend'
 import { ago, brief, compact, exact, noun } from '@/features/issues/format'
 import { LevelGlyph } from '@/features/issues/level'
+import { releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
@@ -29,7 +29,7 @@ const bytes = (size: number) => (size >= 1_000_000 ? `${(size / 1_000_000).toFix
 export function ReleasePage({ org, version }: { org: string; version: string }) {
   const openable = canOpenRelease(version)
   const release = useQuery({ ...releaseQuery(org, version), enabled: openable })
-  useTitle(shortName(version), 'Releases')
+  useTitle(releaseName(version), 'Releases')
 
   const bar = (
     <PageBar>
@@ -40,7 +40,9 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
           </Link>
         }
       >
-        <span className="font-mono">{version}</span>
+        <span className="font-mono" title={version}>
+          {releaseName(version)}
+        </span>
       </Crumbs>
     </PageBar>
   )
@@ -83,7 +85,9 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
       <div className="mx-auto grid w-full max-w-6xl gap-x-10 px-3 pb-16 md:px-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
           <header className="py-5">
-            <h1 className="font-mono text-xl font-semibold break-all lg:text-2xl">{version}</h1>
+            <h1 className="font-mono text-xl font-semibold break-all lg:text-2xl" title={version}>
+              {releaseName(version)}
+            </h1>
             {release.data ? (
               <p className="mono mt-2 text-muted-foreground">
                 {release.data.projects.map((project) => project.slug).join(', ')} · <time dateTime={release.data.dateCreated}>{brief(release.data.dateCreated)}</time>

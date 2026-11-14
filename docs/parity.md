@@ -25,16 +25,16 @@ Totals: **44 routed screens** and **6 redirects** in the stock router, plus 5 sc
 | Auth | `/reset-password/set-new-password/:key` | Set new password from emailed key. Allauth answers 401 on success (flow continues to login/MFA) | `POST /_allauth/browser/v1/auth/password/reset` | [ ] |
 | Auth | `/accept/:memberId/:token` | Org invite landing: shows org name, accept button if logged in, else register/login links carrying `next=/accept/:id/:token` | `GET /accept/{org_user_id}/{token}/` (anonymous); `POST /accept/{org_user_id}/{token}/` body `{acceptInvite:true}` | [ ] |
 | Auth | `/profile/confirm-email/:key` (inside shell, so needs login) | Posts the email-verification key, then goes to `/profile` | `POST /_allauth/browser/v1/auth/email/verify` | [ ] |
-| Auth | (none) session boot | `GET .../auth/session` on app start; 401 means logged out, 401 with `mfa_authenticate` flow means half-logged-in. `isAuthenticated` mirrored in `localStorage` to avoid a flash | `GET /_allauth/browser/v1/auth/session` | [ ] |
-| Auth | (none) logout | User menu "Log Out", then hard navigate to `/login` | `DELETE /_allauth/browser/v1/auth/session` | [ ] |
-| Auth | (none) global 401 handler | Any non-session 401/403 with `detail` "Unauthorized" or "Authentication credentials were not provided." clears auth and reloads `/` | n/a | [ ] |
-| Auth | (none) `?next` handling | After login/register: `/admin/` and `/oauth/authorize/` do a full page load, everything else is a router navigate. Must reject `//host` and `/\host` (open redirect) | n/a (`FE/server-routes.ts`) | [ ] |
+| Auth | (none) session boot | `GET .../auth/session` on app start; 401 means logged out, 401 with `mfa_authenticate` flow means half-logged-in. `isAuthenticated` mirrored in `localStorage` to avoid a flash | `GET /_allauth/browser/v1/auth/session` | [x] |
+| Auth | (none) logout | User menu "Log Out", then hard navigate to `/login` | `DELETE /_allauth/browser/v1/auth/session` | [x] |
+| Auth | (none) global 401 handler | Any non-session 401/403 with `detail` "Unauthorized" or "Authentication credentials were not provided." clears auth and reloads `/` | n/a | [x] |
+| Auth | (none) `?next` handling | After login/register: `/admin/` and `/oauth/authorize/` do a full page load, everything else is a router navigate. Must reject `//host` and `/\host` (open redirect) | n/a (`FE/server-routes.ts`) | [x] |
 
 ### Compat redirects (router level)
 
 | Stock path | Redirects to | Faultline |
 |---|---|---|
-| `/:org/:project/issues/:id` | `/:org/issues/:id` | [ ] |
+| `/:org/:project/issues/:id` | `/:org/issues/:id` | [x] |
 | `/orgredirect/organizations/:org/settings/auth-tokens` | `/profile/auth-tokens` | [ ] |
 | `/account/settings/wizard/:hash` | `/profile/wizard/:hash` | [ ] |
 | `/:org/:project-slug` | `/:org/settings/projects/:project-slug` | [ ] |
@@ -57,7 +57,7 @@ Shell (`FE/logged-in.component.*`, `FE/main-nav/`): `loggedInGuard` redirects to
 | Shell | banners | verify-email banner (primary email unverified, resend), terms banner (billing on only, `localStorage termsUpdate20261121Dismissed`), upgrade banner (throttled org), support banner | `GET /users/me/emails/`; `POST /users/me/emails/confirm/`; stripe overage endpoints | [ ] |
 | Shell | over-limit snackbar | Opens once per session per org when `eventThrottleRate > 0`; dismissals kept in memory only | `GET /organizations/{org}/` | [ ] |
 | Shell | theme | `userOptions.preferredTheme` (system/light/dark) with `localStorage theme` fallback; follows `prefers-color-scheme` | `PUT /users/me/` | [ ] |
-| Shell | title | `document.title` per route; default "GlitchTip" | n/a | [ ] |
+| Shell | title | `document.title` per route; default "GlitchTip" | n/a | [x] |
 | Shell | locales | en, fr, nb (`src/locale/*.xlf`) | n/a | [ ] |
 
 ---
@@ -68,25 +68,25 @@ All under `/:org/issues`. URL state: `query` (default `is:unresolved`), `sort` (
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Issues | `/:org/issues` | Issue list: select, bulk actions, search, sort, env filter, project multiselect, time range, 24h/14d trend toggle, cursor paging | `GET /organizations/{org}/issues/`; `GET /organizations/{org}/issues-stats/?groups&statsPeriod`; `GET /organizations/{org}/environments/` or `GET /projects/{org}/{slug}/environments/` (when exactly one project picked); `PUT`/`DELETE /organizations/{org}/issues/` | [ ] |
-| Issues | `/:org/issues/:issue-id` (default child, "Details") | Issue header (title, level, counts, first/last seen, first release, resolved-in), status dropdown, delete, latest event, tag facets sidebar | `GET /issues/{id}/`; `GET /issues/{id}/events/latest/`; `GET /issues/{id}/tags/`; `PUT /organizations/{org}/issues/{id}/`; `DELETE /issues/{id}/` | [ ] |
+| Issues | `/:org/issues` | Issue list: select, bulk actions, search, sort, env filter, project multiselect, time range, 24h/14d trend toggle, cursor paging | `GET /organizations/{org}/issues/`; `GET /organizations/{org}/issues-stats/?groups&statsPeriod`; `GET /organizations/{org}/environments/` or `GET /projects/{org}/{slug}/environments/` (when exactly one project picked); `PUT`/`DELETE /organizations/{org}/issues/` | [x] |
+| Issues | `/:org/issues/:issue-id` (default child, "Details") | Issue header (title, level, counts, first/last seen, first release, resolved-in), status dropdown, delete, latest event, tag facets sidebar | `GET /issues/{id}/`; `GET /issues/{id}/events/latest/`; `GET /issues/{id}/tags/`; `PUT /organizations/{org}/issues/{id}/`; `DELETE /issues/{id}/` | [x] |
 | Issues | `/:org/issues/:issue-id/events/:event-id` | Specific event: same body as default, Older/Newer navigation, raw JSON link, copy for AI | `GET /issues/{id}/events/{event_id}/` (carries `nextEventID` / `previousEventID`) | [ ] |
-| Issues | `/:org/issues/:issue-id/comments` | Comment list, add, edit, delete (author, manager or owner only since 7.0) | `GET`/`POST /issues/{id}/comments/` (body `{data:{text}}`); `PUT`/`DELETE /issues/{id}/comments/{cid}/` | [ ] |
-| Issues | `/:org/issues/:issue-id/merged` | Hash list for the issue, select hashes and unmerge (never all of them). Hidden when only one hash | `GET /organizations/{org}/issues/{id}/hashes/`; `DELETE .../hashes/?id=<hash>&id=...` (202) | [ ] |
+| Issues | `/:org/issues/:issue-id/comments` | Comment list, add, edit, delete (author, manager or owner only since 7.0) | `GET`/`POST /issues/{id}/comments/` (body `{data:{text}}`); `PUT`/`DELETE /issues/{id}/comments/{cid}/` | [x] |
+| Issues | `/:org/issues/:issue-id/merged` | Hash list for the issue, select hashes and unmerge (never all of them). Hidden when only one hash | `GET /organizations/{org}/issues/{id}/hashes/`; `DELETE .../hashes/?id=<hash>&id=...` (202) | [x] |
 | Issues | `/:org/issues/:issue-id/user-reports` | Crash-report/feedback list (name, email, comments, linked event) with paging | `GET /issues/{id}/user-reports/` | [ ] |
 
 Easy-to-miss inside Issues:
 
 - [ ] Search box with help popover: `is:` (unresolved, resolved, ignored), `level:` (fatal, error, warning, info, debug, sample), `key:value` tags, `has:key`, free text last, `*` prefix match. Tokens are AND only.
-- [ ] Default query `is:unresolved` is applied client-side when `query` is absent; submitting an empty string means "everything".
+- [x] Default query `is:unresolved` is applied client-side when `query` is absent; submitting an empty string means "everything".
 - [ ] Event-id search: a UUID in the query returns `X-Sentry-Direct-Hit: 1` and the UI jumps straight to `/:org/issues/:id/events/:matchingEventId` (replaceUrl).
-- [ ] Sort options: Last Seen (`-last_seen`), First Seen (`first_seen`), Most Frequent (`-count`), Least Frequent (`count`), Highest Priority (`-priority`), Lowest Priority (`priority`). Sort control disabled when list is empty.
+- [x] Sort options: Last Seen (`-last_seen`), First Seen (`first_seen`), Most Frequent (`-count`), Least Frequent (`count`), Highest Priority (`-priority`), Lowest Priority (`priority`). Sort control disabled when list is empty.
 - [ ] Time range select: none, last hour (`now-1h`), 24h (`now-1d`), 7d, 14d, 30d, custom (date + time pickers, sent as UTC ISO with `Z`).
 - [ ] Project multiselect (repeated `project=` ids); "add project" shortcut in the app bar.
 - [ ] Environment select (single value, sent as `environment[]`); resets URL if the env is not valid for the newly chosen project.
 - [ ] Row checkbox with shift-click range select; select-all-on-page; "Select all N issues that match this query" banner (switches bulk actions to query-based, no ids).
-- [ ] Bulk actions: Mark resolved, Mark unresolved, Mark ignored, Merge (needs 2+ rows, one project, not in all-results mode, confirm dialog), Delete (confirm dialog with count). Mobile uses a kebab menu.
-- [ ] Bulk update touches only the first 50 matches synchronously, the rest are queued server-side. List is patched in place (`status` only) rather than refetched.
+- [x] Bulk actions: Mark resolved, Mark unresolved, Mark ignored, Merge (needs 2+ rows, one project, not in all-results mode, confirm dialog), Delete (confirm dialog with count). Mobile uses a kebab menu.
+- [x] Bulk update touches only the first 50 matches synchronously, the rest are queued server-side. List is patched in place (`status` only) rather than refetched.
 - [ ] Deleting everything on the current page resets the `cursor` so the user is not left on an empty page.
 - [ ] Trend sparkline per row, 24h hourly or 14d daily, plus event count, first/last seen ("seen X ago, N old"), CSP report label, `ignored`/`resolved` badges.
 - [ ] Status dropdown on detail: Unresolved, Resolved, Ignored, plus "Resolve in next release" (`statusDetails.inNextRelease`); snackbar says which release it pinned or that none was found.
@@ -94,14 +94,20 @@ Easy-to-miss inside Issues:
 - [ ] Tab badges: user report count, comment count.
 - [ ] Back link to the list keeps the issue's project filter (`?project=<id>`).
 - [ ] Event header: event id, long date, "raw JSON" link, "copy for AI" (markdown payload with instance, org, issue, event URL and event JSON), one-time MCP hint when `enabledFeatures` has `mcp`.
-- [ ] Older / Newer event buttons, disabled at the ends.
+- [x] Older / Newer event buttons, disabled at the ends.
 - [ ] Contexts summary (browser, OS, device, runtime, user) and full per-context tables.
 - [ ] Tag pills; each links to `/:org/issues?query=is:unresolved "key":"value"` (or `?environment=` for the `environment` tag); URL values get an external-link affordance.
 - [ ] Exception entry: Full vs Raw toggle, "most recent call first/last" flip, per-frame expand with context lines and variables, mechanism data, in-app frame styling, syntax highlighting (Prism).
 - [ ] Message entry, CSP violation entry, Request entry (method, URL, headers, query, cookies, body/data), Breadcrumbs entry (type, category, level, data, time).
 - [ ] "Additional Data" (`event.context`), SDK name/version. (`packages`, `errors`, `_meta` are returned but not rendered by stock.)
 - [ ] Issue tag facets sidebar: top 10 values per tag with percent bars and "other"; a tag with one value renders flat.
-- [ ] `shortId` (e.g. `MOBILE-2`) chip on the header and in the sidebar "Issue #" field.
+- [x] `shortId` (e.g. `MOBILE-2`) chip on the header and in the sidebar "Issue #" field.
+
+Where Faultline differs on purpose:
+
+- Comments, merged fingerprints and user reports are sections of the issue page; the stock tab paths redirect to it.
+- An issue that was merged into another shows "Issue not found" at its old address; the backend keeps no pointer to the issue that survived.
+- `/login` stays unticked until signing in with a security key (WebAuthn) is built; password, social and authenticator or recovery code sign-in work.
 
 ---
 

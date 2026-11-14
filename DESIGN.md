@@ -21,7 +21,7 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 | Words | IBM Plex Sans (variable) | issue titles and error messages, navigation and tabs, buttons, form labels and inputs, breadcrumbs, comments and other prose, empty and error states |
 | Machine text | IBM Plex Mono 400/500/600 | short ids (`WEB-APP-1`), event ids, numbers in tables and stats, timestamps and durations, axis and release labels, section labels, the search query, stack traces and code, DSNs, tag keys and values, URLs, file paths, culprits, slugs |
 
-- An exception type in a row (`TypeError`) is mono semibold at 13px and its message is sans, so the type still scans as code.
+- An exception type in a row (`TypeError`) is mono semibold at 13px and its message is sans, so the type still scans as code: the `error-type` utility.
 - Section labels (`STACK TRACE`, `WHAT HAPPENED`, `EVENTS`) are mono, 12px, uppercase, tracked 0.12em, muted: the `label-caps` utility. A label names a section; it never sits above a heading as a kicker.
 - Sans text is sentence case. Identifiers are shown exactly as the system has them.
 - Numbers are tabular everywhere.
@@ -33,9 +33,11 @@ One superfamily, two roles. Both are self-hosted through `@fontsource`.
 | `text-base` | 14px | 15px | body sans |
 | `mono` utility | 12.5px | 13px | machine text |
 | `text-lg` | 16px | 16px | emphasised body |
-| `text-xl` | 18px | 18px | state-screen titles |
+| `text-xl` | 18px | 18px | state-screen titles, stat values |
 | `text-2xl` | 22px | 22px | page titles |
 | `text-3xl` | 26px | 26px | headline numbers |
+
+Every size on screen is one of these steps; a headline that shrinks on a phone moves down a step (`text-2xl lg:text-3xl`), not to a size in between.
 
 Nothing is set below 12px except key hints. Text inputs are 16px on touch layouts so the browser does not zoom. Prose (`prose-text`) has a 1.55 line height and a measure of at most 72 characters.
 
@@ -81,7 +83,7 @@ Rules:
 - Bars are 44px tall. Desktop rows are 36 to 44px; controls are 28 to 36px.
 - On touch layouts every tap target is at least 44 by 44px, including checkboxes, whose visible box stays 16px.
 - Radius is 0 everywhere.
-- Surfaces are separated by 1px hairlines, not shadows. Only things that float above the page (menus, dialogs, the palette) cast a shadow.
+- Surfaces are separated by 1px hairlines, not shadows. Only things that float above the page (menus, dialogs, the palette) cast a shadow, and they all cast the same one: the `shadow-float` token.
 - No coloured side stripes on rows or cards. Selection is a fill; the current row is a fill plus the focus outline.
 
 ## Motion
@@ -96,7 +98,7 @@ Rules:
 Lucide, 16px, 1.6 to 2 stroke, in the text colour. Icons accompany a label; an icon alone is allowed only for theme, account, close and the palette button, and always has an accessible name. No emoji and no character glyphs standing in for icons.
 
 - Level: a filled square (fatal, error), a triangle (warning), a circle (info), a hollow circle (debug), in the level colour.
-- Assignee: the person's initials in a filled square; unassigned is the `UserRound` outline. The column is labelled.
+- Assignee: the person's initials at 12px in a filled 24px square; unassigned is the `UserRound` outline. The column is labelled.
 
 ## The time axis
 
@@ -104,7 +106,7 @@ The inbox and the issue page draw events the same way.
 
 - **Bars, one per bucket.** A bucket is an hour in the 24-hour view and a day in the 14-day view. Counts are discrete, so they are drawn as discrete bars, not a line.
 - **A visible zero.** Every trace sits on a 1px baseline in the `grid` colour that runs the full width, so an empty bucket reads as zero and not as missing data. A bucket with any events is at least 2px tall.
-- **One shared time scale.** All rows in a list cover the same period, and the axis is labelled once, above the rows.
+- **One shared time scale.** All rows in a list cover the same period, and the axis is labelled once, above the rows. A 24h / 14d toggle beside the axis switches the period.
 - **Height scale.** In the inbox each trace is scaled to its own peak, and the row's event count gives the magnitude. On the issue page the chart is labelled with its peak (`peak 31/day`).
 - **Releases** are vertical rules through the axis with the short version as a mono label. The same rule runs through every row.
 - **Colour.** Bars are the foreground at reduced strength. A new issue's bars use `trend-new`; the latest bucket of a spiking issue uses `trend-spiking`.
@@ -115,7 +117,7 @@ The inbox and the issue page draw events the same way.
 - **Buttons.** Outline is the default. One filled (`primary`) button per view marks the main action. Destructive is outlined in red and fills on hover. Labels are verbs in sentence case.
 - **Inputs.** A hairline box on `card`; the border turns `brand` on focus and `destructive` when invalid. The label is always visible above the field. Errors appear under the field in the user's words.
 - **Menus and popovers.** Square, hairline, on `card`. Items are 32px tall, 44px on touch.
-- **Dialogs** are for short tasks that keep their context (confirm a delete, pick an assignee). They are not a page.
+- **Dialogs** are for short tasks that keep their context (confirm a delete or a merge, pick an assignee). They are not a page. A confirmation names what it acts on: how many issues, and for a merge which one is kept.
 - **Top bar.** Mark and wordmark, organization, then on the inbox the project and environment filters, navigation at the right, the palette button, theme, account.
 - **Page bar.** A second 44px bar that sticks while the page scrolls. It says where you are within the section and carries the page's main controls. It mirrors the URL path.
 - **Rows.** The whole row is the target. Hover and the keyboard cursor look the same.
@@ -144,7 +146,7 @@ The inbox and the issue page draw events the same way.
 | `[` / `]` | issue | older / newer event |
 | `Esc` | everywhere | close, clear the selection, leave a field |
 
-Plain keys do nothing while the user is typing or a menu or dialog is open.
+Plain keys do nothing while the user is typing or a menu or dialog is open. `Enter` and `Space` belong to a focused button, link or menu item, so they never also run a page shortcut.
 
 ## Phone
 

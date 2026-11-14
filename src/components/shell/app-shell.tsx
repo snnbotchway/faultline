@@ -111,7 +111,11 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
       </Link>
       <div className="flex min-w-0 items-center gap-1">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex h-7 min-w-0 items-center gap-2 px-2 text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-11" aria-label="Organization">
+          <DropdownMenuTrigger
+            className="flex h-7 min-w-0 items-center gap-2 px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-11 lg:max-w-40 xl:max-w-56"
+            aria-label="Organization"
+            title={organizationName}
+          >
             <span className="truncate">{organizationName}</span>
             <ChevronsUpDown className="size-3 shrink-0" />
           </DropdownMenuTrigger>
@@ -142,7 +146,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
         {inbox && (
           <>
             <span className="text-muted-foreground max-lg:hidden">/</span>
-            <ScopeFilters org={org} className="max-lg:hidden" />
+            <ScopeFilters org={org} className="shrink-0 max-lg:hidden" />
           </>
         )}
       </div>
@@ -281,8 +285,9 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
       .map((organization) => ({
         id: `org:${organization.slug}`,
         group: CommandGroup.organization,
+        label: `Switch to ${organization.name}`,
         // Names can repeat; the slug tells two apart and can be searched.
-        label: organization.name === organization.slug ? `Switch to ${organization.name}` : `Switch to ${organization.name} (${organization.slug})`,
+        detail: organization.name === organization.slug ? undefined : organization.slug,
         run: () => void navigate({ to: '/$org/issues', params: { org: organization.slug } }),
       })),
     ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => setTheme(t.value) })),

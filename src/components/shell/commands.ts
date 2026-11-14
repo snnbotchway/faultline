@@ -13,7 +13,8 @@ export const CommandGroup = {
 } as const
 export type CommandGroup = (typeof CommandGroup)[keyof typeof CommandGroup]
 
-export type Command = { id: string; group: CommandGroup; label: string; keys?: string; run: () => void }
+// `detail` is machine text shown muted after the label, such as a slug; it is searched with the label.
+export type Command = { id: string; group: CommandGroup; label: string; detail?: string; keys?: string; run: () => void }
 
 // Screens register the commands that apply right now; a command that does not apply is simply absent.
 export const registry = new Map<symbol, Command[]>()

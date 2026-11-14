@@ -27,7 +27,7 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
     const words = searchWords(text)
     const matches = [...registry.values()]
       .flat()
-      .filter((command) => hasWords(`${command.group} ${command.label}`, words))
+      .filter((command) => hasWords(`${command.group} ${command.label} ${command.detail ?? ''}`, words))
       .sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group))
     if (text.trim() && onSearch) {
       matches.push({ id: 'search', group: CommandGroup.search, label: `Search issues for “${text.trim()}”`, run: () => onSearch(text.trim()) })
@@ -82,6 +82,7 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
               className={cn('flex min-h-8 w-full items-center gap-3 px-3 py-1 text-left max-lg:min-h-11', index === cursor && 'bg-accent')}
             >
               <span className="min-w-0 flex-1 truncate">{command.label}</span>
+              {command.detail && <span className="mono shrink-0 text-muted-foreground">{command.detail}</span>}
               {command.keys && <Kbd>{command.keys}</Kbd>}
             </button>
           </div>

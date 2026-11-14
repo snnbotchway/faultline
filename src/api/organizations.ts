@@ -35,6 +35,14 @@ export const instanceSettingsQuery = queryOptions({
   staleTime: Infinity,
 })
 
+// The providers one organization signs in with, for its own sign-in page. Unknown organizations have none.
+export const loginSettingsQuery = (slug: string) =>
+  queryOptions({
+    queryKey: ['instance-settings', slug],
+    queryFn: async () => unwrap(await api.GET('/api/settings/{organization_slug}/', { params: { path: { organization_slug: slug } } })),
+    staleTime: Infinity,
+  })
+
 export const currentUserQuery = queryOptions({
   queryKey: ['users', 'me'],
   queryFn: async () => unwrap(await api.GET('/api/0/users/{user_id}/', { params: { path: { user_id: 'me' } } })),

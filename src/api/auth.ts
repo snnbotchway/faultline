@@ -5,7 +5,8 @@ import type { components } from './schema/allauth'
 
 type Schemas = components['schemas']
 export type AuthUser = Schemas['User']
-export type MfaType = Schemas['AuthenticatorType']
+export const MfaType = { totp: 'totp', recoveryCodes: 'recovery_codes', webauthn: 'webauthn' } as const satisfies Record<string, Schemas['AuthenticatorType']>
+export type MfaType = (typeof MfaType)[keyof typeof MfaType]
 
 export const SessionStatus = {
   authenticated: 'authenticated',
@@ -19,7 +20,8 @@ export type SessionStatus = (typeof SessionStatus)[keyof typeof SessionStatus]
 export type Session =
   | { status: typeof SessionStatus.authenticated; user: AuthUser }
   | { status: typeof SessionStatus.mfaPending; mfaTypes: MfaType[] }
-  | { status: typeof SessionStatus.providerSignup }
+  // `provider` is the provider's display name, when the backend names it.
+  | { status: typeof SessionStatus.providerSignup; provider?: string }
   | { status: typeof SessionStatus.anonymous }
 
 type AuthBody = { data?: { user?: AuthUser; flows?: Partial<Schemas['Flow']>[] } }
@@ -32,7 +34,7 @@ export function toSession(response: Response, body: AuthBody | undefined): Sessi
   if (response.status === HttpStatus.unauthenticated || response.status === HttpStatus.sessionGone) {
     const pending = body?.data?.flows?.find((flow) => flow.is_pending)
     if (pending?.id === AuthFlow.mfaAuthenticate) return { status: SessionStatus.mfaPending, mfaTypes: pending.types ?? [] }
-    if (pending?.id === AuthFlow.providerSignup) return { status: SessionStatus.providerSignup }
+    if (pending?.id === AuthFlow.providerSignup) return { status: SessionStatus.providerSignup, provider: pending.provider?.name }
     return { status: SessionStatus.anonymous }
   }
   throw new ApiError(response.status, body)
@@ -81,6 +83,11 @@ export const auth = {
   // A 401 here means the password changed and sign-in continues (MFA or login).
   resetPassword: (body: { key: string; password: string }) =>
     settle(allauth.POST('/_allauth/browser/v1/auth/password/reset', { body })),
+  // Whether an emailed reset link can still be used.
+  resetKeyIsValid: async (key: string) => {
+    const { response } = await allauth.GET('/_allauth/browser/v1/auth/password/reset', { params: { header: { 'X-Password-Reset-Key': key } } })
+    return response.ok
+  },
   verifyEmail: (key: string) => settle(allauth.POST('/_allauth/browser/v1/auth/email/verify', { body: { key } })),
 }
 

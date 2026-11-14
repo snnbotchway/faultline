@@ -38,6 +38,7 @@ import { Route as AppOrgReleasesIndexRouteImport } from './routes/_app/$org/rele
 import { Route as AppOrgReleasesSplatRouteImport } from './routes/_app/$org/releases/$'
 import { Route as AppOrgSettingsIndexRouteImport } from './routes/_app/$org/settings/index'
 import { Route as AppOrgSettingsMembersRouteRouteImport } from './routes/_app/$org/settings/members/route'
+import { Route as AppOrgSettingsSubscriptionRouteImport } from './routes/_app/$org/settings/subscription'
 import { Route as AppOrgSettingsTeamsRouteRouteImport } from './routes/_app/$org/settings/teams/route'
 import { Route as AppOrgUptimeMonitorsIndexRouteImport } from './routes/_app/$org/uptime-monitors/index'
 import { Route as AppOrgUptimeMonitorsNewRouteImport } from './routes/_app/$org/uptime-monitors/new'
@@ -210,6 +211,12 @@ const AppOrgSettingsMembersRouteRoute =
   AppOrgSettingsMembersRouteRouteImport.update({
     id: '/settings/members',
     path: '/settings/members',
+    getParentRoute: () => AppOrgRouteRoute,
+  } as any)
+const AppOrgSettingsSubscriptionRoute =
+  AppOrgSettingsSubscriptionRouteImport.update({
+    id: '/settings/subscription',
+    path: '/settings/subscription',
     getParentRoute: () => AppOrgRouteRoute,
   } as any)
 const AppOrgSettingsTeamsRouteRoute =
@@ -394,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/$org/settings/teams': typeof AppOrgSettingsTeamsRouteRouteWithChildren
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/$org/releases/$': typeof AppOrgReleasesSplatRoute
+  '/$org/settings/subscription': typeof AppOrgSettingsSubscriptionRoute
   '/$org/uptime-monitors/new': typeof AppOrgUptimeMonitorsNewRoute
   '/$org/uptime-monitors/status-pages': typeof AppOrgUptimeMonitorsStatusPagesRoute
   '/organizations/new': typeof AppHomeOrganizationsNewRoute
@@ -446,6 +454,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AppProfileIndexRoute
   '/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/$org/releases/$': typeof AppOrgReleasesSplatRoute
+  '/$org/settings/subscription': typeof AppOrgSettingsSubscriptionRoute
   '/$org/uptime-monitors/new': typeof AppOrgUptimeMonitorsNewRoute
   '/$org/uptime-monitors/status-pages': typeof AppOrgUptimeMonitorsStatusPagesRoute
   '/organizations/new': typeof AppHomeOrganizationsNewRoute
@@ -505,6 +514,7 @@ export interface FileRoutesById {
   '/_app/$org/settings/teams': typeof AppOrgSettingsTeamsRouteRouteWithChildren
   '/_app/$org/$section/$': typeof AppOrgSectionSplatRoute
   '/_app/$org/releases/$': typeof AppOrgReleasesSplatRoute
+  '/_app/$org/settings/subscription': typeof AppOrgSettingsSubscriptionRoute
   '/_app/$org/uptime-monitors/new': typeof AppOrgUptimeMonitorsNewRoute
   '/_app/$org/uptime-monitors/status-pages': typeof AppOrgUptimeMonitorsStatusPagesRoute
   '/_app/_home/organizations/new': typeof AppHomeOrganizationsNewRoute
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/$org/settings/teams'
     | '/$org/$section/$'
     | '/$org/releases/$'
+    | '/$org/settings/subscription'
     | '/$org/uptime-monitors/new'
     | '/$org/uptime-monitors/status-pages'
     | '/organizations/new'
@@ -615,6 +626,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/$org/$section/$'
     | '/$org/releases/$'
+    | '/$org/settings/subscription'
     | '/$org/uptime-monitors/new'
     | '/$org/uptime-monitors/status-pages'
     | '/organizations/new'
@@ -673,6 +685,7 @@ export interface FileRouteTypes {
     | '/_app/$org/settings/teams'
     | '/_app/$org/$section/$'
     | '/_app/$org/releases/$'
+    | '/_app/$org/settings/subscription'
     | '/_app/$org/uptime-monitors/new'
     | '/_app/$org/uptime-monitors/status-pages'
     | '/_app/_home/organizations/new'
@@ -924,6 +937,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSettingsMembersRouteRouteImport
       parentRoute: typeof AppOrgRouteRoute
     }
+    '/_app/$org/settings/subscription': {
+      id: '/_app/$org/settings/subscription'
+      path: '/settings/subscription'
+      fullPath: '/$org/settings/subscription'
+      preLoaderRoute: typeof AppOrgSettingsSubscriptionRouteImport
+      parentRoute: typeof AppOrgRouteRoute
+    }
     '/_app/$org/settings/teams': {
       id: '/_app/$org/settings/teams'
       path: '/settings/teams'
@@ -1171,6 +1191,7 @@ interface AppOrgRouteRouteChildren {
   AppOrgSettingsMembersRouteRoute: typeof AppOrgSettingsMembersRouteRouteWithChildren
   AppOrgSettingsTeamsRouteRoute: typeof AppOrgSettingsTeamsRouteRouteWithChildren
   AppOrgReleasesSplatRoute: typeof AppOrgReleasesSplatRoute
+  AppOrgSettingsSubscriptionRoute: typeof AppOrgSettingsSubscriptionRoute
   AppOrgUptimeMonitorsNewRoute: typeof AppOrgUptimeMonitorsNewRoute
   AppOrgUptimeMonitorsStatusPagesRoute: typeof AppOrgUptimeMonitorsStatusPagesRoute
   AppOrgIssuesIndexRoute: typeof AppOrgIssuesIndexRoute
@@ -1200,6 +1221,7 @@ const AppOrgRouteRouteChildren: AppOrgRouteRouteChildren = {
   AppOrgSettingsMembersRouteRoute: AppOrgSettingsMembersRouteRouteWithChildren,
   AppOrgSettingsTeamsRouteRoute: AppOrgSettingsTeamsRouteRouteWithChildren,
   AppOrgReleasesSplatRoute: AppOrgReleasesSplatRoute,
+  AppOrgSettingsSubscriptionRoute: AppOrgSettingsSubscriptionRoute,
   AppOrgUptimeMonitorsNewRoute: AppOrgUptimeMonitorsNewRoute,
   AppOrgUptimeMonitorsStatusPagesRoute: AppOrgUptimeMonitorsStatusPagesRoute,
   AppOrgIssuesIndexRoute: AppOrgIssuesIndexRoute,

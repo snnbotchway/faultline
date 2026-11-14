@@ -103,6 +103,7 @@ export function SettingsIndex({ org }: { org: string }) {
               <FoldRow label="Name" value={organization.name} open={row.is('name')} onToggle={can(Scope.orgWrite) ? () => row.toggle('name') : undefined}>
                 <RenameOrganization org={org} name={organization.name} onDone={row.close} />
               </FoldRow>
+              <LinkRow label="Usage" value="Last 30 days" to="/$org/settings/subscription" params={{ org }} />
             </Group>
 
             <Group

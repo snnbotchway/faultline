@@ -13,7 +13,16 @@ const DETAIL_TEXT: Record<string, string> = {
   'Only a status change may omit id': 'That can only be done to issues you selected one by one.',
   'User is not a member of this organization': "That person isn't in this organization any more.",
   'Team not found': 'That team no longer exists.',
+  'Only existing users may be invited': 'Sign-up is closed on this server, so only people who already have an account can be invited.',
+  'User must have a verified email address': 'Verify your own email address before you invite people.',
+  'User is organization owner. Transfer ownership first.': 'The owner can only leave after transferring ownership to someone else.',
 }
+
+// Details that name a person or thing, matched by their ending.
+const DETAIL_ENDINGS: [string, string][] = [
+  [' is already a member', "They're already a member of this organization."],
+  [' is already invited', "They're already invited. Open their row to send the invite again."],
+]
 
 const detailOf = (error: ApiError) =>
   error.body && typeof error.body === 'object' && 'detail' in error.body && typeof error.body.detail === 'string' ? error.body.detail : undefined
@@ -25,7 +34,10 @@ const detailOf = (error: ApiError) =>
 export function explain(error: unknown, action: string): string {
   console.error(error instanceof ApiError ? (detailOf(error) ?? error.body ?? error) : error)
   const fallback = `Couldn't ${action}. Try again.`
-  if (error instanceof ApiError) return DETAIL_TEXT[detailOf(error) ?? ''] ?? STATUS_TEXT[error.status] ?? fallback
+  if (error instanceof ApiError) {
+    const detail = detailOf(error) ?? ''
+    return DETAIL_TEXT[detail] ?? DETAIL_ENDINGS.find(([ending]) => detail.endsWith(ending))?.[1] ?? STATUS_TEXT[error.status] ?? fallback
+  }
   if (error instanceof NetworkError) return "Couldn't reach the server. Check your connection, then try again."
   // Anything else was thrown by this app with a message written for the user.
   return error instanceof Error && error.message ? error.message : fallback

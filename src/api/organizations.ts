@@ -11,7 +11,17 @@ export type OrganizationDetail = Schemas['OrganizationDetailSchema']
 export const Feature = { logs: 'logs', uptime: 'uptime', email: 'email', mcp: 'mcp' } as const
 export type Feature = (typeof Feature)[keyof typeof Feature]
 
-export const Scope = { eventWrite: 'event:write', eventAdmin: 'event:admin' } as const
+export const Scope = {
+  eventWrite: 'event:write',
+  eventAdmin: 'event:admin',
+  projectWrite: 'project:write',
+  projectAdmin: 'project:admin',
+  teamWrite: 'team:write',
+  teamAdmin: 'team:admin',
+  memberWrite: 'member:write',
+  orgWrite: 'org:write',
+  orgAdmin: 'org:admin',
+} as const
 export type Scope = (typeof Scope)[keyof typeof Scope]
 
 type Access = OrganizationDetail['access'] | undefined
@@ -19,6 +29,9 @@ type Access = OrganizationDetail['access'] | undefined
 // Changing issues (status, assignee, merge, delete) needs either scope; splitting merged issues needs admin.
 export const canWriteEvents = (access: Access) => !!access && (access.includes(Scope.eventWrite) || access.includes(Scope.eventAdmin))
 export const canAdminEvents = (access: Access) => !!access && access.includes(Scope.eventAdmin)
+
+// Controls the user cannot use are left out, so every gate fails closed until the organization has loaded.
+export const hasScope = (access: Access, scope: Scope) => !!access && access.includes(scope)
 
 export const organizationKeys = {
   all: ['organizations'] as const,
@@ -103,3 +116,13 @@ export const teamsQuery = (slug: string) =>
         }),
       ),
   })
+
+export const ORGANIZATION_NAME_MAX = 200
+
+export const organizationActions = {
+  create: async (name: string) => unwrap(await api.POST('/api/0/organizations/', { body: { name } })),
+  // The name is the only thing the backend lets an organization change about itself.
+  rename: async (slug: string, name: string) =>
+    unwrap(await api.PUT('/api/0/organizations/{organization_id_or_slug}/', { params: { path: orgPath(slug) }, body: { name } })),
+  remove: async (slug: string) => unwrap(await api.DELETE('/api/0/organizations/{organization_id_or_slug}/', { params: { path: orgPath(slug) } })),
+}

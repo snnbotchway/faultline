@@ -1,0 +1,482 @@
+[
+  {
+    "id": "10",
+    "count": "5",
+    "type": "error",
+    "level": "info",
+    "status": "unresolved",
+    "metadata": {
+      "type": "Error",
+      "value": "Biometric prompt was cancelled",
+      "filename": "app/auth/biometrics.ts",
+      "function": "unlockApp"
+    },
+    "project": {
+      "id": "3",
+      "platform": "react-native",
+      "slug": "mobile",
+      "name": "mobile"
+    },
+    "shortId": "MOBILE-2",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/mobile/issues/10",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.4.1",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.1"
+    },
+    "firstSeen": "2026-11-14T11:40:37.127Z",
+    "lastSeen": "2026-11-14T11:40:37.140Z",
+    "assignedTo": null,
+    "title": "Error: Biometric prompt was cancelled",
+    "culprit": ""
+  },
+  {
+    "id": "9",
+    "count": "12",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "NetworkError",
+      "value": "Request failed with status code 503",
+      "filename": "app/claims/sync.ts",
+      "function": "syncClaims"
+    },
+    "project": {
+      "id": "3",
+      "platform": "react-native",
+      "slug": "mobile",
+      "name": "mobile"
+    },
+    "shortId": "MOBILE-1",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/mobile/issues/9",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.5.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.5.0"
+    },
+    "firstSeen": "2026-11-14T11:40:37.084Z",
+    "lastSeen": "2026-11-14T11:40:37.124Z",
+    "assignedTo": null,
+    "title": "NetworkError: Request failed with status code 503",
+    "culprit": ""
+  },
+  {
+    "id": "8",
+    "count": "2",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "ValueError",
+      "value": "Premium amount must be positive, got -12.50",
+      "filename": "payments/validators.py",
+      "function": "validate_amount"
+    },
+    "project": {
+      "id": "2",
+      "platform": "python-django",
+      "slug": "payments-api",
+      "name": "payments-api"
+    },
+    "shortId": "PAYMENTS-API-4",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/payments-api/issues/8",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.4.1",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.1"
+    },
+    "firstSeen": "2026-11-14T11:40:37.078Z",
+    "lastSeen": "2026-11-14T11:40:37.081Z",
+    "assignedTo": null,
+    "title": "ValueError: Premium amount must be positive, got -12.50",
+    "culprit": ""
+  },
+  {
+    "id": "7",
+    "count": "6",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "KeyError",
+      "value": "'policy_number'",
+      "filename": "payments/webhooks.py",
+      "function": "handle_webhook"
+    },
+    "project": {
+      "id": "2",
+      "platform": "python-django",
+      "slug": "payments-api",
+      "name": "payments-api"
+    },
+    "shortId": "PAYMENTS-API-3",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/payments-api/issues/7",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.5.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.5.0"
+    },
+    "firstSeen": "2026-11-14T11:40:37.062Z",
+    "lastSeen": "2026-11-14T11:40:37.076Z",
+    "assignedTo": null,
+    "title": "KeyError: 'policy_number'",
+    "culprit": ""
+  },
+  {
+    "id": "6",
+    "count": "31",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "TimeoutError",
+      "value": "Mobile money gateway did not respond within 30s",
+      "filename": "payments/momo.py",
+      "function": "charge_mobile_money"
+    },
+    "project": {
+      "id": "2",
+      "platform": "python-django",
+      "slug": "payments-api",
+      "name": "payments-api"
+    },
+    "shortId": "PAYMENTS-API-2",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/payments-api/issues/6",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "firstSeen": "2026-11-14T11:40:36.939Z",
+    "lastSeen": "2026-11-14T11:40:37.059Z",
+    "assignedTo": null,
+    "title": "TimeoutError: Mobile money gateway did not respond within 30s",
+    "culprit": ""
+  },
+  {
+    "id": "5",
+    "count": "17",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "IntegrityError",
+      "value": "duplicate key value violates unique constraint \"payment_ref_key\"",
+      "filename": "payments/services.py",
+      "function": "record_payment"
+    },
+    "project": {
+      "id": "2",
+      "platform": "python-django",
+      "slug": "payments-api",
+      "name": "payments-api"
+    },
+    "shortId": "PAYMENTS-API-1",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/payments-api/issues/5",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.4.1",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.1"
+    },
+    "firstSeen": "2026-11-14T11:40:36.866Z",
+    "lastSeen": "2026-11-14T11:40:36.935Z",
+    "assignedTo": null,
+    "title": "IntegrityError: duplicate key value violates unique constraint \"payment_ref_key\"",
+    "culprit": ""
+  },
+  {
+    "id": "4",
+    "count": "3",
+    "type": "error",
+    "level": "warning",
+    "status": "unresolved",
+    "metadata": {
+      "type": "Warning",
+      "value": "Quote form submitted twice within 300ms",
+      "filename": "src/quotes/QuoteForm.tsx",
+      "function": "submitQuote"
+    },
+    "project": {
+      "id": "1",
+      "platform": "javascript-react",
+      "slug": "web-app",
+      "name": "web-app"
+    },
+    "shortId": "WEB-APP-4",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/web-app/issues/4",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.5.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.5.0"
+    },
+    "firstSeen": "2026-11-14T11:40:36.856Z",
+    "lastSeen": "2026-11-14T11:40:36.862Z",
+    "assignedTo": null,
+    "title": "Warning: Quote form submitted twice within 300ms",
+    "culprit": ""
+  },
+  {
+    "id": "3",
+    "count": "4",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "RangeError",
+      "value": "Invalid time value",
+      "filename": "src/lib/dates.ts",
+      "function": "formatDate"
+    },
+    "project": {
+      "id": "1",
+      "platform": "javascript-react",
+      "slug": "web-app",
+      "name": "web-app"
+    },
+    "shortId": "WEB-APP-3",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/web-app/issues/3",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "firstSeen": "2026-11-14T11:40:36.844Z",
+    "lastSeen": "2026-11-14T11:40:36.854Z",
+    "assignedTo": null,
+    "title": "RangeError: Invalid time value",
+    "culprit": ""
+  },
+  {
+    "id": "2",
+    "count": "9",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "ChunkLoadError",
+      "value": "Loading chunk 412 failed.",
+      "filename": "src/router.ts",
+      "function": "loadRoute"
+    },
+    "project": {
+      "id": "1",
+      "platform": "javascript-react",
+      "slug": "web-app",
+      "name": "web-app"
+    },
+    "shortId": "WEB-APP-2",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/web-app/issues/2",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.5.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.5.0"
+    },
+    "firstSeen": "2026-11-14T11:40:36.762Z",
+    "lastSeen": "2026-11-14T11:40:36.840Z",
+    "assignedTo": null,
+    "title": "ChunkLoadError: Loading chunk 412 failed.",
+    "culprit": ""
+  },
+  {
+    "id": "1",
+    "count": "24",
+    "type": "error",
+    "level": "error",
+    "status": "unresolved",
+    "metadata": {
+      "type": "TypeError",
+      "value": "Cannot read properties of undefined (reading 'premium')",
+      "filename": "src/quotes/QuoteCard.tsx",
+      "function": "renderQuote"
+    },
+    "project": {
+      "id": "1",
+      "platform": "javascript-react",
+      "slug": "web-app",
+      "name": "web-app"
+    },
+    "shortId": "WEB-APP-1",
+    "numComments": 0,
+    "stats": {
+      "24h": []
+    },
+    "shareId": null,
+    "logger": null,
+    "permalink": "https://faultline.example.com/web-app/issues/1",
+    "statusDetails": {},
+    "subscriptionDetails": null,
+    "userCount": 0,
+    "matchingEventId": null,
+    "firstRelease": {
+      "shortVersion": "1.4.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.4.0"
+    },
+    "lastRelease": {
+      "shortVersion": "1.5.0",
+      "dateCreated": "2026-11-14T11:40:36.790Z",
+      "dateReleased": null,
+      "version": "1.5.0"
+    },
+    "firstSeen": "2026-11-14T11:40:36.685Z",
+    "lastSeen": "2026-11-14T11:40:36.760Z",
+    "assignedTo": null,
+    "title": "TypeError: Cannot read properties of undefined (reading 'premium')",
+    "culprit": ""
+  }
+]

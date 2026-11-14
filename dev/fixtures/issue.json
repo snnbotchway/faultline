@@ -1,0 +1,49 @@
+{
+  "id": "1",
+  "count": "24",
+  "type": "error",
+  "level": "error",
+  "status": "unresolved",
+  "metadata": {
+    "type": "TypeError",
+    "value": "Cannot read properties of undefined (reading 'premium')",
+    "filename": "src/quotes/QuoteCard.tsx",
+    "function": "renderQuote"
+  },
+  "project": {
+    "id": "1",
+    "platform": "javascript-react",
+    "slug": "web-app",
+    "name": "web-app"
+  },
+  "shortId": "WEB-APP-1",
+  "numComments": 0,
+  "stats": {
+    "24h": []
+  },
+  "shareId": null,
+  "logger": null,
+  "permalink": "https://faultline.example.com/web-app/issues/1",
+  "statusDetails": {},
+  "subscriptionDetails": null,
+  "userCount": 0,
+  "matchingEventId": null,
+  "firstRelease": {
+    "shortVersion": "1.4.0",
+    "dateCreated": "2026-11-14T11:40:36.790Z",
+    "dateReleased": null,
+    "version": "1.4.0"
+  },
+  "lastRelease": {
+    "shortVersion": "1.5.0",
+    "dateCreated": "2026-11-14T11:40:36.790Z",
+    "dateReleased": null,
+    "version": "1.5.0"
+  },
+  "firstSeen": "2026-11-14T11:40:36.685Z",
+  "lastSeen": "2026-11-14T11:40:36.760Z",
+  "assignedTo": null,
+  "title": "TypeError: Cannot read properties of undefined (reading 'premium')",
+  "culprit": "",
+  "userReportCount": 0
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "role": "owner",
+    "roleName": "Owner",
+    "dateCreated": "2026-11-14T11:40:35.949Z",
+    "email": "demo@example.com",
+    "user": {
+      "id": "1",
+      "options": {
+        "timezone": null,
+        "stacktraceOrder": null,
+        "language": null,
+        "clock24Hours": null,
+        "preferredTheme": null
+      },
+      "username": "demo@example.com",
+      "dateJoined": "2026-11-14T11:40:35.875Z",
+      "email": "demo@example.com",
+      "hasPasswordAuth": true,
+      "identities": [],
+      "lastLogin": "2026-11-14T11:40:47.546Z",
+      "isSuperuser": false,
+      "isActive": true,
+      "name": ""
+    },
+    "pending": false,
+    "isOwner": true
+  }
+]

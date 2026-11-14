@@ -1,0 +1,186 @@
+{
+  "platform": "javascript",
+  "errors": null,
+  "id": "01a1d9dc021874fab8b73a269a02c29d",
+  "eventID": "cd0a4b3c89d84194995ae67c94f5e104",
+  "projectID": 1,
+  "groupID": "1",
+  "dateCreated": "2026-11-07T21:07:36.757Z",
+  "dateReceived": "2026-11-14T11:40:36.760Z",
+  "dist": null,
+  "culprit": "renderQuote(src/quotes/QuoteCard.tsx)",
+  "packages": null,
+  "type": "error",
+  "message": "TypeError: Cannot read properties of undefined (reading 'premium')",
+  "metadata": {
+    "type": "TypeError",
+    "value": "Cannot read properties of undefined (reading 'premium')",
+    "filename": "src/quotes/QuoteCard.tsx",
+    "function": "renderQuote"
+  },
+  "tags": [
+    {
+      "key": "browser",
+      "value": "Edge 131 None"
+    },
+    {
+      "key": "os.name",
+      "value": "macOS"
+    },
+    {
+      "key": "release",
+      "value": "1.5.0"
+    },
+    {
+      "key": "user.id",
+      "value": "60"
+    },
+    {
+      "key": "user.email",
+      "value": "user60@example.com"
+    },
+    {
+      "key": "environment",
+      "value": "staging"
+    },
+    {
+      "key": "browser.name",
+      "value": "Edge 131"
+    }
+  ],
+  "entries": [
+    {
+      "type": "exception",
+      "data": {
+        "values": [
+          {
+            "type": "TypeError",
+            "value": "Cannot read properties of undefined (reading 'premium')",
+            "stacktrace": {
+              "frames": [
+                {
+                  "filename": "node_modules/react-dom/client.js",
+                  "function": "commitRoot",
+                  "inApp": false,
+                  "absPath": "node_modules/react-dom/client.js",
+                  "lineNo": 197,
+                  "context": []
+                },
+                {
+                  "filename": "src/main.tsx",
+                  "function": "main",
+                  "inApp": true,
+                  "absPath": "src/main.tsx",
+                  "lineNo": 12,
+                  "context": []
+                },
+                {
+                  "filename": "src/quotes/QuoteCard.tsx",
+                  "function": "renderQuote",
+                  "context_line": "  return quote.premium.amount.toFixed(2)",
+                  "inApp": true,
+                  "absPath": "src/quotes/QuoteCard.tsx",
+                  "lineNo": 130,
+                  "context": [
+                    [
+                      127,
+                      ""
+                    ],
+                    [
+                      128,
+                      "export function renderQuote(props) {"
+                    ],
+                    [
+                      129,
+                      "  const quote = useQuote(props.id)"
+                    ],
+                    [
+                      130,
+                      "  return quote.premium.amount.toFixed(2)"
+                    ],
+                    [
+                      131,
+                      "}"
+                    ],
+                    [
+                      132,
+                      ""
+                    ]
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "hasSystemFrames": true
+      }
+    },
+    {
+      "type": "breadcrumbs",
+      "data": {
+        "values": [
+          {
+            "type": "default",
+            "category": "navigation",
+            "message": "/quotes → /quotes/new",
+            "data": null,
+            "level": "info",
+            "timestamp": "2026-11-14T11:40:31.757Z",
+            "event_id": null
+          },
+          {
+            "type": "default",
+            "category": "http",
+            "message": null,
+            "data": {
+              "url": "/api/quote",
+              "method": "POST",
+              "status_code": 200
+            },
+            "level": "info",
+            "timestamp": "2026-11-14T11:40:34.757Z",
+            "event_id": null
+          }
+        ]
+      }
+    },
+    {
+      "type": "request",
+      "data": {
+        "apiTarget": null,
+        "bodySize": null,
+        "cookies": null,
+        "data": null,
+        "env": null,
+        "fragment": null,
+        "method": "GET",
+        "protocol": null,
+        "url": "https://app.example.com/web-app/renderQuote",
+        "headers": null,
+        "query": null,
+        "inferredContentType": null
+      }
+    }
+  ],
+  "contexts": {
+    "os": {
+      "type": "os",
+      "name": "macOS"
+    },
+    "browser": {
+      "type": "browser",
+      "name": "Edge 131"
+    }
+  },
+  "context": null,
+  "user": {
+    "id": "60",
+    "email": "user60@example.com",
+    "ip_address": "10.0.7.60"
+  },
+  "sdk": null,
+  "title": "TypeError: Cannot read properties of undefined (reading 'premium')",
+  "userReport": null,
+  "nextEventID": null,
+  "previousEventID": "01a1d9dc0214703a97b628099b26ade6"
+}

@@ -1,0 +1,83 @@
+[
+  {
+    "name": "mobile",
+    "slug": "mobile",
+    "id": "3",
+    "avatar": {
+      "avatarType": "",
+      "avatarUuid": null
+    },
+    "color": "",
+    "features": [],
+    "hasAccess": true,
+    "isBookmarked": false,
+    "isInternal": false,
+    "isMember": true,
+    "isPublic": false,
+    "scrubIPAddresses": true,
+    "dateCreated": "2026-11-14T11:40:36.491Z",
+    "platform": "react-native",
+    "firstEvent": "2026-11-14T11:40:37.096Z",
+    "eventThrottleRate": 0,
+    "teams": [
+      {
+        "id": "1",
+        "slug": "core"
+      }
+    ]
+  },
+  {
+    "name": "payments-api",
+    "slug": "payments-api",
+    "id": "2",
+    "avatar": {
+      "avatarType": "",
+      "avatarUuid": null
+    },
+    "color": "",
+    "features": [],
+    "hasAccess": true,
+    "isBookmarked": false,
+    "isInternal": false,
+    "isMember": true,
+    "isPublic": false,
+    "scrubIPAddresses": true,
+    "dateCreated": "2026-11-14T11:40:36.318Z",
+    "platform": "python-django",
+    "firstEvent": "2026-11-14T11:40:36.908Z",
+    "eventThrottleRate": 0,
+    "teams": [
+      {
+        "id": "1",
+        "slug": "core"
+      }
+    ]
+  },
+  {
+    "name": "web-app",
+    "slug": "web-app",
+    "id": "1",
+    "avatar": {
+      "avatarType": "",
+      "avatarUuid": null
+    },
+    "color": "",
+    "features": [],
+    "hasAccess": true,
+    "isBookmarked": false,
+    "isInternal": false,
+    "isMember": true,
+    "isPublic": false,
+    "scrubIPAddresses": true,
+    "dateCreated": "2026-11-14T11:40:36.067Z",
+    "platform": "javascript-react",
+    "firstEvent": "2026-11-14T11:40:36.767Z",
+    "eventThrottleRate": 0,
+    "teams": [
+      {
+        "id": "1",
+        "slug": "core"
+      }
+    ]
+  }
+]

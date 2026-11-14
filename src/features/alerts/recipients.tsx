@@ -8,11 +8,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 import { RECIPIENTS, isAddress, recipientMeta, recipientTarget, withScheme } from './recipient-kinds'
 
-// A recipient on a rule's row: its kind, with the address on hover.
+// A recipient on a rule's row: its kind, with where it goes on hover. A webhook address is a secret, so only its host is shown.
 export function RecipientChip({ recipient }: { recipient: { recipientType: string; url?: string | null } }) {
   const meta = recipientMeta(recipient)
   return (
-    <span className="inline-flex min-w-0 items-center gap-2 text-sm" title={recipient.url || undefined}>
+    <span className="inline-flex min-w-0 items-center gap-2 text-sm" title={recipientTarget(recipient).host || undefined}>
       <meta.icon className="size-3 shrink-0 text-muted-foreground" />
       <span className="truncate">{meta.label}</span>
     </span>
@@ -24,7 +24,7 @@ export function RecipientTag({ recipient, onRemove }: { recipient: RecipientInpu
   const meta = recipientMeta(recipient)
   const { host, tail } = recipientTarget(recipient)
   return (
-    <li className="flex h-9 max-w-full min-w-0 items-center gap-2 border bg-background pl-3 max-lg:h-11" title={recipient.url || undefined}>
+    <li className="flex h-9 max-w-full min-w-0 items-center gap-2 border bg-background pl-3 max-lg:h-11" title={host || undefined}>
       <meta.icon className="size-3 shrink-0 text-muted-foreground" />
       <span className="shrink-0 text-sm font-medium">{meta.label}</span>
       <span className="mono flex min-w-0 flex-1 text-xs text-muted-foreground">

@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { X } from 'lucide-react'
 import { useState } from 'react'
 import { RecipientType, TestStatus, alertActions, alertKeys, toRecipientInput, type Alert, type AlertInput, type RecipientInput } from '@/api/alerts'
 import { projectEnvironmentsQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Dialog, DialogBar, DialogContent } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input, Select } from '@/components/ui/input'
 import { failed, notify } from '@/lib/notice'
@@ -41,13 +41,13 @@ function draftFrom(rule: Alert | undefined, project: string): Draft {
 
 /**
  * Create or change one alert rule: when it fires, who it notifies and in which environments. A saved
- * rule can also send a test to its saved recipients. `projects` lets a new rule pick its project.
+ * rule can also send a test to its saved recipients. `projects` lets a new rule pick its project; a
+ * saved rule stays in its own, as the backend has no way to move one.
  */
 export function AlertDialog({ org, project, rule, projects, canDelete, onClose }: { org: string; project: string; rule?: Alert; projects?: string[]; canDelete: boolean; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState(() => draftFrom(rule, project))
   const [tried, setTried] = useState(false)
-  // Deleting asks once more, on the same button.
   const [deleting, setDeleting] = useState(false)
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }))
   const environments = useQuery(projectEnvironmentsQuery(org, draft.project)).data?.filter((environment) => !environment.isHidden || draft.environments.includes(environment.name))
@@ -110,13 +110,8 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent aria-describedby={undefined} onOpenAutoFocus={(event) => event.preventDefault()} className="top-[6vh] flex max-h-[88vh] max-w-xl flex-col">
-        <div className="flex h-11 shrink-0 items-center justify-between border-b pr-2 pl-4">
-          <DialogTitle className="text-base">{rule ? 'Edit rule' : 'New rule'}</DialogTitle>
-          <DialogClose aria-label="Close" title="Close" className="grid size-8 cursor-pointer place-items-center hover:bg-accent max-lg:size-11">
-            <X className="size-4" />
-          </DialogClose>
-        </div>
+      <DialogContent tall aria-describedby={undefined} onOpenAutoFocus={(event) => event.preventDefault()} className="max-w-xl">
+        <DialogBar title={rule ? 'Edit rule' : 'New rule'} />
         <form
           noValidate
           className="flex min-h-0 flex-col"
@@ -135,11 +130,11 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
                   <Select
                     {...props}
                     value={draft.project}
-                    disabled={!projects}
+                    disabled={!projects || !!rule}
                     onChange={(event) => setDraft((current) => ({ ...current, project: event.target.value, environments: [] }))}
                     className="font-mono"
                   >
-                    {(projects ?? [project]).map((slug) => (
+                    {(rule || !projects ? [project] : projects).map((slug) => (
                       <option key={slug}>{slug}</option>
                     ))}
                   </Select>
@@ -210,8 +205,8 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2 border-t p-3">
             {rule && canDelete && (
-              <Button variant="destructive" className="max-lg:h-11" aria-busy={remove.isPending} disabled={remove.isPending} onClick={() => (deleting ? remove.mutate() : setDeleting(true))}>
-                {deleting ? 'Delete this rule' : 'Delete'}
+              <Button variant="destructive" className="max-lg:h-11" aria-busy={remove.isPending} disabled={remove.isPending} onClick={() => setDeleting(true)}>
+                Delete
               </Button>
             )}
             <span className="flex-1" />
@@ -230,6 +225,17 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
             </Button>
           </div>
         </form>
+        {rule && (
+          <ConfirmDialog
+            open={deleting}
+            destructive
+            title={rule.name ? `Delete “${rule.name}”?` : 'Delete this rule?'}
+            detail="Nobody is told when it would have fired."
+            confirm="Delete rule"
+            onConfirm={() => remove.mutate()}
+            onClose={() => setDeleting(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )

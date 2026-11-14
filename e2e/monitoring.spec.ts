@@ -72,8 +72,9 @@ test('an alert rule is created and deleted', async ({ page }) => {
   await expect(rule).toContainText('a monitor goes down')
 
   await rule.click()
-  await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
-  await page.getByRole('dialog').getByRole('button', { name: 'Delete this rule' }).click()
+  await expect(page.getByRole('dialog').getByLabel('Project')).toBeDisabled()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click()
+  await page.getByRole('button', { name: 'Delete rule' }).click()
   await expect(rule).toHaveCount(0)
 })
 

@@ -7,12 +7,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { AlertDialog } from './alert-dialog'
 import { ALL_ENVIRONMENTS, conditions } from './conditions'
+import { RuleEditor, type OpenRule } from './open-rule'
 import { RecipientChip } from './recipients'
 
 const COLUMNS = 'lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,1.5fr)_minmax(0,3fr)]'
-
-// The editor that is open: a rule's id or `new`, and the project it belongs to.
-export type OpenRule = { alert: string; project: string }
 
 /**
  * The alert rules of every project, or of one (`project`), and the editor for the one that is open.
@@ -24,7 +22,7 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
   const canWrite = canWriteProjects(access)
   const slugs = project ? [project] : (projects.data?.flatMap((item) => (item.slug ? [item.slug] : [])) ?? [])
   const rules = useQueries({ queries: slugs.map((slug) => projectAlertsQuery(org, slug)) })
-  const editing = open && open.alert !== 'new' ? rules[slugs.indexOf(open.project)]?.data?.find((rule) => String(rule.id) === open.alert) : undefined
+  const editing = open && open.alert !== RuleEditor.new ? rules[slugs.indexOf(open.project)]?.data?.find((rule) => String(rule.id) === open.alert) : undefined
 
   if (!project && projects.isError)
     return (
@@ -66,7 +64,7 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
               <p className="flex min-h-11 items-center gap-3 border-b px-3 text-muted-foreground lg:px-4">
                 No rules yet.
                 {canWrite && (
-                  <Button variant="link" onClick={() => onOpen({ alert: 'new', project: slug })}>
+                  <Button variant="link" onClick={() => onOpen({ alert: RuleEditor.new, project: slug })}>
                     Add one
                   </Button>
                 )}
@@ -83,7 +81,7 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
           </section>
         )
       })}
-      {open && canWrite && (open.alert === 'new' || editing) && (
+      {open && canWrite && (open.alert === RuleEditor.new || editing) && (
         <AlertDialog key={`${open.project}:${open.alert}`} org={org} project={open.project} rule={editing} projects={project ? undefined : slugs} canDelete={canAdminProjects(access)} onClose={() => onOpen()} />
       )}
     </>

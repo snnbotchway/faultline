@@ -3,7 +3,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { canWriteProjects, organizationQuery, projectsQuery } from '@/api/organizations'
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
-import { AlertRules, type OpenRule } from '@/features/alerts/alert-rules'
+import { AlertRules } from '@/features/alerts/alert-rules'
+import { RuleEditor, type OpenRule } from '@/features/alerts/open-rule'
 import { useTitle } from '@/lib/title'
 
 type AlertsSearch = { alertProject?: string; alert?: string }
@@ -27,7 +28,7 @@ function AlertsRoute() {
       <PageBar>
         <h1 className="text-sm font-medium">Alerts</h1>
         {canWrite && first && (
-          <Button variant="default" size="sm" className="ml-auto max-lg:h-9" onClick={() => openRule({ alert: 'new', project: first })}>
+          <Button variant="default" size="sm" className="ml-auto max-lg:h-9" onClick={() => openRule({ alert: RuleEditor.new, project: first })}>
             New rule
           </Button>
         )}

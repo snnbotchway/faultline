@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { ChevronsUpDown, Ellipsis, FolderKanban, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, UserRound, Users, UsersRound } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { SessionStatus, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, organizationsQuery, type Feature } from '@/api/organizations'
 import { Mark, Wordmark } from '@/components/mark'
@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
+import { NewOrganizationDialog } from '@/features/settings/new-organization'
 import { useHotkeys } from '@/lib/hotkeys'
 import { useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
@@ -99,6 +100,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const email = session?.status === SessionStatus.authenticated ? (session.user.email ?? session.user.display ?? '') : ''
   const leave = useSignOut()
   const canCreate = useQuery(instanceSettingsQuery).data?.enableOrganizationCreation
+  const [creating, setCreating] = useState(false)
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b px-3 md:px-4">
@@ -126,16 +128,15 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
             {canCreate && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/organizations/new">
-                    <Plus />
-                    New organization
-                  </Link>
+                <DropdownMenuItem onSelect={() => setCreating(true)}>
+                  <Plus />
+                  New organization
                 </DropdownMenuItem>
               </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        {creating && <NewOrganizationDialog onClose={() => setCreating(false)} />}
         {inbox && (
           <>
             <span className="text-muted-foreground max-lg:hidden">/</span>

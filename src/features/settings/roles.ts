@@ -12,5 +12,3 @@ export const ROLE_ADDS: Record<OrgRole, string> = {
   manager: 'Also invites and removes members, and changes every team and project.',
   owner: 'Also renames or deletes the organization, and can hand ownership to someone else.',
 }
-
-export const atLeast = (role: OrgRole, minimum: OrgRole) => ROLES.indexOf(role) >= ROLES.indexOf(minimum)

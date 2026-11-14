@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { OrgRole, type Member } from '@/api/members'
+import { type Member } from '@/api/members'
 import { Scope, membersQuery, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
 import { projectActions, type Project } from '@/api/projects'
 import { TEAM_SLUG_MAX, teamActions, teamMembersQuery, type Team } from '@/api/teams'
@@ -19,7 +19,6 @@ import { useChange } from './change'
 import { Confirm } from './fields'
 import { Field } from '@/components/ui/field'
 import { FoldChevron, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet } from './parts'
-import { atLeast } from './roles'
 import { notify } from '@/lib/notice'
 import { plural } from '@/lib/text'
 import { memberName, projectHasTeam, teamLabel } from './labels'
@@ -29,11 +28,12 @@ import { TeamTab } from './team-tabs'
 /**
  * Whether the user may put someone on this team or take them off it, by the backend's rule: anyone may join or
  * leave when membership is open; otherwise it takes an admin on a team they are on, or a manager on any other.
+ * Team scopes start at admin, and only a manager's role adds `member:write`, which is what tells the two apart.
  */
-function canChangeMembership(me: Member | undefined, team: Team, openMembership: boolean, memberId: string) {
+function canChangeMembership(me: Member | undefined, can: (scope: Scope) => boolean, team: Team, openMembership: boolean, memberId: string) {
   if (!me) return false
   if (openMembership && memberId === me.id) return true
-  return atLeast(me.role, team.isMember ? OrgRole.admin : OrgRole.manager)
+  return can(team.isMember ? Scope.teamWrite : Scope.memberWrite)
 }
 
 /**
@@ -81,7 +81,7 @@ export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
                 write={write}
                 admin={can(Scope.teamAdmin)}
                 linkProjects={can(Scope.orgWrite)}
-                canChange={(memberId) => canChangeMembership(me, team, !!organization?.openMembership, memberId)}
+                canChange={(memberId) => canChangeMembership(me, can, team, !!organization?.openMembership, memberId)}
                 open={team.slug === openSlug}
                 onOpen={open}
               />

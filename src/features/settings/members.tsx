@@ -82,6 +82,7 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
                 teams={teams ?? []}
                 projects={projects}
                 memberTeams={teamsLoaded ? teamsOf(member) : undefined}
+                // No scope tells an owner from anyone else, so the backend's "only an owner may change an owner" rule stays a role check.
                 editable={write && (member.role !== OrgRole.owner || me?.role === OrgRole.owner)}
                 emailOn={emailOn}
                 open={member.id === openId}
@@ -93,6 +94,7 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
           </ul>
         )}
       </Sheet>
+      {/* Only an owner may make another owner; no scope separates owners from managers. */}
       {inviting && write && teams && <InviteDialog org={org} teams={teams} projects={projects} allowOwner={me?.role === OrgRole.owner} emailOn={emailOn} onClose={list} />}
     </>
   )
@@ -167,6 +169,7 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
   const [asking, setAsking] = useState<Question>()
   const added = chosen.filter((team) => !memberTeams.includes(team))
   const removed = memberTeams.filter((team) => !chosen.includes(team))
+  // Only an owner may hand out the owner role; no scope separates owners from managers.
   const owner = me?.role === OrgRole.owner
   const save = useChange(
     'save the member',

@@ -18,7 +18,7 @@ export function DropdownMenuContent({ className, sideOffset = 4, align = 'start'
         sideOffset={sideOffset}
         align={align}
         className={cn(
-          'z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-44 overflow-y-auto border bg-popover py-1 text-popover-foreground shadow-[0_8px_24px_-8px_rgb(0_0_0/0.35)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-100',
+          'z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-44 overflow-y-auto border bg-popover py-1 text-popover-foreground shadow-float data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-100',
           className,
         )}
         {...props}

@@ -1,4 +1,5 @@
 import { StatsPeriod } from '@/api/issues'
+import { dayLabel, hourLabel } from './format'
 
 const HOUR = 3600
 const DAY = 24 * HOUR
@@ -75,3 +76,12 @@ export function releaseMarks(releases: { shortVersion: string; dateCreated: stri
   }
   return marks.map(({ at, label }) => ({ at, label }))
 }
+
+export const PERIODS = [
+  { value: StatsPeriod.day, label: '24h', unit: 'hour', now: 'Now' },
+  { value: StatsPeriod.fortnight, label: '14d', unit: 'day', now: 'Today' },
+] as const
+
+export const periodInfo = (period: StatsPeriod) => PERIODS.find((item) => item.value === period)!
+
+export const axisStartLabel = (period: StatsPeriod, start: number) => (period === StatsPeriod.day ? hourLabel(start) : dayLabel(start))

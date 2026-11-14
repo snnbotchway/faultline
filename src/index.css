@@ -34,6 +34,7 @@
   --radius-xl: 0;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-float: 0 12px 32px -12px rgb(0 0 0 / 0.4);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -198,6 +199,13 @@
 @utility mono {
   font-family: var(--font-mono);
   font-size: var(--fs-data);
+}
+
+/* An exception type beside its message: code, sized to sit level with the sans text. */
+@utility error-type {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 /* Long prose: comments, markdown. */

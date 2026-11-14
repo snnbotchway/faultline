@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 import { palette, useCommands, type Command } from './commands'
 import { Palette } from './palette'
 import { ScopeFilters } from './scope-filters'
-import { SECTIONS, TAB_PATHS, type Section } from './sections'
+import { SECTIONS, TAB_PATHS, sectionLink, type Section } from './sections'
 
 const THEMES = [
   { value: Theme.system, label: 'System', icon: Monitor },
@@ -40,12 +40,8 @@ function useSections(): Section[] {
 }
 
 function SectionLink({ org, section, className, children }: { org: string; section: Section; className?: string; children: ReactNode }) {
-  return section.path === 'issues' ? (
-    <Link to="/$org/issues" params={{ org }} className={className}>
-      {children}
-    </Link>
-  ) : (
-    <Link to="/$org/$section" params={{ org, section: section.path }} className={className}>
+  return (
+    <Link {...sectionLink(org, section)} className={className}>
       {children}
     </Link>
   )
@@ -225,10 +221,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
       id: `go:${section.path}`,
       group: 'go to',
       label: section.label,
-      run: () =>
-        void (section.path === 'issues'
-          ? navigate({ to: '/$org/issues', params: { org } })
-          : navigate({ to: '/$org/$section', params: { org, section: section.path } })),
+      run: () => void navigate(sectionLink(org, section)),
     })),
     ...organizations
       .filter((organization) => organization.slug !== org)
@@ -260,7 +253,7 @@ function Notice() {
   return (
     <div role="status" className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 max-lg:bottom-32">
       {notice && (
-        <p className={cn('pointer-events-auto max-w-md border bg-card px-3 py-2 shadow-[0_8px_24px_-8px_rgb(0_0_0/0.35)]', notice.error && 'border-destructive text-destructive')}>
+        <p className={cn('pointer-events-auto max-w-md border bg-card px-3 py-2 shadow-float', notice.error && 'border-destructive text-destructive')}>
           {notice.text}
         </p>
       )}

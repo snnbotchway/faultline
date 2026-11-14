@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { frameFile, framesOf, type ExceptionValue, type Frame } from './event'
+import { frameFile, framesOf, valueText, type ExceptionValue, type Frame } from './event'
 
 export function ContextLines({ frame }: { frame: Frame }) {
   if (!frame.context?.length) return null
@@ -23,7 +23,7 @@ function Vars({ vars }: { vars: Record<string, unknown> }) {
       {Object.entries(vars).map(([name, value]) => (
         <div key={name} className="contents">
           <dt className="text-muted-foreground">{name}</dt>
-          <dd className="truncate">{typeof value === 'string' ? value : JSON.stringify(value)}</dd>
+          <dd className="truncate">{valueText(value)}</dd>
         </div>
       ))}
     </dl>
@@ -101,7 +101,7 @@ export function StackTrace({ exceptions }: { exceptions: ExceptionValue[] }) {
         <div key={index}>
           <p className="mb-2">
             {index > 0 && <span className="text-muted-foreground">caused by </span>}
-            <span className="font-mono text-[0.8125rem] font-semibold">{exception.type}</span> <span>{exception.value}</span>
+            <span className="error-type">{exception.type}</span> <span>{exception.value}</span>
             {exception.mechanism?.handled === false && <span className="label-caps ml-2 text-level-error">unhandled</span>}
           </p>
           <Frames frames={framesOf(exception)} />

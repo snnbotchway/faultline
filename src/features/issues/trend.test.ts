@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { StatsPeriod } from '@/api/issues'
-import { axisFor, barHeights, classify, fillBuckets, position } from './trend'
+import { axisFor, barHeights, classify, fillBuckets, position, releaseMarks } from './trend'
 
 const now = new Date('2026-11-14T12:30:00Z')
 const seconds = (iso: string) => new Date(iso).getTime() / 1000
@@ -19,16 +19,25 @@ describe('time axis', () => {
     expect(buckets).toEqual([4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9])
   })
 
-  it('uses hourly buckets for the day view', () => {
+  it('puts an hour of the day view in its own bucket', () => {
     const buckets = fillBuckets([[seconds('2026-11-14T11:00:00Z'), 3]], axisFor(StatsPeriod.day, now))
-    expect(buckets).toHaveLength(24)
-    expect(buckets.at(-2)).toBe(3)
+    expect(buckets.slice(-3)).toEqual([0, 3, 0])
   })
 
   it('places a release on the axis, or nowhere when it is older than the period', () => {
     const axis = axisFor(StatsPeriod.fortnight, now)
     expect(position('2026-11-08T00:00:00Z', axis)).toBeCloseTo(0.5)
     expect(position('2026-10-01T00:00:00Z', axis)).toBeUndefined()
+  })
+
+  it('gives releases too close to tell apart one mark, labelled with the newest', () => {
+    const axis = axisFor(StatsPeriod.fortnight, now)
+    const release = (shortVersion: string, dateCreated: string) => ({ shortVersion, dateCreated })
+    const marks = releaseMarks(
+      [release('2.4.1', '2026-11-12T09:00:00Z'), release('2.3.0', '2026-11-04T00:00:00Z'), release('2.4.0', '2026-11-12T03:00:00Z'), release('1.0.0', '2026-09-01T00:00:00Z')],
+      axis,
+    )
+    expect(marks.map((mark) => mark.label)).toEqual(['2.3.0', '2.4.1 +1'])
   })
 })
 

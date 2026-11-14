@@ -1,41 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { UserRound } from 'lucide-react'
 import { useState } from 'react'
-import type { Issue } from '@/api/issues'
+import { AssigneeType, type Issue } from '@/api/issues'
 import { membersQuery, teamsQuery } from '@/api/organizations'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import type { Assignee } from './actions'
-import { Trend, barHeights } from './trend'
-
-const LEVEL_COLOR: Record<string, string> = {
-  fatal: 'text-level-fatal',
-  error: 'text-level-error',
-  warning: 'text-level-warning',
-  info: 'text-level-info',
-  debug: 'text-level-debug',
-}
-
-// Level by shape as well as colour: square for errors, triangle for warnings, circle for the rest.
-export function LevelGlyph({ level, className }: { level: string; className?: string }) {
-  return (
-    <svg viewBox="0 0 10 10" role="img" aria-label={level} className={cn('size-2.5 shrink-0', LEVEL_COLOR[level] ?? 'text-level-debug', className)}>
-      {level === 'fatal' || level === 'error' ? (
-        <rect width="10" height="10" fill="currentColor" />
-      ) : level === 'warning' ? (
-        <path d="M5 0.5 10 9.5H0Z" fill="currentColor" />
-      ) : level === 'info' ? (
-        <circle cx="5" cy="5" r="4.5" fill="currentColor" />
-      ) : (
-        <circle cx="5" cy="5" r="3.8" fill="none" stroke="currentColor" strokeWidth="1.4" />
-      )}
-    </svg>
-  )
-}
 
 const initials = (assignee: Assignee) =>
   (assignee.name || assignee.email || '?')
-    .split(/[\s@._-]+/)
+    .split(/[\s@._#-]+/)
+    .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
     .join('')
@@ -46,7 +21,7 @@ export function AssigneeBadge({ assignee, className }: { assignee: Issue['assign
     <span
       title={assignee.name || assignee.email || undefined}
       aria-label={`Assigned to ${assignee.name || assignee.email}`}
-      className={cn('grid size-5 place-items-center bg-foreground font-mono text-[0.625rem] font-semibold text-background uppercase', className)}
+      className={cn('grid size-6 place-items-center bg-foreground font-mono text-xs font-semibold text-background uppercase', className)}
     >
       {initials(assignee)}
     </span>
@@ -71,8 +46,8 @@ export function AssignDialog({
   const teams = useQuery({ ...teamsQuery(org), enabled: open }).data ?? []
   const [text, setText] = useState('')
   const people: Assignee[] = [
-    ...members.filter((member) => member.user).map((member) => ({ type: 'user' as const, id: member.user!.id, name: member.user!.name || member.email, email: member.email })),
-    ...teams.map((team) => ({ type: 'team' as const, id: team.id, name: `#${team.slug}`, slug: team.slug })),
+    ...members.filter((member) => member.user).map((member) => ({ type: AssigneeType.user, id: member.user!.id, name: member.user!.name || member.email, email: member.email })),
+    ...teams.map((team) => ({ type: AssigneeType.team, id: team.id, name: `#${team.slug}`, slug: team.slug })),
   ]
   const shown = people.filter((person) => `${person.name} ${person.email ?? ''}`.toLowerCase().includes(text.toLowerCase()))
   const pick = (assignee: Assignee | null) => {
@@ -109,7 +84,7 @@ export function AssignDialog({
           {shown.length === 0 && <p className="px-3 py-3 text-muted-foreground">No one matches.</p>}
           {current && (
             <button type="button" onClick={() => pick(null)} className="flex min-h-9 w-full items-center gap-2.5 border-t px-3 text-left hover:bg-accent max-lg:min-h-11">
-              <UserRound className="size-5 p-0.5 text-muted-foreground" />
+              <UserRound className="size-6 p-1 text-muted-foreground" />
               Unassign
             </button>
           )}
@@ -117,47 +92,4 @@ export function AssignDialog({
       </DialogContent>
     </Dialog>
   )
-}
-
-const TREND_BAR: Record<Trend, string> = {
-  [Trend.new]: 'bg-trend-new',
-  [Trend.spiking]: 'bg-foreground/50',
-  [Trend.ongoing]: 'bg-foreground/50',
-}
-
-// Events per bucket as bars on a zero baseline. `marks` are positions (0 to 1) of releases on the same axis.
-export function Trace({
-  buckets,
-  height,
-  peak,
-  trend = Trend.ongoing,
-  marks = [],
-  className,
-}: {
-  buckets: number[]
-  height: number
-  peak?: number
-  trend?: Trend
-  marks?: number[]
-  className?: string
-}) {
-  const heights = barHeights(buckets, height, peak)
-  return (
-    <div className={cn('relative flex items-end gap-px border-b border-foreground/30', className)} style={{ height: height + 1 }} aria-hidden>
-      {marks.map((at) => (
-        <span key={at} className="absolute inset-y-0 w-px bg-brand/45" style={{ left: `${at * 100}%` }} />
-      ))}
-      {heights.map((barHeight, index) => (
-        <span
-          key={index}
-          className={cn('min-w-0 flex-1', trend === Trend.spiking && index === heights.length - 1 ? 'bg-trend-spiking' : TREND_BAR[trend])}
-          style={{ height: barHeight }}
-        />
-      ))}
-    </div>
-  )
-}
-
-export function Skeleton({ className }: { className?: string }) {
-  return <span className={cn('block animate-pulse bg-muted', className)} />
 }

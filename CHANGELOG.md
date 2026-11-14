@@ -13,14 +13,14 @@ All notable changes to Faultline are listed here. The format follows
 - Shift-click, or Shift X, ticks or unticks every issue between two clicks.
 - Issue rows show how old the issue is, tag CSP reports, and show `Resolved` or `Ignored` in the "All" view.
 - Issue page: "Copy for AI" in the event header copies the event as markdown, with a one-time pointer to MCP when the instance offers it; a user report links to its event; the way back to the list keeps the issue's project.
-- Stack trace: Full and Raw views, newest or oldest call first, how the exception was caught, and coloured code lines (highlight.js, loaded when a frame opens).
+- Stack trace: Full and Raw views and newest or oldest call first, both remembered, a Copy button for the raw trace, how the exception was caught, and coloured code lines (highlight.js, loaded when a frame opens).
 - Event: a CSP report section, request cookies, and an "Additional data" section for what the SDK attached.
-- Tags: the ten commonest values with an "other" bar, single-valued tags without a bar, and an open-in-new-tab link on web addresses.
+- Tags: the four commonest values, with the rest of the ten one click away and an "other" bar, single-valued tags without a bar, and an open-in-new-tab link on web addresses.
 
 ### Fixed
 
 - The environment filter lists only the environments of the chosen projects, and drops a choice they do not have.
-- "Resolve in next release" works on 7.0.0 and names the release the issue was tied to, or says none was found; it used to be refused by the bulk route.
+- "Resolve in next release" works on 7.0.0, names the release the issue was tied to (or says none was found) with an Undo, and the issue's status shows that release; it used to be refused by the bulk route.
 
 ## [0.2.1] - 2026-11-14
 

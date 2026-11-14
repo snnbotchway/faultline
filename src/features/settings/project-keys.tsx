@@ -9,7 +9,8 @@ import { Confirm } from './fields'
 import { CopyField, Field, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton } from './parts'
 import { useFold } from './rows'
 
-const keyName = (key: ProjectKey) => key.name || key.label || 'Unnamed key'
+// A key without a name goes by the start of its id, which is also how its DSN begins.
+const keyName = (key: ProjectKey) => key.name || key.label || `Key ${key.id.slice(0, 8)}`
 
 // GlitchTip 7.0.0 ignores changes to a key and does not enforce a key's rate limit, so a key is only made, read and deleted.
 export function Keys({ org, slug, keys, write, admin }: { org: string; slug: string; keys?: ProjectKey[]; write: boolean; admin: boolean }) {

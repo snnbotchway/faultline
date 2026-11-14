@@ -1,6 +1,7 @@
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Check, ChevronsUpDown, Plus } from 'lucide-react'
+import { useEffect } from 'react'
 import { Scope, environmentsQuery, projectsQuery } from '@/api/organizations'
 import { projectEnvironmentsQuery, shownEnvironmentNames } from '@/api/projects'
 import {
@@ -12,8 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAccess } from '@/features/settings/access'
 import type { InboxSearch } from '@/features/issues/search'
+import { useAccess } from '@/features/settings/access'
 import { cn } from '@/lib/utils'
 
 const TRIGGER = 'flex h-7 min-w-0 items-center gap-2 px-2 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11 max-lg:border max-lg:bg-card max-lg:px-3'
@@ -23,7 +24,6 @@ const ALL_ENVIRONMENTS = ''
 export function ScopeFilters({ org, className }: { org: string; className?: string }) {
   const search = useSearch({ strict: false }) as InboxSearch
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const can = useAccess(org)
   const projects = useQuery(projectsQuery(org)).data ?? []
   const picked = search.project ?? []
@@ -36,28 +36,26 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
   ].sort()
   const update = (patch: Partial<InboxSearch>) =>
     void navigate({ to: '/$org/issues', params: { org }, search: (previous) => ({ ...previous, ...patch }), replace: true })
-  const toggle = async (id: number) => {
-    const next = picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id]
-    const patch: Partial<InboxSearch> = { project: next.length > 0 ? next : undefined }
-    if (search.environment) {
-      // The chosen environment stays only if one of the new projects has it.
-      const nextSlugs = next.flatMap((project) => projects.find((candidate) => Number(candidate.id) === project)?.slug ?? [])
-      const names =
-        nextSlugs.length > 0
-          ? (await Promise.all(nextSlugs.map((slug) => queryClient.ensureQueryData(projectEnvironmentsQuery(org, slug))))).flatMap(shownEnvironmentNames)
-          : (await queryClient.ensureQueryData(environmentsQuery(org))).map((environment) => environment.name)
-      if (!names.includes(search.environment)) patch.environment = undefined
-    }
-    update(patch)
-  }
-  const toggleAll = async () => {
-    const patch: Partial<InboxSearch> = { project: undefined }
-    if (search.environment) {
-      const names = (await queryClient.ensureQueryData(environmentsQuery(org))).map((environment) => environment.name)
-      if (!names.includes(search.environment)) patch.environment = undefined
-    }
-    update(patch)
-  }
+  // Each pick reads the URL as it is then, so quick clicks while the menu stays open all count.
+  const toggle = (id: number) =>
+    void navigate({
+      to: '/$org/issues',
+      params: { org },
+      search: (previous) => {
+        const current = previous.project ?? []
+        const next = current.includes(id) ? current.filter((project) => project !== id) : [...current, id]
+        return { ...previous, project: next.length > 0 ? next : undefined }
+      },
+      replace: true,
+    })
+  // The chosen environment stays only while one of the chosen projects has it. It is dropped once
+  // their lists have loaded, and kept when a list fails to load.
+  const listsLoaded = slugs.length > 0 ? projectEnvironments.every((result) => result.isSuccess) : orgEnvironments !== undefined
+  const missing = !!search.environment && listsLoaded && !environments.includes(search.environment)
+  useEffect(() => {
+    if (missing)
+      void navigate({ to: '/$org/issues', params: { org }, search: (previous) => ({ ...previous, environment: undefined }), replace: true })
+  }, [missing, navigate, org])
   const projectLabel =
     picked.length === 0
       ? 'All projects'
@@ -73,7 +71,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem onSelect={() => void toggleAll()}>
+          <DropdownMenuItem onSelect={() => update({ project: undefined })}>
             <Check className={cn(picked.length > 0 && 'invisible')} />
             All projects
           </DropdownMenuItem>
@@ -83,7 +81,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
               key={project.id}
               onSelect={(event) => {
                 event.preventDefault()
-                void toggle(Number(project.id))
+                toggle(Number(project.id))
               }}
             >
               <Check className={cn(!picked.includes(Number(project.id)) && 'invisible')} />

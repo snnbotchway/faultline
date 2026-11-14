@@ -2,15 +2,16 @@
 //   A  the existing /login page repeated: one page per flow, links between them
 //   B  one box; sign in and create account are tabs of it, and the second step picks its method by tab
 //   C  the app's top bar with a plain column; providers first, and choices unfold as rows
+//   D  the picked mix: A's page for every flow, with C's inline invite form
 import { ChevronDown, KeyRound, LifeBuoy, Smartphone } from 'lucide-react'
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Mark, Wordmark } from '@/components/mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { TOUCH, useGo, type ScreenKey } from './model'
 import { Field, PasswordInput } from './parts'
-import { INVITE, SOCIAL_APPS, USER } from './stub'
+import { INVITE, PENDING_PROVIDER, SOCIAL_APPS, USER } from './stub'
 
 const WIDE = cn('h-10 w-full', TOUCH)
 const org = INVITE.orgUser.organization.name
@@ -141,6 +142,7 @@ function useCommon(screen: ScreenKey): Content | undefined {
         ),
         links: [{ label: 'Back to sign in', to: 'sign-in' }],
       }
+    case 'reset-limited':
     case 'reset-sent':
       return {
         title: 'Check your email',
@@ -492,4 +494,92 @@ export function SignedOutC({ screen }: { screen: ScreenKey }) {
       </main>
     </div>
   )
+}
+
+/* ---------- D: the picked mix. A's page for every flow, C's inline invite ---------- */
+
+// The mark is smaller on a phone, so the form starts in the first third of the screen.
+function FrameD({ title, body, links }: Content) {
+  return (
+    <main className="min-h-dvh pb-16">
+      <div className="flex items-start pt-[14vh] max-sm:pt-6" aria-hidden>
+        <div className="mt-[10px] h-px flex-1 bg-border max-sm:mt-[7px]" />
+        <Mark className="-mx-[3px] size-8 max-sm:-mx-[2px] max-sm:size-6" />
+        <div className="mt-[21px] h-px flex-1 bg-border max-sm:mt-[15px]" />
+      </div>
+      <div className="mx-auto w-full max-w-[376px] px-4 pt-7 max-sm:pt-4">
+        <p className="text-center font-mono text-xs font-semibold tracking-[0.18em]">FAULTLINE</p>
+        <h1 className="mt-10 text-2xl font-semibold max-sm:mt-6">{title}</h1>
+        <div className="mt-5">{body}</div>
+        <Links links={links} />
+      </div>
+    </main>
+  )
+}
+
+// Our own pause between sends, so a locked-out person does not run into the server's limit.
+const RESEND_AFTER = 60
+
+function ResetSent({ limited }: { limited: boolean }) {
+  const [wait, setWait] = useState(RESEND_AFTER)
+  useEffect(() => {
+    if (wait <= 0) return
+    const timer = setTimeout(() => setWait(wait - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [wait])
+  return (
+    <div className="space-y-4">
+      <p className="prose-text text-muted-foreground">
+        If <span className="mono text-foreground">{INVITE.orgUser.email}</span> has an account, a reset link is on its way.
+      </p>
+      {limited && (
+        <p className="prose-text border border-destructive px-3 py-2 text-destructive" role="alert">
+          Too many reset emails. Wait a few minutes, then send again.
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button className={TOUCH} disabled={wait > 0} onClick={() => setWait(RESEND_AFTER)}>
+          {wait > 0 ? (
+            <>
+              Send again in <span className="mono">{wait}s</span>
+            </>
+          ) : (
+            'Send again'
+          )}
+        </Button>
+        <BackToSignIn />
+      </div>
+    </div>
+  )
+}
+
+function InviteForm() {
+  const [joining, setJoining] = useState<'sign-up' | 'sign-in'>('sign-up')
+  return (
+    <>
+      <p className="-mt-3 mb-5 text-muted-foreground">
+        Invited as <span className="font-medium text-foreground">{INVITE.orgUser.roleName}</span>
+      </p>
+      {joining === 'sign-up' ? <SignUpForm action="Create account and join" email={INVITE.orgUser.email} /> : <SignInForm action="Sign in and join" email={INVITE.orgUser.email} />}
+      <div className="mt-6 border-t pt-6">
+        <Social />
+      </div>
+      <div className="mt-6">
+        <Button variant="link" className="max-lg:min-h-11" onClick={() => setJoining(joining === 'sign-up' ? 'sign-in' : 'sign-up')}>
+          {joining === 'sign-up' ? 'I already have an account' : 'Create an account instead'}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+export function SignedOutD({ screen }: { screen: ScreenKey }) {
+  const common = useCommon(screen)
+  const go = useGo()
+  const finish = useSubmit('profile')
+  let content = common ?? contentA(screen, go, finish)
+  if (screen === 'invite') content = { title: `Join ${org}`, body: <InviteForm /> }
+  if (screen === 'reset-sent' || screen === 'reset-limited') content = { title: 'Check your email', body: <ResetSent limited={screen === 'reset-limited'} /> }
+  if (screen === 'provider-signup') content = { ...content, title: `${PENDING_PROVIDER.name} didn't share an email` }
+  return <FrameD {...content} />
 }

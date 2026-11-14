@@ -106,3 +106,6 @@ export const INVITE: Invite = {
 }
 
 export const MFA_TYPES: MfaType[] = ['totp', 'recovery_codes', 'webauthn']
+
+// A sign-in through a provider that gave no email leaves a pending `provider_signup` flow that names the provider.
+export const PENDING_PROVIDER: Allauth['Provider'] = { id: 'gitlab', name: 'GitLab', flows: ['provider_redirect'] }

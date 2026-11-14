@@ -149,7 +149,7 @@ function FakeQr() {
 
 function StepActions({ primary, onCancel }: { primary: string; onCancel: () => void }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div data-actions className="flex flex-wrap gap-2">
       <Button type="submit" variant="default" className={cn('h-10', TOUCH)}>
         {primary}
       </Button>
@@ -184,8 +184,8 @@ export function TotpScan({ stack, onNext, onCancel }: { stack?: boolean; onNext:
       <div className="min-w-0 flex-1 space-y-4">
         <div>
           <p className="label-caps mb-1.5">Or type this key</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <code className="mono break-all">{TOTP_SECRET.match(/.{4}/g)?.join(' ')}</code>
+          <div data-key-line className="flex flex-wrap items-center gap-2">
+            <code className="mono min-w-0 [overflow-wrap:anywhere]">{TOTP_SECRET.match(/.{4}/g)?.join(' ')}</code>
             <CopyButton text={TOTP_SECRET} />
           </div>
         </div>

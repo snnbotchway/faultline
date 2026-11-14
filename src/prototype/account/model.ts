@@ -18,6 +18,7 @@ export const VARIANTS = [
   { key: 'A', name: 'Ledger: one page' },
   { key: 'B', name: 'Tabbed pages' },
   { key: 'C', name: 'Summary and dialogs' },
+  { key: 'D', name: 'Mix: summary sheet, /login family' },
 ] as const
 export type VariantKey = (typeof VARIANTS)[number]['key']
 
@@ -28,6 +29,7 @@ export const SCREENS = [
   { key: 'provider-signup', label: 'Sign up, provider gave no email', signedOut: true },
   { key: 'reset', label: 'Reset request', signedOut: true },
   { key: 'reset-sent', label: 'Reset request sent', signedOut: true },
+  { key: 'reset-limited', label: 'Reset, sent too many times', signedOut: true },
   { key: 'reset-no-email', label: 'Reset, server has no email', signedOut: true },
   { key: 'new-password', label: 'Set new password', signedOut: true },
   { key: 'invite', label: 'Invite, signed out', signedOut: true },

@@ -97,22 +97,22 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
 
       {hasSpans ? (
         <>
-          {shared && <p className="mt-6 text-sm text-muted-foreground">The chart and spans also count the other transactions named <span className="mono text-foreground">{group.transaction}</span>.</p>}
+          {shared && <p className="mt-6 text-sm text-muted-foreground">The chart and breakdown also count the other transactions named <span className="mono text-foreground">{group.transaction}</span>.</p>}
           <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <SectionLabel>Time in spans per request, 7 days</SectionLabel>
+            <SectionLabel>Time per request, 7 days</SectionLabel>
             {slower && <Slower slower={slower} since={since} />}
           </div>
           <WeekChart buckets={time} marks={marks} axis={axis} slower={!!slower} height={56} className="mt-2" />
 
           <div className="mt-6 flex items-baseline justify-between gap-3">
-            <SectionLabel>Average request by span, 7 days</SectionLabel>
+            <SectionLabel>Average request, 7 days</SectionLabel>
             <span className="mono font-semibold">{formatMs(request.total)}</span>
           </div>
           <div className="mt-2">
             <RequestSplit rows={request.rows} outside={request.outside} total={request.total} kind={kind} />
           </div>
           <KindFilter kinds={kinds} kind={kind} onChange={setKind} />
-          <ol className="mt-3 border-t" aria-label="Spans, largest first">
+          <ol className="mt-3 border-t" aria-label="Parts of a request, largest first">
             {request.rows.map((row, index) =>
               kind && kindOf(row.op) !== kind ? null : (
                 <li key={spanKey(row)} className={SPAN_GRID}>
@@ -140,7 +140,7 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
             {request.outside > 0 && !kind && (
               <li className={SPAN_GRID}>
                 <span />
-                <span>Outside spans</span>
+                <span>Not broken down</span>
                 <span className="mono text-right tabular-nums">
                   <span className="block font-semibold">{formatMs(request.outside)}</span>
                   <span className="text-muted-foreground">{formatPercent((request.outside / request.total) * 100)}</span>
@@ -151,7 +151,7 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
         </>
       ) : (
         <div className="mt-6 border-t pt-4">
-          <p className="font-medium">No span details in the last 7 days</p>
+          <p className="font-medium">No request details in the last 7 days</p>
           <div className="mt-1">
             <SpanStorageHint />
           </div>

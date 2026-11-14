@@ -118,7 +118,7 @@ const dayOfMonth = new Intl.DateTimeFormat(undefined, { day: 'numeric' })
 export function WeekChart({ buckets, marks, axis, slower, height, className }: { buckets: number[]; marks: Mark[]; axis: Axis; slower: boolean; height: number; className?: string }) {
   const peak = Math.max(...buckets, 0)
   return (
-    <div className={cn('flex', className)} role="img" aria-label={`Time in spans per request for each of the last ${axis.count} days, peak ${formatMs(peak)}`}>
+    <div className={cn('flex', className)} role="img" aria-label={`Time per request for each of the last ${axis.count} days, peak ${formatMs(peak)}`}>
       <div className={cn('mono shrink-0 pt-5 pr-2 text-right text-xs text-muted-foreground', AXIS_WIDTH)} aria-hidden>
         <div className="flex flex-col justify-between" style={{ height }}>
           <span className="-translate-y-1/2">{formatMs(peak)}</span>
@@ -177,7 +177,8 @@ export function SkeletonRows({ rows = 8 }: { rows?: number }) {
   )
 }
 
-// What to do when no transaction has span details: the server only keeps them with cold storage on.
+// What to do when no transaction has request details: GlitchTip only keeps its spans with cold storage on,
+// which the README tells an admin how to turn on.
 export function SpanStorageHint() {
-  return <p className="text-sm text-muted-foreground">Ask whoever runs your server to turn on cold storage.</p>
+  return <p className="text-sm text-muted-foreground">Ask your admin to turn on request details.</p>
 }

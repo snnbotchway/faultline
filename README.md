@@ -60,7 +60,7 @@ Set GlitchTip's `GLITCHTIP_DOMAIN` to Faultline's public URL, so the links in al
 | `BACKEND_URL` | (required) | Where the GlitchTip web service listens, as Faultline's container sees it, e.g. `http://glitchtip:8000`. |
 | `PORT` | `8080` | Port Faultline listens on inside the container. |
 
-Performance needs GlitchTip's cold storage for span breakdowns, weekly trends and repeated queries: set `GLITCHTIP_ENABLE_DUCKDB=true` and `GLITCHTIP_COLD_STORAGE_DIR` (on a volume) or a storage bucket on the GlitchTip service. See [docs/compatibility.md](docs/compatibility.md#cold-storage-for-performance).
+Performance needs GlitchTip's cold storage for span breakdowns, weekly trends and repeated queries: set `GLITCHTIP_ENABLE_DUCKDB=true` and `GLITCHTIP_COLD_STORAGE_DIR` (on a volume) or a storage bucket on the GlitchTip service. Without it the screens ask users to have an admin turn on "request details". See [docs/compatibility.md](docs/compatibility.md#cold-storage-for-performance).
 
 Behind a TLS proxy that forwards the original `Host` header (Caddy, Traefik, Tailscale Serve, most nginx setups), nothing else is needed. If your proxy rewrites `Host`, add Faultline's URL to GlitchTip's `CSRF_TRUSTED_ORIGINS`.
 

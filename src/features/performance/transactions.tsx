@@ -212,7 +212,7 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
       )
     if (view === View.slower)
       return data.noSpanData ? (
-        <Screen title="No span details in the last 7 days">
+        <Screen title="No request details in the last 7 days">
           <SpanStorageHint />
         </Screen>
       ) : (

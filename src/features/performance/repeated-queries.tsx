@@ -105,7 +105,7 @@ export function RepeatedQueries({
         </Screen>
       )
     return noSpanData ? (
-      <Screen title="No span details in the last 7 days">
+      <Screen title="No request details in the last 7 days">
         <SpanStorageHint />
       </Screen>
     ) : (

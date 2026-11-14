@@ -1,10 +1,12 @@
 import { test as setup } from '@playwright/test'
-import { DEMO, seed } from '../dev/seed.ts'
+import { samplePerformance } from '../dev/sample-performance.ts'
+import { DEMO } from '../dev/seed.ts'
 
 setup('seed the backend and sign in', async ({ page, baseURL }) => {
-  // Seeding an empty backend sends about 500 events and waits for them to be processed.
-  setup.setTimeout(240_000)
-  await seed(baseURL!)
+  // Seeding an empty backend sends about 500 events and a week of transactions and logs, and waits for
+  // them to be processed.
+  setup.setTimeout(480_000)
+  await samplePerformance(baseURL!)
   await page.request.get('/_allauth/browser/v1/config')
   const csrf = (await page.context().cookies()).find((c) => c.name === 'csrftoken')?.value ?? ''
   await page.request.post('/_allauth/browser/v1/auth/login', {

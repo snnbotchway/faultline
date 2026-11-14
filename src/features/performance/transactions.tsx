@@ -81,11 +81,12 @@ const MEASURES: Record<Measure, MeasureView> = {
   },
 }
 
-const VIEWS: { view: View; label: string; test?: (transaction: Transaction) => boolean }[] = [
-  { view: View.all, label: 'All' },
-  { view: View.repeated, label: 'Repeated queries' },
-  { view: View.slower, label: 'Slower this week', test: (transaction) => !!transaction.slower },
-  { view: View.failing, label: 'Failing', test: (transaction) => transaction.failing },
+// `short` is the tab's label on a phone, where all four have to fit across.
+const VIEWS: { view: View; label: string; short: string; test?: (transaction: Transaction) => boolean }[] = [
+  { view: View.all, label: 'All', short: 'All' },
+  { view: View.repeated, label: 'Repeated queries', short: 'Repeated' },
+  { view: View.slower, label: 'Slower this week', short: 'Slower', test: (transaction) => !!transaction.slower },
+  { view: View.failing, label: 'Failing', short: 'Failing', test: (transaction) => transaction.failing },
 ]
 
 const matches = (repeat: Repeat, query: string | undefined) => {
@@ -108,7 +109,7 @@ function Views({ org, search, counts }: { org: string; search: PerformanceSearch
   return (
     <div className="scroll-row flex items-center gap-1 border-b px-3 py-2 md:px-4">
       <nav className="flex shrink-0 items-center gap-1" aria-label="Show">
-        {VIEWS.map(({ view, label }) => {
+        {VIEWS.map(({ view, label, short }) => {
           const on = view === current
           // The two kinds of list are ordered differently, so an order does not carry from one to the other.
           const keepsOrder = (view === View.repeated) === (current === View.repeated)
@@ -119,9 +120,10 @@ function Views({ org, search, counts }: { org: string; search: PerformanceSearch
               params={{ org }}
               search={{ view: view === View.all ? undefined : view, query: search.query, project: search.project, order: keepsOrder ? search.order : undefined }}
               aria-current={on ? 'page' : undefined}
-              className={cn('flex h-7 shrink-0 items-center gap-2 border px-3 text-sm max-lg:h-11', on ? 'border-foreground bg-foreground text-background' : 'bg-card hover:bg-accent')}
+              className={cn('flex h-7 shrink-0 items-center gap-2 border px-3 text-sm max-lg:h-11 max-lg:px-2', on ? 'border-foreground bg-foreground text-background' : 'bg-card hover:bg-accent')}
             >
-              {label}
+              <span className="max-lg:hidden">{label}</span>
+              <span className="lg:hidden">{short}</span>
               <span className={cn('mono', !on && 'text-muted-foreground')}>
                 <CountLabel count={counts[view]} />
               </span>
@@ -137,9 +139,9 @@ function SortMenu({ orders, order, onChange }: { orders: { value: string; label:
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="min-w-0 max-lg:h-11" aria-label="Sort">
+        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label="Sort" title="Sort">
           <ArrowDownWideNarrow />
-          <span className="truncate">{orders.find((item) => item.value === (order ?? DEFAULT_ORDER))?.label}</span>
+          <span className="truncate max-lg:hidden">{orders.find((item) => item.value === (order ?? DEFAULT_ORDER))?.label}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

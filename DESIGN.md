@@ -81,7 +81,7 @@ Rules:
 - Code in a stack frame is coloured by three tones only: keywords are semibold, strings and numbers are `level-info`, comments are `muted-foreground`. Each is at least 4.5:1 on `code` and on `hit`, in both themes.
 - When a pick in a chart singles some of it out, the rest is `dimmed` (30% opacity), the one dim strength; it stays readable as the shape it belongs to.
 - Release marks are quiet: the rule is `grid` and the label is `muted-foreground`. Red on the time axis is reserved for a spike.
-- The theme follows the system unless the user picks light or dark; the choice is stored in `localStorage.theme` and applied before first paint.
+- The theme follows the system unless the user picks light or dark. The choice is saved to the user's account (`preferredTheme`), so it follows them to another browser, and this browser keeps a copy in `localStorage.theme`, applied before first paint and used when the account has none.
 
 ## Space, density, shape
 
@@ -104,7 +104,7 @@ Rules:
 
 Lucide, in the text colour. An icon is 16px, or 12px when it sits inline with small text (a chevron in a chip, a count beside an id); there are no other sizes.
 
-Icons accompany a label. An icon alone is allowed for theme, account, close and the palette button, and for the glyphs everyone reads: more (ellipsis), previous and next (chevrons), disclosure (a chevron that unfolds), sort, and help (a question mark in a circle, for a syntax popover). Every icon-only control has an accessible name and, on desktop, shows that name on hover. No emoji and no character glyphs standing in for icons.
+Icons accompany a label. An icon alone is allowed for theme, account, support (a life buoy), close and the palette button, and for the glyphs everyone reads: more (ellipsis), previous and next (chevrons), disclosure (a chevron that unfolds), sort, and help (a question mark in a circle, for a syntax popover and nothing else). Every icon-only control has an accessible name and, on desktop, shows that name on hover. Two entries in one menu never share an icon. A link that opens a new tab ends in the external-link icon and tells a screen reader so. No emoji and no character glyphs standing in for icons.
 
 - Level: a filled square (fatal, error), a triangle (warning), a circle (info), a hollow circle (debug), in the level colour. Logs add trace, which issues do not have: a short dash in the debug colour.
 - Health (uptime) borrows the level shape of the same weight: a filled square for down in `destructive`, a triangle for slow in `level-warning`, a hollow circle for not checked yet in the muted colour. Up is a filled circle in `ok`, and flapping, which no level has, a diamond in `trend-spiking`. Health and level glyphs never share a list.
@@ -142,7 +142,8 @@ Uptime draws checks and downtime on the same rules:
 - **Dialogs** are for short tasks that keep their context (confirm a delete or a merge, pick an assignee). They are not a page. A confirmation names what it acts on: how many issues, and for a merge which one is kept.
 - **One dialog.** Every task dialog is a `TaskDialog`: title, then the task, then its buttons in `TaskActions`, main action first. A confirmation is a `ConfirmDialog`. A longer form (a monitor, an alert rule) is the same dialog made wider: it never grows past the screen, the whole dialog scrolls, and on a phone its buttons stay pinned to the sheet's bottom.
 - **Notices** ("Password changed.") sit at the bottom of the page, one at a time. A notice may offer one action, such as Undo after taking someone off a team. While a dialog or sheet is open they move to the top, so they never cover it, and opening a dialog clears an old one. A dialog shown once (a new token, recovery codes to confirm) closes only by its own button.
-- **Top bar.** Mark and wordmark, organization (its name in sans; the slug stays in the address, and the switcher and palette add it when it differs from the name, since names can repeat), then on the inbox the project and environment filters, navigation at the right, the palette button, theme, account.
+- **Top bar.** Mark and wordmark, organization (its name in sans; the slug stays in the address, and the switcher and palette add it when it differs from the name, since names can repeat), then on the inbox the project and environment filters, navigation at the right, the palette button, support (GlitchTip's support page when the instance gives one, the docs, and a Faultline bug report, each in a new tab), theme, account.
+- **Banners** sit under the top bar on every page while something about the account or organization needs acting on (an unverified email, events being dropped). A banner is one line on `card` with an icon, says what is happening and what to do next, and stays until the state ends; it never hides on its own. Once its action is done it gives way to a status line with a check, not a disabled button.
 - **Signed-out screens** (sign in, sign up, reset, an invitation) have the top bar and nothing else in it: the wordmark at its left, and the bar's rule drawn as the mark, slipping at the centre of the page. The page title is the first thing in the column below.
 - **Page bar.** A second 44px bar that sticks while the page scrolls. It says where you are within the section and carries the page's main controls. It mirrors the URL path.
 - **Rows.** The whole row is the target. Hover and the keyboard cursor look the same. The word that names a row's action (`Edit`, `Manage`, `Turn on`) is in the text colour; it is `destructive` only when it takes something away (`Delete`, `Remove`, `Disconnect`, `Revoke`). A row's action is always that word, never a boxed button.
@@ -206,7 +207,7 @@ Plain keys do nothing while the user is typing or a menu or dialog is open. `Ent
 
 Designed at 390px, checked at 375px.
 
-- Navigation moves to a bottom tab bar: issues, releases, uptime, alerts, more. Performance, logs, settings, theme and sign out are under more.
+- Navigation moves to a bottom tab bar: issues, releases, uptime, alerts, more. Performance, logs, settings, theme, help (which swaps the menu for the support links, with a way back), profile and sign out are under more, which fits a 375×667 screen without scrolling.
 - Project and environment filters stay on the inbox, as a row under the page bar. Performance's tabs and logs' filters in force are one row that scrolls sideways; logs' other filters sit behind a Filters button that shows how many are set, with a button beside it that clears them.
 - A transaction, a repeated query and a log open on their own: a transaction on its page, a repeated query in place of the list, a log unfolded under its row.
 - Tapping a row opens the issue; rows do not unfold. Titles wrap to two lines instead of cutting off.
@@ -227,6 +228,3 @@ Designed at 390px, checked at 375px.
 - Times are relative in lists (`7m`, `3d`) and exact on hover. On the issue page a relative time opens to the exact one on tap, and the event's time is written out (without the year and seconds on a phone). A list grouped under day headings (releases) shows the time of day instead (`2:02 PM`, in the style of the dates beside it), still exact on hover: the heading already says how long ago, and a relative time would repeat it.
 - Words are not abbreviated: `9 events`, not `9 ev`.
 
-## Not built yet
-
-- The server-stored theme preference; the theme is per browser for now.

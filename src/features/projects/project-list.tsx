@@ -18,7 +18,7 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
 const GRID =
-  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[3rem_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_5rem_4rem_6.5rem]'
+  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[3rem_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_5rem_4rem_2rem]'
 
 /**
  * Every project the user can see, with how it is doing: open issues, errors per day, when it last broke.
@@ -167,14 +167,12 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
         {lastSeen && ago(lastSeen)}
       </span>
       <span className={cn('mono text-right max-lg:hidden', !alerts && 'text-muted-foreground')}>{alerts}</span>
-      <Link
-        to="/$org/settings/projects/$project"
-        params={{ org, project: slug }}
-        className="relative z-10 flex h-8 items-center justify-end gap-2 text-sm font-medium text-muted-foreground hover:text-foreground max-lg:hidden"
-      >
-        {fresh ? <Plug className="size-4" /> : <Settings className="size-4" />}
-        {fresh ? 'Set up' : 'Settings'}
-      </Link>
+      {/* The same on every row, so it is an icon; its name shows on hover. */}
+      <Button asChild variant="ghost" size="icon" className="relative z-10 justify-self-end text-muted-foreground hover:text-foreground max-lg:hidden" aria-label={fresh ? `Set up ${slug}` : `Settings of ${slug}`}>
+        <Link to="/$org/settings/projects/$project" params={{ org, project: slug }}>
+          {fresh ? <Plug /> : <Settings />}
+        </Link>
+      </Button>
     </li>
   )
 }

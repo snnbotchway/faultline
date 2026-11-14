@@ -181,8 +181,8 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
       {data && (
         <>
           <span className="text-muted-foreground">/</span>
-          <span className="mono font-semibold">{data.shortId}</span>
-          <span className={cn('label-caps', data.status === IssueStatus.resolved && 'text-ok')}>{statusLabel(data, resolvingNext)}</span>
+          <span className="mono shrink-0 font-semibold whitespace-nowrap">{data.shortId}</span>
+          <span className={cn('label-caps min-w-0 truncate', data.status === IssueStatus.resolved && 'text-ok')}>{statusLabel(data, resolvingNext)}</span>
         </>
       )}
       {data && (

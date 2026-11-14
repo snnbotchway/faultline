@@ -19,7 +19,7 @@ import {
 import { Kbd } from '@/components/ui/kbd'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
 import { useHotkeys } from '@/lib/hotkeys'
-import { useNotice } from '@/lib/notice'
+import { holdNotice, useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
 import { Theme, useTheme } from '@/lib/theme'
 import { useChooseTheme, useThemeSync } from '@/lib/theme-sync'
@@ -384,7 +384,12 @@ export function Notice() {
       className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 max-lg:bottom-32 [body[data-scroll-locked]_&]:top-4 [body[data-scroll-locked]_&]:bottom-auto"
     >
       {notice && (
-        <p className={cn('pointer-events-auto flex max-w-md items-center gap-3 border bg-card px-3 py-2 shadow-float', notice.error && 'border-destructive text-destructive')}>
+        <p
+          onPointerEnter={() => holdNotice(true)}
+          onPointerLeave={() => holdNotice(false)}
+          onFocus={() => holdNotice(true)}
+          onBlur={() => holdNotice(false)}
+          className={cn('pointer-events-auto flex max-w-md items-center gap-3 border bg-card px-3 py-2 shadow-float', notice.error && 'border-destructive text-destructive')}>
           {notice.text}
           {notice.action && (
             <Button variant="link" className="text-foreground underline" onClick={notice.action.run}>

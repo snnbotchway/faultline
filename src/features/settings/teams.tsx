@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import type { Member } from '@/api/members'
+import { OrgRole, type Member } from '@/api/members'
 import { Scope, membersQuery, organizationQuery, projectsQuery, teamsQuery } from '@/api/organizations'
 import { projectActions, type Project } from '@/api/projects'
 import { TEAM_SLUG_MAX, teamActions, teamMembersQuery, type Team } from '@/api/teams'
@@ -14,9 +14,20 @@ import { cn } from '@/lib/utils'
 import { useAccess, useChange, useOwnMember } from './access'
 import { Confirm } from './fields'
 import { Field, FoldRow, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet, Tag } from './parts'
+import { atLeast } from './roles'
 import { plural } from './rows'
 import { teamSlugError } from './team-slug'
 import { TeamTab } from './team-tabs'
+
+/**
+ * Whether the user may put someone on this team or take them off it, by the backend's rule: anyone may join or
+ * leave when membership is open; otherwise it takes an admin on a team they are on, or a manager on any other.
+ */
+function canChangeMembership(me: Member | undefined, team: Team, openMembership: boolean, memberId: string) {
+  if (!me) return false
+  if (openMembership && memberId === me.id) return true
+  return atLeast(me.role, team.isMember ? OrgRole.admin : OrgRole.manager)
+}
 
 /**
  * The organization's teams. A row unfolds to show who is on the team and which projects it opens.
@@ -62,8 +73,8 @@ export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
                 me={me}
                 write={write}
                 admin={can(Scope.teamAdmin)}
-                // Anyone may join when the organization lets them; otherwise only those who run teams.
-                canJoin={!!organization?.openMembership || write}
+                linkProjects={can(Scope.orgWrite)}
+                canChange={(memberId) => canChangeMembership(me, team, !!organization?.openMembership, memberId)}
                 open={team.slug === openSlug}
                 onOpen={open}
               />
@@ -84,13 +95,15 @@ type RowProps = {
   me?: Member
   write: boolean
   admin: boolean
-  canJoin: boolean
+  // Adding a project to a team, or taking it off, is for managers and owners.
+  linkProjects: boolean
+  canChange: (memberId: string) => boolean
   open: boolean
   onOpen: (slug?: string) => void
 }
 
 function TeamRow(props: RowProps) {
-  const { org, team, projects, me, canJoin, open, onOpen } = props
+  const { org, team, projects, me, canChange, open, onOpen } = props
   const opens = projects.filter((project) => project.teams.some((t) => t.slug === team.slug))
   const membership = useChange(org, team.isMember ? 'leave the team' : 'join the team', () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
     notice: true,
@@ -105,7 +118,7 @@ function TeamRow(props: RowProps) {
             {plural(team.memberCount, 'member')} · {plural(opens.length, 'project')}
           </span>
         </span>
-        {me && (team.isMember || canJoin) && (
+        {me && canChange(me.id) && (
           <Button size="sm" className="relative z-10 w-16 max-lg:h-9 touch-hit" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
             {team.isMember ? 'Leave' : 'Join'}
           </Button>
@@ -119,7 +132,7 @@ function TeamRow(props: RowProps) {
 
 const LINE = 'flex min-h-10 items-center gap-2 border-b max-lg:min-h-11'
 
-function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpen }: RowProps & { opens: Project[] }) {
+function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkProjects, canChange, onOpen }: RowProps & { opens: Project[] }) {
   const roster = useQuery(teamMembersQuery(org, team.slug)).data
   const everyone = useQuery(membersQuery(org)).data ?? []
   const [renaming, setRenaming] = useState(false)
@@ -130,7 +143,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpe
   const addProject = useChange(org, 'add the project', (slug: string) => projectActions.addTeam(org, slug, team.slug), quiet)
   const removeProject = useChange(org, 'remove the project', (slug: string) => projectActions.removeTeam(org, slug, team.slug), quiet)
   const remove = useChange(org, 'delete the team', () => teamActions.remove(org, team.slug), { gone: true, onDone: () => onOpen() })
-  const outside = everyone.filter((member) => !roster?.some((m) => m.id === member.id))
+  const outside = everyone.filter((member) => member.id !== me?.id && !roster?.some((m) => m.id === member.id) && canChange(member.id))
   const closed = projects.filter((project) => !opens.includes(project))
   return (
     <div className="grid gap-x-8 gap-y-4 border-b px-3 pt-1 pb-4 md:px-4 lg:grid-cols-2">
@@ -148,7 +161,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpe
             {member.id === me?.id ? (
               <Tag>You</Tag>
             ) : (
-              write && (
+              canChange(member.id) && (
                 <Button size="sm" variant="ghost" className="max-lg:h-11" disabled={removeMember.pending} onClick={() => removeMember.run(member.id)}>
                   Remove
                 </Button>
@@ -156,7 +169,7 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpe
             )}
           </div>
         ))}
-        {write && outside.length > 0 && (
+        {outside.length > 0 && (
           <Select value="" aria-label={`Add a member to ${team.slug}`} className="mt-2" disabled={addMember.pending} onChange={(event) => addMember.run(event.target.value)}>
             <option value="" disabled>
               Add a member
@@ -177,14 +190,14 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, onOpe
             <Link to="/$org/settings/projects/$project" params={{ org, project: project.slug ?? '' }} className="mono min-w-0 flex-1 py-1 break-words hover:underline">
               {project.slug}
             </Link>
-            {write && (
+            {linkProjects && (
               <Button size="sm" variant="ghost" className="max-lg:h-11" disabled={removeProject.pending} onClick={() => removeProject.run(project.slug ?? '')}>
                 Remove
               </Button>
             )}
           </div>
         ))}
-        {write && closed.length > 0 && (
+        {linkProjects && closed.length > 0 && (
           <Select value="" aria-label={`Add a project to ${team.slug}`} className="mt-2" disabled={addProject.pending} onChange={(event) => addProject.run(event.target.value)}>
             <option value="" disabled>
               Add a project

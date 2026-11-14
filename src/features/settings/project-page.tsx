@@ -109,13 +109,15 @@ const PROJECT_TABS: { value: ProjectTab; label: string; count?: (context: TabCon
   {
     value: ProjectTab.general,
     label: 'General',
-    render: ({ org, project, teams, can }) => <General org={org} project={project} teams={teams} write={can(Scope.projectWrite)} admin={can(Scope.projectAdmin)} />,
+    render: ({ org, project, teams, can }) => (
+      <General org={org} project={project} teams={teams} write={can(Scope.projectWrite)} admin={can(Scope.projectAdmin)} linkTeams={can(Scope.orgWrite)} />
+    ),
   },
   {
     value: ProjectTab.keys,
     label: 'Client keys',
     count: ({ keys }) => keys?.length,
-    render: ({ org, slug, keys, can }) => <Keys org={org} slug={slug} keys={keys} write={can(Scope.projectWrite)} />,
+    render: ({ org, slug, keys, can }) => <Keys org={org} slug={slug} keys={keys} write={can(Scope.projectWrite)} admin={can(Scope.projectAdmin)} />,
   },
   {
     value: ProjectTab.environments,
@@ -127,7 +129,8 @@ const PROJECT_TABS: { value: ProjectTab; label: string; count?: (context: TabCon
 
 /* ---------- general ---------- */
 
-function General({ org, project, teams, write, admin }: { org: string; project: ProjectDetail; teams?: string[]; write: boolean; admin: boolean }) {
+// `linkTeams`: giving a team access to the project, or taking it away, is for managers and owners.
+function General({ org, project, teams, write, admin, linkTeams }: { org: string; project: ProjectDetail; teams?: string[]; write: boolean; admin: boolean; linkTeams: boolean }) {
   const slug = project.slug ?? ''
   const row = useFold()
   const [deleting, setDeleting] = useState(false)
@@ -146,7 +149,7 @@ function General({ org, project, teams, write, admin }: { org: string; project: 
           mono={!!teams?.length}
           value={teams && (teams.length ? teams.map((team) => `#${team}`).join('  ') : 'None')}
           open={row.is('teams')}
-          onToggle={teams && edit('teams')}
+          onToggle={teams && linkTeams ? () => row.toggle('teams') : undefined}
         >
           {teams && <TeamsForm org={org} slug={slug} teams={teams} onDone={row.close} />}
         </FoldRow>
@@ -278,7 +281,7 @@ function DeleteProject({ org, slug, onClose }: { org: string; slug: string; onCl
 const keyName = (key: ProjectKey) => key.name || key.label || 'Unnamed key'
 
 // GlitchTip 7.0.0 ignores changes to a key and does not enforce a key's rate limit, so a key is only made, read and deleted.
-function Keys({ org, slug, keys, write }: { org: string; slug: string; keys?: ProjectKey[]; write: boolean }) {
+function Keys({ org, slug, keys, write, admin }: { org: string; slug: string; keys?: ProjectKey[]; write: boolean; admin: boolean }) {
   const row = useFold(keys?.length === 1 ? keys[0]!.id : undefined)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<ProjectKey>()
@@ -302,7 +305,7 @@ function Keys({ org, slug, keys, write }: { org: string; slug: string; keys?: Pr
           <FoldRow key={key.id} label={keyName(key)} mono value={key.dsn.public} open={row.is(key.id)} onToggle={() => row.toggle(key.id)}>
             <Field label="DSN">{() => <CopyField value={key.dsn.public ?? ''} label={`DSN of ${keyName(key)}`} />}</Field>
             {key.dsn.security && <Field label="Security report address">{() => <CopyField value={key.dsn.security!} label="Security report address" />}</Field>}
-            {write && (
+            {admin && (
               <Button variant="destructive" className="self-start max-lg:h-11" onClick={() => setDeleting(key)}>
                 Delete key
               </Button>

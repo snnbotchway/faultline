@@ -337,14 +337,41 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
 
   return (
     <div className="flex min-h-dvh flex-col max-lg:pb-14">
+      <SkipLink />
       <TopBar org={org} current={current} inbox={current === 'issues' && deeper.length === 0} />
       <VerifyEmailBanner />
       <OverLimitBanner org={org} />
-      {children}
+      <Main>{children}</Main>
       <TabBar org={org} current={current} />
       <Notice />
       <Palette onSearch={(text) => void navigate({ to: '/$org/issues', params: { org }, search: { query: text } })} />
     </div>
+  )
+}
+
+const MAIN_ID = 'main'
+
+// The first stop on Tab, shown only while focused, so a keyboard user can pass the top bar.
+export function SkipLink() {
+  return (
+    <a
+      href={`#${MAIN_ID}`}
+      onClick={(event) => {
+        event.preventDefault()
+        document.getElementById(MAIN_ID)?.focus()
+      }}
+      className="fixed top-1 left-1 z-[70] -translate-y-16 border bg-card px-3 py-2 text-sm font-medium shadow-float focus:translate-y-0"
+    >
+      Skip to content
+    </a>
+  )
+}
+
+export function Main({ children }: { children: ReactNode }) {
+  return (
+    <main id={MAIN_ID} tabIndex={-1} className="flex flex-1 flex-col focus-visible:outline-none">
+      {children}
+    </main>
   )
 }
 

@@ -53,6 +53,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
 
   const bar = (
     <PageBar>
+      <h1 className="sr-only">Uptime monitors</h1>
       <UptimeTabs org={org} current={UptimeTab.monitors} counts={{ [UptimeTab.statusPages]: pages?.length }} />
       <div className="ml-auto flex items-center gap-2">
         {monitors.length > 0 && <div className="max-lg:hidden">{toggle}</div>}

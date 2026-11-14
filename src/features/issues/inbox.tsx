@@ -215,6 +215,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
   return (
     <>
       <PageBar className={cn(offer.selecting && 'max-lg:hidden')}>
+        <h1 className="sr-only">Issues</h1>
         {offer.selecting ? (
           <SelectionBar {...bar} />
         ) : (

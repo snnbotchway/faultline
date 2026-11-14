@@ -106,7 +106,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
         <span className="font-semibold">Profile</span>
         <span className="mono truncate text-muted-foreground">{user.email}</span>
       </PageBar>
-      <main className="mx-auto w-full max-w-180 px-3 pb-16 md:px-4">
+      <div className="mx-auto w-full max-w-180 px-3 pb-16 md:px-4">
         <h1 className="sr-only">Profile</h1>
         {connectFailed && <FormAlert className="mt-5">That account couldn't be connected. Try again.</FormAlert>}
 
@@ -225,7 +225,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
         <div className="mt-8 border-t">
           <Fact name="Delete account" action="Delete" danger onClick={open(Task.delete)} />
         </div>
-      </main>
+      </div>
 
       <DetailsDialog open={task === Task.details} onClose={close} user={user} />
       <EmailsDialog open={task === Task.emails} onClose={close} emails={emails} canSend={canSend} />

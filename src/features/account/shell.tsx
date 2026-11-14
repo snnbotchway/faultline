@@ -3,7 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { organizationsQuery } from '@/api/organizations'
 import { Wordmark } from '@/components/mark'
-import { AppShell, Notice } from '@/components/shell/app-shell'
+import { AppShell, Main, Notice, SkipLink } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { LAST_ORG_KEY, signOut } from '@/lib/session'
 
@@ -18,6 +18,7 @@ export function BareShell({ children }: { children: ReactNode }) {
   }
   return (
     <div className="flex min-h-dvh flex-col">
+      <SkipLink />
       <header className="flex h-11 shrink-0 items-center gap-1 border-b px-3 md:px-4">
         <Link to="/" aria-label="Faultline" className="mr-auto">
           <Wordmark />
@@ -29,7 +30,7 @@ export function BareShell({ children }: { children: ReactNode }) {
           Sign out
         </Button>
       </header>
-      {children}
+      <Main>{children}</Main>
       <Notice />
     </div>
   )

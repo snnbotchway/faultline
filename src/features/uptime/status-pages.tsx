@@ -44,6 +44,7 @@ export function StatusPages({ org }: { org: string }) {
 
   const bar = (
     <PageBar>
+      <h1 className="sr-only">Status pages</h1>
       <UptimeTabs org={org} current={UptimeTab.statusPages} counts={{ [UptimeTab.statusPages]: pages.data?.length }} />
       {canAdmin && (
         <Button variant="default" size="bar" className="ml-auto" onClick={() => setCreating(true)}>

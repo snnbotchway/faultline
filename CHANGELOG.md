@@ -7,6 +7,7 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Added
 
+- Issue page: a breadcrumb's level shows as a shape as well as a colour.
 - The issue list's search box has a syntax popover (`is:`, `level:`, `key:value`, `has:`, `*`).
 - The first-seen range offers "Last hour" and a custom range with date and time pickers, sent to GlitchTip in UTC.
 - A `+` beside the project filter starts a new project, for people who can create one.
@@ -29,6 +30,7 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Fixed
 
+- Issue page: the copied issue link and the "Copy for AI" event URL include the path Faultline is served under.
 - The environment filter lists only the environments of the chosen projects, and drops a choice they do not have.
 - "Resolve in next release" works on 7.0.0, names the release the issue was tied to (or says none was found) with an Undo, and the issue's status shows that release; it used to be refused by the bulk route.
 - The image tells browsers to check for a new page on every load, so a new release shows without a hard refresh, and a missing script file is a 404 instead of the page.

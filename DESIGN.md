@@ -104,7 +104,7 @@ Lucide, in the text colour. An icon is 16px, or 12px when it sits inline with sm
 
 Icons accompany a label. An icon alone is allowed for theme, account, close and the palette button, and for the glyphs everyone reads: more (ellipsis), previous and next (chevrons), disclosure (a chevron that unfolds), and sort. Every icon-only control has an accessible name and, on desktop, shows that name on hover. No emoji and no character glyphs standing in for icons.
 
-- Level: a filled square (fatal, error), a triangle (warning), a circle (info), a hollow circle (debug), in the level colour.
+- Level: a filled square (fatal, error), a triangle (warning), a circle (info), a hollow circle (debug), in the level colour. Logs add trace, which issues do not have: a short dash in the debug colour.
 - Assignee: the person's initials at 12px in a filled 24px square; unassigned is the `UserRound` outline. The column is labelled.
 
 ## The time axis
@@ -118,6 +118,11 @@ The inbox and the issue page draw events the same way.
 - **Releases** are vertical rules through the axis with the short version as a mono label. The same rule runs through every row. On a phone the rows' traces are too narrow for rules, so they show on the issue page only.
 - **Colour.** Bars are the foreground at reduced strength. A new issue's bars use `trend-new`; the latest bucket of a spiking issue uses `trend-spiking`.
 - Buckets are arrival times, as the backend reports them.
+
+Performance draws durations, not counts, on the same rules, with two additions:
+
+- **A labelled scale.** A chart of one transaction labels its peak and its zero with their unit (`2.81 s`, `0`) in a column at the left, and names every day under the bars, the last one `Today`.
+- **One duration scale for a list.** When a list is ordered by duration, every row's bar runs from typical (p50, light) to slow (p95, darker) on one logarithmic scale from 1 ms to 30 s, labelled once above the rows and lined up with the bars. Other orders draw each row's share as a plain bar in the foreground at reduced strength. A row's bar is never red; a problem is a word with an icon under it. As in the inbox, the latest day of a transaction that got slower uses `trend-spiking`.
 
 ## Components
 
@@ -153,7 +158,7 @@ The inbox and the issue page draw events the same way.
 | --- | --- |
 | selection | what can be done to the selected issues |
 | issue | what can be done to the open issue |
-| show | the inbox's other status views |
+| show | the inbox's other status views; performance's other tabs |
 | go to | every section except the one you are in, then the organization's projects, members and teams |
 | organization | the other organizations |
 | theme | system, light and dark |
@@ -179,6 +184,8 @@ The groups are listed in this order.
 | `a` | inbox, issue | assign |
 | `m` | inbox | merge the selection |
 | `[` / `]` | issue | older / newer event |
+| `/` | performance, logs | focus search |
+| `j` / `k` | performance, logs | next / previous transaction or log (desktop, where it opens beside the list) |
 | `Esc` | everywhere | close, clear the selection, leave a field |
 
 Plain keys do nothing while the user is typing or a menu or dialog is open. `Enter` and `Space` belong to a focused button, link or menu item, so they never also run a page shortcut.
@@ -187,8 +194,9 @@ Plain keys do nothing while the user is typing or a menu or dialog is open. `Ent
 
 Designed at 390px, checked at 375px.
 
-- Navigation moves to a bottom tab bar: issues, releases, uptime, alerts, more. Theme and sign out are under more.
-- Project and environment filters stay on the inbox, as a row under the page bar.
+- Navigation moves to a bottom tab bar: issues, releases, uptime, alerts, more. Performance, logs, settings, theme and sign out are under more.
+- Project and environment filters stay on the inbox, as a row under the page bar. Performance's tabs and logs' filters in force are one row that scrolls sideways; logs' other filters sit behind a Filters button that shows how many are set, with a button beside it that clears them.
+- A transaction, a repeated query and a log open on their own: a transaction on its page, a repeated query in place of the list, a log unfolded under its row.
 - Tapping a row opens the issue; rows do not unfold. Titles wrap to two lines instead of cutting off.
 - With a selection, the tab bar gives way to an action bar holding the bulk actions.
 - An issue's actions sit in a sticky bar at the bottom, the main action filled.

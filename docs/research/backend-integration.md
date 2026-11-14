@@ -279,7 +279,23 @@ Sub-path deployment: backend honours `BASE_PATH`/`FORCE_SCRIPT_NAME` and rewrite
 
 ---
 
-## 6. Kudcrafts alternative (`/home/jarvis/dev/scratch/glitchtip-demo/frontend`): what to borrow, what to avoid
+## 6. Performance and logs (7.0.0)
+
+| Topic | Detail | Source |
+|---|---|---|
+| Transaction group stats | `count`, `avgDuration`, `p50`, `p95`, `errorRate` cover everything a group ever received. `environment`, `start` and `end` are accepted and change nothing; `firstSeen` and `lastSeen` are arrival times. Percentiles are approximate | live, 2026-11-14 |
+| Cold storage | Span breakdowns (`transaction-groups/{id}/spans/`), daily trends (`.../trend/`), `span-groups/` and `n-plus-one/` read cold storage. They need `GLITCHTIP_ENABLE_DUCKDB=true` and a store (`GLITCHTIP_COLD_STORAGE_DIR`, or a bucket via `GLITCHTIP_COLD_STORAGE_BUCKET` / `AWS_STORAGE_BUCKET_NAME`). Without them every one answers `200 []`, so "off" and "no data" look the same. The directory must outlive the container | `BE glitchtip/settings.py:436-460`; live |
+| Span promotion | Spans wait in staging for about five minutes before a scheduled task moves them to cold storage, so new transactions show in the list at once and in breakdowns later. All four cold-storage endpoints default to the last 7 days | `BE apps/performance/promotion.py`; live |
+| Trend counts | A trend day's `transactionCount` counts a request once per span group it touched; divide by the number of span groups for requests | live |
+| Repeated queries | `n-plus-one/` lists a span description that runs more than five times in one request, per transaction name (no group id; match on `transactionName`) with `spansPerTxn`, `avgDuration`, `totalTime`, `transactionCount` | live |
+| Log search | `query` matches the log body only, case-insensitively. Pages are up to 200 logs; `X-Hits` on the first page, capped at `X-Max-Hits: 1000` | live |
+| Log stats | `logs/stats/` gives hourly counts per level and filters by project, level, service, environment and time; it ignores the text search, host and trace | live |
+| Log ingest | Logs older than a day are dropped, and a log outside the existing daily partitions fails its whole batch. OTLP logs arrive on `/v1/logs` | `dev/sample-performance.ts`; live |
+| Access | An organization the user is not in answers `404` on the log endpoints but `200 []` on `transaction-groups/` and `n-plus-one/` | live |
+
+---
+
+## 7. Kudcrafts alternative (`/home/jarvis/dev/scratch/glitchtip-demo/frontend`): what to borrow, what to avoid
 
 | Topic | What it does | Verdict |
 |---|---|---|
@@ -298,7 +314,7 @@ Sub-path deployment: backend honours `BASE_PATH`/`FORCE_SCRIPT_NAME` and rewrite
 
 ---
 
-## 7. Commands used (for reproducing)
+## 8. Commands used (for reproducing)
 
 ```sh
 # session + csrf cookie

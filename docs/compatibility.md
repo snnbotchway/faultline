@@ -20,3 +20,12 @@ Faultline serves `/{org}/…` and passes some top-level paths to the backend on 
 (`src/api/backend-paths.ts`). GlitchTip already refuses the slugs `api`, `admin` and `_health`.
 An organisation whose slug is `accounts`, `oauth`, `mcp`, `static`, `media` or `status-pages`
 would have its pages sent to the backend; rename such an organisation before switching to Faultline.
+
+## Cold storage for performance
+
+Transaction lists work on any GlitchTip. Span breakdowns, the 7-day charts, "Slower this week" and
+repeated queries are read from GlitchTip's cold storage, which is off by default. Turn it on with
+`GLITCHTIP_ENABLE_DUCKDB=true` and a storage location: `GLITCHTIP_COLD_STORAGE_DIR` on a volume that
+survives restarts, or a bucket (`GLITCHTIP_COLD_STORAGE_BUCKET`, or the `AWS_STORAGE_BUCKET_NAME`
+GlitchTip already uses for uploads). Spans show up about five minutes after they arrive. Without cold
+storage those parts of the screen are empty and say what to turn on. `dev/compose.yml` turns it on.

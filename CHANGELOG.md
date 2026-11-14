@@ -18,6 +18,8 @@ All notable changes to Faultline are listed here. The format follows
 - Project settings: name, platform, teams with access, share of events to drop, client keys (new, copy, delete), environments, delete.
 - New project with the SDK code for its platform, and a set-up step that shows when the first event arrives.
 - Create an organization, and a system info page.
+- Performance (`/:org/performance/transaction-groups`): transactions ranked by the time they take, with tabs for repeated queries, those slower this week (and the release they slowed down at) and failing ones. A transaction shows its all-time figures, a 7-day chart and where an average request spends its time; on a desktop it opens beside the list. Breakdowns, charts and repeated queries need GlitchTip's cold storage.
+- Logs (`/:org/logs`): search, filters by level, service, environment, host and project with counts, a time window and logs per hour, a log's attributes, and the other logs in its trace.
 
 ### Changed
 

@@ -38,7 +38,7 @@ Totals: **44 routed screens** and **6 redirects** in the stock router, plus 5 sc
 | `/orgredirect/organizations/:org/settings/auth-tokens` | `/profile/auth-tokens` | [x] |
 | `/account/settings/wizard/:hash` | `/profile/wizard/:hash` | [x] |
 | `/:org/:project-slug` | `/:org/settings/projects/:project-slug` | [x] |
-| `/:org/performance` | `/:org/performance/transaction-groups` | [ ] |
+| `/:org/performance` | `/:org/performance/transaction-groups` | [x] |
 | `**` | `/` | [ ] |
 
 ---
@@ -114,10 +114,11 @@ Where Faultline differs on purpose:
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Logs | `/:org/logs` | Log table (level, timestamp, service, body), message search, multi-select level filter (trace, debug, info, warn, error, fatal), service filter, project + time range from app bar, "Load more" (accumulates pages, `limit=200`), clear filters | `GET /organizations/{org}/logs/?cursor&level&service&query&project&start&end&limit`; `GET /organizations/{org}/logs/resources/?resource_type=service` | [ ] |
+| Logs | `/:org/logs` | Log table (level, timestamp, service, body), message search, multi-select level filter (trace, debug, info, warn, error, fatal), service filter, project + time range from app bar, "Load more" (accumulates pages, `limit=200`), clear filters | `GET /organizations/{org}/logs/?cursor&level&service&query&project&start&end&limit`; `GET /organizations/{org}/logs/resources/?resource_type=service` | [x] |
 
-- [ ] Empty states: "No logs yet" vs "No matching logs".
-- [ ] Initial hit count kept while paging (`X-Hits` from the first page).
+- [x] Empty states: "No logs yet" vs "No matching logs".
+- [x] Initial hit count kept while paging (`X-Hits` from the first page).
+- Faultline also filters by environment and host, counts each filter value, charts logs per hour (pick an hour to narrow the list), opens a log with its attributes, and lists the other logs in its trace or span. Backend limits: the search matches the message only, and counts above 1000 read `1000+` where the hourly statistics cannot answer (a text search, a host or a trace).
 
 ---
 
@@ -216,8 +217,12 @@ Easy to miss:
 
 | Area | Stock route | What it does | API endpoints | Faultline |
 |---|---|---|---|---|
-| Perf | `/:org/performance/transaction-groups` | Transaction group list: columns Title (method, transaction, op) with project + transaction count, and Average Duration; env filter, sort (Slowest `-avg_duration`, Fastest, Most Frequent `-count`, Least Frequent), search `query`, project/time range, paging | `GET /organizations/{org}/transaction-groups/?cursor&query&start&end&sort&project&environment`; `GET /organizations/{org}/environments/` | [ ] |
-| Perf | `/:org/performance/transaction-groups/:id` | Group header (count, avg, p95, op chip), span breakdown table (sortable columns, op filter); "not found" state | `GET /organizations/{org}/transaction-groups/{id}/`; `GET .../transaction-groups/{id}/spans/` | [ ] |
+| Perf | `/:org/performance/transaction-groups` | Transaction group list: columns Title (method, transaction, op) with project + transaction count, and Average Duration; env filter, sort (Slowest `-avg_duration`, Fastest, Most Frequent `-count`, Least Frequent), search `query`, project/time range, paging | `GET /organizations/{org}/transaction-groups/?cursor&query&start&end&sort&project&environment`; `GET /organizations/{org}/environments/` | [x] |
+| Perf | `/:org/performance/transaction-groups/:id` | Group header (count, avg, p95, op chip), span breakdown table (sortable columns, op filter); "not found" state | `GET /organizations/{org}/transaction-groups/{id}/`; `GET .../transaction-groups/{id}/spans/` | [x] |
+
+- [ ] Environment filter and time range. Not built: GlitchTip 7.0.0 accepts `environment`, `start` and `end` on the list and ignores them, so every figure covers all environments and all time.
+- Faultline adds the time spent per transaction, tabs for repeated queries (`/n-plus-one/`), transactions slower this week (`/trend/`, with the release they slowed down at) and failing ones, the 7-day duration chart, and the transaction beside the list on a desktop. The stock `sort` parameter is read as Faultline's `order`, so old links keep their order.
+- Backend limits: the list's figures are all-time and its percentiles approximate. Breakdowns, trends and repeated queries cover the last 7 days and need cold storage (`GLITCHTIP_ENABLE_DUCKDB` and a storage directory or bucket); without it they are empty and the screens say so. GlitchTip keeps no individual transactions, so there is no waterfall: a breakdown is the average request's time per span group, in no order.
 
 ---
 

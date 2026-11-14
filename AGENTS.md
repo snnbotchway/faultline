@@ -8,7 +8,7 @@ Use Bun; npm and npx are not used in this repo.
 
 | Task | Command |
 |---|---|
-| Backend for dev and e2e (GlitchTip 7.0.0 on :8600) | `bun run backend:up`, then `bun run seed` |
+| Backend for dev and e2e (GlitchTip 7.0.0 on :8600) | `bun run backend:up`, then `bun run seed:performance` (the demo data plus a week of transactions and logs) |
 | App with backend proxy (:5190) | `bun run dev` |
 | Checks | `bun run lint && bun run typecheck && bun run test` |
 | End-to-end, against the image on :8620 | `docker compose -f dev/compose.yml --profile app up -d --wait --build && bun run e2e` |

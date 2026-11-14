@@ -44,8 +44,7 @@ export function SignInApps({ org }: { org: string }) {
         {apps?.length === 0 && <Row label="No sign-in apps yet" />}
         {apps?.map((app) => (
           <FoldRow key={app.id} label={app.name} value={providerName(app)} open={row.is(String(app.id))} onToggle={() => row.toggle(String(app.id))}>
-            {app.callbackUrl && <Field label="Redirect address for the provider">{() => <CopyField value={app.callbackUrl!} label={`Redirect address of ${app.name}`} />}</Field>}
-            <Field label="Sign-in page">{() => <CopyField value={app.loginUrl} label={`Sign-in page of ${app.name}`} />}</Field>
+            <AppAddresses app={app} />
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
               {app.serverUrl && (
                 <>
@@ -88,7 +87,20 @@ export function SignInApps({ org }: { org: string }) {
   )
 }
 
-// Create a sign-in app, or edit one. The provider is fixed once the app exists, because the redirect address depends on it.
+// The two addresses an app hands out: the one to register at the provider, and the organization's sign-in page.
+function AppAddresses({ app }: { app: SignInApp }) {
+  return (
+    <>
+      {app.callbackUrl && <Field label="Redirect address for the provider">{() => <CopyField value={app.callbackUrl!} label={`Redirect address of ${app.name}`} />}</Field>}
+      <Field label="Sign-in page">{() => <CopyField value={app.loginUrl} label={`Sign-in page of ${app.name}`} />}</Field>
+    </>
+  )
+}
+
+/**
+ * Create a sign-in app, or edit one. The provider is fixed once the app exists, because the redirect address depends
+ * on it. The backend makes that address when it creates the app, so a new app's dialog shows it next, to give the provider.
+ */
 function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: SignInApp; onClose: () => void; onCreated?: (app: SignInApp) => void }) {
   const [provider, setProvider] = useState<SignInProvider>(SignInProvider.openIdConnect)
   const [name, setName] = useState(app?.name ?? '')
@@ -96,6 +108,7 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
   const [clientID, setClientID] = useState(app?.clientID ?? '')
   const [secret, setSecret] = useState('')
   const [checked, setChecked] = useState(false)
+  const [created, setCreated] = useState<SignInApp>()
   const google = app ? app.brand === SignInProvider.google : provider === SignInProvider.google
 
   const problems = {
@@ -113,7 +126,8 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
     {
       stale: [stale.signInApps(org)],
       onDone: (saved) => {
-        onClose()
+        if (app) return onClose()
+        setCreated(saved)
         onCreated?.(saved)
       },
     },
@@ -124,6 +138,12 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
   }
   const shown = (problem?: string) => (checked ? problem : undefined)
 
+  if (created)
+    return (
+      <FormDialog open onClose={onClose} title={`${created.name} is ready`}>
+        <AppAddresses app={created} />
+      </FormDialog>
+    )
   return (
     <FormDialog open onClose={onClose} title={app ? app.name : 'New sign-in app'} submit={app ? 'Save' : 'Create app'} onSubmit={submit} pending={save.pending} error={save.error}>
       {!app && (
@@ -172,6 +192,7 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
           />
         )}
       </Field>
+      {!app && <p className="text-sm text-muted-foreground">The redirect address to give the provider comes once the app is created.</p>}
     </FormDialog>
   )
 }

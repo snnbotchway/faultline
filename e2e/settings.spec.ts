@@ -88,7 +88,7 @@ test('a team can be created and deleted', async ({ page }) => {
   await expect(page.getByRole('button', { name: `Team ${slug}` })).toHaveCount(0)
 })
 
-test('a sign-in app shows the redirect address to give the provider, and can be deleted', async ({ page }) => {
+test('a new sign-in app shows the redirect address to give the provider, and can be deleted', async ({ page }) => {
   const name = unique('e2e-sso').slice(0, 40)
   await page.goto(settings)
   await page.getByRole('button', { name: 'New sign-in app' }).click()
@@ -98,8 +98,13 @@ test('a sign-in app shows the redirect address to give the provider, and can be 
   await page.getByLabel('Client secret').fill('e2e-secret')
   await page.getByRole('button', { name: 'Create app' }).click()
 
+  // The dialog stays open on the address to give the provider, which the backend only makes once the app exists.
+  const ready = page.getByRole('dialog', { name: `${name} is ready` })
+  await expect(ready.getByLabel(`Redirect address of ${name}`)).toContainText(/\/accounts\/oidc\/.+\/login\/callback\//)
+  await ready.getByRole('button', { name: 'Done' }).click()
+
   const app = page.getByRole('region', { name: 'Sign-in apps' })
-  await expect(app.getByLabel(`Redirect address of ${name}`)).toContainText(/\/accounts\/oidc\/.+\/login\/callback\//)
+  await expect(app.getByLabel(`Redirect address of ${name}`)).toBeVisible()
   await app.getByRole('button', { name: 'Delete' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Delete sign-in app' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)

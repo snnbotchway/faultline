@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
+import { ExternalLink } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import {
   IssueLevel,
@@ -16,10 +17,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { failed } from '@/lib/notice'
 import { cn } from '@/lib/utils'
-import { crumbKind, crumbText, crumbsOf, requestOf, valueText, type Crumb } from './event'
+import { cookiesOf, crumbKind, crumbText, crumbsOf, cspOf, requestOf, valueText, type Crumb } from './event'
 import { levelColor } from './levels'
 import { ago, exact, hourLabel } from './format'
 import { DEFAULT_QUERY, withFilter } from './search'
+import { isUrl, tagFacets } from './tags'
 
 export function Section({ title, count, className, children }: { title: string; count?: number; className?: string; children: ReactNode }) {
   return (
@@ -111,6 +113,7 @@ function Fold({ label, count, children }: { label: string; count: number; childr
 export function RequestSection({ event }: { event: IssueEvent }) {
   const request = requestOf(event)
   if (!request?.url) return null
+  const cookies = cookiesOf(request)
   const body = request.data == null || request.data === '' ? undefined : typeof request.data === 'string' ? request.data : JSON.stringify(request.data, null, 2)
   return (
     <Section title="Request">
@@ -129,6 +132,11 @@ export function RequestSection({ event }: { event: IssueEvent }) {
             <Pairs pairs={request.headers} />
           </Fold>
         )}
+        {cookies.length > 0 && (
+          <Fold label="Cookies" count={cookies.length}>
+            <Pairs pairs={cookies} />
+          </Fold>
+        )}
         {body && (
           <Fold label="Body" count={body.length}>
             <pre className="mono overflow-x-auto">{body}</pre>
@@ -139,12 +147,55 @@ export function RequestSection({ event }: { event: IssueEvent }) {
   )
 }
 
-const TOP_VALUES = 4
+// The report a browser sent about what its content security policy blocked.
+export function CspSection({ event }: { event: IssueEvent }) {
+  const report = cspOf(event)
+  const pairs = Object.entries(report ?? {}).filter(([, value]) => value != null && value !== '')
+  if (pairs.length === 0) return null
+  const directive = report?.effective_directive
+  return (
+    <Section title="CSP report">
+      <div className="border px-3 py-2">
+        {typeof directive === 'string' && <p className="mono mb-2 font-semibold">{directive}</p>}
+        <Pairs pairs={pairs} />
+      </div>
+    </Section>
+  )
+}
+
+// What the SDK attached to the event as extra data.
+export function AdditionalData({ event }: { event: IssueEvent }) {
+  const pairs = Object.entries(event.context ?? {}).filter(([, value]) => value != null && value !== '')
+  if (pairs.length === 0) return null
+  return (
+    <Section title="Additional data">
+      <Pairs pairs={pairs} />
+    </Section>
+  )
+}
 
 // The backend builds the `browser` tag as "name version" and writes "None" when the SDK sent no version.
 const tagLabel = (key: string, value: string) => (key === TagKey.browser ? value.replace(/ None$/, '') : value)
 
-// Clicking a value opens the inbox filtered to it.
+const percent = (share: number) => `${Math.round(share * 100)}%`
+
+function Share({ share, flat, children }: { share: number; flat: boolean; children: ReactNode }) {
+  return (
+    <>
+      {flat ? (
+        <span className="w-9 shrink-0" aria-hidden />
+      ) : (
+        <>
+          <span className="absolute inset-y-1 left-12 bg-foreground/10" style={{ width: `calc((100% - 3rem) * ${share})` }} aria-hidden />
+          <span className="relative w-9 shrink-0 text-right text-muted-foreground">{percent(share)}</span>
+        </>
+      )}
+      <span className="relative min-w-0 flex-1 truncate">{children}</span>
+    </>
+  )
+}
+
+// Clicking a value opens the inbox filtered to it; a value that is a web address also opens on its own.
 export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
   const tags = useQuery(issueTagsQuery(org, issueId))
   if (tags.isPending) return <Skeleton className="h-40" />
@@ -152,28 +203,48 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
   return (
     <Section title="Tags">
       <div className="space-y-3">
-        {tags.data.map((tag) => (
-          <div key={tag.key}>
-            <h3 className="mono mb-1 text-muted-foreground">{tag.key}</h3>
-            <ul>
-              {tag.topValues.slice(0, TOP_VALUES).map((top) => (
-                <li key={top.value}>
-                  <Link
-                    to="/$org/issues"
-                    params={{ org }}
-                    search={{ query: withFilter(DEFAULT_QUERY, tag.key, top.value) }}
-                    className="mono relative flex min-h-6 items-center gap-3 pr-2 hover:bg-accent max-lg:min-h-11"
-                  >
-                    <span className="absolute inset-y-1 left-12 bg-foreground/10" style={{ width: `calc((100% - 3rem) * ${top.count / Math.max(1, tag.totalValues)})` }} aria-hidden />
-                    <span className="relative w-9 shrink-0 text-right text-muted-foreground">{Math.round((top.count / Math.max(1, tag.totalValues)) * 100)}%</span>
-                    <span className="relative min-w-0 flex-1 truncate">{tagLabel(tag.key, top.name || top.value)}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {tag.uniqueValues > TOP_VALUES && <p className="mono pl-12 text-muted-foreground">{tag.uniqueValues - TOP_VALUES} more</p>}
-          </div>
-        ))}
+        {tags.data.map((tag) => {
+          const facets = tagFacets(tag)
+          return (
+            <div key={tag.key}>
+              <h3 className="mono mb-1 text-muted-foreground">{tag.key}</h3>
+              <ul>
+                {facets.rows.map((top) => (
+                  <li key={top.value} className="flex items-center">
+                    <Link
+                      to="/$org/issues"
+                      params={{ org }}
+                      search={{ query: withFilter(DEFAULT_QUERY, tag.key, top.value) }}
+                      className="mono relative flex min-h-6 min-w-0 flex-1 items-center gap-3 pr-2 hover:bg-accent max-lg:min-h-11"
+                    >
+                      <Share share={top.share} flat={facets.flat}>
+                        {tagLabel(tag.key, top.name)}
+                      </Share>
+                    </Link>
+                    {isUrl(top.value) && (
+                      <a
+                        href={top.value}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Open ${top.value} in a new tab`}
+                        className="grid size-6 shrink-0 place-items-center text-muted-foreground hover:bg-accent hover:text-foreground max-lg:size-11"
+                      >
+                        <ExternalLink className="size-3" />
+                      </a>
+                    )}
+                  </li>
+                ))}
+                {facets.other > 0 && (
+                  <li className="mono relative flex min-h-6 items-center gap-3 pr-2 text-muted-foreground max-lg:min-h-11">
+                    <Share share={facets.other} flat={false}>
+                      other
+                    </Share>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )
+        })}
       </div>
     </Section>
   )
@@ -197,6 +268,7 @@ export function ContextRail({ event }: { event: IssueEvent }) {
             <Pairs pairs={pairsOf(context)} />
           </Section>
         ))}
+      <AdditionalData event={event} />
       {event.sdk && (
         <Section title="SDK">
           <Pairs pairs={pairsOf(event.sdk as Record<string, unknown>).filter(([, value]) => typeof value === 'string')} />
@@ -214,13 +286,17 @@ export function UserReports({ org, issueId }: { org: string; issueId: string }) 
       <ul className="space-y-4">
         {reports.map((report) => (
           <li key={report.eventID + report.dateCreated} className="border-l pl-3">
-            <p className="mono flex flex-wrap gap-x-3 text-muted-foreground">
+            <Link
+              to="/$org/issues/$issueId/events/$eventId"
+              params={{ org, issueId, eventId: report.eventID }}
+              className="mono flex flex-wrap items-center gap-x-3 text-muted-foreground hover:bg-accent max-lg:min-h-11"
+            >
               <span className="text-foreground">{report.name || report.email}</span>
               {report.name && <span>{report.email}</span>}
               <time dateTime={report.dateCreated} title={exact(report.dateCreated)}>
                 {ago(report.dateCreated)}
               </time>
-            </p>
+            </Link>
             <p className="prose-text mt-1 whitespace-pre-wrap">{report.comments}</p>
           </li>
         ))}

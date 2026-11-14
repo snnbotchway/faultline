@@ -81,11 +81,13 @@ export function LinkRow({ label, value, mono, ...link }: { label: ReactNode; val
   )
 }
 
-// A setting that unfolds in place to be changed. Without `onToggle` it only reports.
+// A setting that unfolds in place to be changed. Without `onToggle` it only reports. `wrap` lets a value that must be
+// read whole, such as a DSN, run onto more lines instead of being cut off.
 export function FoldRow({
   label,
   value,
   mono,
+  wrap,
   open,
   onToggle,
   children,
@@ -93,6 +95,7 @@ export function FoldRow({
   label: ReactNode
   value?: ReactNode
   mono?: boolean
+  wrap?: boolean
   open: boolean
   onToggle?: () => void
   children: ReactNode
@@ -102,7 +105,7 @@ export function FoldRow({
     <div className={cn(open && 'bg-card')}>
       <button type="button" aria-expanded={open} onClick={onToggle} className={cn(ROW, 'hover:bg-accent', open && 'border-b-0')}>
         <span className={ROW_LABEL}>{label}</span>
-        <span className={cn('min-w-0 flex-1 truncate text-muted-foreground', mono && 'mono')}>{value}</span>
+        <span className={cn('min-w-0 flex-1 text-muted-foreground', wrap ? 'py-2 [overflow-wrap:anywhere]' : 'truncate', mono && 'mono')}>{value}</span>
         <FoldChevron open={open} />
       </button>
       {open && <div className="flex flex-col gap-4 border-b px-3 pt-1 pb-4 md:px-4 lg:pl-59">{children}</div>}

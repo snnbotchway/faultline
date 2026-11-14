@@ -35,7 +35,7 @@ export function Keys({ org, slug, keys, write, admin }: { org: string; slug: str
         {!keys && <RowSkeleton rows={2} />}
         {keys?.length === 0 && <Row label="No client keys" />}
         {keys?.map((key) => (
-          <FoldRow key={key.id} label={keyName(key)} mono value={key.dsn.public} open={row.is(key.id)} onToggle={() => row.toggle(key.id)}>
+          <FoldRow key={key.id} label={keyName(key)} mono wrap value={key.dsn.public} open={row.is(key.id)} onToggle={() => row.toggle(key.id)}>
             <Field label="DSN">{() => <CopyField value={key.dsn.public ?? ''} label={`DSN of ${keyName(key)}`} />}</Field>
             {key.dsn.security && <Field label="Security report address">{() => <CopyField value={key.dsn.security!} label="Security report address" />}</Field>}
             {admin && (

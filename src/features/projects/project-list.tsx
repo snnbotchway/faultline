@@ -12,7 +12,8 @@ import { ago, exact } from '@/features/issues/format'
 import { Trace } from '@/features/issues/trace'
 import { useAccess, useLastOrganization } from '@/features/settings/access'
 import { platformName } from '@/features/settings/platforms'
-import { hasWords, plural, searchWords } from '@/lib/text'
+import { useT } from '@/i18n'
+import { hasWords, searchWords } from '@/lib/text'
 import { useSeen } from '@/lib/seen'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -25,7 +26,8 @@ const GRID =
  * Without `org` it lists the projects of all their organizations, grouped; with it, that organization's alone.
  */
 export function ProjectList({ org }: { org?: string }) {
-  useTitle('Projects', org)
+  const { projects: t, common } = useT()
+  useTitle(t.title, org)
   const organizations = useQuery(organizationsQuery)
   const last = useLastOrganization()
   const slugs = org ? [org] : (organizations.data ?? []).map((organization) => organization.slug)
@@ -38,13 +40,13 @@ export function ProjectList({ org }: { org?: string }) {
 
   if (!organizations.isPending && slugs.length === 0)
     return (
-      <Screen title="No organization yet">
+      <Screen title={t.noOrganization}>
         {canCreateOrganization ? (
           <Button asChild variant="default">
-            <Link to="/organizations/new">Create an organization</Link>
+            <Link to="/organizations/new">{t.createOrganization}</Link>
           </Button>
         ) : (
-          <p className="prose-text text-muted-foreground">Ask an owner to invite you to theirs.</p>
+          <p className="prose-text text-muted-foreground">{t.askOwner}</p>
         )}
       </Screen>
     )
@@ -62,14 +64,14 @@ export function ProjectList({ org }: { org?: string }) {
   const total = lists.reduce((sum, list) => sum + (list.data?.length ?? 0), 0)
   const shown = groups.reduce((sum, group) => sum + group.projects.length, 0)
   const find = (className: string) => (
-    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a project" aria-label="Find a project" className={className} />
+    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.find} aria-label={t.find} className={className} />
   )
   const empty = !loading && total === 0
 
   return (
     <>
       <PageBar>
-        <h1 className="text-2xl font-semibold">Projects</h1>
+        <h1 className="text-2xl font-semibold">{t.title}</h1>
         {org && <span className="min-w-0 truncate text-muted-foreground max-lg:hidden">{nameOf(org)}</span>}
         {!empty && (
           <>
@@ -79,19 +81,19 @@ export function ProjectList({ org }: { org?: string }) {
         )}
       </PageBar>
       {empty ? (
-        <Screen title="No projects yet">{target && <NewProjectButton org={target} />}</Screen>
+        <Screen title={t.noProjects}>{target && <NewProjectButton org={target} />}</Screen>
       ) : (
         <>
           <div className="border-b px-3 py-2 lg:hidden">{find('h-9')}</div>
           <div className={cn(GRID, 'h-8 border-b')}>
-            <span className="label-caps text-right">Open</span>
-            <span className="label-caps">Project</span>
+            <span className="label-caps text-right">{t.columns.open}</span>
+            <span className="label-caps">{common.project}</span>
             <span className="label-caps max-lg:text-right">
-              <span className="lg:hidden">{ACTIVITY_DAYS}d</span>
-              <span className="max-lg:hidden">Errors, last {ACTIVITY_DAYS} days</span>
+              <span className="lg:hidden">{common.time.ago.days(ACTIVITY_DAYS)}</span>
+              <span className="max-lg:hidden">{t.columns.errors(ACTIVITY_DAYS)}</span>
             </span>
-            <span className="label-caps text-right whitespace-nowrap max-lg:hidden">Last seen</span>
-            <span className="label-caps text-right max-lg:hidden">Alerts</span>
+            <span className="label-caps text-right whitespace-nowrap max-lg:hidden">{t.columns.lastSeen}</span>
+            <span className="label-caps text-right max-lg:hidden">{t.columns.alerts}</span>
             <span className="max-lg:hidden" />
           </div>
           {groups.map((group) => (
@@ -117,7 +119,7 @@ export function ProjectList({ org }: { org?: string }) {
               )}
             </section>
           ))}
-          {!loading && shown === 0 && <p className="px-3 py-10 text-center text-muted-foreground">No project matches “{query}”.</p>}
+          {!loading && shown === 0 && <p className="px-3 py-10 text-center text-muted-foreground">{t.noMatch(query)}</p>}
         </>
       )}
     </>
@@ -126,19 +128,21 @@ export function ProjectList({ org }: { org?: string }) {
 
 // In the page bar it takes the bar's size; on the empty page it is the page's one action, at the default size.
 function NewProjectButton({ org, size }: { org: string; size?: 'bar' }) {
+  const t = useT().projects
   const can = useAccess(org)
   if (!can(Scope.projectWrite)) return null
   return (
     <Button asChild variant="default" size={size}>
       <Link to="/$org/settings/projects/new" params={{ org }}>
         <Plus />
-        New project
+        {t.newProject}
       </Link>
     </Button>
   )
 }
 
 function ProjectRow({ org, project }: { org: string; project: Project }) {
+  const t = useT().projects
   const slug = project.slug ?? ''
   const fresh = !project.firstEvent
   // Each row costs four requests, so a long list asks only for the rows that come on screen.
@@ -150,9 +154,9 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
   return (
     <li ref={ref} className={cn(GRID, 'relative min-h-14 border-b hover:bg-accent')}>
       {fresh ? (
-        <Link to="/$org/settings/projects/$project" params={{ org, project: slug }} className="absolute inset-0 -outline-offset-2" aria-label={`Set up ${slug}`} />
+        <Link to="/$org/settings/projects/$project" params={{ org, project: slug }} className="absolute inset-0 -outline-offset-2" aria-label={t.setUp(slug)} />
       ) : (
-        <Link to="/$org/issues" params={{ org }} search={{ project: [Number(project.id)] }} className="absolute inset-0 -outline-offset-2" aria-label={`Issues in ${slug}`} />
+        <Link to="/$org/issues" params={{ org }} search={{ project: [Number(project.id)] }} className="absolute inset-0 -outline-offset-2" aria-label={t.issuesIn(slug)} />
       )}
       <span className={cn('mono text-right text-lg font-medium', activity?.unresolved === 0 && 'text-muted-foreground')}>
         {activity && `${activity.unresolved}${activity.capped ? '+' : ''}`}
@@ -162,16 +166,16 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
         <span className="truncate text-sm text-muted-foreground">
           {platformName(project.platform)}
           {lastSeen && <span className="lg:hidden"> · {ago(lastSeen)}</span>}
-          {!!alerts && <span className="lg:hidden"> · {plural(alerts, 'alert')}</span>}
+          {!!alerts && <span className="lg:hidden"> · {t.alertCount(alerts)}</span>}
         </span>
       </div>
-      {fresh ? <span className="text-sm text-muted-foreground">No events yet</span> : activity ? <Trace buckets={activity.buckets} height={24} /> : <span />}
+      {fresh ? <span className="text-sm text-muted-foreground">{t.noEventsYet}</span> : activity ? <Trace buckets={activity.buckets} height={24} /> : <span />}
       <span className="mono text-right text-muted-foreground max-lg:hidden" title={lastSeen && exact(lastSeen)}>
         {lastSeen && ago(lastSeen)}
       </span>
       <span className={cn('mono text-right max-lg:hidden', !alerts && 'text-muted-foreground')}>{alerts}</span>
       {/* The same on every row, so it is an icon; its name shows on hover. */}
-      <Button asChild variant="ghost" size="icon" className="relative z-10 justify-self-end text-muted-foreground hover:text-foreground max-lg:hidden" aria-label={fresh ? `Set up ${slug}` : `Settings of ${slug}`}>
+      <Button asChild variant="ghost" size="icon" className="relative z-10 justify-self-end text-muted-foreground hover:text-foreground max-lg:hidden" aria-label={fresh ? t.setUp(slug) : t.settingsOf(slug)}>
         <Link to="/$org/settings/projects/$project" params={{ org, project: slug }}>
           {fresh ? <Plug /> : <Settings />}
         </Link>

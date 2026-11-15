@@ -5,7 +5,7 @@ export const projects: Messages['projects'] = {
   title: 'Prosjekter',
   noOrganization: 'Ingen organisasjon ennå',
   createOrganization: 'Opprett en organisasjon',
-  askOwner: 'Be en eier om å invitere deg til organisasjonen sin.',
+  orAskOwner: 'Eller be en eier om å invitere deg til organisasjonen sin.',
   find: 'Finn et prosjekt',
   noProjects: 'Ingen prosjekter ennå',
   newProject: 'Nytt prosjekt',

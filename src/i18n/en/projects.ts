@@ -5,7 +5,7 @@ export const projects = {
   title: 'Projects',
   noOrganization: 'No organization yet',
   createOrganization: 'Create an organization',
-  askOwner: 'Ask an owner to invite you to theirs.',
+  orAskOwner: 'Or ask an owner to invite you to theirs.',
   find: 'Find a project',
   noProjects: 'No projects yet',
   newProject: 'New project',

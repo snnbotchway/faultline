@@ -13,6 +13,11 @@ All notable changes to Faultline are listed here. The format follows
 
 - With a single project, home opens its issues straight away, or its setup page until its first event arrives; the organization's Projects page still lists it.
 
+### Fixed
+
+- Superusers are offered New organization even when organization creation is closed to everyone else, as the backend allows.
+- A user in no organization is offered to create one, since anyone may create a server's first organization; when the server refuses, the form says only an administrator can.
+
 ## [0.3.0] - 2026-11-15
 
 Parity with the stock GlitchTip frontend, in English, French and Norwegian Bokmål. Tested against GlitchTip 7.0.0.

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
+import { useCanCreateOrganization } from '@/features/settings/access'
 import { LOCALE_NAMES, Locale, useChosenLocale, useLocale, useT } from '@/i18n'
 import { overlayOpen, useHotkeys } from '@/lib/hotkeys'
 import { clearActionNotice, clearNotice, holdNotice, NoticeHold, releaseNotice, useNotice } from '@/lib/notice'
@@ -111,7 +112,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const organizationName = useQuery(organizationsQuery).data?.find((organization) => organization.slug === org)?.name ?? org
   const email = session?.status === SessionStatus.authenticated ? (session.user.email ?? session.user.display ?? '') : ''
   const leave = useSignOut()
-  const canCreate = useQuery(instanceSettingsQuery).data?.enableOrganizationCreation
+  const canCreate = useCanCreateOrganization()
   const [creating, setCreating] = useState(false)
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (

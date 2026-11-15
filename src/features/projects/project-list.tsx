@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Plug, Plus, Settings } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
-import { Scope, instanceSettingsQuery, organizationsQuery, projectsQuery } from '@/api/organizations'
+import { Scope, organizationsQuery, projectsQuery } from '@/api/organizations'
 import { ACTIVITY_DAYS, projectActivityQuery, projectAlertCountQuery, type Project } from '@/api/projects'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ago, exact } from '@/features/issues/format'
 import { Trace } from '@/features/issues/trace'
-import { useAccess, useLastOrganization } from '@/features/settings/access'
+import { useAccess, useCanCreateOrganization, useLastOrganization } from '@/features/settings/access'
 import { platformName } from '@/features/settings/platforms'
 import { useT } from '@/i18n'
 import { hasWords, searchWords } from '@/lib/text'
@@ -36,20 +36,18 @@ export function ProjectList({ org }: { org?: string }) {
   const nameOf = (slug: string) => organizations.data?.find((organization) => organization.slug === slug)?.name ?? slug
   const lists = useQueries({ queries: slugs.map((slug) => projectsQuery(slug)) })
   const [query, setQuery] = useState('')
-  const canCreateOrganization = useQuery(instanceSettingsQuery).data?.enableOrganizationCreation
+  const canCreateOrganization = useCanCreateOrganization()
   // New projects go into the organization on screen, or the one the shell is showing.
   const target = org ?? last
 
   if (!organizations.isPending && slugs.length === 0)
     return (
       <Screen title={t.noOrganization}>
-        {canCreateOrganization ? (
-          <Button asChild variant="default">
-            <Link to="/organizations/new">{t.createOrganization}</Link>
-          </Button>
-        ) : (
-          <p className="prose-text text-muted-foreground">{t.askOwner}</p>
-        )}
+        {/* Offered even when not known to be allowed: the server's first organization is open to anyone. */}
+        <Button asChild variant="default">
+          <Link to="/organizations/new">{t.createOrganization}</Link>
+        </Button>
+        {!canCreateOrganization && <p className="prose-text text-muted-foreground">{t.orAskOwner}</p>}
       </Screen>
     )
 

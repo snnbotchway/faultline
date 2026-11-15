@@ -5,7 +5,7 @@ export const projects: Messages['projects'] = {
   title: 'Projets',
   noOrganization: 'Aucune organisation pour l’instant',
   createOrganization: 'Créer une organisation',
-  askOwner: 'Demandez à un propriétaire de vous inviter dans la sienne.',
+  orAskOwner: 'Ou demandez à un propriétaire de vous inviter dans la sienne.',
   find: 'Chercher un projet',
   noProjects: 'Aucun projet pour l’instant',
   newProject: 'Nouveau projet',

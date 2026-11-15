@@ -2,11 +2,12 @@ import { LogLevel, type LogEvent } from '@/api/logs'
 import { projectIds, searchText as text } from '@/lib/search'
 import { HOUR } from '@/lib/time'
 
+// Each range is named in the catalog, by its value.
 export const RANGES = [
-  { value: '1h', label: 'Last hour', hours: 1 },
-  { value: '6h', label: 'Last 6 hours', hours: 6 },
-  { value: '24h', label: 'Last 24 hours', hours: 24 },
-  { value: '7d', label: 'Last 7 days', hours: 168 },
+  { value: '1h', hours: 1 },
+  { value: '6h', hours: 6 },
+  { value: '24h', hours: 24 },
+  { value: '7d', hours: 168 },
 ] as const
 export type Range = (typeof RANGES)[number]['value']
 const DEFAULT_RANGE: Range = '24h'

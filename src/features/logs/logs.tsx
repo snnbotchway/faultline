@@ -10,9 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useT } from '@/i18n'
 import { useHotkeys } from '@/lib/hotkeys'
-import { hitsText } from '@/lib/format'
-import { plural, valueName } from '@/lib/text'
+import { hitsText, type Hits } from '@/lib/format'
 import { isDesktop, useIsDesktop } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -24,17 +24,20 @@ import { LogLevelGlyph } from './level'
 import { LogActions, LogFields } from './log-detail'
 import { NO_FILTERS, RANGES, facetCount, isNarrowed, levelOf, rangeOf, type LogSearch, type SetSearch } from './search'
 
-// The button shows "24h"; its name and hover say it in full, so a phone, which has no hover, still has the words.
-const rangeName = (range: { value: string; label: string }) => `${valueName('Time range', range.value)} (${range.label})`
+// A count of logs that stops at the backend's limit (`1000+`) is worded as it is; an exact one agrees with its word.
+const logCount = (hits: Hits) => (hits.capped ? hitsText(hits) : hits.n)
 
 const HISTOGRAM_HEIGHT = 64
 
 function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
+  const t = useT().logs
   const range = rangeOf(search)
+  // The button shows "24h"; its name and hover say it in full, so a phone, which has no hover, still has the words.
+  const name = t.rangeName(range.value, t.ranges[range.value])
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={rangeName(range)} title={rangeName(range)}>
+        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={name} title={name}>
           <CalendarDays />
           <span className="mono">{range.value}</span>
         </Button>
@@ -43,7 +46,7 @@ function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
         <DropdownMenuRadioGroup value={range.value} onValueChange={(value) => set({ range: RANGES.find((item) => item.value === value)?.value, hour: undefined })}>
           {RANGES.map((item) => (
             <DropdownMenuRadioItem key={item.value} value={item.value}>
-              {item.label}
+              {t.ranges[item.value]}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -53,8 +56,9 @@ function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
 }
 
 function SkeletonRows() {
+  const t = useT().logs
   return (
-    <ul aria-busy aria-label="Loading logs">
+    <ul aria-busy aria-label={t.loading}>
       {Array.from({ length: 12 }, (_, index) => (
         <li key={index} className="flex items-center gap-3 border-b px-3 py-3 md:px-4">
           <Skeleton className="h-3 w-20" />
@@ -76,7 +80,9 @@ function LevelAndTime({ log, className }: { log: LogEvent; className?: string })
 }
 
 export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
-  useTitle('Logs')
+  const t = useT()
+  const l = t.logs
+  useTitle(t.shell.sections.logs)
   const navigate = useNavigate()
   const set: SetSearch = (patch) => void navigate({ to: '/$org/logs', params: { org }, search: { ...search, ...patch }, replace: true })
   const logs = useLogs(org, search)
@@ -99,11 +105,11 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
 
   return (
     <>
-      <ListPageBar title="Logs">
+      <ListPageBar title={t.shell.sections.logs}>
         <SearchField
           key={search.query}
           query={search.query}
-          label="Search messages"
+          label={l.searchMessages}
           onSubmit={(query) => set({ query, log: undefined })}
           className="max-lg:order-last max-lg:basis-full lg:max-w-lg"
         />
@@ -113,17 +119,17 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
               <DialogTrigger asChild>
                 <Button size="sm" className="h-11">
                   <SlidersHorizontal />
-                  Filters
+                  {l.filters}
                   {active > 0 && <span className="mono font-semibold">{active}</span>}
                 </Button>
               </DialogTrigger>
               <DialogContent className="dialog-scroll p-3">
-                <DialogTitle className="px-2 pb-3">Filters</DialogTitle>
+                <DialogTitle className="px-2 pb-3">{l.filters}</DialogTitle>
                 <Facets logs={logs} search={search} counts={counts} set={set} />
               </DialogContent>
             </Dialog>
             {active > 0 && (
-              <Button size="icon-touch" className="border-l-0" aria-label="Clear filters" onClick={clear}>
+              <Button size="icon-touch" className="border-l-0" aria-label={l.clearFilters} onClick={clear}>
                 <X />
               </Button>
             )}
@@ -132,33 +138,33 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
         </div>
       </ListPageBar>
       <div className="flex flex-1 items-start">
-        <aside className="side-pane hidden w-60 shrink-0 border-r px-2 py-4 lg:block" aria-label="Filters">
+        <aside className="side-pane hidden w-60 shrink-0 border-r px-2 py-4 lg:block" aria-label={l.filters}>
           <Facets logs={logs} search={search} counts={counts} set={set} />
           {narrowed && (
             <Button variant="ghost" size="sm" className="mt-4 w-full" onClick={clear}>
-              Clear filters
+              {l.clearFilters}
             </Button>
           )}
         </aside>
         <div className="min-w-0 flex-1">
           <div className="border-b px-3 py-3 md:px-4">
             <div className="mb-2 flex items-baseline justify-between gap-3">
-              <h2 className="label-caps">Logs per hour</h2>
-              {logs.total && <span className="mono font-semibold">{plural(hitsText(logs.total), 'log')}</span>}
+              <h2 className="label-caps">{l.logsPerHour}</h2>
+              {logs.total && <span className="mono font-semibold">{l.logs(logCount(logs.total))}</span>}
             </div>
-            {!chartFollows && <p className="mb-2 text-sm text-muted-foreground">The chart counts every log in the window; the search, host and trace don't narrow it.</p>}
+            {!chartFollows && <p className="mb-2 text-sm text-muted-foreground">{l.chartNote}</p>}
             <LogHistogram buckets={logs.buckets} height={HISTOGRAM_HEIGHT} hour={search.hour} dim={!chartFollows} onPick={(hour) => set({ hour, log: undefined })} />
           </div>
           <ActiveFilters logs={logs} search={search} set={set} />
           {(logs.missing || logs.openFailed) && (
             <div className="flex items-center gap-2 border-b px-3 py-2 md:px-4 lg:hidden">
-              <p className="flex-1">{logs.missing ? 'This log no longer exists.' : "This log didn't load."}</p>
+              <p className="flex-1">{logs.missing ? l.errors.missingNote : l.errors.openFailedNote}</p>
               {logs.openFailed && (
                 <Button size="sm" className="h-11" onClick={logs.retryOpen}>
-                  Try again
+                  {t.common.tryAgain}
                 </Button>
               )}
-              <Button variant="ghost" size="icon-touch" aria-label="Close" onClick={() => set({ log: undefined })}>
+              <Button variant="ghost" size="icon-touch" aria-label={t.common.close} onClick={() => set({ log: undefined })}>
                 <X />
               </Button>
             </div>
@@ -166,26 +172,26 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
           {logs.spanPartial &&
             (list.isFetchNextPageError ? (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-3 py-2 md:px-4">
-                <p className="text-muted-foreground">Searched the first {logs.loaded.length} logs of this trace for this span. The rest didn't load.</p>
+                <p className="text-muted-foreground">{l.searchedSpanFailed(logs.loaded.length)}</p>
                 <Button size="sm" className="max-lg:h-11" onClick={() => void list.fetchNextPage()}>
-                  Try again
+                  {t.common.tryAgain}
                 </Button>
               </div>
             ) : (
-              <p className="border-b px-3 py-2 text-muted-foreground md:px-4">Searched the first {logs.loaded.length} logs of this trace for this span.</p>
+              <p className="border-b px-3 py-2 text-muted-foreground md:px-4">{l.searchedSpan(logs.loaded.length)}</p>
             ))}
           {list.isPending ? (
             <SkeletonRows />
           ) : hasStatus(list.error, HttpStatus.forbidden) ? (
-            <Screen title="You can't see logs in this organization" />
+            <Screen title={l.errors.denied} />
           ) : list.isError && !list.data ? (
-            <Screen title="The logs didn't load">
-              <Button onClick={() => void list.refetch()}>Try again</Button>
+            <Screen title={l.errors.list}>
+              <Button onClick={() => void list.refetch()}>{t.common.tryAgain}</Button>
             </Screen>
           ) : logs.logs.length === 0 ? (
-            <Screen title={narrowed ? 'No logs match' : `No logs in the ${logs.range.label.toLowerCase()}`}>{narrowed && <Button onClick={clear}>Clear filters</Button>}</Screen>
+            <Screen title={narrowed ? l.errors.noMatch : l.noLogsIn[logs.range.value]}>{narrowed && <Button onClick={clear}>{l.clearFilters}</Button>}</Screen>
           ) : (
-            <ul aria-label="Logs">
+            <ul aria-label={l.logList}>
               {logs.logs.map((log, index) => {
                 const current = log.id === search.log
                 const newDay = index === 0 || dayOf(log.timestamp) !== dayOf(logs.logs[index - 1]!.timestamp)
@@ -234,42 +240,42 @@ export function LogsPage({ org, search }: { org: string; search: LogSearch }) {
           )}
           {list.hasNextPage && !search.spanId && (
             <div className="flex flex-col items-center gap-2 py-4">
-              {list.isFetchNextPageError && <p className="text-muted-foreground">Older logs didn't load.</p>}
+              {list.isFetchNextPageError && <p className="text-muted-foreground">{l.olderFailed}</p>}
               <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage} className="max-lg:h-11">
-                {list.isFetchNextPageError ? 'Try again' : 'Load older logs'}
+                {list.isFetchNextPageError ? t.common.tryAgain : l.loadOlder}
               </Button>
             </div>
           )}
         </div>
         {(logs.missing || logs.openFailed) && (
-          <aside aria-label="Log" className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
+          <aside aria-label={l.log} className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
             <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-card px-4">
-              <p className="flex-1 font-semibold">{logs.missing ? 'This log no longer exists' : "This log didn't load"}</p>
-              <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => set({ log: undefined })}>
+              <p className="flex-1 font-semibold">{logs.missing ? l.errors.missing : l.errors.openFailed}</p>
+              <Button variant="ghost" size="icon-sm" aria-label={t.common.close} onClick={() => set({ log: undefined })}>
                 <X />
               </Button>
             </div>
             <div className="px-4 py-4">
               {logs.missing ? (
-                <p className="text-muted-foreground">It may have been removed when its retention ran out.</p>
+                <p className="text-muted-foreground">{l.errors.retention}</p>
               ) : (
-                <Button onClick={logs.retryOpen}>Try again</Button>
+                <Button onClick={logs.retryOpen}>{t.common.tryAgain}</Button>
               )}
             </div>
           </aside>
         )}
         {open && (
-          <aside aria-label="Log" className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
+          <aside aria-label={l.log} className="side-pane hidden w-96 shrink-0 border-l lg:block xl:w-104">
             <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-card px-4">
               <LevelAndTime log={open} className="flex-1" />
-              <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={() => set({ log: undefined })}>
+              <Button variant="ghost" size="icon-sm" aria-label={t.common.close} onClick={() => set({ log: undefined })}>
                 <X />
               </Button>
             </div>
             <div className="px-4 py-4">
               <p className="mono mb-4 break-words whitespace-pre-wrap">{open.body}</p>
               <LogActions log={open} search={search} set={set} />
-              <h2 className="label-caps mt-6">Fields</h2>
+              <h2 className="label-caps mt-6">{l.fields}</h2>
               <LogFields org={org} log={open} project={logs.projectOf(open)} search={search} className="mt-1 border-t" />
             </div>
           </aside>

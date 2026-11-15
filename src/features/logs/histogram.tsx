@@ -1,5 +1,6 @@
 import { LogLevel } from '@/api/logs'
 import { hourLabel } from '@/features/issues/format'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { bucketTotal, type Bucket } from './data'
 import { dayOf } from './format'
@@ -12,15 +13,16 @@ const MIN_BAR = 2
 // a key in the level shapes. An hour is as fine as the backend counts. Picking a bar narrows the list to
 // that hour; `dim` fades the chart when it does not follow the list's filters.
 export function LogHistogram({ buckets, height, hour, dim, onPick }: { buckets: Bucket[]; height: number; hour: number | undefined; dim: boolean; onPick: (hour: number | undefined) => void }) {
+  const t = useT().logs
   const peak = Math.max(0, ...buckets.map(bucketTotal))
   const px = (count: number) => (count <= 0 ? 0 : Math.max(MIN_BAR, Math.round((count / peak) * height)))
   const first = buckets[0]!.start
   return (
     <div className={cn(dim && 'dimmed')}>
-      <div className="flex items-end gap-px border-b border-grid" style={{ height: height + 1 }} role="group" aria-label="Logs per hour">
+      <div className="flex items-end gap-px border-b border-grid" style={{ height: height + 1 }} role="group" aria-label={t.logsPerHour}>
         {buckets.map((bucket) => {
           const picked = hour === bucket.start
-          const label = `${buckets.length > DAY_HOURS ? `${dayOf(bucket.start * 1000)} ` : ''}${hourLabel(bucket.start)}, ${bucketTotal(bucket)} logs`
+          const label = t.histogram.bar(`${buckets.length > DAY_HOURS ? `${dayOf(bucket.start * 1000)} ` : ''}${hourLabel(bucket.start)}`, bucketTotal(bucket))
           return (
             <button
               key={bucket.start}
@@ -42,12 +44,12 @@ export function LogHistogram({ buckets, height, hour, dim, onPick }: { buckets: 
         <span>{buckets.length > DAY_HOURS ? dayOf(first * 1000) : hourLabel(first)}</span>
         <span className="flex items-center gap-2">
           <LogLevelGlyph level={LogLevel.error} />
-          error
+          {LogLevel.error}
           <LogLevelGlyph level={LogLevel.warn} />
-          warn
-          <span className="ml-2">{peak > 0 ? `peak ${peak}/hour` : 'no logs'}</span>
+          {LogLevel.warn}
+          <span className="ml-2">{peak > 0 ? t.histogram.peak(peak) : t.histogram.none}</span>
         </span>
-        <span>Now</span>
+        <span>{t.histogram.now}</span>
       </div>
     </div>
   )

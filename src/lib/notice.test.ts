@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearNotice, holdNotice, notify, NoticeHold, releaseNotice, SHOWN_FOR, useNotice } from './notice'
+import { clearActionNotice, clearNotice, holdNotice, notify, NoticeHold, releaseNotice, SHOWN_FOR, useNotice } from './notice'
 
 function shown() {
   return renderHook(() => useNotice()).result
@@ -64,6 +64,32 @@ describe('notice hold', () => {
     holdNotice(NoticeHold.pointer, true)
     releaseNotice()
     wait(SHOWN_FOR)
+    expect(notice.current).toBeUndefined()
+  })
+
+  it('keeps a message with an action until it is replaced, even after letting go', () => {
+    const notice = shown()
+    act(() => notify('Removed', false, { label: 'Undo', run: () => {} }))
+    wait(SHOWN_FOR * 10)
+    expect(notice.current?.text).toBe('Removed')
+    holdNotice(NoticeHold.focus, true)
+    holdNotice(NoticeHold.focus, false)
+    wait(SHOWN_FOR * 10)
+    expect(notice.current?.text).toBe('Removed')
+
+    act(() => notify('Added'))
+    wait(SHOWN_FOR)
+    expect(notice.current).toBeUndefined()
+  })
+
+  it('ends a message with an action on a route change, and leaves a plain one', () => {
+    const notice = shown()
+    act(() => notify('Failed', true))
+    act(() => clearActionNotice())
+    expect(notice.current?.text).toBe('Failed')
+
+    act(() => notify('Removed', false, { label: 'Undo', run: () => {} }))
+    act(() => clearActionNotice())
     expect(notice.current).toBeUndefined()
   })
 })

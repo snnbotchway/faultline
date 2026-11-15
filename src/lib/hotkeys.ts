@@ -12,7 +12,7 @@ function activates(event: KeyboardEvent) {
   return ACTIVATION_KEYS.has(event.key) && event.target instanceof HTMLElement && event.target.closest('button, a, [role="option"], [role="menuitem"]') !== null
 }
 
-const overlayOpen = () => document.querySelector('[role="dialog"], [role="menu"]') !== null
+export const overlayOpen = () => document.querySelector('[role="dialog"], [role="menu"]') !== null
 
 /**
  * Page-level shortcuts. Keys are `event.key` values; prefix with `mod+` for Cmd/Ctrl.

@@ -10,8 +10,9 @@ const listeners = new Set<() => void>()
 export const SHOWN_FOR = 6000
 let timer: ReturnType<typeof setTimeout> | undefined
 
-// While the pointer or focus is on the message it stays, so its action can still be reached. Letting go of both
-// starts its time again.
+// A plain message goes after SHOWN_FOR. A message with an action stays until the next message, a route change or Esc,
+// so a keyboard user has the time to reach it. While the pointer or focus is on a plain message it stays too; letting
+// go of both starts its time again.
 export const NoticeHold = { pointer: 'pointer', focus: 'focus' } as const
 export type NoticeHold = (typeof NoticeHold)[keyof typeof NoticeHold]
 const held: Record<NoticeHold, boolean> = { pointer: false, focus: false }
@@ -23,7 +24,7 @@ function show(next: typeof current) {
   clearTimeout(timer)
   held.pointer = held.focus = false
   current = next
-  timer = next && setTimeout(() => show(undefined), SHOWN_FOR)
+  timer = next && !next.action ? setTimeout(() => show(undefined), SHOWN_FOR) : undefined
   emit()
 }
 
@@ -31,7 +32,7 @@ export function holdNotice(by: NoticeHold, on: boolean) {
   const was = holding()
   held[by] = on
   if (holding()) clearTimeout(timer)
-  else if (was && current) timer = setTimeout(() => show(undefined), SHOWN_FOR)
+  else if (was && current && !current.action) timer = setTimeout(() => show(undefined), SHOWN_FOR)
 }
 
 // For the message's element going away, which leaves no pointer or focus to let go of it.
@@ -53,6 +54,11 @@ export function notify(text: string, error = false, action?: NoticeAction) {
 // Drops the message now: a dialog that opens starts a new task, and an old message would sit over it.
 export function clearNotice() {
   if (current) show(undefined)
+}
+
+// For a route change: a message with an action no longer fits the page it was shown for.
+export function clearActionNotice() {
+  if (current?.action) show(undefined)
 }
 
 // `action` completes "Couldn't …": "resolve the issue".

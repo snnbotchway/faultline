@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
-import { useHotkeys } from '@/lib/hotkeys'
-import { holdNotice, NoticeHold, releaseNotice, useNotice } from '@/lib/notice'
+import { overlayOpen, useHotkeys } from '@/lib/hotkeys'
+import { clearActionNotice, clearNotice, holdNotice, NoticeHold, releaseNotice, useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
 import { valueName } from '@/lib/text'
 import { Theme, useTheme } from '@/lib/theme'
@@ -359,9 +359,9 @@ export function SkipLink() {
       href={`#${MAIN_ID}`}
       onClick={(event) => {
         event.preventDefault()
-        document.getElementById(MAIN_ID)?.focus()
+        document.getElementById(MAIN_ID)?.focus({ preventScroll: true })
       }}
-      className="fixed top-1 left-1 z-[70] -translate-y-16 border bg-card px-3 py-2 text-sm font-medium shadow-float focus:translate-y-0"
+      className="fixed top-0 left-0 z-[70] flex h-11 min-w-44 -translate-y-full items-center border-r border-b bg-card px-3 text-sm font-medium shadow-float transition-transform focus:translate-y-0 md:px-4 motion-reduce:transition-none"
     >
       Skip to content
     </a>
@@ -370,7 +370,7 @@ export function SkipLink() {
 
 export function Main({ children }: { children: ReactNode }) {
   return (
-    <main id={MAIN_ID} tabIndex={-1} className="flex flex-1 flex-col focus-visible:outline-none">
+    <main id={MAIN_ID} tabIndex={-1} className="flex flex-1 flex-col outline-none">
       {children}
     </main>
   )
@@ -379,6 +379,20 @@ export function Main({ children }: { children: ReactNode }) {
 export function Notice() {
   const notice = useNotice()
   useEffect(() => releaseNotice, [])
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  useEffect(() => clearActionNotice(), [pathname])
+  const lasting = !!notice?.action
+  // Esc ends a message that has no timer. A dialog or menu has its own Esc, and wins.
+  useEffect(() => {
+    if (!lasting) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape' || event.defaultPrevented || overlayOpen()) return
+      event.stopPropagation()
+      clearNotice()
+    }
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [lasting])
   return (
     // While a dialog or sheet is open (the page's scroll is locked), the message moves to the top so it never covers it.
     <div

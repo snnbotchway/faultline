@@ -42,7 +42,7 @@ export const performance: Messages['performance'] = {
     failing: { label: 'En échec', short: 'En échec' },
   },
   mostTimeSpent: 'Le plus de temps passé',
-  mostRepeated: 'Plus répétées',
+  mostRepeated: 'Les plus répétées',
   sorts: {
     '-avg_duration': 'Plus lentes',
     avg_duration: 'Plus rapides',

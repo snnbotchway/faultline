@@ -47,7 +47,7 @@ export const logs: Messages['logs'] = {
   facets: { level: 'Niveau', service: 'Service', environment: 'Environnement', host: 'Hôte' },
   filtersInForce: 'Filtres actifs',
   removeFilter: (name, value) => `Retirer le filtre ${name} ${value}`,
-  hourRange: (from, to) => `${from} à ${to}`,
+  hourRange: (from, to) => `de ${from} à ${to}`,
 
   histogram: {
     bar: (when, count) => `${when}, ${plural(count, { one: '# journal', many: '# de journaux', other: '# journaux' })}`,

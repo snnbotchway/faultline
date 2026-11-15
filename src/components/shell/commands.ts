@@ -15,7 +15,8 @@ export const CommandGroup = {
 export type CommandGroup = (typeof CommandGroup)[keyof typeof CommandGroup]
 
 // `detail` is machine text shown muted after the label, such as a slug; it is searched with the label.
-export type Command = { id: string; group: CommandGroup; label: string; detail?: string; keys?: string; run: () => void }
+// `keywords` are searched but not shown; `lang` marks a label in another language than the screen's.
+export type Command = { id: string; group: CommandGroup; label: string; detail?: string; keywords?: string; lang?: string; keys?: string; run: () => void }
 
 // Screens register the commands that apply right now; a command that does not apply is simply absent.
 export const registry = new Map<symbol, Command[]>()

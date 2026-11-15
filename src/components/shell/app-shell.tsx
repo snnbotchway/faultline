@@ -297,6 +297,10 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
   )
 }
 
+// The word for "language" in each one Faultline has, and the languages' English names, so someone who cannot read the
+// screen still finds the way out of it.
+const LANGUAGE_KEYWORDS = 'language langue språk english french norwegian'
+
 export function AppShell({ org, children }: { org: string; children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [, first = '', inOrg, ...deeper] = pathname.split('/')
@@ -343,8 +347,8 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
     // The other languages, each by its own name, so a reader finds theirs whatever the screen is in now.
     ...Object.values(Locale)
       .filter((locale) => locale !== shownLocale)
-      .map((locale) => ({ id: `language:${locale}`, group: CommandGroup.language, label: LOCALE_NAMES[locale], run: () => chooseLanguage(locale) })),
-    ...(chosenLocale ? [{ id: 'language:browser', group: CommandGroup.language, label: t.shell.language.browser, run: () => chooseLanguage(undefined) }] : []),
+      .map((locale) => ({ id: `language:${locale}`, group: CommandGroup.language, label: LOCALE_NAMES[locale], lang: locale, keywords: LANGUAGE_KEYWORDS, run: () => chooseLanguage(locale) })),
+    ...(chosenLocale ? [{ id: 'language:browser', group: CommandGroup.language, label: t.shell.language.browser, keywords: LANGUAGE_KEYWORDS, run: () => chooseLanguage(undefined) }] : []),
     { id: 'profile', group: CommandGroup.account, label: t.shell.profile, run: () => void navigate({ to: '/profile' }) },
     { id: 'sign-out', group: CommandGroup.account, label: t.shell.signOut, run: () => void leave() },
   ]

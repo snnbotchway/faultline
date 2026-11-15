@@ -19,7 +19,7 @@ import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
 const GRID =
-  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[3rem_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_5rem_4rem_2rem]'
+  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[3rem_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_7rem_4rem_2rem]'
 
 /**
  * Every project the user can see, with how it is doing: open issues, errors per day, when it last broke.

@@ -149,7 +149,8 @@ function ReleaseIssues({ org, version }: { org: string; version: string }) {
   )
 }
 
-const ISSUE_COLUMNS = 'grid-cols-[minmax(0,1fr)_56px_80px] lg:grid-cols-[minmax(0,1fr)_64px_88px]'
+// Wide enough for the French and Norwegian headers ("Événements", "Vu en dernier").
+const ISSUE_COLUMNS = 'grid-cols-[minmax(0,1fr)_72px_104px] lg:grid-cols-[minmax(0,1fr)_80px_112px]'
 
 function IssueList({ org, label, count, issues, fresh = false, className }: { org: string; label: string; count: string; issues: Issue[]; fresh?: boolean; className?: string }) {
   const t = useT().releases.page

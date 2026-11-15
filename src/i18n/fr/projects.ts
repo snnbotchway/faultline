@@ -12,9 +12,8 @@ export const projects: Messages['projects'] = {
   noMatch: (query) => `Aucun projet ne correspond à « ${query} ».`,
   columns: {
     open: 'Ouverts',
-    project: 'Projet',
     errors: (days) => `Erreurs, ${days} derniers jours`,
-    lastSeen: 'Dernière vue',
+    lastSeen: 'Vu en dernier',
     alerts: 'Alertes',
   },
   setUp: (slug) => `Configurer ${slug}`,

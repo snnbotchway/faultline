@@ -30,7 +30,7 @@ export const releases: Messages['releases'] = {
     noIssues: 'Aucun problème ouvert n’a d’événements dans cette version.',
     moreIssues: 'Plus de problèmes',
     events: 'Événements',
-    lastSeen: 'Dernière vue',
+    lastSeen: 'Vu en dernier',
     deploys: 'Déploiements',
     deploysFailed: 'Les déploiements ne se sont pas chargés.',
     noDeploys: 'Aucun déploiement enregistré.',

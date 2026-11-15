@@ -12,7 +12,6 @@ export const projects = {
   noMatch: (query: string) => `No project matches “${query}”.`,
   columns: {
     open: 'Open',
-    project: 'Project',
     errors: (days: number) => `Errors, last ${days} days`,
     lastSeen: 'Last seen',
     alerts: 'Alerts',

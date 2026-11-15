@@ -43,11 +43,16 @@ export function ProjectList({ org }: { org?: string }) {
   if (!organizations.isPending && slugs.length === 0)
     return (
       <Screen title={t.noOrganization}>
-        {/* Offered even when not known to be allowed: the server's first organization is open to anyone. */}
-        <Button asChild variant="default">
-          <Link to="/organizations/new">{t.createOrganization}</Link>
-        </Button>
-        {creationOpen === false && <p className="prose-text text-muted-foreground">{t.orAskOwner}</p>}
+        {/* Offered even when not known to be allowed: the server's first organization is open to anyone. Shown once the
+            account and settings load, so the line below doesn't shift it. */}
+        {creationOpen !== undefined && (
+          <>
+            <Button asChild variant="default">
+              <Link to="/organizations/new">{t.createOrganization}</Link>
+            </Button>
+            {!creationOpen && <p className="prose-text text-muted-foreground">{t.orAskOwner}</p>}
+          </>
+        )}
       </Screen>
     )
 

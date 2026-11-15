@@ -2,7 +2,7 @@ import { CircleAlert, Repeat, TrendingUp } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 import type { TransactionGroup } from '@/api/performance'
 import { Skeleton } from '@/components/ui/skeleton'
-import { localized } from '@/i18n'
+import { localized, useT } from '@/i18n'
 import { dayLabel } from '@/features/issues/format'
 import { MarkLabels, Trace } from '@/features/issues/trace'
 import { Trend, type Axis, type Mark } from '@/features/issues/trend'
@@ -35,11 +35,12 @@ export function TransactionName({ group, className }: { group: Pick<TransactionG
 }
 
 export function Slower({ slower, since }: { slower: Regression; since?: string }) {
+  const t = useT().performance
   return (
     <span className="flex items-center gap-1 text-sm">
       <TrendingUp className="size-3 shrink-0 text-trend-spiking" />
       <span>
-        <span className="mono font-semibold">{formatFactor(slower.factor)}</span> slower{since ? ` since ${since}` : ' this week'}
+        {t.slower(<span className="mono font-semibold">{formatFactor(slower.factor)}</span>, since)}
       </span>
     </span>
   )
@@ -47,6 +48,7 @@ export function Slower({ slower, since }: { slower: Regression; since?: string }
 
 // What is wrong with a transaction, each as an icon and words.
 export function Signals({ transaction, className }: { transaction: Transaction; className?: string }) {
+  const t = useT().performance
   const worst = Math.max(0, ...transaction.repeats.map((pattern) => pattern.spansPerTxn))
   if (!worst && !transaction.slower && !transaction.failing) return null
   return (
@@ -54,18 +56,14 @@ export function Signals({ transaction, className }: { transaction: Transaction; 
       {worst > 0 && (
         <span className="flex items-center gap-1">
           <Repeat className="size-3 shrink-0 text-trend-spiking" />
-          <span>
-            Query repeats <span className="mono font-semibold">{formatTimes(worst)}</span>
-          </span>
+          <span>{t.queryRepeats(<span className="mono font-semibold">{formatTimes(worst)}</span>)}</span>
         </span>
       )}
       {transaction.slower && <Slower slower={transaction.slower} since={transaction.since} />}
       {transaction.failing && (
         <span className="flex items-center gap-1">
           <CircleAlert className="size-3 shrink-0 text-destructive" />
-          <span>
-            <span className="mono font-semibold">{formatPercent(transaction.group.errorRate)}</span> failed
-          </span>
+          <span>{t.failedShare(<span className="mono font-semibold">{formatPercent(transaction.group.errorRate)}</span>)}</span>
         </span>
       )}
     </span>
@@ -110,6 +108,17 @@ export function DurationBar({ p50, p95, className }: { p50: number; p95: number;
   )
 }
 
+// The full word where the day's column is wide enough for it, a shorter one on a phone.
+function Today() {
+  const t = useT()
+  return (
+    <>
+      <span className="max-md:hidden">{t.common.time.today}</span>
+      <span className="md:hidden">{t.performance.todayShort}</span>
+    </>
+  )
+}
+
 const AXIS_WIDTH = 'w-14'
 const dayOfMonth = localized((tag) => new Intl.DateTimeFormat(tag, { day: 'numeric' }))
 
@@ -117,9 +126,10 @@ const dayOfMonth = localized((tag) => new Intl.DateTimeFormat(tag, { day: 'numer
 // every day is named, and releases are marked. A day with no requests stays on the zero line. The
 // latest day of a transaction that got slower is drawn in the spiking colour, as in the inbox.
 export function WeekChart({ buckets, marks, axis, slower, height, className }: { buckets: number[]; marks: Mark[]; axis: Axis; slower: boolean; height: number; className?: string }) {
+  const t = useT()
   const peak = Math.max(...buckets, 0)
   return (
-    <div className={cn('flex', className)} role="img" aria-label={`Time per request for each of the last ${axis.count} days, peak ${formatMs(peak)}`}>
+    <div className={cn('flex', className)} role="img" aria-label={t.performance.weekChart(axis.count, formatMs(peak))}>
       <div className={cn('mono shrink-0 pt-5 pr-2 text-right text-xs text-muted-foreground', AXIS_WIDTH)} aria-hidden>
         <div className="flex flex-col justify-between" style={{ height }}>
           <span className="-translate-y-1/2">{formatMs(peak)}</span>
@@ -134,7 +144,7 @@ export function WeekChart({ buckets, marks, axis, slower, height, className }: {
         <div className="mono mt-1 flex gap-px text-xs text-muted-foreground">
           {buckets.map((_, index) => (
             <span key={index} className="min-w-0 flex-1 truncate text-center">
-              {index === buckets.length - 1 ? 'Today' : index === 0 ? dayLabel(axis.start) : dayOfMonth().format((axis.start + index * axis.size) * 1000)}
+              {index === buckets.length - 1 ? <Today /> : index === 0 ? dayLabel(axis.start) : dayOfMonth().format((axis.start + index * axis.size) * 1000)}
             </span>
           ))}
         </div>
@@ -157,8 +167,9 @@ export function Stat({ label, children, className }: { label: string; children: 
 }
 
 export function SkeletonRows({ rows = 8 }: { rows?: number }) {
+  const t = useT().performance
   return (
-    <ul aria-busy aria-label="Loading">
+    <ul aria-busy aria-label={t.loading}>
       {Array.from({ length: rows }, (_, index) => (
         <li key={index} className="space-y-2 border-b px-3 py-3 md:px-4">
           <Skeleton className="h-4 w-2/5" />
@@ -173,5 +184,5 @@ export function SkeletonRows({ rows = 8 }: { rows?: number }) {
 // What to do when no transaction has request details: GlitchTip only keeps its spans with cold storage on,
 // which the README tells an admin how to turn on.
 export function SpanStorageHint() {
-  return <p className="text-sm text-muted-foreground">Ask your admin to turn on request details.</p>
+  return <p className="text-sm text-muted-foreground">{useT().performance.askAdmin}</p>
 }

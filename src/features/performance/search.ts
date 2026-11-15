@@ -4,22 +4,13 @@ import { projectIds, searchId, searchText as text } from '@/lib/search'
 export const View = { all: 'all', repeated: 'repeated', slower: 'slower', failing: 'failing' } as const
 export type View = (typeof View)[keyof typeof View]
 
-// How the list of transactions can be ordered. Time spent is ranked in the browser; the rest are the backend's sorts.
-export const SORTS: { value: TransactionSort; label: string }[] = [
-  { value: '-avg_duration', label: 'Slowest' },
-  { value: 'avg_duration', label: 'Fastest' },
-  { value: '-count', label: 'Most requests' },
-  { value: 'count', label: 'Fewest requests' },
-  { value: '-created', label: 'Newest' },
-]
+// How the list of transactions can be ordered, named in the catalog. Time spent is ranked in the browser; the rest are the backend's sorts.
+export const SORTS = ['-avg_duration', 'avg_duration', '-count', 'count', '-created'] as const satisfies readonly TransactionSort[]
 
 export const RepeatOrder = { share: 'share', total: 'total' } as const
 export type RepeatOrder = (typeof RepeatOrder)[keyof typeof RepeatOrder]
 
-export const REPEAT_ORDERS: { value: RepeatOrder; label: string }[] = [
-  { value: RepeatOrder.share, label: 'Largest share of request' },
-  { value: RepeatOrder.total, label: 'Most time spent' },
-]
+export const REPEAT_ORDERS = [RepeatOrder.share, RepeatOrder.total] as const
 
 export type PerformanceSearch = {
   view?: View
@@ -39,12 +30,12 @@ export function validatePerformanceSearch(search: Record<string, unknown>): Perf
   return {
     view: Object.values(View).find((view) => view === search.view && view !== View.all),
     query: text(search.query),
-    order: SORTS.find((sort) => sort.value === order)?.value ?? REPEAT_ORDERS.find((item) => item.value === order)?.value,
+    order: SORTS.find((sort) => sort === order) ?? REPEAT_ORDERS.find((item) => item === order),
     project: projectIds(search.project),
     group: searchId(search.group),
     pattern: text(search.pattern),
   }
 }
 
-export const transactionSort = (search: PerformanceSearch) => SORTS.find((sort) => sort.value === search.order)?.value
-export const repeatOrder = (search: PerformanceSearch) => REPEAT_ORDERS.find((item) => item.value === search.order)?.value
+export const transactionSort = (search: PerformanceSearch) => SORTS.find((sort) => sort === search.order)
+export const repeatOrder = (search: PerformanceSearch) => REPEAT_ORDERS.find((item) => item === search.order)

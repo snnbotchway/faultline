@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { compact } from '@/features/issues/format'
+import { useT } from '@/i18n'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { FAILING_PERCENT, useTransaction } from './data'
@@ -43,9 +44,10 @@ function RequestSplit({ rows, outside, total, kind }: { rows: SpanRow[]; outside
 }
 
 function KindFilter({ kinds, kind, onChange }: { kinds: string[]; kind: string | undefined; onChange: (kind: string | undefined) => void }) {
+  const t = useT().performance
   if (kinds.length < 2) return null
   return (
-    <div className="mt-3 flex flex-wrap gap-1" role="group" aria-label="Kind of span">
+    <div className="mt-3 flex flex-wrap gap-1" role="group" aria-label={t.detail.kindOfSpan}>
       {[undefined, ...kinds].map((item) => (
         <button
           key={item ?? ''}
@@ -54,7 +56,7 @@ function KindFilter({ kinds, kind, onChange }: { kinds: string[]; kind: string |
           onClick={() => onChange(item)}
           className={cn('h-7 border px-3 max-lg:h-11 max-lg:px-4', item ? 'mono' : 'text-sm', item === kind ? 'border-foreground bg-foreground text-background' : 'bg-card text-muted-foreground hover:text-foreground')}
         >
-          {item ?? 'All'}
+          {item ?? t.all}
         </button>
       ))}
     </div>
@@ -63,14 +65,16 @@ function KindFilter({ kinds, kind, onChange }: { kinds: string[]; kind: string |
 
 // One transaction: how long it takes, how that changed over the week, and where an average request spends its time.
 export function TransactionPane({ org, groupId }: { org: string; groupId: string }) {
+  const t = useT()
+  const p = t.performance
   const { detail, axis, marks, project, missing, denied, failed, retry } = useTransaction(org, groupId)
   const [kind, setKind] = useState<string>()
-  if (missing) return <Screen title="This transaction no longer exists" />
-  if (denied) return <Screen title="You can't see this transaction" />
+  if (missing) return <Screen title={p.errors.transactionMissing} />
+  if (denied) return <Screen title={p.errors.transactionDenied} />
   if (failed)
     return (
-      <Screen title="This transaction didn't load">
-        <Button onClick={retry}>Try again</Button>
+      <Screen title={p.errors.transaction}>
+        <Button onClick={retry}>{t.common.tryAgain}</Button>
       </Screen>
     )
   if (!detail) return <SkeletonRows rows={6} />
@@ -84,35 +88,35 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
       </h2>
       <p className="mono mt-1 text-muted-foreground">{project}</p>
 
-      <SectionLabel className="mt-5">All time</SectionLabel>
+      <SectionLabel className="mt-5">{p.allTime}</SectionLabel>
       <dl className="mt-2 grid grid-cols-3 gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-8">
-        <Stat label="Typical">{formatMs(group.p50 ?? 0)}</Stat>
-        <Stat label="Slow">{formatMs(group.p95 ?? 0)}</Stat>
-        <Stat label="Average">{formatMs(group.avgDuration)}</Stat>
-        <Stat label="Requests">{compact(group.count)}</Stat>
-        <Stat label="Failed">
+        <Stat label={p.detail.stats.typical}>{formatMs(group.p50 ?? 0)}</Stat>
+        <Stat label={p.detail.stats.slow}>{formatMs(group.p95 ?? 0)}</Stat>
+        <Stat label={p.detail.stats.average}>{formatMs(group.avgDuration)}</Stat>
+        <Stat label={p.detail.stats.requests}>{compact(group.count)}</Stat>
+        <Stat label={p.detail.stats.failed}>
           <span className={cn(group.errorRate >= FAILING_PERCENT && 'text-destructive')}>{formatPercent(group.errorRate)}</span>
         </Stat>
       </dl>
 
       {hasSpans ? (
         <>
-          {shared && <p className="mt-6 text-sm text-muted-foreground">The chart and breakdown also count the other transactions named <span className="mono text-foreground">{group.transaction}</span>.</p>}
+          {shared && <p className="mt-6 text-sm text-muted-foreground">{p.detail.sharedName(<span className="mono text-foreground">{group.transaction}</span>)}</p>}
           <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <SectionLabel>Time per request, 7 days</SectionLabel>
+            <SectionLabel>{p.detail.timePerRequest}</SectionLabel>
             {slower && <Slower slower={slower} since={since} />}
           </div>
           <WeekChart buckets={time} marks={marks} axis={axis} slower={!!slower} height={56} className="mt-2" />
 
           <div className="mt-6 flex items-baseline justify-between gap-3">
-            <SectionLabel>Average request, 7 days</SectionLabel>
+            <SectionLabel>{p.detail.averageRequest}</SectionLabel>
             <span className="mono font-semibold">{formatMs(request.total)}</span>
           </div>
           <div className="mt-2">
             <RequestSplit rows={request.rows} outside={request.outside} total={request.total} kind={kind} />
           </div>
           <KindFilter kinds={kinds} kind={kind} onChange={setKind} />
-          <ol className="mt-3 border-t" aria-label="Parts of a request, largest first">
+          <ol className="mt-3 border-t" aria-label={p.detail.parts}>
             {request.rows.map((row, index) =>
               kind && kindOf(row.op) !== kind ? null : (
                 <li key={spanKey(row)} className={SPAN_GRID}>
@@ -123,11 +127,11 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
                     </span>
                     <span className="mono mt-1 flex flex-wrap gap-x-3 text-muted-foreground">
                       <span className={cn('flex items-center gap-1', row.repeats && 'font-semibold text-foreground')}>
-                        {row.repeats && <Repeat className="size-3 text-trend-spiking" aria-label="Repeats" />}
-                        {formatTimes(row.times)} per request
+                        {row.repeats && <Repeat className="size-3 text-trend-spiking" aria-label={p.detail.repeats} />}
+                        {p.perRequest(formatTimes(row.times))}
                       </span>
-                      <span>{formatMs(row.avgDuration)} each</span>
-                      <span>slow {formatMs(row.p95Duration)}</span>
+                      <span>{p.each(formatMs(row.avgDuration))}</span>
+                      <span>{p.slow(formatMs(row.p95Duration))}</span>
                     </span>
                   </span>
                   <span className="mono text-right tabular-nums">
@@ -140,7 +144,7 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
             {request.outside > 0 && !kind && (
               <li className={SPAN_GRID}>
                 <span />
-                <span>Not broken down</span>
+                <span>{p.detail.notBrokenDown}</span>
                 <span className="mono text-right tabular-nums">
                   <span className="block font-semibold">{formatMs(request.outside)}</span>
                   <span className="text-muted-foreground">{formatPercent((request.outside / request.total) * 100)}</span>
@@ -151,7 +155,7 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
         </>
       ) : (
         <div className="mt-6 border-t pt-4">
-          <p className="font-medium">No request details in the last 7 days</p>
+          <p className="font-medium">{p.noDetails}</p>
           <div className="mt-1">
             <SpanStorageHint />
           </div>
@@ -163,11 +167,12 @@ export function TransactionPane({ org, groupId }: { org: string; groupId: string
 
 // The transaction as a page of its own: where a phone opens it, and where a link to it lands.
 export function TransactionPage({ org, groupId }: { org: string; groupId: string }) {
-  useTitle('Transaction', 'Performance')
+  const t = useT()
+  useTitle(t.performance.transaction, t.shell.sections.performance)
   return (
     <>
       <PageBar>
-        <h1 className="sr-only">Transaction</h1>
+        <h1 className="sr-only">{t.performance.transaction}</h1>
         <Link
           to="/$org/performance/transaction-groups"
           params={{ org }}
@@ -175,7 +180,7 @@ export function TransactionPage({ org, groupId }: { org: string; groupId: string
           className="flex h-11 items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="size-4" />
-          Performance
+          {t.shell.sections.performance}
         </Link>
       </PageBar>
       <div className="mx-auto w-full max-w-3xl">

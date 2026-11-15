@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { CountLabel } from '@/components/count-label'
 import { compact } from '@/features/issues/format'
+import { messages, useT } from '@/i18n'
 import { LOADING, UNAVAILABLE, counted, type Count } from '@/lib/format'
-import { plural, valueName } from '@/lib/text'
+import { valueName } from '@/lib/text'
 import { useHotkeys } from '@/lib/hotkeys'
 import { isDesktop, openBeside } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
@@ -24,8 +25,14 @@ import { REPEAT_ORDERS, RepeatOrder, SORTS, View, repeatOrder, transactionSort, 
 import { TransactionPane } from './transaction'
 
 const DEFAULT_ORDER = ''
-const TRANSACTION_ORDERS = [{ value: DEFAULT_ORDER, label: 'Most time spent' }, ...SORTS]
-const REPEATED_ORDERS = [{ value: DEFAULT_ORDER, label: 'Most repeated' }, ...REPEAT_ORDERS]
+const transactionOrders = () => {
+  const t = messages().performance
+  return [{ value: DEFAULT_ORDER, label: t.mostTimeSpent }, ...SORTS.map((value) => ({ value, label: t.sorts[value] }))]
+}
+const repeatedOrders = () => {
+  const t = messages().performance
+  return [{ value: DEFAULT_ORDER, label: t.mostRepeated }, ...REPEAT_ORDERS.map((value) => ({ value, label: t.repeatOrders[value] }))]
+}
 
 // What a row's bar and figure show, which follows from how the list is ordered.
 const Measure = { time: 'time', duration: 'duration', requests: 'requests' } as const
@@ -40,14 +47,13 @@ const MEASURE_OF: Record<TransactionSort, Measure> = {
 }
 const measureOf = (order: TransactionSort | undefined): Measure => (order ? MEASURE_OF[order] : Measure.time)
 
-const requests = (transaction: Transaction) => plural(compact(transaction.group.count), 'request')
-const typical = (transaction: Transaction) => `typical ${formatMs(transaction.group.p50 ?? 0)}`
-const slow = (transaction: Transaction) => `slow ${formatMs(transaction.group.p95 ?? 0)}`
-const total = (transaction: Transaction) => `total ${formatMs(transaction.totalTime)}`
+// Under a thousand the count is a number, so its word agrees with it; above, it is shortened (`1.2k`).
+const requests = ({ group }: Transaction) => messages().performance.requests(group.count < 1000 ? group.count : compact(group.count))
+const typical = (transaction: Transaction) => messages().performance.typical(formatMs(transaction.group.p50 ?? 0))
+const slow = (transaction: Transaction) => messages().performance.slow(formatMs(transaction.group.p95 ?? 0))
+const total = (transaction: Transaction) => messages().performance.total(formatMs(transaction.totalTime))
 
 type MeasureView = {
-  // The labels above the rows, left and right.
-  headings: [string, string]
   // The row's figure, at the right of its name.
   figure: (transaction: Transaction) => string
   // The row's bar, scaled to the largest in the list. Undefined draws the span from typical to slow instead.
@@ -60,21 +66,18 @@ type MeasureView = {
 
 const MEASURES: Record<Measure, MeasureView> = {
   [Measure.time]: {
-    headings: ['Share of time spent', 'Total, all time'],
     figure: (transaction) => formatMs(transaction.totalTime),
     size: (transaction) => transaction.share,
     percent: true,
     details: [requests, typical, slow],
   },
   [Measure.duration]: {
-    headings: ['Typical to slow', 'Slow, all time'],
     figure: (transaction) => formatMs(transaction.group.p95 ?? 0),
     size: undefined,
     percent: false,
     details: [requests, typical, total],
   },
   [Measure.requests]: {
-    headings: ['Requests', 'All time'],
     figure: (transaction) => compact(transaction.group.count),
     size: (transaction) => transaction.group.count,
     percent: false,
@@ -82,12 +85,12 @@ const MEASURES: Record<Measure, MeasureView> = {
   },
 }
 
-// `short` is the tab's label on a phone, where all four have to fit across.
-const VIEWS: { view: View; label: string; short: string; test?: (transaction: Transaction) => boolean }[] = [
-  { view: View.all, label: 'All', short: 'All' },
-  { view: View.repeated, label: 'Repeated queries', short: 'Repeated' },
-  { view: View.slower, label: 'Slower this week', short: 'Slower', test: (transaction) => !!transaction.slower },
-  { view: View.failing, label: 'Failing', short: 'Failing', test: (transaction) => transaction.failing },
+// Each tab is named in the catalog, with a short name for a phone, where all four have to fit across.
+const VIEWS: { view: View; test?: (transaction: Transaction) => boolean }[] = [
+  { view: View.all },
+  { view: View.repeated },
+  { view: View.slower, test: (transaction) => !!transaction.slower },
+  { view: View.failing, test: (transaction) => transaction.failing },
 ]
 
 const matches = (repeat: Repeat, query: string | undefined) => {
@@ -107,10 +110,12 @@ type Go = (patch: Partial<PerformanceSearch>) => void
 // that scrolls sideways when it does not fit.
 function Views({ org, search, counts }: { org: string; search: PerformanceSearch; counts: Record<View, Count> }) {
   const current = search.view ?? View.all
+  const t = useT()
   return (
     <div className="scroll-row flex items-center gap-1 border-b px-3 py-2 md:px-4">
-      <nav className="flex shrink-0 items-center gap-1" aria-label="Show">
-        {VIEWS.map(({ view, label, short }) => {
+      <nav className="flex shrink-0 items-center gap-1" aria-label={t.common.show}>
+        {VIEWS.map(({ view }) => {
+          const { label, short } = t.performance.views[view]
           const on = view === current
           // The two kinds of list are ordered differently, so an order does not carry from one to the other.
           const keepsOrder = (view === View.repeated) === (current === View.repeated)
@@ -137,11 +142,13 @@ function Views({ org, search, counts }: { org: string; search: PerformanceSearch
 }
 
 function SortMenu({ orders, order, onChange }: { orders: { value: string; label: string }[]; order: string | undefined; onChange: (order: string) => void }) {
+  const t = useT().performance
   const label = orders.find((item) => item.value === (order ?? DEFAULT_ORDER))?.label
+  const name = valueName(t.sort, label)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label={valueName('Sort', label)} title={valueName('Sort', label)}>
+        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label={name} title={name}>
           <ArrowDownWideNarrow />
           <span className="truncate max-lg:hidden">{label}</span>
         </Button>
@@ -197,6 +204,7 @@ function TransactionRow({ org, transaction, measure, peak, current, onOpen }: { 
 }
 
 function TransactionList({ org, search, data, rows, go }: { org: string; search: PerformanceSearch; data: Transactions; rows: Transaction[]; go: Go }) {
+  const t = useT().performance
   const measure = MEASURES[measureOf(transactionSort(search))]
   const open = rows.find((row) => row.group.id === search.group) ?? rows[0]
   const { size } = measure
@@ -211,22 +219,22 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
     const view = search.view ?? View.all
     if (search.query)
       return (
-        <Screen title="No transactions match">
-          <Button onClick={() => go({ query: undefined })}>Clear the search</Button>
+        <Screen title={t.empty.noMatch}>
+          <Button onClick={() => go({ query: undefined })}>{t.clearSearch}</Button>
         </Screen>
       )
     if (view === View.slower)
       return data.noSpanData ? (
-        <Screen title="No request details in the last 7 days">
+        <Screen title={t.noDetails}>
           <SpanStorageHint />
         </Screen>
       ) : (
-        <Screen title="Nothing got slower this week" />
+        <Screen title={t.empty.nothingSlower} />
       )
-    if (view === View.failing) return <Screen title="No transaction is failing" />
-    return <Screen title="No project has sent transactions yet" />
+    if (view === View.failing) return <Screen title={t.empty.nothingFailing} />
+    return <Screen title={t.empty.noTransactions} />
   }
-  const [left, right] = measure.headings
+  const { left, right } = t.headings[measureOf(transactionSort(search))]
   return (
     <div className="flex flex-1 items-start">
       <div className="min-w-0 flex-1 lg:max-w-list lg:border-r">
@@ -238,7 +246,7 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
           {/* Clear of the rows' right-hand column, so the scale lines up with their bars. */}
           {!size && <DurationScale className="mt-1 mr-17" />}
         </div>
-        <ul aria-label="Transactions">
+        <ul aria-label={t.transactions}>
           {rows.map((transaction) => (
             <TransactionRow
               key={transaction.group.id}
@@ -253,7 +261,7 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
         </ul>
       </div>
       {open && (
-        <aside className="side-pane hidden min-w-0 flex-1 lg:block" aria-label="Transaction">
+        <aside className="side-pane hidden min-w-0 flex-1 lg:block" aria-label={t.transaction}>
           <TransactionPane org={org} groupId={String(open.group.id)} key={open.group.id} />
         </aside>
       )}
@@ -262,7 +270,8 @@ function TransactionList({ org, search, data, rows, go }: { org: string; search:
 }
 
 export function Performance({ org, search }: { org: string; search: PerformanceSearch }) {
-  useTitle('Performance')
+  const t = useT()
+  useTitle(t.shell.sections.performance)
   const navigate = useNavigate()
   // The search box searches queries in that tab, so it does not narrow the transactions they belong to.
   const data = useTransactions(org, search.view === View.repeated ? { ...search, query: undefined } : search)
@@ -291,40 +300,40 @@ export function Performance({ org, search }: { org: string; search: PerformanceS
     VIEWS.filter((item) => item.view !== view).map((item) => ({
       id: `show:${item.view}`,
       group: CommandGroup.show,
-      label: item.view === View.all ? 'All transactions' : item.label,
+      label: item.view === View.all ? t.performance.allTransactions : t.performance.views[item.view].label,
       run: () => go({ view: item.view === View.all ? undefined : item.view, order: undefined, group: undefined, pattern: undefined }),
     })),
   )
 
   return (
     <>
-      <ListPageBar title="Performance">
+      <ListPageBar title={t.shell.sections.performance}>
         <SearchField
           key={`${repeated} ${search.query}`}
           query={search.query}
-          label={repeated ? 'Search queries' : 'Search transactions'}
+          label={repeated ? t.performance.searchQueries : t.performance.searchTransactions}
           onSubmit={(query) => go({ query, group: undefined, pattern: undefined })}
           className="max-lg:order-last max-lg:basis-full lg:max-w-md"
         />
         <ProjectMenu org={org} value={search.project} onChange={(project) => go({ project, group: undefined, pattern: undefined })} className="ml-auto" />
         <SortMenu
-          orders={repeated ? REPEATED_ORDERS : TRANSACTION_ORDERS}
+          orders={repeated ? repeatedOrders() : transactionOrders()}
           order={order}
-          onChange={(value) => go({ order: [...SORTS, ...REPEAT_ORDERS].find((item) => item.value === value)?.value, group: undefined, pattern: undefined })}
+          onChange={(value) => go({ order: [...SORTS, ...REPEAT_ORDERS].find((item) => item === value), group: undefined, pattern: undefined })}
         />
       </ListPageBar>
       <Views org={org} search={search} counts={counts} />
       {data.loading ? (
         <SkeletonRows />
       ) : data.denied ? (
-        <Screen title="You can't see performance in this organization" />
+        <Screen title={t.performance.errors.denied} />
       ) : data.failed ? (
-        <Screen title="The transactions didn't load">
-          <Button onClick={data.retry}>Try again</Button>
+        <Screen title={t.performance.errors.transactions}>
+          <Button onClick={data.retry}>{t.common.tryAgain}</Button>
         </Screen>
       ) : partFailed ? (
-        <Screen title={repeated ? "The repeated queries didn't load" : "Slower transactions didn't load"}>
-          <Button onClick={data.retry}>Try again</Button>
+        <Screen title={repeated ? t.performance.errors.repeats : t.performance.errors.slower}>
+          <Button onClick={data.retry}>{t.common.tryAgain}</Button>
         </Screen>
       ) : repeated && data.countingRepeats ? (
         <SkeletonRows />

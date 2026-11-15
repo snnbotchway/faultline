@@ -205,11 +205,11 @@ function Share({ share, flat, children }: { share: number; flat: boolean; childr
   return (
     <>
       {flat ? (
-        <span className="w-9 shrink-0" aria-hidden />
+        <span className="w-10 shrink-0" aria-hidden />
       ) : (
         <>
-          <span className="absolute inset-y-1 left-12 bg-foreground/10" style={{ width: `calc((100% - 3rem) * ${share})` }} aria-hidden />
-          <span className="relative w-9 shrink-0 text-right text-muted-foreground">{percent(share * 100)}</span>
+          <span className="absolute inset-y-1 left-13 bg-foreground/10" style={{ width: `calc((100% - 3.25rem) * ${share})` }} aria-hidden />
+          <span className="relative w-10 shrink-0 text-right text-muted-foreground">{percent(share * 100)}</span>
         </>
       )}
       <span className="relative min-w-0 flex-1 truncate">{children}</span>

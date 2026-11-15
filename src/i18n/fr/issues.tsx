@@ -5,7 +5,7 @@ export const issues: Messages['issues'] = {
   issue: 'Problème',
   issueCount: (count) => plural(count, { one: '# problème', many: '# de problèmes', other: '# problèmes' }),
   issueNoun: (count) => plural(count, { one: 'problème', other: 'problèmes' }),
-  eventCount: (count) => plural(count, { one: '# événement', many: '# d’événements', other: '# événements' }),
+  eventCount: (count) => plural(count, { one: '# événement', many: '# d’événements', other: '# événements' }),
 
   views: { unresolved: 'Problèmes non résolus', resolved: 'Problèmes résolus', ignored: 'Problèmes ignorés', all: 'Tous les problèmes' },
   heading: 'Problèmes',
@@ -67,8 +67,8 @@ export const issues: Messages['issues'] = {
     where: 'Où',
     open: 'Ouvrir',
     threw: 'a levé',
-    firstSeen: 'première vue',
-    lastSeen: 'dernière vue',
+    firstSeen: 'vu en premier',
+    lastSeen: 'vu en dernier',
   },
 
   search: {

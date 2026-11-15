@@ -5,7 +5,7 @@ export const issues: Messages['issues'] = {
   issue: 'Problem',
   issueCount: (count) => plural(count, { one: '# problem', other: '# problemer' }),
   issueNoun: (count) => plural(count, { one: 'problem', other: 'problemer' }),
-  eventCount: (count) => plural(count, { one: '# hendelse', other: '# hendelser' }),
+  eventCount: (count) => plural(count, { one: '# hendelse', other: '# hendelser' }),
 
   views: { unresolved: 'Uløste problemer', resolved: 'Løste problemer', ignored: 'Ignorerte problemer', all: 'Alle problemer' },
   heading: 'Problemer',

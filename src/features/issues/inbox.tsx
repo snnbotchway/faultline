@@ -299,13 +299,13 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
               <span />
             )}
             <span className="label-caps">{w.inbox.columns.issue}</span>
-            <span className="label-caps mx-4 flex items-center justify-between">
-              <span>{axisStartLabel(period, axis.start)}</span>
-              <span className="flex items-center gap-2">
-                {w.inbox.eventsPer(unit.unit)}
+            <span className="label-caps mx-4 flex min-w-0 items-center justify-between gap-2">
+              <span className="shrink-0 whitespace-nowrap">{axisStartLabel(period, axis.start)}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate">{w.inbox.eventsPer(unit.unit)}</span>
                 <PeriodToggle period={period} onChange={setPeriod} />
               </span>
-              <span>{unit.now}</span>
+              <span className="shrink-0 whitespace-nowrap">{unit.now}</span>
             </span>
             <span className="label-caps text-right">{w.inbox.columns.events}</span>
             <span className="label-caps text-right">{w.inbox.columns.seen}</span>

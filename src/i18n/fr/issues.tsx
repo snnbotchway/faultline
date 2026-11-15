@@ -33,6 +33,7 @@ export const issues: Messages['issues'] = {
     loadMore: 'Charger plus',
     selectAll: 'Tout sélectionner',
     columns: { issue: 'Problème', events: 'Événements', seen: 'Vu', assignee: 'Assigné à' },
+    columnWidths: { events: '88px', seen: '88px' },
     trends: {
       new: { heading: 'Nouveaux', word: (count) => (count === 1 ? 'nouveau' : 'nouveaux') },
       spiking: { heading: 'En hausse', word: () => 'en hausse' },
@@ -56,8 +57,8 @@ export const issues: Messages['issues'] = {
     select: (shortId) => `Sélectionner ${shortId}`,
     details: 'Détails',
     detailsOf: (shortId) => `Détails de ${shortId}`,
-    summary: (seen, age, events) => `il y a ${seen} · âge ${age} · ${events}`,
-    age: (age) => `âge ${age}`,
+    summary: (seen, age, events) => [`il y a ${seen}`, `depuis ${age}`, events],
+    age: (age) => `depuis ${age}`,
     lastSeenAt: (moment) => `Vu en dernier : ${moment}`,
     firstSeenAt: (moment) => `Vu en premier : ${moment}`,
     assignedChange: (name) => `Assigné à ${name}. Modifier`,

@@ -33,6 +33,7 @@ export const issues: Messages['issues'] = {
     loadMore: 'Last inn flere',
     selectAll: 'Velg alle',
     columns: { issue: 'Problem', events: 'Hendelser', seen: 'Sett', assignee: 'Tildelt' },
+    columnWidths: { events: '88px', seen: '88px' },
     trends: {
       new: { heading: 'Nye', word: (count) => (count === 1 ? 'ny' : 'nye') },
       spiking: { heading: 'Økende', word: () => 'økende' },
@@ -56,7 +57,7 @@ export const issues: Messages['issues'] = {
     select: (shortId) => `Velg ${shortId}`,
     details: 'Detaljer',
     detailsOf: (shortId) => `Detaljer for ${shortId}`,
-    summary: (seen, age, events) => `${seen} siden · alder ${age} · ${events}`,
+    summary: (seen, age, events) => [`${seen} siden`, `alder ${age}`, events],
     age: (age) => `alder ${age}`,
     lastSeenAt: (moment) => `Sist sett ${moment}`,
     firstSeenAt: (moment) => `Først sett ${moment}`,

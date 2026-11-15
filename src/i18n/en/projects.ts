@@ -16,6 +16,8 @@ export const projects = {
     lastSeen: 'Last seen',
     alerts: 'Alerts',
   },
+  // The phone's open column, wide enough for its header.
+  openWidth: '3rem',
   setUp: (slug: string) => `Set up ${slug}`,
   issuesIn: (slug: string) => `Issues in ${slug}`,
   settingsOf: (slug: string) => `Settings of ${slug}`,

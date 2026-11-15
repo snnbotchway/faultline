@@ -16,6 +16,7 @@ export const projects: Messages['projects'] = {
     lastSeen: 'Sist sett',
     alerts: 'Varsler',
   },
+  openWidth: '3rem',
   setUp: (slug) => `Sett opp ${slug}`,
   issuesIn: (slug) => `Problemer i ${slug}`,
   settingsOf: (slug) => `Innstillinger for ${slug}`,

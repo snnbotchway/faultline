@@ -34,7 +34,7 @@ export function SelectionBar({ offer, matching, actions }: Props) {
       <Button variant="ghost" size="icon-sm" onClick={actions.clear} aria-label={w.clear}>
         <X />
       </Button>
-      <span className="font-medium">{w.selected(<span className="mono">{offer.count}</span>, offer.count !== '1')}</span>
+      <span className="font-medium whitespace-nowrap">{w.selected(<span className="mono">{offer.count}</span>, offer.count !== '1')}</span>
       {actions.selectAllMatching && (
         <Button variant="link" onClick={actions.selectAllMatching}>
           {w.selectAllMatching(matching ?? '')}
@@ -82,7 +82,7 @@ export function SelectionSheet({ offer, matching, actions }: Props) {
         <Button variant="ghost" size="icon-touch" onClick={actions.clear} aria-label={w.clear}>
           <X />
         </Button>
-        <span className="mr-auto font-medium">{w.selected(<span className="mono">{offer.count}</span>, offer.count !== '1')}</span>
+        <span className="mr-auto font-medium whitespace-nowrap">{w.selected(<span className="mono">{offer.count}</span>, offer.count !== '1')}</span>
         {offer.statuses.slice(0, 2).map((action, index) => (
           <Button key={action.status} size="touch" variant={index === 0 ? 'default' : 'outline'} onClick={() => actions.setStatus(action.status)}>
             {action.action}

@@ -1,7 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Plug, Plus, Settings } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { Scope, instanceSettingsQuery, organizationsQuery, projectsQuery } from '@/api/organizations'
 import { ACTIVITY_DAYS, projectActivityQuery, projectAlertCountQuery, type Project } from '@/api/projects'
 import { PageBar, Screen } from '@/components/shell/app-shell'
@@ -18,8 +18,9 @@ import { useSeen } from '@/lib/seen'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 
+// On a phone the open column is as wide as each language's header needs (`openWidth` in the catalog).
 const GRID =
-  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[4rem_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_7rem_4rem_2rem]'
+  'grid items-center gap-x-4 px-3 md:px-4 grid-cols-[var(--open)_minmax(0,1fr)_5.5rem] lg:grid-cols-[4rem_minmax(0,1fr)_18rem_7rem_4rem_2rem]'
 
 /**
  * Every project the user can see, with how it is doing: open issues, errors per day, when it last broke.
@@ -83,7 +84,7 @@ export function ProjectList({ org }: { org?: string }) {
       {empty ? (
         <Screen title={t.noProjects}>{target && <NewProjectButton org={target} />}</Screen>
       ) : (
-        <>
+        <div style={{ '--open': t.openWidth } as CSSProperties}>
           <div className="border-b px-3 py-2 lg:hidden">{find('h-9')}</div>
           <div className={cn(GRID, 'h-8 border-b')}>
             <span className="label-caps text-right">{t.columns.open}</span>
@@ -120,7 +121,7 @@ export function ProjectList({ org }: { org?: string }) {
             </section>
           ))}
           {!loading && shown === 0 && <p className="px-3 py-10 text-center text-muted-foreground">{t.noMatch(query)}</p>}
-        </>
+        </div>
       )}
     </>
   )

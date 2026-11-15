@@ -1,6 +1,6 @@
 import { keepPreviousData, useInfiniteQuery, useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { StatsPeriod, issueListQuery, issueStatsQuery, type IssueStatus } from '@/api/issues'
 import { canWriteEvents, organizationQuery } from '@/api/organizations'
 import { recentReleasesQuery } from '@/api/releases'
@@ -254,98 +254,101 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
         <TimeRangeMenu chip search={search} onChange={go} />
       </div>
 
-      {list.isPending ? (
-        <SkeletonRows />
-      ) : list.isError ? (
-        <Screen title={w.inbox.failed}>
-          <Button onClick={() => void list.refetch()}>{t.common.tryAgain}</Button>
-        </Screen>
-      ) : rows.length === 0 ? (
-        <Screen title={isFiltered(search) ? w.inbox.noMatch : w.inbox.nothingUnresolved}>
-          {isFiltered(search) && <Button onClick={() => void navigate({ to: '/$org/issues', params: { org }, search: {} })}>{w.inbox.showUnresolved}</Button>}
-        </Screen>
-      ) : (
-        <>
-          <div className={cn('grid items-end border-b py-3 pr-3 pl-3 lg:pr-4 lg:pl-0', COLUMNS)}>
-            <span className="max-lg:hidden" />
-            <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <span>
-                <span className="font-mono text-2xl font-semibold lg:text-3xl">{hits && hitsText(hits)}</span> {w.issueNoun(hits && !hits.capped ? hits.n : 2)}
+      {/* The figure columns are as wide as each language's headers need; `display: contents` keeps the sticky header's containing block. */}
+      <div className="contents" style={{ '--events': w.inbox.columnWidths.events, '--seen': w.inbox.columnWidths.seen } as CSSProperties}>
+        {list.isPending ? (
+          <SkeletonRows />
+        ) : list.isError ? (
+          <Screen title={w.inbox.failed}>
+            <Button onClick={() => void list.refetch()}>{t.common.tryAgain}</Button>
+          </Screen>
+        ) : rows.length === 0 ? (
+          <Screen title={isFiltered(search) ? w.inbox.noMatch : w.inbox.nothingUnresolved}>
+            {isFiltered(search) && <Button onClick={() => void navigate({ to: '/$org/issues', params: { org }, search: {} })}>{w.inbox.showUnresolved}</Button>}
+          </Screen>
+        ) : (
+          <>
+            <div className={cn('grid items-end border-b py-3 pr-3 pl-3 lg:pr-4 lg:pl-0', COLUMNS)}>
+              <span className="max-lg:hidden" />
+              <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span>
+                  <span className="font-mono text-2xl font-semibold lg:text-3xl">{hits && hitsText(hits)}</span> {w.issueNoun(hits && !hits.capped ? hits.n : 2)}
+                </span>
+                {groups
+                  .filter((group) => group.trend !== Trend.ongoing)
+                  .map((group) => (
+                    <span key={group.trend} className={group.color}>
+                      <span className="mono font-semibold">{group.rows.length}</span> {w.inbox.trends[group.trend].word(group.rows.length)}
+                    </span>
+                  ))}
+              </p>
+              <ReleaseTrace buckets={totals} marks={marks} height={36} className="max-lg:hidden lg:mx-4" />
+              <span className="mono col-span-4 pb-px text-muted-foreground max-lg:hidden">
+                {w.inbox.peak(compact(Math.max(...totals, 0)), unit.unit)}
               </span>
-              {groups
-                .filter((group) => group.trend !== Trend.ongoing)
-                .map((group) => (
-                  <span key={group.trend} className={group.color}>
-                    <span className="mono font-semibold">{group.rows.length}</span> {w.inbox.trends[group.trend].word(group.rows.length)}
-                  </span>
-                ))}
-            </p>
-            <ReleaseTrace buckets={totals} marks={marks} height={36} className="max-lg:hidden lg:mx-4" />
-            <span className="mono col-span-4 pb-px text-muted-foreground max-lg:hidden">
-              {w.inbox.peak(compact(Math.max(...totals, 0)), unit.unit)}
-            </span>
-          </div>
+            </div>
 
-          <div className={cn('sticky top-11 z-10 grid h-9 items-center border-b bg-background pr-4 max-lg:hidden', COLUMNS)}>
-            {canWrite ? (
-              <Checkbox
-                hit
-                className="mx-auto"
-                checked={offer.everyLoaded ? true : offer.selecting ? 'indeterminate' : false}
-                onCheckedChange={() => (offer.everyLoaded ? selection.clear() : selection.set(loadedIds))}
-                aria-label={w.inbox.selectAll}
-              />
-            ) : (
+            <div className={cn('sticky top-11 z-10 grid h-9 items-center border-b bg-background pr-4 max-lg:hidden', COLUMNS)}>
+              {canWrite ? (
+                <Checkbox
+                  hit
+                  className="mx-auto"
+                  checked={offer.everyLoaded ? true : offer.selecting ? 'indeterminate' : false}
+                  onCheckedChange={() => (offer.everyLoaded ? selection.clear() : selection.set(loadedIds))}
+                  aria-label={w.inbox.selectAll}
+                />
+              ) : (
+                <span />
+              )}
+              <span className="label-caps">{w.inbox.columns.issue}</span>
+              <span className="label-caps mx-4 flex min-w-0 items-center justify-between gap-2">
+                <span className="shrink-0 whitespace-nowrap">{axisStartLabel(period, axis.start)}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="truncate">{w.inbox.eventsPer(unit.unit)}</span>
+                  <PeriodToggle period={period} onChange={setPeriod} />
+                </span>
+                <span className="shrink-0 whitespace-nowrap">{unit.now}</span>
+              </span>
+              <span className="label-caps text-right">{w.inbox.columns.events}</span>
+              <span className="label-caps text-right">{w.inbox.columns.seen}</span>
+              <span className="label-caps text-right">{w.inbox.columns.assignee}</span>
               <span />
-            )}
-            <span className="label-caps">{w.inbox.columns.issue}</span>
-            <span className="label-caps mx-4 flex min-w-0 items-center justify-between gap-2">
-              <span className="shrink-0 whitespace-nowrap">{axisStartLabel(period, axis.start)}</span>
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate">{w.inbox.eventsPer(unit.unit)}</span>
-                <PeriodToggle period={period} onChange={setPeriod} />
-              </span>
-              <span className="shrink-0 whitespace-nowrap">{unit.now}</span>
-            </span>
-            <span className="label-caps text-right">{w.inbox.columns.events}</span>
-            <span className="label-caps text-right">{w.inbox.columns.seen}</span>
-            <span className="label-caps text-right">{w.inbox.columns.assignee}</span>
-            <span />
-          </div>
+            </div>
 
-          {groups.map((group) => (
-            <section key={group.trend} aria-label={w.inbox.trends[group.trend].heading}>
-              <h2 className={cn('label-caps flex h-8 items-center gap-2 border-b bg-muted/60 px-3 font-semibold lg:pl-check', group.color)}>
-                {w.inbox.trends[group.trend].heading}
-                <span className="font-normal text-muted-foreground">{group.rows.length}</span>
-              </h2>
-              <ul>
-                {group.rows.map((row) => (
-                  <IssueRow
-                    key={row.issue.id}
-                    org={org}
-                    row={row}
-                    marks={marks}
-                    view={view}
-                    canWrite={canWrite}
-                    selected={ticked(row.issue.id)}
-                    current={cursor === row.issue.id}
-                    unfolded={unfolded === row.issue.id}
-                    handlers={handlers}
-                  />
-                ))}
-              </ul>
-            </section>
-          ))}
-          <div ref={observe} className="grid h-14 place-items-center">
-            {canLoadMore && (
-              <Button variant="ghost" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage} aria-busy={isFetchingNextPage}>
-                {w.inbox.loadMore}
-              </Button>
-            )}
-          </div>
-        </>
-      )}
+            {groups.map((group) => (
+              <section key={group.trend} aria-label={w.inbox.trends[group.trend].heading}>
+                <h2 className={cn('label-caps flex h-8 items-center gap-2 border-b bg-muted/60 px-3 font-semibold lg:pl-check', group.color)}>
+                  {w.inbox.trends[group.trend].heading}
+                  <span className="font-normal text-muted-foreground">{group.rows.length}</span>
+                </h2>
+                <ul>
+                  {group.rows.map((row) => (
+                    <IssueRow
+                      key={row.issue.id}
+                      org={org}
+                      row={row}
+                      marks={marks}
+                      view={view}
+                      canWrite={canWrite}
+                      selected={ticked(row.issue.id)}
+                      current={cursor === row.issue.id}
+                      unfolded={unfolded === row.issue.id}
+                      handlers={handlers}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))}
+            <div ref={observe} className="grid h-14 place-items-center">
+              {canLoadMore && (
+                <Button variant="ghost" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage} aria-busy={isFetchingNextPage}>
+                  {w.inbox.loadMore}
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       {offer.selecting && <SelectionSheet {...bar} />}
 

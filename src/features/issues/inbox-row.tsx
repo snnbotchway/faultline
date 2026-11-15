@@ -16,7 +16,7 @@ import { ACTION, statusWords, type StatusView } from './status'
 import { Trace } from './trace'
 import type { Mark, Trend } from './trend'
 
-export const COLUMNS = 'lg:grid-cols-[var(--spacing-check)_minmax(0,5fr)_minmax(0,4fr)_88px_88px_96px_36px]'
+export const COLUMNS = 'lg:grid-cols-[var(--spacing-check)_minmax(0,5fr)_minmax(0,4fr)_var(--events)_var(--seen)_96px_36px]'
 const PHONE_COLUMNS = 'grid-cols-[var(--spacing-check)_minmax(0,1fr)_64px]'
 
 export type Row = { issue: Issue; buckets: number[]; trend: Trend }
@@ -84,9 +84,13 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
             {issue.type === IssueKind.csp && <Tag>{t.sections.csp}</Tag>}
             {issue.status !== IssueStatus.unresolved && issue.status !== view && <Tag ok={issue.status === IssueStatus.resolved}>{statusWords(issue.status).label}</Tag>}
             <span className="truncate max-lg:hidden">{issue.culprit}</span>
-            <span className="lg:hidden">
-              {t.row.summary(ago(issue.lastSeen), ago(issue.firstSeen), t.eventCount(Number(issue.count) < 1000 ? Number(issue.count) : compact(issue.count)))}
-            </span>
+            {/* Each part wraps as a whole, with its separator, so a line never ends in one. */}
+            {t.row.summary(ago(issue.lastSeen), ago(issue.firstSeen), t.eventCount(Number(issue.count) < 1000 ? Number(issue.count) : compact(issue.count))).map((part, index) => (
+              <span key={index} className="whitespace-nowrap lg:hidden">
+                {index > 0 && '· '}
+                {part}
+              </span>
+            ))}
             {issue.numComments > 0 && (
               <span className="flex shrink-0 items-center gap-1">
                 <MessageSquare className="size-3" />

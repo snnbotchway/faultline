@@ -37,6 +37,8 @@ export const issues = {
     loadMore: 'Load more',
     selectAll: 'Select all',
     columns: { issue: 'Issue', events: 'Events', seen: 'Seen', assignee: 'Assignee' },
+    // Wide enough for the events and seen headers and the seen column's age line.
+    columnWidths: { events: '64px', seen: '80px' },
     // The count of each trend that is not the usual one, in the head of the list.
     trends: {
       new: { heading: 'New', word: (_count: number) => 'new' },
@@ -62,8 +64,8 @@ export const issues = {
     select: (shortId: string) => `Select ${shortId}`,
     details: 'Details',
     detailsOf: (shortId: string) => `Details of ${shortId}`,
-    // The phone's line under the title.
-    summary: (seen: string, age: string, events: string) => `seen ${seen} · ${age} old · ${events}`,
+    // The phone's line under the title, in parts joined by `·`; a part never breaks across lines.
+    summary: (seen: string, age: string, events: string) => [`seen ${seen}`, `${age} old`, events],
     age: (age: string) => `${age} old`,
     lastSeenAt: (moment: string) => `Last seen ${moment}`,
     firstSeenAt: (moment: string) => `First seen ${moment}`,

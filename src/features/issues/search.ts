@@ -1,4 +1,5 @@
 import type { IssueFilters, IssueSort } from '@/api/issues'
+import { localized } from '@/i18n'
 import { plural } from '@/lib/text'
 import { StatusView, isStatus } from './status'
 
@@ -69,12 +70,12 @@ export const TIME_RANGES = [
   { start: 'now-30d', label: 'Last 30 days' },
 ]
 
-const dateTimeFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-const dateTimeYearFormat = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+const dateTimeFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
+const dateTimeYearFormat = localized((tag) => new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
 // The year is left out for a date in the current one.
 const dateTime = (value: string) => {
   const at = new Date(value)
-  return (at.getFullYear() === new Date().getFullYear() ? dateTimeFormat : dateTimeYearFormat).format(at)
+  return (at.getFullYear() === new Date().getFullYear() ? dateTimeFormat : dateTimeYearFormat)().format(at)
 }
 
 // The range in words. `start` is set when it is one of the choices; other ranges are shown as they are.

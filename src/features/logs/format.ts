@@ -1,11 +1,12 @@
 import type { LogEvent } from '@/api/logs'
+import { localized } from '@/i18n'
 
-const clock = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3, hour12: false })
-const day = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+const clock = localized((tag) => new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3, hour12: false }))
+const day = localized((tag) => new Intl.DateTimeFormat(tag, { weekday: 'short', month: 'short', day: 'numeric' }))
 
 // `13:35:30.495`: logs are read to the millisecond.
-export const clockTime = (time: string) => clock.format(new Date(time))
-export const dayOf = (time: string | number) => day.format(new Date(time))
+export const clockTime = (time: string) => clock().format(new Date(time))
+export const dayOf = (time: string | number) => day().format(new Date(time))
 export const fullTime = (time: string) => `${dayOf(time)} ${clockTime(time)}`
 
 // SDKs prefix their own attributes with their vendor's name; the screen shows `release`, not `sentry.release`.

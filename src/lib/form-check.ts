@@ -1,4 +1,4 @@
-import { FormText, type FormProblems } from '@/api/form-errors'
+import { formText, type FormProblems } from '@/api/form-errors'
 
 const controls = (form: HTMLFormElement) =>
   [...form.elements].filter((element): element is HTMLInputElement | HTMLTextAreaElement => element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)
@@ -12,17 +12,18 @@ export const fieldNames = (form: HTMLFormElement) => controls(form).flatMap((con
  */
 export function checkForm(form: HTMLFormElement): FormProblems {
   const fields: FormProblems['fields'] = {}
+  const text = formText()
   for (const control of controls(form)) {
     const { name, minLength, maxLength } = control
     // The backend strips every field, passwords included, before it checks them, so the form counts the same way.
     const value = control.value.trim()
     if (!name || fields[name]) continue
     if (!value) {
-      if (control.required) fields[name] = FormText.required
-    } else if (control.type === 'email' && control.validity.typeMismatch) fields[name] = FormText.invalidEmail
+      if (control.required) fields[name] = text.required
+    } else if (control.type === 'email' && control.validity.typeMismatch) fields[name] = text.invalidEmail
     // The browser only flags lengths the user typed, and counts the spaces the backend strips.
-    else if (minLength > 0 && value.length < minLength) fields[name] = FormText.tooShort(minLength)
-    else if (maxLength > 0 && value.length > maxLength) fields[name] = FormText.tooLong(maxLength)
+    else if (minLength > 0 && value.length < minLength) fields[name] = text.tooShort(minLength)
+    else if (maxLength > 0 && value.length > maxLength) fields[name] = text.tooLong(maxLength)
   }
   return { fields }
 }

@@ -1,3 +1,5 @@
+import { messages } from '@/i18n'
+
 // `issue` or `issues`: the word for a count, for when the count is shown apart from it. `count` may already be worded (`1000+`).
 export const countWord = (count: number | string, one: string, many = `${one}s`) => (String(count) === '1' ? one : many)
 
@@ -18,7 +20,7 @@ export const hasWords = (text: string, words: string[]) => {
 export const releaseName = (version: string) => version.replace(/(^|@)(?=[0-9a-f]*[a-f])([0-9a-f]{7})(?:[0-9a-f]{33}|[0-9a-f]{57})$/i, '$1$2')
 
 // A menu button's name: what it sets, then the value it shows ("Sort: Last seen"), so speech users can say the words they see.
-export const valueName = (setting: string, value: string | undefined) => (value ? `${setting}: ${value}` : setting)
+export const valueName = (setting: string, value: string | undefined) => (value ? messages().common.valueName(setting, value) : setting)
 
 // The word for every environment at once, as a filter or a rule's scope.
 export const ALL_ENVIRONMENTS = 'All environments'

@@ -1,3 +1,4 @@
+import { messages, type Messages } from '@/i18n'
 import { ApiError, HttpStatus } from './client'
 import { explain } from './errors'
 
@@ -27,51 +28,46 @@ export const AllauthCode = {
 } as const
 export type AllauthCode = (typeof AllauthCode)[keyof typeof AllauthCode]
 
-// One wording for what a form catches itself and what the server catches.
-export const FormText = {
-  required: 'Fill this in.',
-  invalidEmail: 'Enter a valid email address.',
-  tooShort: (length: number) => `Use ${length} or more characters.`,
-  tooLong: (length: number) => `Use ${length} characters or fewer.`,
-  // The backend says how long to wait in neither the body nor a header, so no time is promised.
-  tooMany: 'Too many tries. Wait a few minutes, then try again.',
-  reauthenticate: 'Sign in again to make this change.',
-} as const
+type FormText = Messages['common']['form']
+// The words of a form's problems (`required`, `tooShort`, …), in the language on screen.
+export const formText = (): FormText => messages().common.form
 
-const WRONG_CODE = "That code isn't right. Check it, then try again."
-
+// The backend says how long to wait in neither the body nor a header, so `tooMany` promises no time.
 // `invalid` means something different for each field, so it is worded by INVALID_TEXT instead.
-const CODE_TEXT: Record<Exclude<AllauthCode, typeof AllauthCode.invalid>, string> = {
-  required: FormText.required,
-  email_password_mismatch: 'Wrong email or password.',
-  too_many_login_attempts: FormText.tooMany,
-  incorrect_code: WRONG_CODE,
-  password_too_short: FormText.tooShort(8),
-  password_too_common: 'That password is too easy to guess. Pick another.',
-  password_entirely_numeric: 'Add a letter or a symbol.',
-  password_too_similar: 'Pick a password less like your email.',
-  email_taken: 'That email already has an account. Sign in instead.',
-  enter_current_password: "That isn't your current password.",
-  invalid_password_reset: 'That link has expired or was already used. Ask for a new one.',
-  invalid_or_expired_key: 'That link has expired or was already used.',
-  unverified_email: 'Verify every email on your account first, or remove the ones you no longer use.',
-  no_password: 'Set a password before you disconnect this account.',
-  no_verified_email: 'Verify an email before you disconnect this account.',
-  disconnect_last: 'This is your only way to sign in. Set a password before you disconnect it.',
-  account_not_found: 'That account is already disconnected.',
+const CODE_TEXT: Record<Exclude<AllauthCode, typeof AllauthCode.invalid>, (text: FormText) => string> = {
+  required: (text) => text.required,
+  email_password_mismatch: (text) => text.emailPasswordMismatch,
+  too_many_login_attempts: (text) => text.tooMany,
+  incorrect_code: (text) => text.wrongCode,
+  password_too_short: (text) => text.tooShort(8),
+  password_too_common: (text) => text.passwordTooCommon,
+  password_entirely_numeric: (text) => text.passwordNumeric,
+  password_too_similar: (text) => text.passwordSimilar,
+  email_taken: (text) => text.emailTaken,
+  enter_current_password: (text) => text.notCurrentPassword,
+  invalid_password_reset: (text) => text.resetLinkExpired,
+  invalid_or_expired_key: (text) => text.linkExpired,
+  unverified_email: (text) => text.unverifiedEmail,
+  no_password: (text) => text.noPassword,
+  no_verified_email: (text) => text.noVerifiedEmail,
+  disconnect_last: (text) => text.disconnectLast,
+  account_not_found: (text) => text.accountGone,
 }
-const INVALID_TEXT: Record<string, string> = { email: FormText.invalidEmail, code: WRONG_CODE }
+const INVALID_TEXT: Record<string, (text: FormText) => string> = { email: (text) => text.invalidEmail, code: (text) => text.wrongCode }
 
 // Codes about the whole attempt: the form's message, even though allauth names a field.
 const FORM_LEVEL = new Set<string>([AllauthCode.emailPasswordMismatch, AllauthCode.tooManyLoginAttempts, AllauthCode.unverifiedEmail])
 
 // GlitchTip's `detail` strings for account changes, in the user's words.
-const DETAIL_TEXT: Record<string, string> = {
-  'Invalid code': "That code isn't one of the new ones. Check it, then try again.",
-  'Token not found': 'That link has expired. Run the wizard again for a new one.',
-  'Email already exists': 'That email is already on an account.',
-  'User is organization owner. Delete organization or transfer ownership first.': 'You own an organization. Transfer it or delete it first.',
-  'User is the only member of an organization. Delete the organization or add another member first.': "You're the only member of an organization. Add someone, or delete it, first.",
+// The plain sentences of FormText, as against the ones that take a length.
+type Sentence = { [K in keyof FormText]: FormText[K] extends string ? K : never }[keyof FormText]
+
+const DETAIL_TEXT: Record<string, Sentence> = {
+  'Invalid code': 'invalidCode',
+  'Token not found': 'wizardExpired',
+  'Email already exists': 'emailExists',
+  'User is organization owner. Delete organization or transfer ownership first.': 'ownsOrganization',
+  'User is the only member of an organization. Delete the organization or add another member first.': 'onlyMember',
 }
 
 type AllauthError = { code?: string; param?: string }
@@ -92,17 +88,18 @@ const listOf = <T>(body: unknown, key: string): T[] => {
 }
 
 function allauthText({ code = '', param }: AllauthError): Found {
-  const text = code === AllauthCode.invalid ? INVALID_TEXT[param ?? ''] : CODE_TEXT[code as keyof typeof CODE_TEXT]
-  return { field: FORM_LEVEL.has(code) ? undefined : param, text }
+  const word = code === AllauthCode.invalid ? INVALID_TEXT[param ?? ''] : CODE_TEXT[code as keyof typeof CODE_TEXT]
+  return { field: FORM_LEVEL.has(code) ? undefined : param, text: word?.(formText()) }
 }
 
 // django-ninja's 422s name the field last in `loc`; its `msg` is for developers.
 function inputText({ type, loc, ctx }: InvalidInput): Found {
   const last = loc?.at(-1)
   const field = typeof last === 'string' ? last : undefined
-  if (type === 'string_too_long' && ctx?.max_length) return { field, text: FormText.tooLong(ctx.max_length) }
-  if (type === 'missing') return { field, text: FormText.required }
-  if (field === 'email') return { field, text: FormText.invalidEmail }
+  const text = formText()
+  if (type === 'string_too_long' && ctx?.max_length) return { field, text: text.tooLong(ctx.max_length) }
+  if (type === 'missing') return { field, text: text.required }
+  if (field === 'email') return { field, text: text.invalidEmail }
   return { field }
 }
 
@@ -112,8 +109,8 @@ function inputText({ type, loc, ctx }: InvalidInput): Found {
  */
 export function formProblems(error: unknown, action: string, shown: readonly string[] = []): FormProblems {
   if (!(error instanceof ApiError)) return { fields: {}, message: explain(error, action) }
-  if (error.status === HttpStatus.tooManyRequests) return { fields: {}, message: FormText.tooMany }
-  if (needsReauthentication(error)) return { fields: {}, message: FormText.reauthenticate }
+  if (error.status === HttpStatus.tooManyRequests) return { fields: {}, message: formText().tooMany }
+  if (needsReauthentication(error)) return { fields: {}, message: formText().reauthenticate }
   const problems: FormProblems = { fields: {} }
   const found = [...listOf<AllauthError>(error.body, 'errors').map(allauthText), ...listOf<InvalidInput>(error.body, 'detail').map(inputText)]
   for (const { field, text } of found) {
@@ -126,9 +123,10 @@ export function formProblems(error: unknown, action: string, shown: readonly str
     return problems
   }
   const detail = error.body && typeof error.body === 'object' && 'detail' in error.body ? error.body.detail : undefined
-  if (typeof detail === 'string' && DETAIL_TEXT[detail]) {
+  const known = typeof detail === 'string' ? DETAIL_TEXT[detail] : undefined
+  if (known) {
     console.error(detail)
-    return { fields: {}, message: DETAIL_TEXT[detail] }
+    return { fields: {}, message: formText()[known] }
   }
   return { fields: {}, message: explain(error, action) }
 }

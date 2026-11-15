@@ -2,6 +2,7 @@ import { CircleAlert, Repeat, TrendingUp } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 import type { TransactionGroup } from '@/api/performance'
 import { Skeleton } from '@/components/ui/skeleton'
+import { localized } from '@/i18n'
 import { dayLabel } from '@/features/issues/format'
 import { MarkLabels, Trace } from '@/features/issues/trace'
 import { Trend, type Axis, type Mark } from '@/features/issues/trend'
@@ -110,7 +111,7 @@ export function DurationBar({ p50, p95, className }: { p50: number; p95: number;
 }
 
 const AXIS_WIDTH = 'w-14'
-const dayOfMonth = new Intl.DateTimeFormat(undefined, { day: 'numeric' })
+const dayOfMonth = localized((tag) => new Intl.DateTimeFormat(tag, { day: 'numeric' }))
 
 // Seven days of a duration on the shared time axis: the peak and zero are labelled with their unit,
 // every day is named, and releases are marked. A day with no requests stays on the zero line. The
@@ -133,7 +134,7 @@ export function WeekChart({ buckets, marks, axis, slower, height, className }: {
         <div className="mono mt-1 flex gap-px text-xs text-muted-foreground">
           {buckets.map((_, index) => (
             <span key={index} className="min-w-0 flex-1 truncate text-center">
-              {index === buckets.length - 1 ? 'Today' : index === 0 ? dayLabel(axis.start) : dayOfMonth.format((axis.start + index * axis.size) * 1000)}
+              {index === buckets.length - 1 ? 'Today' : index === 0 ? dayLabel(axis.start) : dayOfMonth().format((axis.start + index * axis.size) * 1000)}
             </span>
           ))}
         </div>

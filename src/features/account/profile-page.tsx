@@ -203,7 +203,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
         )}
         <Fact
           name={text.rows.keys}
-          value={factors.keys.map((key) => key.name).join(', ') || common.none}
+          value={factors.keys.map((key) => key.name).join(', ') || common.noneFeminine}
           action={factors.keys.length > 0 ? text.manage : text.add}
           onClick={factors.keys.length > 0 ? open(Task.keys) : twoStepTask(Task.keys)}
         />

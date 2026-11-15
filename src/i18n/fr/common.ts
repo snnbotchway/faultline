@@ -23,6 +23,8 @@ export const common: Messages['common'] = {
   off: 'Désactivé',
   none: 'Aucun',
   noneYet: 'Aucun pour l’instant',
+  noneFeminine: 'Aucune',
+  noneYetFeminine: 'Aucune pour l’instant',
   notSet: 'Non défini',
   you: 'Vous',
   opensInNewTab: '(s’ouvre dans un nouvel onglet)',

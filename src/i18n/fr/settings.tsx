@@ -28,7 +28,7 @@ export const settings: Messages['settings'] = {
   memberSummary: (members, invited) =>
     `${plural(members, { one: '# membre', many: '# de membres', other: '# membres' })}${invited ? ` · ${plural(invited, { one: '# invité', other: '# invités' })}` : ''}`,
   organizationLoses: (count, memberships) =>
-    `${projects(count)}, leurs problèmes et ${plural(memberships, { one: '# adhésion', many: '# d’adhésions', other: '# adhésions' })} seront supprimés définitivement.`,
+    `${projects(count)}, ${count === 1 ? 'ses' : 'leurs'} problèmes et ${plural(memberships, { one: '# adhésion', many: '# d’adhésions', other: '# adhésions' })} seront supprimés définitivement.`,
   renameOrganizationAction: 'renommer l’organisation',
   deleteOrganizationAction: 'supprimer l’organisation',
 
@@ -259,7 +259,7 @@ export const settings: Messages['settings'] = {
     byInvitation: 'Sur invitation',
     newOrganizations: 'Nouvelles organisations',
     anyUser: 'Tout utilisateur peut en créer une',
-    adminsOnly: 'Seulement les administrateurs du serveur',
+    adminsOnly: 'Administrateurs du serveur uniquement',
     features: 'Fonctionnalités',
     email: 'E-mail',
     uptime: 'Moniteurs de disponibilité',

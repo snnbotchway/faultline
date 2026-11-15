@@ -20,6 +20,9 @@ export const common: Messages['common'] = {
   off: 'Av',
   none: 'Ingen',
   noneYet: 'Ingen ennå',
+  // The same, for a word French treats as feminine (teams, keys).
+  noneFeminine: 'Ingen',
+  noneYetFeminine: 'Ingen ennå',
   notSet: 'Ikke angitt',
   you: 'Deg',
   opensInNewTab: '(åpnes i en ny fane)',

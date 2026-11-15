@@ -132,7 +132,7 @@ export function SettingsIndex({ org }: { org: string }) {
               <LinkRow
                 label={t.teams}
                 mono={teams.length > 0}
-                value={teams.length ? teamList(teams.map((team) => team.slug)) : common.noneYet}
+                value={teams.length ? teamList(teams.map((team) => team.slug)) : common.noneYetFeminine}
                 to="/$org/settings/teams"
                 params={{ org }}
               />

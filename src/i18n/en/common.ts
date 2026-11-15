@@ -20,6 +20,9 @@ export const common = {
   off: 'Off',
   none: 'None',
   noneYet: 'None yet',
+  // The same, for a word French treats as feminine (teams, keys).
+  noneFeminine: 'None',
+  noneYetFeminine: 'None yet',
   notSet: 'Not set',
   you: 'You',
   opensInNewTab: '(opens in a new tab)',

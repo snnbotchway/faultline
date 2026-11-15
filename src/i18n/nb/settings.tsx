@@ -25,7 +25,7 @@ export const settings: Messages['settings'] = {
   noEventsYet: ' · ingen hendelser ennå',
   deleteOrganization: 'Slett organisasjonen',
   usageSummary: (count, days) => `${events(count)} de siste ${days} dagene`,
-  memberSummary: (members, invited) => `${plural(members, { one: '# medlem', other: '# medlemmer' })}${invited ? ` · ${invited} invitert` : ''}`,
+  memberSummary: (members, invited) => `${plural(members, { one: '# medlem', other: '# medlemmer' })}${invited ? ` · ${plural(invited, { one: '# invitert', other: '# inviterte' })}` : ''}`,
   organizationLoses: (count, memberships) =>
     `${projects(count)}, problemene deres og ${plural(memberships, { one: '# medlemskap', other: '# medlemskap' })} slettes for godt.`,
   renameOrganizationAction: 'gi organisasjonen nytt navn',

@@ -1,4 +1,4 @@
-import { localized, messages, type Messages } from '@/i18n'
+import { Locale, currentLocale, localized, messages, type Messages } from '@/i18n'
 import { DAY_MS } from '@/lib/time'
 
 const STEPS: [number, keyof Messages['common']['time']['ago']][] = [
@@ -28,7 +28,11 @@ const exactFormat = localized((tag) => new Intl.DateTimeFormat(tag, { dateStyle:
 export const exact = (time: string | Date) => exactFormat().format(new Date(time))
 
 const compactFormat = localized((tag) => new Intl.NumberFormat(tag, { notation: 'compact', maximumFractionDigits: 1 }))
-export const compact = (count: number | string) => compactFormat().format(Number(count)).toLowerCase()
+// "1.2k" in English; other languages keep their case, as French "1,2 M" lowercased would read as metres.
+export const compact = (count: number | string) => {
+  const text = compactFormat().format(Number(count))
+  return currentLocale() === Locale.en ? text.toLowerCase() : text
+}
 
 const dayFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric' }))
 const hourFormat = localized((tag) => new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', hour12: false }))

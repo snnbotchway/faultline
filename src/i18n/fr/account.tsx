@@ -38,7 +38,7 @@ export const account: Messages['account'] = {
   ),
   codesLeft: (left, total) => (
     <>
-      {left} sur {total} restants
+      {left} restants sur {total}
     </>
   ),
   newCodes: 'Nouveaux codes',

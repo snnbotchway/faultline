@@ -181,7 +181,7 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
         <FoldRow
           label={text.teamsWithAccess}
           mono={!!teams?.length}
-          value={teams && (teams.length ? teamList(teams) : common.none)}
+          value={teams && (teams.length ? teamList(teams) : common.noneFeminine)}
           open={row.is(GeneralField.teams)}
           onToggle={teams && linkTeams ? () => row.toggle(GeneralField.teams) : undefined}
         >

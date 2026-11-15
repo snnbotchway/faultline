@@ -1,15 +1,20 @@
 import { StatsPeriod } from '@/api/issues'
+import { messages } from '@/i18n'
 import { releaseName } from '@/lib/text'
 import { DAY, HOUR, SECOND_MS } from '@/lib/time'
 import { dayLabel, hourLabel } from './format'
 
-// Each period the traces can show: its buckets, and how it is named on screen.
+// Each period the traces can show: its buckets.
 export const PERIODS = [
-  { value: StatsPeriod.day, size: HOUR, count: 24, label: '24h', unit: 'hour', now: 'Now' },
-  { value: StatsPeriod.fortnight, size: DAY, count: 14, label: '14d', unit: 'day', now: 'Today' },
+  { value: StatsPeriod.day, size: HOUR, count: 24 },
+  { value: StatsPeriod.fortnight, size: DAY, count: 14 },
 ] as const
 
-export const periodInfo = (period: StatsPeriod) => PERIODS.find((item) => item.value === period)!
+// A period's buckets and how it is named on screen: its toggle, its unit and what its axis ends on.
+export const periodInfo = (period: StatsPeriod) => {
+  const item = PERIODS.find((candidate) => candidate.value === period)!
+  return { ...item, ...messages().issues.inbox.periods[period] }
+}
 
 export type Axis = { start: number; size: number; count: number }
 

@@ -1,22 +1,14 @@
 import type { IssueFilters, IssueSort } from '@/api/issues'
-import { localized } from '@/i18n'
-import { plural } from '@/lib/text'
+import { localized, messages } from '@/i18n'
 import { StatusView, isStatus } from './status'
 
 export const DEFAULT_QUERY = 'is:unresolved'
 export const DEFAULT_SORT: IssueSort = '-last_seen'
 
 // Every sort the API takes, so a link from the stock UI keeps its order.
-export const SORTS: { value: IssueSort; label: string }[] = [
-  { value: '-last_seen', label: 'Last seen' },
-  { value: 'last_seen', label: 'Least recently seen' },
-  { value: '-first_seen', label: 'Newest' },
-  { value: 'first_seen', label: 'Oldest' },
-  { value: '-count', label: 'Most events' },
-  { value: 'count', label: 'Fewest events' },
-  { value: '-priority', label: 'Highest priority' },
-  { value: 'priority', label: 'Lowest priority' },
-]
+export const SORTS: IssueSort[] = ['-last_seen', 'last_seen', '-first_seen', 'first_seen', '-count', 'count', '-priority', 'priority']
+
+export const sortLabel = (sort: IssueSort) => messages().issues.search.sorts[sort]
 
 // URL state of the inbox. Same names as the stock GlitchTip UI, so its links keep working.
 export type InboxSearch = {
@@ -38,7 +30,7 @@ const date = (value: unknown) => (typeof value === 'string' && (RELATIVE.test(va
 
 export function validateInboxSearch(search: Record<string, unknown>): InboxSearch {
   const project = numbers(search.project)
-  const sort = SORTS.find((s) => s.value === search.sort)?.value
+  const sort = SORTS.find((value) => value === search.sort)
   return {
     query: typeof search.query === 'string' ? search.query : undefined,
     sort: sort === DEFAULT_SORT ? undefined : sort,
@@ -62,13 +54,9 @@ export function toFilters(search: InboxSearch): IssueFilters {
 }
 
 // The choices of the time menu, each as the `start` the backend takes.
-export const TIME_RANGES = [
-  { start: 'now-1h', label: 'Last hour' },
-  { start: 'now-1d', label: 'Last 24 hours' },
-  { start: 'now-7d', label: 'Last 7 days' },
-  { start: 'now-14d', label: 'Last 14 days' },
-  { start: 'now-30d', label: 'Last 30 days' },
-]
+const RANGE_STARTS = ['now-1h', 'now-1d', 'now-7d', 'now-14d', 'now-30d'] as const
+
+export const timeRanges = () => RANGE_STARTS.map((start) => ({ start, label: messages().issues.search.ranges[start] }))
 
 const dateTimeFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
 const dateTimeYearFormat = localized((tag) => new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
@@ -80,18 +68,19 @@ const dateTime = (value: string) => {
 
 // The range in words. `start` is set when it is one of the choices; other ranges are shown as they are.
 export function timeRange(search: Pick<InboxSearch, 'start' | 'end'>): { start?: string; label: string } {
-  if (!search.start && !search.end) return { label: 'Any time' }
+  const words = messages().issues.search
+  if (!search.start && !search.end) return { label: words.anyTime }
   const relative = !search.end && search.start?.match(RELATIVE)
   if (relative) {
     const count = Number(relative[1])
     const unit = UNIT[relative[2] as keyof typeof UNIT]
-    const preset = TIME_RANGES.find((range) => range.start === search.start)
-    return preset ?? TIME_RANGES.find((range) => range.start === `now-${count / unit.perDay}d`) ?? { label: `Last ${plural(count, unit.word)}` }
+    const preset = timeRanges().find((range) => range.start === search.start)
+    return preset ?? timeRanges().find((range) => range.start === `now-${count / unit.perDay}d`) ?? { label: words.last[unit.word](count) }
   }
-  const words = (value: string) => (RELATIVE.test(value) ? value : dateTime(value))
-  if (!search.end) return { label: `Since ${words(search.start!)}` }
-  if (!search.start) return { label: `Before ${words(search.end)}` }
-  return { label: `${words(search.start)} – ${words(search.end)}` }
+  const when = (value: string) => (RELATIVE.test(value) ? value : dateTime(value))
+  if (!search.end) return { label: words.since(when(search.start!)) }
+  if (!search.start) return { label: words.before(when(search.end)) }
+  return { label: `${when(search.start)} – ${when(search.end)}` }
 }
 
 // A `datetime-local` field holds the viewer's wall-clock time; the backend takes UTC with a `Z`.

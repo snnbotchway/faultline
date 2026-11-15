@@ -1,6 +1,7 @@
 import { type IssueEvent } from '@/api/issues'
 import { Feature } from '@/api/organizations'
 import { BASE_PATH } from '@/api/base'
+import { messages } from '@/i18n'
 import { notify } from '@/lib/notice'
 
 // Set once the hint has been shown. The stock interface uses the same key, so the hint is not shown twice.
@@ -39,12 +40,12 @@ export async function copyForAi(event: IssueEvent, where: Omit<Where, 'instance'
   const eventUrl = issueAddress(window.location.origin, where.org, where.issueId, event.id)
   await navigator.clipboard.writeText(aiPayload(event, { ...where, instance, eventUrl }))
   if (!features?.includes(Feature.mcp) || localStorage.getItem(MCP_HINT_KEY) === 'true') {
-    notify('Copied for AI')
+    notify(messages().issues.notices.copiedForAi)
     return
   }
   localStorage.setItem(MCP_HINT_KEY, 'true')
-  notify('Copied. Let your agent read events directly with MCP.', false, {
-    label: 'Set up MCP',
+  notify(messages().issues.notices.copiedMcp, false, {
+    label: messages().issues.notices.setUpMcp,
     run: () => void window.open(`${MCP_GUIDE}#instance=${encodeURIComponent(instance)}`, '_blank', 'noreferrer'),
   })
 }

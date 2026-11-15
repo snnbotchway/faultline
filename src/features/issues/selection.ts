@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { IssueFilters } from '@/api/issues'
 import { hitsText, type Hits } from '@/lib/format'
-import { plural } from '@/lib/text'
+import { messages, useT, type Messages } from '@/i18n'
 import type { Target } from './actions'
 import type { Row } from './inbox-row'
 import { statusActions, type StatusView } from './status'
@@ -81,20 +81,24 @@ type OfferInput = {
   filters: IssueFilters
   hits: Hits | undefined
   hasMore: boolean
+  // The words `what` is written in; the language on screen unless given.
+  words?: Messages['issues']
 }
 
 /**
  * What the selection is and what can be done with it. Keys, palette commands and both
  * toolbars read this, so an action is offered in all of them or in none.
  */
-export function selectionOffer({ rows, selection, view, filters, hits, hasMore }: OfferInput) {
+export function selectionOffer({ rows, selection, view, filters, hits, hasMore, words = messages().issues }: OfferInput) {
   const selected = selection.all ? rows : rows.filter((row) => selection.ids.has(row.issue.id))
   const ids = selected.map((row) => row.issue.id)
   const selecting = ids.length > 0
   const allMatching = selecting && selection.all
   const everyLoaded = selecting && ids.length === rows.length
   const target: Target = allMatching ? { selection: { filters }, ids } : { selection: { ids }, ids }
-  const count = allMatching && hits ? hitsText(hits) : String(ids.length)
+  // The backend stops counting at a limit, so "all matching" may be a count like `1000+`, which has no plural of its own.
+  const total: Hits = allMatching && hits ? hits : { n: ids.length, capped: false }
+  const count = hitsText(total)
   return {
     ids,
     selecting,
@@ -103,7 +107,7 @@ export function selectionOffer({ rows, selection, view, filters, hits, hasMore }
     canSelectAllMatching: everyLoaded && hasMore && !allMatching,
     target,
     count,
-    what: plural(count, 'issue'),
+    what: words.issueCount(total.capped ? count : total.n),
     statuses: statusActions(view),
     // The backend only takes a status change or a delete for "every match"; assigning and merging need the issues named.
     canAssign: !allMatching,
@@ -113,8 +117,9 @@ export function selectionOffer({ rows, selection, view, filters, hits, hasMore }
   }
 }
 
-export function useSelectionOffer({ rows, selection, view, filters, hits, hasMore }: OfferInput) {
-  return useMemo(() => selectionOffer({ rows, selection, view, filters, hits, hasMore }), [rows, selection, view, filters, hits, hasMore])
+export function useSelectionOffer({ rows, selection, view, filters, hits, hasMore }: Omit<OfferInput, 'words'>) {
+  const words = useT().issues
+  return useMemo(() => selectionOffer({ rows, selection, view, filters, hits, hasMore, words }), [rows, selection, view, filters, hits, hasMore, words])
 }
 
 export type SelectionOffer = ReturnType<typeof selectionOffer>

@@ -180,6 +180,7 @@ Usage draws what an organization took in on the same rules:
 | go to | every section except the one you are in, then the organization's projects, members and teams |
 | organization | the other organizations |
 | theme | system, light and dark |
+| language | the languages not on screen, each under its own name |
 | account | sign out |
 | search | free text, as a search of issues; always last |
 
@@ -236,6 +237,7 @@ Designed at 390px, checked at 375px.
 
 ## Copy
 
+- Every word on screen comes from the catalog in `src/i18n/` (`useT()` in a component, `messages()` elsewhere), in English, French and Norwegian Bokmål; new text is never written into a component (the areas `docs/i18n.md` lists as still English move over one PR at a time). A sentence that holds a name, a count or a link is one entry that takes it, so each language orders its own words. Counts use `plural()`, and dates and numbers use `Intl` through `localized()`, so both follow the language. See `docs/i18n.md`.
 - Use the user's words. No vendor names, internal names, or status codes on screen.
 - No filler: no "Welcome", no "Manage your…", no text that restates the heading.
 - Errors say what happened and what to do next, in one sentence.

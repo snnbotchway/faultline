@@ -50,12 +50,12 @@ export function Dossier({ org, issue, view, canWrite, handlers }: { org: string;
           <dt className="text-muted-foreground">{t.dossier.firstSeen}</dt>
           <dd>
             {exact(issue.firstSeen)}
-            {issue.firstRelease && <span className="text-muted-foreground"> {t.sections.in(releaseName(issue.firstRelease.shortVersion))}</span>}
+            {issue.firstRelease && <span className="text-muted-foreground"> {t.sections.inRelease(releaseName(issue.firstRelease.shortVersion))}</span>}
           </dd>
           <dt className="text-muted-foreground">{t.dossier.lastSeen}</dt>
           <dd>
             {exact(issue.lastSeen)}
-            {issue.lastRelease && <span className="text-muted-foreground"> {t.sections.in(releaseName(issue.lastRelease.shortVersion))}</span>}
+            {issue.lastRelease && <span className="text-muted-foreground"> {t.sections.inRelease(releaseName(issue.lastRelease.shortVersion))}</span>}
           </dd>
         </dl>
       </section>

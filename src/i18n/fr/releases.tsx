@@ -25,7 +25,7 @@ export const releases: Messages['releases'] = {
     notFound: 'Version introuvable',
     failed: 'Cette version ne s’est pas chargée',
     projectsErrors: 'Erreurs dans ses projets',
-    firstSeen: 'Vus pour la première fois dans cette version',
+    firstSeen: 'Nouveaux dans cette version',
     seenBefore: 'Déjà vus, toujours en cours',
     issuesFailed: 'Les problèmes de cette version ne se sont pas chargés.',
     noIssues: 'Aucun problème ouvert n’a d’événements dans cette version.',

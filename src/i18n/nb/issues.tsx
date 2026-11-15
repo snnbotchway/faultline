@@ -84,7 +84,7 @@ export const issues: Messages['issues'] = {
       text: 'fritekst, etter eventuelle filtre',
     },
     words: 'ord',
-    rule: 'Alle deler må treffe. Det finnes ingen OR eller NOT.',
+    rule: 'Alle delene må samsvare. Det finnes ingen OR eller NOT.',
     sort: 'Sortering',
     sorts: {
       '-last_seen': 'Sist sett',
@@ -199,6 +199,7 @@ export const issues: Messages['issues'] = {
     whatHappened: 'Hva som skjedde',
     earlierSteps: (count) => plural(count, { one: '# tidligere steg', other: '# tidligere steg' }),
     in: (name) => `i ${name}`,
+    inRelease: (name) => `i ${name}`,
     request: 'Forespørsel',
     query: 'Søkeparametere',
     headers: 'Hoder',
@@ -229,7 +230,7 @@ export const issues: Messages['issues'] = {
   stackTrace: {
     title: 'Stakksporing',
     view: 'Visning',
-    views: { full: 'Full', raw: 'Rå' },
+    views: { full: 'Fullstendig', raw: 'Rå' },
     order: 'Rekkefølge',
     orders: { newest: 'Nyeste først', oldest: 'Eldste først' },
     causedBy: 'forårsaket av ',

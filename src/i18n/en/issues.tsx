@@ -211,8 +211,10 @@ export const issues = {
   sections: {
     whatHappened: 'What happened',
     earlierSteps: (count: number) => plural(count, { one: '# earlier step', other: '# earlier steps' }),
-    // After a file's name: the function or the release it was in.
+    // After a file's name: the function it was in.
     in: (name: string) => `in ${name}`,
+    // After a time: the release it was in.
+    inRelease: (name: string) => `in ${name}`,
     request: 'Request',
     query: 'Query',
     headers: 'Headers',
@@ -223,10 +225,10 @@ export const issues = {
     tags: 'Tags',
     user: 'User',
     sdk: 'SDK',
-    userReports: 'User reports',
-    anonymous: 'Anonymous',
     // The headings of the contexts SDKs send under these names; any other context is headed by its own name.
     contexts: { app: 'App', browser: 'Browser', culture: 'Culture', device: 'Device', gpu: 'GPU', os: 'OS', response: 'Response', runtime: 'Runtime', trace: 'Trace' },
+    userReports: 'User reports',
+    anonymous: 'Anonymous',
     openEvent: (who: string) => `${who}, open event`,
     mergedFingerprints: 'Merged fingerprints',
     selectFingerprint: (id: string) => `Select fingerprint ${id}`,

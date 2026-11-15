@@ -9,20 +9,20 @@ import { CopyField } from '@/features/settings/parts'
 import { Field, SubmitButton } from '@/components/ui/field'
 import { Input, Select } from '@/components/ui/input'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
+import { messages, useT, type Messages } from '@/i18n'
 import { failed, notify } from '@/lib/notice'
-import { ALL_ENVIRONMENTS } from '@/lib/text'
 import { withScheme } from '@/lib/url'
 import { cn } from '@/lib/utils'
-import { every } from './format'
+import { every, everyPhrase } from './format'
 import { DAY, HOUR, MINUTE } from '@/lib/time'
 
 // The kinds a monitor can be made as, or switched between. An SSL monitor keeps its kind.
-const TYPES: { value: MonitorType; label: string; icon: LucideIcon }[] = [
-  { value: MonitorType.get, label: 'GET', icon: Globe },
-  { value: MonitorType.post, label: 'POST', icon: Send },
-  { value: MonitorType.ping, label: 'Ping', icon: Radio },
-  { value: MonitorType.port, label: 'Port', icon: Plug },
-  { value: MonitorType.heartbeat, label: 'Heartbeat', icon: HeartPulse },
+const TYPES: { value: MonitorType; label: (text: Messages['uptime']['dialog']['types']) => string; icon: LucideIcon }[] = [
+  { value: MonitorType.get, label: () => 'GET', icon: Globe },
+  { value: MonitorType.post, label: () => 'POST', icon: Send },
+  { value: MonitorType.ping, label: (text) => text.ping, icon: Radio },
+  { value: MonitorType.port, label: (text) => text.port, icon: Plug },
+  { value: MonitorType.heartbeat, label: (text) => text.heartbeat, icon: HeartPulse },
 ]
 const INTERVALS = [MINUTE, 2 * MINUTE, 5 * MINUTE, 15 * MINUTE, HOUR, DAY]
 const THRESHOLDS = [1, 2, 3, 5]
@@ -30,12 +30,12 @@ const MAX_TIMEOUT = 60
 const DEFAULT_TIMEOUT = 20
 
 const isOffered = (type: string) => TYPES.some((offered) => offered.value === type)
-const ADDRESS: Partial<Record<MonitorType, { label: string; noun: string; placeholder: string }>> = {
-  [MonitorType.get]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com/health' },
-  [MonitorType.post]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com/health' },
-  [MonitorType.ping]: { label: 'Host', noun: 'host', placeholder: 'example.com' },
-  [MonitorType.port]: { label: 'Host and port', noun: 'host and port', placeholder: 'db.example.com:5432' },
-  [MonitorType.ssl]: { label: 'URL', noun: 'URL', placeholder: 'https://example.com' },
+const ADDRESS: Partial<Record<MonitorType, { kind: keyof Messages['uptime']['dialog']['address']; placeholder: string }>> = {
+  [MonitorType.get]: { kind: 'url', placeholder: 'https://example.com/health' },
+  [MonitorType.post]: { kind: 'url', placeholder: 'https://example.com/health' },
+  [MonitorType.ping]: { kind: 'host', placeholder: 'example.com' },
+  [MonitorType.port]: { kind: 'hostPort', placeholder: 'db.example.com:5432' },
+  [MonitorType.ssl]: { kind: 'url', placeholder: 'https://example.com' },
 }
 
 // HTTP and SSL checks take a whole address; ping and port take a host without a scheme.
@@ -63,26 +63,30 @@ const draftFrom = (monitor?: MonitorDetail): Draft => ({
 
 const whole = (text: string, min: number, max: number) => /^\d+$/.test(text.trim()) && Number(text) >= min && Number(text) <= max
 
-function validate(draft: Draft): Partial<Record<'name' | 'url' | 'status' | 'timeout', string>> {
+function validate(draft: Draft, text: Messages['uptime']['dialog']): Partial<Record<'name' | 'url' | 'status' | 'timeout', string>> {
   const errors: Partial<Record<'name' | 'url' | 'status' | 'timeout', string>> = {}
-  if (!draft.name.trim()) errors.name = 'Give the monitor a name.'
+  if (!draft.name.trim()) errors.name = text.nameMissing
   const url = draft.url.trim()
-  if (draft.type !== MonitorType.heartbeat && !url) errors.url = `Enter the ${ADDRESS[draft.type]!.noun} to check.`
-  else if (draft.type === MonitorType.port && !/^[^\s:/]+:\d{1,5}$/.test(url.replace(/^\w+:\/\//, ''))) errors.url = 'Enter a host and port, such as db.example.com:5432.'
-  if (isHttp(draft.type) && !whole(draft.status, 100, 599)) errors.status = 'A status code, such as 200.'
-  if (draft.type !== MonitorType.heartbeat && !whole(draft.timeout, 1, MAX_TIMEOUT)) errors.timeout = `From 1 to ${MAX_TIMEOUT}.`
+  if (draft.type !== MonitorType.heartbeat && !url) errors.url = text.address[ADDRESS[draft.type]!.kind].missing
+  else if (draft.type === MonitorType.port && !/^[^\s:/]+:\d{1,5}$/.test(url.replace(/^\w+:\/\//, ''))) errors.url = text.hostPortExample
+  if (isHttp(draft.type) && !whole(draft.status, 100, 599)) errors.status = text.statusExample
+  if (draft.type !== MonitorType.heartbeat && !whole(draft.timeout, 1, MAX_TIMEOUT)) errors.timeout = text.timeoutRange(MAX_TIMEOUT)
   return errors
 }
 
 // The backend's refusals of an address, in the user's words.
-const ADDRESS_REFUSED: Partial<Record<MonitorRefusal, string>> = {
-  [MonitorRefusal.privateAddress]: 'This address is on a private network. Monitors can only check public addresses.',
-  [MonitorRefusal.badAddress]: 'Enter a full address, such as https://example.com/health.',
-  [MonitorRefusal.badPort]: 'Enter a host and port, such as db.example.com:5432.',
-}
 function addressError(error: unknown): string | undefined {
-  const refusal = monitorRefusal(error)
-  return refusal && ADDRESS_REFUSED[refusal]
+  const refused = messages().uptime.dialog.refused
+  switch (monitorRefusal(error)) {
+    case MonitorRefusal.privateAddress:
+      return refused.privateAddress
+    case MonitorRefusal.badAddress:
+      return refused.badAddress
+    case MonitorRefusal.badPort:
+      return refused.badPort
+    default:
+      return undefined
+  }
 }
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
@@ -100,6 +104,8 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
  */
 export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: string; monitor?: MonitorDetail; onClose: () => void; onCreated: (monitor: Monitor) => void }) {
   const queryClient = useQueryClient()
+  const { uptime: t, common } = useT()
+  const text = t.dialog
   const [draft, setDraft] = useState(() => draftFrom(monitor))
   const [tried, setTried] = useState(false)
   const [created, setCreated] = useState<Monitor>()
@@ -112,7 +118,7 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
     (environment) => !environment.isHidden || String(environment.id) === draft.environment,
   )
   const heartbeat = draft.type === MonitorType.heartbeat
-  const errors = validate(draft)
+  const errors = validate(draft, text)
   const shown = (key: keyof typeof errors) => (tried ? errors[key] : undefined)
 
   const save = useMutation({
@@ -140,8 +146,8 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
     },
     onError: (error) => {
       if (addressError(error)) return
-      if (monitorRefusal(error) === MonitorRefusal.limit) notify('This organization has as many monitors as it may have. Delete one to add another.', true)
-      else failed(error, 'save the monitor')
+      if (monitorRefusal(error) === MonitorRefusal.limit) notify(text.limit, true)
+      else failed(error, text.saveAction)
     },
   })
   const refused = addressError(save.error)
@@ -150,19 +156,19 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
     <TaskDialog
       open
       onClose={() => (created ? onCreated(created) : onClose())}
-      title={created ? `${created.name} is ready` : monitor ? `Edit ${monitor.name}` : 'New monitor'}
+      title={created ? text.ready(created.name) : monitor ? text.edit(monitor.name) : t.newMonitor}
       quietFocus={!!monitor || !!created}
       className="sm:max-w-2xl"
     >
       {created ? (
         <>
           <div className="mb-4 flex flex-col gap-3">
-            <p>Call this address every {every(created.interval)}.</p>
-            <CopyField value={created.heartbeatEndpoint ?? ''} label="Heartbeat address" />
+            <p>{text.callEvery(everyPhrase(created.interval))}</p>
+            <CopyField value={created.heartbeatEndpoint ?? ''} label={t.page.heartbeatAddress} />
           </div>
           <TaskActions className="sm:justify-end">
             <Button variant="default" onClick={() => onCreated(created)}>
-              Open monitor
+              {text.openMonitor}
             </Button>
           </TaskActions>
         </>
@@ -175,14 +181,14 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
             if (Object.keys(errors).length === 0) save.mutate()
           }}
         >
-          <Group label="Check">
+          <Group label={text.groups.check}>
             {!isOffered(draft.type) ? (
               <p className="flex min-h-9 items-center gap-3">
                 <span className="mono font-semibold">{draft.type}</span>
-                <span className="text-muted-foreground">This kind of check is set up through the API and can't be changed here.</span>
+                <span className="text-muted-foreground">{text.byApi}</span>
               </p>
             ) : (
-              <div role="radiogroup" aria-label="Type" className="grid grid-cols-5 border bg-card">
+              <div role="radiogroup" aria-label={text.type} className="grid grid-cols-5 border bg-card">
                 {TYPES.map((type) => (
                   <button
                     key={type.value}
@@ -196,7 +202,7 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
                     )}
                   >
                     <type.icon className="size-4" />
-                    {type.label}
+                    {type.label(text.types)}
                   </button>
                 ))}
               </div>
@@ -204,12 +210,12 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
             {heartbeat ? (
               monitor?.heartbeatEndpoint && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Address to call</span>
-                  <CopyField value={monitor.heartbeatEndpoint} label="Heartbeat address" />
+                  <span className="text-sm font-medium">{text.addressToCall}</span>
+                  <CopyField value={monitor.heartbeatEndpoint} label={t.page.heartbeatAddress} />
                 </div>
               )
             ) : (
-              <Field label={ADDRESS[draft.type]!.label} error={shown('url') ?? refused}>
+              <Field label={text.address[ADDRESS[draft.type]!.kind].label} error={shown('url') ?? refused}>
                 {(props) => (
                   <Input
                     {...props}
@@ -227,23 +233,23 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
                 )}
               </Field>
             )}
-            <Field label="Name" error={shown('name')}>
+            <Field label={text.name} error={shown('name')}>
               {(props) => <Input {...props} value={draft.name} onChange={(event) => set('name', event.target.value)} />}
             </Field>
           </Group>
           {isHttp(draft.type) && (
-            <Group label="Expect">
+            <Group label={text.groups.expect}>
               <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
-                <Field label="Status" error={shown('status')}>
+                <Field label={text.status} error={shown('status')}>
                   {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.status} onChange={(event) => set('status', event.target.value)} />}
                 </Field>
-                <Field label="Page contains">{(props) => <Input {...props} value={draft.body} onChange={(event) => set('body', event.target.value)} />}</Field>
+                <Field label={text.pageContains}>{(props) => <Input {...props} value={draft.body} onChange={(event) => set('body', event.target.value)} />}</Field>
               </div>
             </Group>
           )}
-          <Group label="Schedule">
+          <Group label={text.groups.schedule}>
             <div className={cn('grid gap-3', heartbeat ? 'grid-cols-1 sm:max-w-48' : 'grid-cols-2 sm:grid-cols-3')}>
-              <Field label={heartbeat ? 'A heartbeat every' : 'Every'}>
+              <Field label={heartbeat ? text.heartbeatEveryLabel : text.every}>
                 {(props) => (
                   <Select {...props} value={draft.interval} onChange={(event) => set('interval', Number(event.target.value))}>
                     {withCurrent(INTERVALS, draft.interval).map((seconds) => (
@@ -256,15 +262,15 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
               </Field>
               {!heartbeat && (
                 <>
-                  <Field label="Timeout (seconds)" error={shown('timeout')}>
+                  <Field label={text.timeoutSeconds} error={shown('timeout')}>
                     {(props) => <Input {...props} inputMode="numeric" className="font-mono" value={draft.timeout} onChange={(event) => set('timeout', event.target.value)} />}
                   </Field>
-                  <Field label="Down after">
+                  <Field label={text.downAfter}>
                     {(props) => (
                       <Select {...props} value={draft.threshold} onChange={(event) => set('threshold', Number(event.target.value))}>
                         {withCurrent(THRESHOLDS, draft.threshold).map((count) => (
                           <option key={count} value={count}>
-                            {count} failed
+                            {t.page.failedCount(count)}
                           </option>
                         ))}
                       </Select>
@@ -274,13 +280,13 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
               )}
             </div>
           </Group>
-          <Group label="Belongs to">
+          <Group label={text.groups.belongsTo}>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Project">
+              <Field label={common.project}>
                 {(props) => (
                   // Slugs are machine text; "None (no alerts)" is words.
                   <Select {...props} className={cn(project && 'font-mono')} value={project} onChange={(event) => setDraft((current) => ({ ...current, project: event.target.value, environment: '' }))}>
-                    <option value="">None (no alerts)</option>
+                    <option value="">{text.noProject}</option>
                     {projects?.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.slug}
@@ -289,10 +295,10 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
                   </Select>
                 )}
               </Field>
-              <Field label="Environment">
+              <Field label={text.environment}>
                 {(props) => (
                   <Select {...props} className={cn(draft.environment && 'font-mono')} value={draft.environment} disabled={!project} onChange={(event) => set('environment', event.target.value)}>
-                    <option value="">{ALL_ENVIRONMENTS}</option>
+                    <option value="">{common.allEnvironments}</option>
                     {environments?.map((environment) => (
                       <option key={environment.id} value={environment.id ?? ''}>
                         {environment.name}
@@ -305,9 +311,9 @@ export function MonitorDialog({ org, monitor, onClose, onCreated }: { org: strin
           </Group>
           <TaskActions className="mt-4 sm:justify-end">
             <SubmitButton busy={save.isPending} className="sm:order-last">
-              {monitor ? 'Save monitor' : 'Create monitor'}
+              {monitor ? text.saveMonitor : text.createMonitor}
             </SubmitButton>
-            <Button onClick={onClose}>Cancel</Button>
+            <Button onClick={onClose}>{common.cancel}</Button>
           </TaskActions>
         </form>
       )}

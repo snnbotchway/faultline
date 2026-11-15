@@ -2,16 +2,18 @@ import { useQuery } from '@tanstack/react-query'
 import { monitorQuery } from '@/api/monitors'
 import { canWriteProjects, organizationQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
+import { useT } from '@/i18n'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
 import { isMonitorId } from './address'
 import { MonitorDialog } from './monitor-dialog'
 
 // Opened at an address the user may not have the access for: say so instead of a form that would be refused.
 function NoAccess({ onClose }: { onClose: () => void }) {
+  const { uptime: t, common } = useT()
   return (
-    <TaskDialog open onClose={onClose} quietFocus title="You can't change monitors in this organization" description="Ask an admin of the organization to give you access to its projects.">
+    <TaskDialog open onClose={onClose} quietFocus title={t.noAccess.title} description={t.noAccess.description}>
       <TaskActions className="sm:justify-end">
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose}>{common.close}</Button>
       </TaskActions>
     </TaskDialog>
   )

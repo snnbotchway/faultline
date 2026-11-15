@@ -10,12 +10,13 @@ import { Field, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
+import { useT } from '@/i18n'
 import { failed } from '@/lib/notice'
 import { useTitle } from '@/lib/title'
 import { span } from './format'
 import { FLAPPING_WINDOW, Health, healthOf } from './health'
 import { UptimeTab } from './address'
-import { HEALTH, HEALTH_ORDER } from './describe'
+import { HEALTH, HEALTH_ORDER, healthInline } from './describe'
 import { HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth } from './use-health'
 import { CopyButton } from '@/features/settings/parts'
@@ -29,7 +30,9 @@ const ADMIN_LINK = 'relative z-10 flex min-h-8 shrink-0 cursor-pointer items-cen
  * superuser can open, so only a superuser is shown the way there.
  */
 export function StatusPages({ org }: { org: string }) {
-  useTitle('Status pages', 'Uptime')
+  const { uptime: t, common } = useT()
+  const text = t.statusPages
+  useTitle(text.title, t.title)
   const pages = useQuery(statusPagesQuery(org))
   const list = useInfiniteQuery(monitorListQuery(org, MonitorSort.name))
   const monitors = useMemo(() => list.data?.pages.flatMap((page) => page.items) ?? [], [list.data])
@@ -44,11 +47,11 @@ export function StatusPages({ org }: { org: string }) {
 
   const bar = (
     <PageBar>
-      <h1 className="sr-only">Status pages</h1>
+      <h1 className="sr-only">{text.title}</h1>
       <UptimeTabs org={org} current={UptimeTab.statusPages} counts={{ [UptimeTab.statusPages]: pages.data?.length }} />
       {canAdmin && (
         <Button variant="default" size="bar" className="ml-auto" onClick={() => setCreating(true)}>
-          New status page
+          {text.new}
         </Button>
       )}
     </PageBar>
@@ -59,8 +62,8 @@ export function StatusPages({ org }: { org: string }) {
     return (
       <>
         {bar}
-        <Screen title="The status pages didn't load">
-          <Button onClick={() => void pages.refetch()}>Try again</Button>
+        <Screen title={text.failed}>
+          <Button onClick={() => void pages.refetch()}>{common.tryAgain}</Button>
         </Screen>
       </>
     )
@@ -68,10 +71,10 @@ export function StatusPages({ org }: { org: string }) {
     return (
       <>
         {bar}
-        <Screen title="Make a status page to show others which services are up">
+        <Screen title={text.empty}>
           {canAdmin && (
             <Button variant="default" onClick={() => setCreating(true)}>
-              New status page
+              {text.new}
             </Button>
           )}
         </Screen>
@@ -83,7 +86,7 @@ export function StatusPages({ org }: { org: string }) {
     <>
       {bar}
       {pages.isPending ? (
-        <div aria-busy aria-label="Loading status pages">
+        <div aria-busy aria-label={text.loading}>
           {Array.from({ length: 3 }, (_, index) => (
             <div key={index} className="flex flex-col gap-2 border-b px-3 py-3 lg:px-4">
               <Skeleton className="h-4 w-48" />
@@ -109,13 +112,13 @@ export function StatusPages({ org }: { org: string }) {
                     </a>
                     <span className="flex shrink-0 items-center gap-1 text-sm font-normal text-muted-foreground">
                       <Visibility className="size-3" />
-                      {page.isPublic ? 'Public' : 'Members'}
+                      {page.isPublic ? text.public : text.members}
                     </span>
-                    <ExternalLink className="size-3 shrink-0 text-muted-foreground" aria-label="Opens in a new tab" />
+                    <ExternalLink className="size-3 shrink-0 text-muted-foreground" aria-label={text.opensInNewTab} />
                   </h2>
                   <p className="flex min-w-0 items-center gap-3">
                     <span className="mono truncate text-muted-foreground">{url}</span>
-                    <CopyButton text={url} label="Copy link" variant="ghost" size="bar" className="relative z-10 shrink-0" />
+                    <CopyButton text={url} label={text.copyLink} variant="ghost" size="bar" className="relative z-10 shrink-0" />
                   </p>
                 </div>
                 <ul className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1">
@@ -123,13 +126,13 @@ export function StatusPages({ org }: { org: string }) {
                     <li className="flex items-center gap-3 text-muted-foreground">
                       {canAdmin ? (
                         <>
-                          No monitors yet
+                          {text.noMonitors}
                           <a href={STATUS_PAGE_ADMIN_URL} target="_blank" rel="noreferrer" className={ADMIN_LINK}>
-                            Add monitors
+                            {text.addMonitors}
                           </a>
                         </>
                       ) : (
-                        'An admin adds monitors to this page.'
+                        text.adminAdds
                       )}
                     </li>
                   )}
@@ -140,11 +143,9 @@ export function StatusPages({ org }: { org: string }) {
                       {health !== Health.up && (
                         <span className={HEALTH[health].color}>
                           {health === Health.down && monitor.lastChange ? (
-                            <>
-                              down <span className="mono">{span(now - Date.parse(monitor.lastChange))}</span>
-                            </>
+                            text.downFor(<span className="mono">{span(now - Date.parse(monitor.lastChange))}</span>)
                           ) : (
-                            HEALTH[health].label.toLowerCase()
+                            healthInline(health)
                           )}
                         </span>
                       )}
@@ -153,7 +154,7 @@ export function StatusPages({ org }: { org: string }) {
                 </ul>
                 {canAdmin && (
                   <a href={STATUS_PAGE_ADMIN_URL} target="_blank" rel="noreferrer" className={ADMIN_LINK}>
-                    Edit page
+                    {text.editPage}
                     <ExternalLink className="size-3" />
                   </a>
                 )}
@@ -168,6 +169,8 @@ export function StatusPages({ org }: { org: string }) {
 }
 
 function NewStatusPage({ org, onClose }: { org: string; onClose: () => void }) {
+  const { uptime: t, common } = useT()
+  const text = t.statusPages
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [isPublic, setIsPublic] = useState(true)
@@ -178,10 +181,10 @@ function NewStatusPage({ org, onClose }: { org: string; onClose: () => void }) {
       void queryClient.invalidateQueries({ queryKey: monitorKeys.statusPages(org) })
       onClose()
     },
-    onError: (error) => failed(error, 'create the status page'),
+    onError: (error) => failed(error, text.createAction),
   })
   return (
-    <TaskDialog open onClose={onClose} title="New status page">
+    <TaskDialog open onClose={onClose} title={text.new}>
       <form
         noValidate
         className="flex flex-col gap-4"
@@ -191,18 +194,18 @@ function NewStatusPage({ org, onClose }: { org: string; onClose: () => void }) {
           if (name.trim()) create.mutate()
         }}
       >
-        <Field label="Name" error={tried && !name.trim() ? 'Give the page a name.' : undefined}>
+        <Field label={t.dialog.name} error={tried && !name.trim() ? text.nameMissing : undefined}>
           {(props) => <Input {...props} value={name} onChange={(event) => setName(event.target.value)} />}
         </Field>
         <label className="flex min-h-9 cursor-pointer items-center gap-3 max-lg:min-h-11">
           <Checkbox checked={isPublic} onCheckedChange={(checked) => setIsPublic(checked === true)} />
-          Anyone with the link can see it
+          {text.anyoneWithLink}
         </label>
         <TaskActions className="sm:justify-end">
           <SubmitButton busy={create.isPending} className="sm:order-last">
-            Create status page
+            {text.create}
           </SubmitButton>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common.cancel}</Button>
         </TaskActions>
       </form>
     </TaskDialog>

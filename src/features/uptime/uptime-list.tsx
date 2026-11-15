@@ -11,24 +11,25 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { MarkLabels, PeriodToggle, ReleaseRules } from '@/features/issues/trace'
 import { releaseMarks, spanAxis, type Mark } from '@/features/issues/trend'
 import { ago, dayTime, exact } from '@/features/issues/format'
+import { useT } from '@/i18n'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { periodLength } from './format'
 import { Health } from './health'
 import { UptimeTab } from './address'
-import { HEALTH, HEALTH_ORDER, downReason, healthLine, isAlarm, isHeartbeat, targetText } from './describe'
+import { HEALTH, HEALTH_ORDER, downReason, healthInline, healthLabel, healthLine, isAlarm, isHeartbeat, targetText } from './describe'
 import { CheckBars, DowntimeStrip, HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth, type MonitorHealth } from './use-health'
-import { countWord } from '@/lib/text'
 import { formatMs } from '@/features/performance/format'
 
 const COLUMNS = 'lg:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_232px_80px]'
 // A group is named as its health, except the monitors that have not been checked yet.
-const groupLabel = (state: Health) => (state === Health.waiting ? 'Waiting for a first check' : HEALTH[state].label)
+const groupLabel = (state: Health, waiting: string) => (state === Health.waiting ? waiting : healthLabel(state))
 
 /** The monitors, grouped by what needs attention first, each with its downtime on one shared time axis. */
 export function UptimeList({ org, period = StatsPeriod.day }: { org: string; period?: StatsPeriod }) {
-  useTitle('Uptime')
+  const { uptime: t, common } = useT()
+  useTitle(t.title)
   const navigate = useNavigate()
   const list = useInfiniteQuery(monitorListQuery(org, MonitorSort.name))
   const pages = useQuery(statusPagesQuery(org)).data
@@ -53,14 +54,14 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
 
   const bar = (
     <PageBar>
-      <h1 className="sr-only">Uptime monitors</h1>
+      <h1 className="sr-only">{t.monitorsHeading}</h1>
       <UptimeTabs org={org} current={UptimeTab.monitors} counts={{ [UptimeTab.statusPages]: pages?.length }} />
       <div className="ml-auto flex items-center gap-2">
         {monitors.length > 0 && <div className="max-lg:hidden">{toggle}</div>}
         {canWrite && (
           <Button asChild variant="default" size="bar">
             <Link to="/$org/uptime-monitors/new" params={{ org }}>
-              New monitor
+              {t.newMonitor}
             </Link>
           </Button>
         )}
@@ -72,8 +73,8 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
     return (
       <>
         {bar}
-        <Screen title="The monitors didn't load">
-          <Button onClick={() => void list.refetch()}>Try again</Button>
+        <Screen title={t.list.failed}>
+          <Button onClick={() => void list.refetch()}>{common.tryAgain}</Button>
         </Screen>
       </>
     )
@@ -81,11 +82,11 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
     return (
       <>
         {bar}
-        <Screen title="Add a monitor to see when a site or job goes down">
+        <Screen title={t.list.empty}>
           {canWrite && (
             <Button asChild variant="default">
               <Link to="/$org/uptime-monitors/new" params={{ org }}>
-                New monitor
+                {t.newMonitor}
               </Link>
             </Button>
           )}
@@ -101,14 +102,14 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
         {shown ? (
           <>
             <span>
-              <span className="mono text-2xl leading-none font-semibold lg:text-3xl">{monitors.length}</span> {countWord(monitors.length, 'monitor')}
+              <span className="mono text-2xl leading-none font-semibold lg:text-3xl">{monitors.length}</span> {t.list.monitors(monitors.length)}
             </span>
             {alarms.map((state) => (
               <span key={state} className={HEALTH[state].color}>
-                <span className="mono font-semibold">{count(state)}</span> {HEALTH[state].label.toLowerCase()}
+                <span className="mono font-semibold">{count(state)}</span> {healthInline(state)}
               </span>
             ))}
-            {alarms.length === 0 && <span className="text-ok">all up</span>}
+            {alarms.length === 0 && <span className="text-ok">{t.list.allUp}</span>}
           </>
         ) : (
           <Skeleton className="h-7 w-48" />
@@ -117,8 +118,8 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
 
       {/* The shared time axis: where the period starts, the releases inside it, and now. */}
       <div className={cn('sticky top-11 z-10 grid items-center gap-x-3 border-b bg-background px-3 max-lg:h-11 max-lg:grid-cols-[minmax(0,1fr)_auto] lg:h-12 lg:gap-x-0 lg:px-4', COLUMNS)}>
-        <span className="label-caps max-lg:hidden">Monitor</span>
-        <span className="label-caps lg:hidden">Downtime since {since}</span>
+        <span className="label-caps max-lg:hidden">{t.monitor}</span>
+        <span className="label-caps lg:hidden">{t.list.downtimeSince(since)}</span>
         <div className="lg:hidden">{toggle}</div>
         <div className="relative mx-4 max-lg:hidden">
           <div className="relative h-5">
@@ -129,11 +130,11 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
           </div>
           <span className="label-caps flex justify-between">
             <span>{since}</span>
-            <span>Now</span>
+            <span>{t.now}</span>
           </span>
         </div>
-        <span className="label-caps text-right max-lg:hidden">Last 60 checks</span>
-        <span className="label-caps text-right max-lg:hidden">Changed</span>
+        <span className="label-caps text-right max-lg:hidden">{t.list.lastChecks}</span>
+        <span className="label-caps text-right max-lg:hidden">{t.list.changed}</span>
       </div>
 
       {!shown ? (
@@ -143,9 +144,9 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
           const rows = monitors.filter((monitor) => ready(monitor) && health.get(monitor.id)!.report.health === state)
           if (!rows.length) return null
           return (
-            <section key={state} aria-label={groupLabel(state)}>
+            <section key={state} aria-label={groupLabel(state, t.list.waitingGroup)}>
               <h2 className={cn('label-caps flex h-8 items-center gap-2 border-b bg-muted/60 px-3 font-semibold lg:px-4', isAlarm(state) && HEALTH[state].color)}>
-                {groupLabel(state)}
+                {groupLabel(state, t.list.waitingGroup)}
                 <span className="font-normal text-muted-foreground">{rows.length}</span>
               </h2>
               <ul>
@@ -161,7 +162,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
       {list.hasNextPage && (
         <div className="px-3 py-4 lg:px-4">
           <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage}>
-            More monitors
+            {t.list.more}
           </Button>
         </div>
       )}
@@ -170,6 +171,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
 }
 
 function MonitorRow({ org, monitor, health, from, now, marks }: { org: string; monitor: Monitor; health: MonitorHealth; from: number; now: number; marks: Mark[] }) {
+  useT()
   const { report, checks } = health
   const state = report.health
   const loud = isAlarm(state)
@@ -187,7 +189,7 @@ function MonitorRow({ org, monitor, health, from, now, marks }: { org: string; m
           <div className="flex items-center gap-2">
             <HealthGlyph health={state} />
             <span className="truncate font-medium">{monitor.name}</span>
-            {alsoSlow && <span className={cn('label-caps shrink-0', HEALTH[Health.slow].color)}>{HEALTH[Health.slow].label}</span>}
+            {alsoSlow && <span className={cn('label-caps shrink-0', HEALTH[Health.slow].color)}>{healthLabel(Health.slow)}</span>}
           </div>
           {/* Health in words, then what is checked: an address in mono, a heartbeat's schedule in words. */}
           <div className="mt-1 flex gap-2 pl-5 text-muted-foreground">
@@ -223,8 +225,9 @@ function MonitorRow({ org, monitor, health, from, now, marks }: { org: string; m
 }
 
 function ListSkeleton({ rows = 5 }: { rows?: number }) {
+  const t = useT().uptime
   return (
-    <div aria-busy aria-label="Loading monitors">
+    <div aria-busy aria-label={t.list.loading}>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className={cn('grid grid-cols-[minmax(0,1fr)_96px] items-center gap-x-3 border-b px-3 py-3 lg:gap-x-0 lg:px-4', COLUMNS)}>
           <span className="flex flex-col gap-2">

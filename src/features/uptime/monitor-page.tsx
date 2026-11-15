@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { StatsPeriod } from '@/api/issues'
 import { projectAlertsQuery } from '@/api/alerts'
 import { explain, isNotFound } from '@/api/errors'
@@ -20,23 +20,20 @@ import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
 import { MarkLabels, PeriodToggle } from '@/features/issues/trace'
 import { releaseBefore, releaseMarks, spanAxis } from '@/features/issues/trend'
-import { plural, releaseName } from '@/lib/text'
+import { useT } from '@/i18n'
+import { releaseName } from '@/lib/text'
 import { ago, brief, clock, dayName, dayTime, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
-import { every, periodLength, span } from './format'
+import { everyPhrase, periodLength, span } from './format'
 import { Health, checkHealth, checkScale, healthOf, isSlow, percent, uptimeShare, type Downtime, type HealthReport } from './health'
 import { isMonitorId } from './address'
-import { HEALTH, healthLine, isAlarm, isHeartbeat, reasonText, targetText } from './describe'
+import { HEALTH, healthHeadline, healthLabel, healthLine, isAlarm, isHeartbeat, reasonText, targetText } from './describe'
 import { CheckBars, DowntimeGlyph, DowntimeStrip, HealthGlyph } from './parts'
 import { formatMs } from '@/features/performance/format'
 
 const ChecksView = { all: 'all', incidents: 'incidents' } as const
 type ChecksView = (typeof ChecksView)[keyof typeof ChecksView]
-const CHECKS_VIEWS = [
-  { value: ChecksView.all, label: 'All' },
-  { value: ChecksView.incidents, label: 'Incidents only' },
-]
 
 /** One monitor: its health and since when, its uptime, its checks, every stretch of downtime with the release before it, and who hears about it. */
 export function MonitorPage({ org, monitorId }: { org: string; monitorId: number }) {
@@ -44,14 +41,15 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
   const monitor = useQuery({ ...monitorQuery(org, monitorId), enabled: valid })
   const canWrite = canWriteProjects(useQuery(organizationQuery(org)).data?.access)
   const [confirming, setConfirming] = useState(false)
-  useTitle(monitor.data?.name ?? 'Monitor', 'Uptime')
+  const { uptime: t, common } = useT()
+  useTitle(monitor.data?.name ?? t.monitor, t.title)
 
   const bar = (
     <PageBar>
       <Crumbs
         root={
           <Link to="/$org/uptime-monitors" params={{ org }} className={CRUMB_LINK}>
-            Uptime
+            {t.title}
           </Link>
         }
       >
@@ -61,11 +59,11 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <Button asChild size="bar">
             <Link to="/$org/uptime-monitors/$monitorId/update" params={{ org, monitorId: String(monitorId) }}>
-              Edit
+              {common.edit}
             </Link>
           </Button>
           <Button size="bar" variant="destructive" onClick={() => setConfirming(true)}>
-            Delete
+            {common.delete}
           </Button>
         </div>
       )}
@@ -77,15 +75,15 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
     return (
       <>
         {bar}
-        <Screen title={missing ? 'Monitor not found' : "This monitor didn't load"}>
+        <Screen title={missing ? t.page.notFound : t.page.failed}>
           {missing ? (
             <Button asChild>
               <Link to="/$org/uptime-monitors" params={{ org }}>
-                Go to uptime
+                {t.page.goToUptime}
               </Link>
             </Button>
           ) : (
-            <Button onClick={() => void monitor.refetch()}>Try again</Button>
+            <Button onClick={() => void monitor.refetch()}>{common.tryAgain}</Button>
           )}
         </Screen>
       </>
@@ -95,7 +93,7 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
     return (
       <>
         {bar}
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-3 py-5 md:px-4" aria-busy aria-label="Loading monitor">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-3 py-5 md:px-4" aria-busy aria-label={t.page.loading}>
           <Skeleton className="h-7 w-2/3" />
           <Skeleton className="h-4 w-1/3" />
           <Skeleton className="h-24" />
@@ -114,6 +112,7 @@ export function MonitorPage({ org, monitorId }: { org: string; monitorId: number
 }
 
 function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetail; now: number }) {
+  const { uptime: t, common } = useT()
   const project = projectSlug(useQuery(projectsQuery(org)).data, monitor.projectID ? Number(monitor.projectID) : undefined)
   const releases = (useQuery(recentReleasesQuery(org)).data ?? []).filter((release) => !project || release.projects.some((other) => other.slug === project))
   const alerts = useQuery({ ...projectAlertsQuery(org, project ?? ''), enabled: !!project })
@@ -125,7 +124,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const changes = useQuery(monitorChangesQuery(org, monitor.id, monitor.lastChange, periodMs))
   const from = now - periodMs
   const marks = releaseMarks(releases, spanAxis(from, now))
-  const periodText = period === StatsPeriod.day ? '24 hours' : '14 days'
+  const inLast = t.page.inLast[period === StatsPeriod.day ? 'day' : 'fortnight']
 
   const report = healthOf(monitor, monitor.checks, changes.data?.changes ?? [], now)
   const health = report.health
@@ -140,15 +139,15 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const open = unfolded === undefined ? inPeriod.find((period) => period.ongoing)?.from : unfolded
   // Who hears about it now. Only an ongoing downtime says so: the rules may have changed since an older one.
   const recipients = [...new Set(rules.flatMap((rule) => rule.alertRecipients.map((recipient) => recipientMeta(recipient).label)))]
-  const alertsGoTo = !project || (alerts.isSuccess && recipients.length === 0) ? 'Nobody' : alerts.isPending ? undefined : recipients.join(', ')
-  const facts: [string, string | null | undefined][] = [
-    ['Check', monitor.monitorType],
-    ['Status', isHttp(monitor.monitorType) ? String(monitor.expectedStatus ?? '') : null],
-    ['Text', monitor.expectedBody || null],
-    ['Timeout', monitor.timeout ? `${monitor.timeout}s` : null],
-    ['Down after', heartbeat ? null : `${monitor.confirmationThreshold} failed`],
-    ['Project', project ?? monitor.projectName],
-    ['Environment', monitor.envName],
+  const alertsGoTo = !project || (alerts.isSuccess && recipients.length === 0) ? t.page.nobody : alerts.isPending ? undefined : recipients.join(', ')
+  const facts: [string, string, string | null | undefined][] = [
+    ['check', t.page.facts.check, monitor.monitorType],
+    ['status', t.page.facts.status, isHttp(monitor.monitorType) ? String(monitor.expectedStatus ?? '') : null],
+    ['text', t.page.facts.text, monitor.expectedBody || null],
+    ['timeout', t.page.facts.timeout, monitor.timeout ? t.seconds(monitor.timeout) : null],
+    ['downAfter', t.page.facts.downAfter, heartbeat ? null : t.page.failedCount(monitor.confirmationThreshold)],
+    ['project', common.project, project ?? monitor.projectName],
+    ['environment', t.page.facts.environment, monitor.envName],
   ]
 
   return (
@@ -159,27 +158,27 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
           <h1 className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 text-2xl font-semibold', loud && HEALTH[health].color)}>
             <HealthGlyph health={health} className="size-4" />
             <span className="[overflow-wrap:anywhere]">
-              {monitor.name} {HEALTH[health].headline}
+              {healthHeadline(health, monitor.name)}
             </span>
-            {alsoSlow && <span className={cn('label-caps', HEALTH[Health.slow].color)}>{HEALTH[Health.slow].label}</span>}
+            {alsoSlow && <span className={cn('label-caps', HEALTH[Health.slow].color)}>{healthLabel(Health.slow)}</span>}
           </h1>
           {health !== Health.waiting && <p className="mt-1 font-medium">{healthLine(monitor, report, now)}</p>}
           <p className="mt-2 [overflow-wrap:anywhere] text-muted-foreground">
             {heartbeat ? (
-              `Heartbeat ${targetText(monitor)}`
+              t.heartbeatEvery(targetText(monitor))
             ) : (
               <>
                 <span className="mono">
                   {monitor.monitorType} {targetText(monitor)}
                 </span>{' '}
-                <span className="whitespace-nowrap">every {every(monitor.interval)}</span>
+                <span className="whitespace-nowrap">{everyPhrase(monitor.interval)}</span>
               </>
             )}
           </p>
         </header>
 
         <div className="order-3">
-          <Section label="Downtime" count={changes.data ? inPeriod.length : undefined} action={<PeriodToggle period={period} onChange={setPeriod} />}>
+          <Section label={t.page.downtime} count={changes.data ? inPeriod.length : undefined} action={<PeriodToggle period={period} onChange={setPeriod} />}>
             {changes.data && (
               // Every stretch down in the period on one strip, with the releases made in it.
               <div className="pt-3 pb-4">
@@ -198,12 +197,13 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
                 </div>
                 <p className="label-caps mt-2 flex justify-between">
                   <span>{dayTime(new Date(from), new Date(now))}</span>
-                  <span>Now</span>
+                  <span>{t.now}</span>
                 </p>
                 {uptime && (
                   <p className="mt-3">
-                    <span className="mono font-semibold">{percent(uptime.share)}</span> up{' '}
-                    {uptime.sinceFirst ? 'since its first check' : `in the last ${periodText}`}
+                    {uptime.sinceFirst
+                      ? t.page.upSinceFirst(<span className="mono font-semibold">{percent(uptime.share)}</span>)
+                      : t.page.upShare(<span className="mono font-semibold">{percent(uptime.share)}</span>, inLast)}
                   </p>
                 )}
               </div>
@@ -211,9 +211,9 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
             {changes.isPending ? (
               <RowsSkeleton rows={2} className="min-h-11" />
             ) : changes.isError ? (
-              <p className="py-4 text-muted-foreground">The downtime didn't load.</p>
+              <p className="py-4 text-muted-foreground">{t.page.downtimeFailed}</p>
             ) : inPeriod.length === 0 ? (
-              <p className="py-4 text-muted-foreground">{health === Health.waiting ? 'Nothing to show until the first check.' : `No downtime in the last ${periodText}.`}</p>
+              <p className="py-4 text-muted-foreground">{health === Health.waiting ? t.page.waitingNothing : t.page.noDowntime(inLast)}</p>
             ) : (
               <ul>
                 {inPeriod.map((period) => (
@@ -245,23 +245,23 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
         )}
         <div className="order-4 mt-8 flex flex-col gap-8 lg:mt-0">
           {heartbeat && monitor.heartbeatEndpoint && (
-            <Section label="Heartbeat address">
-              <CopyField value={monitor.heartbeatEndpoint} label="Heartbeat address" className="mt-3" />
+            <Section label={t.page.heartbeatAddress}>
+              <CopyField value={monitor.heartbeatEndpoint} label={t.page.heartbeatAddress} className="mt-3" />
             </Section>
           )}
-          <Section label="Setup">
+          <Section label={t.page.setup}>
             <dl>
               {facts
-                .filter(([, value]) => value)
-                .map(([label, value]) => (
-                  <div key={label} className="flex min-h-9 items-center justify-between gap-4 border-b">
+                .filter(([, , value]) => value)
+                .map(([key, label, value]) => (
+                  <div key={key} className="flex min-h-9 items-center justify-between gap-4 border-b">
                     <dt className="text-muted-foreground">{label}</dt>
                     <dd className="mono truncate">{value}</dd>
                   </div>
                 ))}
             </dl>
           </Section>
-          <Section label="Alerts" count={project && alerts.data ? rules.length : undefined}>
+          <Section label={t.page.alerts} count={project && alerts.data ? rules.length : undefined}>
             {project && alerts.isPending ? (
               <Skeleton className="mt-3 h-12" />
             ) : rules.length > 0 ? (
@@ -277,14 +277,14 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
               </ul>
             ) : (
               <p className="py-3 text-muted-foreground">
-                Nobody hears when this goes down.{' '}
+                {t.page.nobodyHears}{' '}
                 {project ? (
                   <Link to="/$org/alerts" params={{ org }} search={{ alertProject: project, alert: RuleEditor.new }} className="text-brand hover:underline">
-                    Add a rule
+                    {t.page.addRule}
                   </Link>
                 ) : (
                   <Link to="/$org/uptime-monitors/$monitorId/update" params={{ org, monitorId: String(monitor.id) }} className="text-brand hover:underline">
-                    Link a project
+                    {t.page.linkProject}
                   </Link>
                 )}
               </p>
@@ -298,6 +298,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
 
 // The newest checks at a glance, once there are any: how many passed, the typical response, how many were slow, and each as a bar.
 function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: HealthReport }) {
+  const { uptime: t, common } = useT()
   const checks = monitor.checks
   const heartbeat = isHeartbeat(monitor)
   const health = report.health
@@ -305,11 +306,11 @@ function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: Hea
   const slowChecks = checks.filter((check) => isSlow(check, monitor.timeout)).length
   const { peak, over, overLimit } = checkScale(checks, monitor.timeout)
   return (
-    <Section label={`Last ${plural(checks.length, 'check')}`}>
+    <Section label={t.page.lastChecks(checks.length)}>
           <dl className="grid grid-cols-3 gap-x-4 pt-3">
-            <Stat label="Passed" value={`${passed}/${checks.length}`} tone={health === Health.down ? HEALTH[Health.down].color : undefined} />
-            {!heartbeat && <Stat label="Response" value={report.typical === undefined ? 'None' : formatMs(report.typical)} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
-            {!heartbeat && <Stat label="Slow" value={slowChecks} tone={slowChecks ? HEALTH[Health.slow].color : undefined} />}
+            <Stat label={t.page.passed} value={`${passed}/${checks.length}`} tone={health === Health.down ? HEALTH[Health.down].color : undefined} />
+            {!heartbeat && <Stat label={t.page.response} value={report.typical === undefined ? common.noneFeminine : formatMs(report.typical)} tone={report.slow ? HEALTH[Health.slow].color : undefined} />}
+            {!heartbeat && <Stat label={t.page.slow} value={slowChecks} tone={slowChecks ? HEALTH[Health.slow].color : undefined} />}
           </dl>
           {!heartbeat && (
             <>
@@ -317,15 +318,15 @@ function CheckSummary({ monitor, report }: { monitor: MonitorDetail; report: Hea
               <p className="mono mt-2 flex justify-between gap-2 text-muted-foreground">
                 <span>{clock(checks.at(-1)!.startCheck)}</span>
                 <span className="flex items-center gap-2">
-                  peak {formatMs(peak)}
+                  {t.page.peak(formatMs(peak))}
                   {overLimit && (
                     <span className="flex items-center gap-1">
                       <span aria-hidden className="h-0.5 w-3 bg-foreground" />
-                      slow over {formatMs(over!)}
+                      {t.page.slowOver(formatMs(over!))}
                     </span>
                   )}
                 </span>
-                <span>Now</span>
+                <span>{t.now}</span>
               </p>
             </>
           )}
@@ -354,16 +355,18 @@ function DowntimeRow({
   before?: Release
   alertsGoTo?: string
 }) {
+  const { uptime: t, common } = useT()
+  const text = t.page
   const releaseText = before && releaseName(before.version)
   // Times and versions are machine text; the words around them are not.
   const details: { label: string; value: ReactNode; mono?: boolean }[] = [
-    { label: 'Went down', value: brief(new Date(period.from)), mono: true },
-    period.ongoing ? { label: 'Came back', value: 'Not yet' } : { label: 'Came back', value: brief(new Date(period.to)), mono: true },
+    { label: text.wentDown, value: brief(new Date(period.from)), mono: true },
+    period.ongoing ? { label: text.cameBack, value: text.notYet } : { label: text.cameBack, value: brief(new Date(period.to)), mono: true },
     {
-      label: 'Release before',
+      label: text.releaseBefore,
       value: before ? (
-        <>
-          {canOpenRelease(before.version) ? (
+        text.earlier(
+          canOpenRelease(before.version) ? (
             <Link to="/$org/releases/$" params={{ org, _splat: before.version }} title={before.version} className="mono hover:underline">
               {releaseText}
             </Link>
@@ -371,14 +374,14 @@ function DowntimeRow({
             <span className="mono" title={before.version}>
               {releaseText}
             </span>
-          )}
-          , <span className="mono">{span(period.from - Date.parse(before.dateCreated))}</span> earlier
-        </>
+          ),
+          <span className="mono">{span(period.from - Date.parse(before.dateCreated))}</span>,
+        )
       ) : (
-        'None'
+        common.noneFeminine
       ),
     },
-    ...(alertsGoTo ? [{ label: 'Alerts go to', value: alertsGoTo }] : []),
+    ...(alertsGoTo ? [{ label: text.alertsGoTo, value: alertsGoTo }] : []),
   ]
   return (
     <li className="border-b">
@@ -386,11 +389,12 @@ function DowntimeRow({
         type="button"
         aria-expanded={unfolded}
         onClick={onToggle}
-        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[64px_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfolded ? 'bg-accent' : 'hover:bg-accent/60')}
+        style={{ '--ago': text.agoWidth } as CSSProperties}
+        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[var(--ago)_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfolded ? 'bg-accent' : 'hover:bg-accent/60')}
       >
         {/* "ago", so a start is not read as a length; the length is at the right. */}
         <time className="mono text-muted-foreground" dateTime={new Date(period.from).toISOString()} title={exact(new Date(period.from))}>
-          {ago(new Date(period.from), new Date(now))} ago
+          {text.ago(ago(new Date(period.from), new Date(now)))}
         </time>
         <span className="flex min-w-0 items-center gap-2">
           <DowntimeGlyph ongoing={period.ongoing} />
@@ -398,7 +402,7 @@ function DowntimeRow({
         </span>
         <span className={cn('mono', period.ongoing && cn('font-semibold', HEALTH[Health.down].color))}>
           {span(period.to - period.from)}
-          {period.ongoing && ' so far'}
+          {period.ongoing && ` ${text.soFar}`}
         </span>
         <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', unfolded && 'rotate-180')} />
       </button>
@@ -419,6 +423,12 @@ function DowntimeRow({
 // Every check, newest first, a page at a time, under the day it ran. "Incidents only" keeps the ones where the
 // monitor went down or came back, and names each by that change rather than by its result.
 function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; now: number }) {
+  const { uptime: t, common } = useT()
+  const text = t.page
+  const views = [
+    { value: ChecksView.all, label: text.views.all },
+    { value: ChecksView.incidents, label: text.views.incidents },
+  ]
   const [view, setView] = useState<ChecksView>(ChecksView.all)
   // The cursor of each page opened so far, from the newest; the last is the page shown.
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined])
@@ -427,7 +437,7 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
   const { hits, maxHits } = checks.data ?? {}
   const older = checks.data?.cursors.next
   // The backend counts no further than its cap.
-  const total = hits === undefined ? undefined : `${hits}${maxHits !== undefined && hits >= maxHits ? '+' : ''}`
+  const total = hits === undefined ? undefined : maxHits !== undefined && hits >= maxHits ? `${hits}+` : hits
   const offset = (cursors.length - 1) * CHECKS_PAGE_SIZE
   // Until the page asked for is in, the one shown belongs to another page or view.
   const stale = checks.isPlaceholderData
@@ -448,40 +458,40 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
   const olderBlocked = stale || !older
   const newerBlocked = stale || cursors.length === 1
   return (
-    <Section label="Checks" className="mt-8" action={<Segmented label="Show checks" size="sm" value={view} options={CHECKS_VIEWS} onChange={show} />}>
+    <Section label={text.checks} className="mt-8" action={<Segmented label={text.showChecks} size="sm" value={view} options={views} onChange={show} />}>
       {checks.isPending ? (
         <RowsSkeleton rows={8} />
       ) : checks.isError ? (
         <p className="py-4 text-muted-foreground">
-          The checks didn't load.{' '}
+          {text.checksFailed}{' '}
           <button type="button" className="text-brand hover:underline" onClick={() => void checks.refetch()}>
-            Try again
+            {common.tryAgain}
           </button>
           {cursors.length > 1 && (
             <>
               {' · '}
               <button type="button" className="text-brand hover:underline" onClick={() => setCursors([undefined])}>
-                Back to newest
+                {text.backToNewest}
               </button>
             </>
           )}
         </p>
       ) : items.length === 0 ? (
-        <p className="py-4 text-muted-foreground">{view === ChecksView.incidents ? 'No incidents recorded.' : 'No checks yet.'}</p>
+        <p className="py-4 text-muted-foreground">{view === ChecksView.incidents ? text.noIncidents : text.noChecks}</p>
       ) : (
         <table className={cn('w-full table-fixed', stale && 'opacity-60')}>
-          <caption className="sr-only">{total} checks, newest first</caption>
+          <caption className="sr-only">{text.caption(total)}</caption>
           <thead>
             <tr className="label-caps h-9 text-left">
               <th scope="col" className="w-20 font-normal">
-                Time
+                {text.time}
               </th>
               <th scope="col" className="font-normal">
-                Result
+                {text.result}
               </th>
               {!heartbeat && (
                 <th scope="col" className="w-20 text-right font-normal lg:w-24">
-                  Response
+                  {text.response}
                 </th>
               )}
             </tr>
@@ -503,14 +513,13 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
       {items.length > 0 && (cursors.length > 1 || older) && (
         <div className="mt-2 flex items-center justify-between gap-4">
           <p aria-live="polite" className={cn('mono text-muted-foreground transition-opacity duration-100', stale && 'opacity-60')}>
-            {offset + 1}–{offset + items.length}
-            {total !== undefined && ` of ${total}`}
+            {text.range(offset + 1, offset + items.length, total)}
           </p>
           <div className="flex shrink-0 items-center">
-            <Button variant="ghost" size="icon-sm" className={PAGER} aria-disabled={olderBlocked} onClick={turn([...cursors, older], olderBlocked)} aria-label="Older checks">
+            <Button variant="ghost" size="icon-sm" className={PAGER} aria-disabled={olderBlocked} onClick={turn([...cursors, older], olderBlocked)} aria-label={text.older}>
               <ChevronLeft />
             </Button>
-            <Button variant="ghost" size="icon-sm" className={PAGER} aria-disabled={newerBlocked} onClick={turn(cursors.slice(0, -1), newerBlocked)} aria-label="Newer checks">
+            <Button variant="ghost" size="icon-sm" className={PAGER} aria-disabled={newerBlocked} onClick={turn(cursors.slice(0, -1), newerBlocked)} aria-label={text.newer}>
               <ChevronRight />
             </Button>
           </div>
@@ -526,11 +535,12 @@ const PAGER = 'max-lg:size-11 aria-disabled:cursor-default aria-disabled:opacity
 // change, worded as in the downtime list; a recovery that was slow keeps its time in amber. The oldest change of all
 // is the monitor's `first` check, which came back from nothing.
 function CheckRow({ monitor, check, view, first }: { monitor: MonitorDetail; check: Check; view: ChecksView; first: boolean }) {
+  const text = useT().uptime.page
   const state = checkHealth(check, monitor.timeout)
   const incidents = view === ChecksView.incidents
   const glyph = incidents && check.isUp ? Health.up : state
   const reason = reasonText(monitor, check.reason)
-  const result = incidents ? (check.isUp ? (first ? 'First check' : 'Came back') : `Went down · ${reason}`) : state === Health.down ? reason : HEALTH[state].label
+  const result = incidents ? (check.isUp ? (first ? text.firstCheck : text.cameBack) : text.wentDownBecause(reason)) : state === Health.down ? reason : healthLabel(state)
   return (
     <tr className="h-9 border-t">
       <td>
@@ -553,8 +563,9 @@ function CheckRow({ monitor, check, view, first }: { monitor: MonitorDetail; che
 
 // The shape of rows still loading: a time, a result, and a figure at the right.
 function RowsSkeleton({ rows, className = 'h-9' }: { rows: number; className?: string }) {
+  const text = useT().uptime.page
   return (
-    <div aria-busy aria-label="Loading">
+    <div aria-busy aria-label={text.loadingRows}>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className={cn('flex items-center gap-4 border-b', className)}>
           <Skeleton className="h-3 w-12" />
@@ -567,6 +578,7 @@ function RowsSkeleton({ rows, className = 'h-9' }: { rows: number; className?: s
 }
 
 function DeleteMonitor({ org, monitor, open, onClose }: { org: string; monitor: MonitorDetail; open: boolean; onClose: () => void }) {
+  const text = useT().uptime.page
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [error, setError] = useState<string>()
@@ -577,14 +589,14 @@ function DeleteMonitor({ org, monitor, open, onClose }: { org: string; monitor: 
       void queryClient.invalidateQueries({ queryKey: monitorKeys.all(org) })
       void navigate({ to: '/$org/uptime-monitors', params: { org } })
     },
-    onError: (failure) => setError(explain(failure, 'delete the monitor')),
+    onError: (failure) => setError(explain(failure, text.deleteAction)),
   })
   return (
     <ConfirmDialog
       open={open}
-      title={`Delete ${monitor.name}?`}
-      description="Its check history is deleted with it."
-      action="Delete monitor"
+      title={text.deleteTitle(monitor.name)}
+      description={text.deleteDescription}
+      action={text.deleteMonitor}
       busy={remove.isPending}
       error={error}
       onConfirm={() => {

@@ -1,4 +1,5 @@
 import type { Check } from '@/api/monitors'
+import { localized } from '@/i18n'
 import { DAY_MS, SECOND_MS } from '@/lib/time'
 
 // The backend knows only up and down. Slow and flapping are read off the checks it returns.
@@ -113,7 +114,9 @@ export function uptimeShare(history: { changes: StateChange[]; toFirst: boolean 
   return { share: 1 - down / (now - from), sinceFirst }
 }
 
+const shares = localized((tag) => new Intl.NumberFormat(tag, { style: 'percent', maximumFractionDigits: 1 }))
+
+// `99.9%`: cut, never rounded up, so a share short of full never reads as 100%.
 export function percent(share: number): string {
-  if (share >= 1) return '100%'
-  return `${Math.min(99.9, Math.floor(share * 1000) / 10)}%`
+  return shares().format(share >= 1 ? 1 : Math.min(99.9, Math.floor(share * 1000) / 10) / 100)
 }

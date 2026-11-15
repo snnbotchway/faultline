@@ -2,9 +2,10 @@ import { Link } from '@tanstack/react-router'
 import type { Check } from '@/api/monitors'
 import { TraceFrame } from '@/features/issues/trace'
 import type { Mark } from '@/features/issues/trend'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { UptimeTab } from './address'
-import { HEALTH } from './describe'
+import { HEALTH, healthLabel } from './describe'
 import { Health, checkHealth, checkScale, type Downtime } from './health'
 
 // The outline of a hollow glyph, in its 10-unit box.
@@ -12,8 +13,9 @@ const GLYPH_STROKE = 1.5
 
 // Health by shape as well as colour: square down, diamond flapping, triangle slow, disc up, ring not reported yet.
 export function HealthGlyph({ health, className }: { health: Health; className?: string }) {
+  useT()
   return (
-    <svg viewBox="0 0 10 10" role="img" aria-label={HEALTH[health].label} className={cn('size-3 shrink-0', HEALTH[health].color, className)}>
+    <svg viewBox="0 0 10 10" role="img" aria-label={healthLabel(health)} className={cn('size-3 shrink-0', HEALTH[health].color, className)}>
       {health === Health.down ? (
         <rect width="10" height="10" fill="currentColor" />
       ) : health === Health.flapping ? (
@@ -31,8 +33,9 @@ export function HealthGlyph({ health, className }: { health: Health; className?:
 
 // A square for a stretch of downtime: filled while it lasts, an outline once it is over.
 export function DowntimeGlyph({ ongoing }: { ongoing: boolean }) {
+  const t = useT().uptime
   return (
-    <svg viewBox="0 0 10 10" className={cn('size-3 shrink-0', HEALTH[Health.down].color)} role="img" aria-label={ongoing ? 'Down now' : 'Recovered'}>
+    <svg viewBox="0 0 10 10" className={cn('size-3 shrink-0', HEALTH[Health.down].color)} role="img" aria-label={ongoing ? t.downNow : t.recovered}>
       {ongoing ? <rect width="10" height="10" fill="currentColor" /> : <rect x="0.75" y="0.75" width="8.5" height="8.5" fill="none" stroke="currentColor" strokeWidth={GLYPH_STROKE} />}
     </svg>
   )
@@ -105,6 +108,7 @@ export function DowntimeStrip({
 }
 
 export function UptimeTabs({ org, current, counts }: { org: string; current: UptimeTab; counts: Partial<Record<UptimeTab, number>> }) {
+  const t = useT().uptime.tabs
   const tab = 'flex items-center gap-2 border-y-2 border-transparent text-sm font-medium whitespace-nowrap'
   const link = (value: UptimeTab, label: string, to: '/$org/uptime-monitors' | '/$org/uptime-monitors/status-pages') => (
     <Link to={to} params={{ org }} aria-current={current === value ? 'page' : undefined} className={cn(tab, current === value ? 'border-b-brand' : 'text-muted-foreground hover:text-foreground')}>
@@ -113,9 +117,9 @@ export function UptimeTabs({ org, current, counts }: { org: string; current: Upt
     </Link>
   )
   return (
-    <nav aria-label="Uptime" className="flex h-full items-stretch gap-4">
-      {link(UptimeTab.monitors, 'Monitors', '/$org/uptime-monitors')}
-      {link(UptimeTab.statusPages, 'Status pages', '/$org/uptime-monitors/status-pages')}
+    <nav aria-label={t.label} className="flex h-full items-stretch gap-4">
+      {link(UptimeTab.monitors, t.monitors, '/$org/uptime-monitors')}
+      {link(UptimeTab.statusPages, t.statusPages, '/$org/uptime-monitors/status-pages')}
     </nav>
   )
 }

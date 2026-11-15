@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
-import { LOCALE_NAMES, Locale, useLocale, useT } from '@/i18n'
+import { LOCALE_NAMES, Locale, useChosenLocale, useLocale, useT } from '@/i18n'
 import { overlayOpen, useHotkeys } from '@/lib/hotkeys'
 import { clearActionNotice, clearNotice, holdNotice, NoticeHold, releaseNotice, useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
@@ -309,6 +309,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
   const chooseLanguage = useChooseLanguage()
   const t = useT()
   const shownLocale = useLocale()
+  const chosenLocale = useChosenLocale()
   useThemeSync()
   useLanguageSync()
 
@@ -343,6 +344,7 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
     ...Object.values(Locale)
       .filter((locale) => locale !== shownLocale)
       .map((locale) => ({ id: `language:${locale}`, group: CommandGroup.language, label: LOCALE_NAMES[locale], run: () => chooseLanguage(locale) })),
+    ...(chosenLocale ? [{ id: 'language:browser', group: CommandGroup.language, label: t.shell.language.browser, run: () => chooseLanguage(undefined) }] : []),
     { id: 'profile', group: CommandGroup.account, label: t.shell.profile, run: () => void navigate({ to: '/profile' }) },
     { id: 'sign-out', group: CommandGroup.account, label: t.shell.signOut, run: () => void leave() },
   ]

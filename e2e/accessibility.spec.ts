@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { DEMO } from '../dev/seed.ts'
 
 const org = `/${DEMO.org}`
@@ -41,8 +41,12 @@ async function audit(page: Page) {
   expect({ light, dark }).toEqual({ light: [], dark: [] })
 }
 
-const SCREENS: { name: string; open: (page: Page) => Promise<unknown> }[] = [
-  { name: 'the issue inbox', open: (page) => page.goto(`${org}/issues`).then(() => page.getByRole('region', { name: 'Ongoing' }).waitFor()) },
+// A screen opens at its path and is ready once its one `h1` (or what `ready` names) is on the page; `open` is for
+// one reached by a click.
+type Screen = { name: string } & ({ path: string; ready?: (page: Page) => Locator } | { open: (page: Page) => Promise<void> })
+
+const SCREENS: Screen[] = [
+  { name: 'the issue inbox', path: `${org}/issues`, ready: (page) => page.getByRole('region', { name: 'Ongoing' }) },
   {
     name: 'an issue page',
     open: async (page) => {
@@ -51,8 +55,8 @@ const SCREENS: { name: string; open: (page: Page) => Promise<unknown> }[] = [
       await page.getByRole('heading', { name: 'Stack trace' }).waitFor()
     },
   },
-  { name: 'releases', open: (page) => page.goto(`${org}/releases`).then(() => page.getByRole('heading', { level: 1 }).waitFor()) },
-  { name: 'the uptime list', open: (page) => page.goto(`${org}/uptime-monitors`).then(() => page.getByRole('region', { name: 'Down', exact: true }).waitFor()) },
+  { name: 'releases', path: `${org}/releases` },
+  { name: 'the uptime list', path: `${org}/uptime-monitors`, ready: (page) => page.getByRole('region', { name: 'Down', exact: true }) },
   {
     name: 'a monitor page',
     open: async (page) => {
@@ -61,15 +65,12 @@ const SCREENS: { name: string; open: (page: Page) => Promise<unknown> }[] = [
       await page.getByRole('region', { name: 'Checks', exact: true }).locator('tbody time').first().waitFor()
     },
   },
-  { name: 'alerts', open: (page) => page.goto(`${org}/alerts`).then(() => page.getByText('Downtime and spikes').first().waitFor()) },
-  {
-    name: 'performance',
-    open: (page) => page.goto(`${org}/performance`).then(() => page.getByRole('list', { name: 'Transactions' }).getByRole('listitem').first().waitFor()),
-  },
-  { name: 'logs', open: (page) => page.goto(`${org}/logs`).then(() => page.getByRole('heading', { level: 1 }).waitFor()) },
-  { name: 'organization settings', open: (page) => page.goto(`${org}/settings`).then(() => page.getByRole('heading', { level: 1 }).waitFor()) },
-  { name: 'project settings', open: (page) => page.goto(`${org}/settings/projects/web-app`).then(() => page.getByRole('heading', { level: 1 }).waitFor()) },
-  { name: 'profile', open: (page) => page.goto('/profile').then(() => page.getByRole('heading', { level: 1 }).waitFor()) },
+  { name: 'alerts', path: `${org}/alerts`, ready: (page) => page.getByText('Downtime and spikes').first() },
+  { name: 'performance', path: `${org}/performance`, ready: (page) => page.getByRole('list', { name: 'Transactions' }).getByRole('listitem').first() },
+  { name: 'logs', path: `${org}/logs` },
+  { name: 'organization settings', path: `${org}/settings` },
+  { name: 'project settings', path: `${org}/settings/projects/web-app` },
+  { name: 'profile', path: '/profile' },
   {
     name: 'the command palette',
     open: async (page) => {
@@ -89,9 +90,15 @@ const SCREENS: { name: string; open: (page: Page) => Promise<unknown> }[] = [
   },
 ]
 
+async function open(page: Page, screen: Screen) {
+  if ('open' in screen) return screen.open(page)
+  await page.goto(screen.path)
+  await (screen.ready?.(page) ?? page.getByRole('heading', { level: 1 })).waitFor()
+}
+
 for (const screen of SCREENS) {
   test(`${screen.name} has no serious accessibility violations`, async ({ page }) => {
-    await screen.open(page)
+    await open(page, screen)
     await audit(page)
   })
 }

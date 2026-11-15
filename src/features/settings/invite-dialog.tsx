@@ -10,6 +10,7 @@ import { RoleField, TeamChecklist } from './fields'
 import { parseEmails } from './invite'
 import { Field, FieldError } from '@/components/ui/field'
 import { CopyField, FormDialog } from './parts'
+import { useT } from '@/i18n'
 
 type Outcome = { email: string; link?: string | null; error?: string }
 
@@ -39,9 +40,11 @@ export function InviteDialog({
   const [links, setLinks] = useState<Outcome[]>()
   const [refused, setRefused] = useState<Outcome[]>([])
   const { emails, invalid } = parseEmails(text)
+  const { settings: t } = useT()
+  const words = t.invite
 
   const invite = useChange(
-    'send the invites',
+    words.sendAction,
     async (): Promise<Outcome[]> => {
       const outcomes: Outcome[] = []
       // One at a time, so each address gets its own answer and one refusal does not stop the rest.
@@ -50,7 +53,7 @@ export function InviteDialog({
           const member = await memberActions.invite(org, { email, role, teams: chosen }, emailOn)
           outcomes.push({ email, link: member.inviteLink })
         } catch (error) {
-          outcomes.push({ email, error: explain(error, `invite ${email}`) })
+          outcomes.push({ email, error: explain(error, words.inviteAction(email)) })
         }
       }
       return outcomes
@@ -76,23 +79,23 @@ export function InviteDialog({
 
   if (links && !refused.length)
     return (
-      <FormDialog open onClose={onClose} title={links.length === 1 ? 'Invite link' : `${links.length} invite links`}>
-        <p className="prose-text">This server doesn't send email. Pass each link on yourself.</p>
+      <FormDialog open onClose={onClose} title={words.links(links.length)}>
+        <p className="prose-text">{words.noEmail}</p>
         {links.map((outcome) => (
           <div key={outcome.email} className="flex flex-col gap-2">
             <span className="text-sm font-medium [overflow-wrap:anywhere]">{outcome.email}</span>
-            <CopyField value={outcome.link ?? ''} label={`Invite link for ${outcome.email}`} />
+            <CopyField value={outcome.link ?? ''} label={words.linkFor(outcome.email)} />
           </div>
         ))}
       </FormDialog>
     )
 
   const count = emails.length
-  const label = emailOn ? (count > 1 ? `Send ${count} invites` : 'Send invite') : count > 1 ? `Create ${count} invite links` : 'Create invite link'
-  const emailError = !checked ? undefined : invalid.length ? `${invalid.join(', ')} ${invalid.length === 1 ? "isn't an email address" : "aren't email addresses"}.` : !count ? 'Enter at least one email address.' : undefined
+  const label = emailOn ? words.send(count) : words.create(count)
+  const emailError = !checked ? undefined : invalid.length ? words.notEmails(invalid) : !count ? words.enterOne : undefined
   return (
-    <FormDialog open onClose={onClose} title="Invite members" submit={label} onSubmit={submit} pending={invite.pending} error={invite.error}>
-      <Field label="Email addresses" error={emailError}>
+    <FormDialog open onClose={onClose} title={words.title} submit={label} onSubmit={submit} pending={invite.pending} error={invite.error}>
+      <Field label={words.addresses} error={emailError}>
         {(field) => (
           <Input {...field} autoFocus value={text} onChange={(event) => setText(event.target.value)} inputMode="email" autoComplete="off" autoCapitalize="off" spellCheck={false} />
         )}
@@ -104,7 +107,7 @@ export function InviteDialog({
       ))}
       <RoleField value={role} onChange={setRole} allowOwner={allowOwner} />
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Teams</span>
+        <span className="text-sm font-medium">{t.teams}</span>
         <TeamChecklist teams={teams} projects={projects} value={chosen} onChange={setChosen} />
       </div>
     </FormDialog>

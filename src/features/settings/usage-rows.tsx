@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { Project } from '@/api/projects'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { FoldChevron } from './parts'
 import { ProjectTab } from './project-tabs'
@@ -14,12 +15,15 @@ export const FIGURES = 'flex w-full items-baseline gap-3 text-left'
 export const SHARE = 'mono w-10 shrink-0 text-right text-muted-foreground'
 export const SLOT = 'flex size-4 shrink-0 items-center self-center'
 // The column has no heading, so a screen reader hears what the figure is a share of.
-export const Share = ({ part, whole, of }: { part: number; whole: number; of: string }) => (
-  <span className={SHARE}>
-    {share(part, whole)}
-    <span className="sr-only"> of {of}</span>
-  </span>
-)
+export function Share({ part, whole, of }: { part: number; whole: number; of: string }) {
+  const t = useT().settings.usagePage
+  return (
+    <span className={SHARE}>
+      {share(part, whole)}
+      <span className="sr-only">{t.of(of)}</span>
+    </span>
+  )
+}
 export const PROJECT_ROW = 'min-h-11 items-center border-t py-2 lg:min-h-9 lg:py-1'
 
 // A row that folds shows keyboard focus on its button as the whole row, the same as hover.

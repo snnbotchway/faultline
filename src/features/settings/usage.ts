@@ -1,12 +1,4 @@
-import type { UsageKind } from '@/api/usage'
-
-export const KIND_LABEL: Record<UsageKind, string> = { errors: 'Errors', transactions: 'Transactions', logs: 'Logs', uptime: 'Uptime checks' }
-export const KIND_WORD: Record<UsageKind, [one: string, many: string]> = {
-  errors: ['error', 'errors'],
-  transactions: ['transaction', 'transactions'],
-  logs: ['log', 'logs'],
-  uptime: ['uptime check', 'uptime checks'],
-}
+import { count, messages, percent } from '@/i18n'
 
 export const BLOCKED = 100
 
@@ -39,8 +31,8 @@ export function dropRange(organization: number, projects: number[]): { min: numb
 
 // Projects that drop nothing are not part of the range: 0–20% would read as a spread across every project.
 export function rangeText({ min, max }: { min: number; max: number }): string {
-  if (min === max) return `${max}%`
-  return min === 0 ? `up to ${max}%` : `${min}–${max}%`
+  if (min === max) return percent(max)
+  return min === 0 ? messages().settings.usagePage.upTo(percent(max)) : `${count(min)}–${percent(max)}`
 }
 
 export function dayAt(x: number, left: number, width: number, count: number): number {
@@ -53,12 +45,11 @@ export function stepDay(current: number | undefined, step: -1 | 1, count: number
   return Math.min(count - 1, Math.max(0, current + step))
 }
 
-const countFormat = new Intl.NumberFormat('en')
-export const exactCount = (count: number) => countFormat.format(count)
+export { count as exactCount } from '@/i18n'
 
 // A part too small to round to one still shows, and one counted a little apart from its whole never passes it.
 export function share(part: number, whole: number): string {
-  if (whole <= 0 || part <= 0) return '0%'
-  const percent = Math.min(100, Math.round((part / whole) * 100))
-  return percent < 1 ? '<1%' : `${percent}%`
+  if (whole <= 0 || part <= 0) return percent(0)
+  const rounded = Math.min(100, Math.round((part / whole) * 100))
+  return rounded < 1 ? `<${percent(1)}` : percent(rounded)
 }

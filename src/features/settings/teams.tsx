@@ -20,7 +20,7 @@ import { Confirm } from './fields'
 import { Field } from '@/components/ui/field'
 import { FoldChevron, FormDialog, Initials, RowSkeleton, SettingsBar, Sheet } from './parts'
 import { notify } from '@/lib/notice'
-import { plural } from '@/lib/text'
+import { messages, useT } from '@/i18n'
 import { memberName, projectHasTeam, teamLabel } from './labels'
 import { teamSlugError } from './team-slug'
 import { TeamTab } from './team-tabs'
@@ -41,7 +41,8 @@ function canChangeMembership(me: Member | undefined, can: (scope: Scope) => bool
  * The stock paths `/teams/:team/members`, `/projects` and `/settings` are this page with that row unfolded.
  */
 export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
-  useTitle('Teams', org)
+  const t = useT().settings
+  useTitle(t.teams, org)
   const can = useAccess(org)
   const navigate = useNavigate()
   const teams = useQuery(teamsQuery(org)).data
@@ -55,19 +56,19 @@ export function Teams({ org, openSlug }: { org: string; openSlug?: string }) {
   const create = write && (
     <Button variant="default" size="bar" onClick={() => setCreating(true)}>
       <Plus />
-      New team
+      {t.teamsPage.newTeam}
     </Button>
   )
   return (
     <>
-      <SettingsBar org={org} title="Teams">
+      <SettingsBar org={org} title={t.teams}>
         {teams && teams.length > 0 && create}
       </SettingsBar>
       <Sheet>
         {!teams ? (
           <RowSkeleton />
         ) : teams.length === 0 ? (
-          <Screen title="No teams yet">{create}</Screen>
+          <Screen title={t.teamsPage.none}>{create}</Screen>
         ) : (
           <ul>
             {teams.map((team) => (
@@ -112,7 +113,8 @@ type RowProps = {
 function TeamRow(props: RowProps) {
   const { org, team, projects, me, canChange, open, onOpen } = props
   const opens = projects.filter((project) => projectHasTeam(project, team.slug))
-  const membership = useChange(team.isMember ? 'leave the team' : 'join the team', () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
+  const { settings: t, common } = useT()
+  const membership = useChange(team.isMember ? t.teamsPage.leaveAction : t.teamsPage.joinAction, () => (team.isMember ? teamActions.removeMember(org, team.slug, me!.id) : teamActions.addMember(org, team.slug, me!.id)), {
     // Being on a team changes which projects the user is a member of.
     stale: [stale.teams(org), stale.projects(org)],
     notice: true,
@@ -120,16 +122,16 @@ function TeamRow(props: RowProps) {
   return (
     <li className={cn(open && 'bg-card')}>
       <div className={cn('relative flex min-h-14 items-center gap-3 border-b px-3 hover:bg-accent md:px-4', open && 'border-b-0')}>
-        <button type="button" aria-expanded={open} onClick={() => onOpen(open ? undefined : team.slug)} className="absolute inset-0 -outline-offset-2" aria-label={`Team ${team.slug}`} />
+        <button type="button" aria-expanded={open} onClick={() => onOpen(open ? undefined : team.slug)} className="absolute inset-0 -outline-offset-2" aria-label={t.teamsPage.team(team.slug)} />
         <span className="flex min-w-0 flex-1 flex-col py-2 lg:flex-row lg:items-center lg:gap-3">
           <span className="mono font-medium break-words lg:w-52 lg:shrink-0">{teamLabel(team.slug)}</span>
           <span className="text-sm whitespace-nowrap text-muted-foreground">
-            {plural(team.memberCount, 'member')} · {plural(opens.length, 'project')}
+            {common.members(team.memberCount)} · {common.projects(opens.length)}
           </span>
         </span>
         {me && canChange(me.id) && (
           <RowButton className="relative z-10" disabled={membership.pending} aria-busy={membership.pending} onClick={() => membership.run()}>
-            {team.isMember ? 'Leave' : 'Join'}
+            {team.isMember ? t.teamsPage.leave : t.teamsPage.join}
           </RowButton>
         )}
         <FoldChevron open={open} />
@@ -147,28 +149,33 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
   const [renaming, setRenaming] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [unlinking, setUnlinking] = useState<string>()
+  const { settings: t, common } = useT()
+  const text = t.teamsPage
   const onRoster = { stale: [stale.teams(org)], notice: true }
   const onAccess = { stale: [stale.teams(org), stale.projects(org)], notice: true }
-  const addMember = useChange('add the member', (id: string) => teamActions.addMember(org, team.slug, id), onRoster)
+  const addMember = useChange(text.addMemberAction, (id: string) => teamActions.addMember(org, team.slug, id), onRoster)
   // A team membership carries nothing but itself, so adding the member back undoes the removal exactly.
-  const removeMember = useChange('remove the member', (member: Member) => teamActions.removeMember(org, team.slug, member.id), {
+  const removeMember = useChange(text.removeMemberAction, (member: Member) => teamActions.removeMember(org, team.slug, member.id), {
     ...onRoster,
-    onDone: (_, member) => notify(`${memberName(member)} removed from #${team.slug}`, false, { label: 'Undo', run: () => addMember.run(member.id) }),
+    onDone: (_, member) => {
+      const words = messages().settings.teamsPage
+      notify(words.removed(memberName(member), team.slug), false, { label: words.undo, run: () => addMember.run(member.id) })
+    },
   })
-  const addProject = useChange('add the project', (slug: string) => projectActions.addTeam(org, slug, team.slug), onAccess)
-  const removeProject = useChange('remove the project', (slug: string) => projectActions.removeTeam(org, slug, team.slug), {
+  const addProject = useChange(text.addProjectAction, (slug: string) => projectActions.addTeam(org, slug, team.slug), onAccess)
+  const removeProject = useChange(text.removeProjectAction, (slug: string) => projectActions.removeTeam(org, slug, team.slug), {
     stale: onAccess.stale,
     onDone: () => setUnlinking(undefined),
   })
-  const remove = useChange('delete the team', () => teamActions.remove(org, team.slug), { stale: [stale.teams(org), stale.projects(org)], leavesPage: true, onDone: () => onOpen() })
+  const remove = useChange(text.deleteAction, () => teamActions.remove(org, team.slug), { stale: [stale.teams(org), stale.projects(org)], leavesPage: true, onDone: () => onOpen() })
   const outside = everyone.filter((member) => member.id !== me?.id && !roster?.some((m) => m.id === member.id) && canChange(member.id))
   const closed = projects.filter((project) => !opens.includes(project))
   return (
     <div className="grid gap-x-8 gap-y-4 border-b px-3 pt-1 pb-4 md:px-4 lg:grid-cols-2">
-      <section aria-label={`Members of ${team.slug}`}>
-        <h2 className="label-caps border-b pb-2">Members</h2>
+      <section aria-label={text.membersOf(team.slug)}>
+        <h2 className="label-caps border-b pb-2">{t.members}</h2>
         {!roster && <RowSkeleton rows={2} />}
-        {roster?.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>Nobody yet</p>}
+        {roster?.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>{text.nobody}</p>}
         {roster?.map((member) => (
           <div key={member.id} className={DETAIL_ROW}>
             <Initials name={memberName(member)} hollow={member.pending} />
@@ -177,20 +184,20 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
             </Link>
             {/* The user's own way out is the Leave button on the row above; it is not offered twice. */}
             {member.id === me?.id ? (
-              <Tag>You</Tag>
+              <Tag>{common.you}</Tag>
             ) : (
               canChange(member.id) && (
                 <RowButton danger disabled={removeMember.pending} onClick={() => removeMember.run(member)}>
-                  Remove
+                  {common.remove}
                 </RowButton>
               )
             )}
           </div>
         ))}
         {outside.length > 0 && (
-          <Select value="" aria-label={`Add a member to ${team.slug}`} className="mt-2" disabled={addMember.pending} onChange={(event) => addMember.run(event.target.value)}>
+          <Select value="" aria-label={text.addMemberTo(team.slug)} className="mt-2" disabled={addMember.pending} onChange={(event) => addMember.run(event.target.value)}>
             <option value="" disabled>
-              Add a member
+              {text.addMember}
             </option>
             {outside.map((member) => (
               <option key={member.id} value={member.id}>
@@ -200,9 +207,9 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
           </Select>
         )}
       </section>
-      <section aria-label={`Projects of ${team.slug}`}>
-        <h2 className="label-caps border-b pb-2">Projects</h2>
-        {opens.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>None yet</p>}
+      <section aria-label={text.projectsOf(team.slug)}>
+        <h2 className="label-caps border-b pb-2">{t.projects}</h2>
+        {opens.length === 0 && <p className={cn(DETAIL_ROW, 'text-muted-foreground')}>{common.noneYet}</p>}
         {opens.map((project) => (
           <div key={project.id} className={DETAIL_ROW}>
             <Link to="/$org/settings/projects/$project" params={{ org, project: project.slug ?? '' }} className="mono min-w-0 flex-1 py-1 break-words hover:underline">
@@ -210,15 +217,15 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
             </Link>
             {linkProjects && (
               <RowButton danger onClick={() => setUnlinking(project.slug ?? '')}>
-                Remove
+                {common.remove}
               </RowButton>
             )}
           </div>
         ))}
         {linkProjects && closed.length > 0 && (
-          <Select value="" aria-label={`Add a project to ${team.slug}`} className="mt-2" disabled={addProject.pending} onChange={(event) => addProject.run(event.target.value)}>
+          <Select value="" aria-label={text.addProjectTo(team.slug)} className="mt-2" disabled={addProject.pending} onChange={(event) => addProject.run(event.target.value)}>
             <option value="" disabled>
-              Add a project
+              {text.addProject}
             </option>
             {closed.map((project) => (
               <option key={project.id} value={project.slug ?? ''}>
@@ -230,12 +237,10 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
       </section>
       {write && (
         <div className="flex gap-2 lg:col-span-2">
-          <Button onClick={() => setRenaming(true)}>
-            Rename
-          </Button>
+          <Button onClick={() => setRenaming(true)}>{text.rename}</Button>
           {admin && (
             <Button variant="destructive" onClick={() => setDeleting(true)}>
-              Delete team
+              {text.delete}
             </Button>
           )}
         </div>
@@ -247,14 +252,14 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
           setDeleting(false)
           remove.clear()
         }}
-        title={`Delete #${team.slug}?`}
-        confirm="Delete team"
+        title={text.deleteTitle(team.slug)}
+        confirm={text.delete}
         destructive
         onConfirm={() => remove.run()}
         pending={remove.pending}
         error={remove.error}
       >
-        {opens.length > 0 && `Its members lose the access it gave them to ${plural(opens.length, 'project')}. The projects stay.`}
+        {opens.length > 0 && text.loseAccess(opens.length)}
       </Confirm>
       <Confirm
         open={!!unlinking}
@@ -262,14 +267,14 @@ function TeamDetail({ org, team, taken, projects, opens, me, write, admin, linkP
           setUnlinking(undefined)
           removeProject.clear()
         }}
-        title={`Remove ${unlinking} from #${team.slug}?`}
-        confirm="Remove project"
+        title={text.removeProjectTitle(unlinking ?? '', team.slug)}
+        confirm={text.removeProject}
         destructive
         onConfirm={() => unlinking && removeProject.run(unlinking)}
         pending={removeProject.pending}
         error={removeProject.error}
       >
-        Its members lose access to {unlinking} unless another of their teams has it.
+        {text.loseProject(unlinking ?? '')}
       </Confirm>
     </div>
   )
@@ -280,7 +285,9 @@ function SlugDialog({ org, team, taken, onClose, onDone }: { org: string; team?:
   const [slug, setSlug] = useState(team ?? '')
   const [checked, setChecked] = useState(false)
   const problem = teamSlugError(slug, taken)
-  const save = useChange(team ? 'rename the team' : 'create the team', () => (team ? teamActions.rename(org, team, slug.trim()) : teamActions.create(org, slug.trim())), {
+  const t = useT().settings
+  const text = t.teamsPage
+  const save = useChange(team ? text.renameAction : text.createAction, () => (team ? teamActions.rename(org, team, slug.trim()) : teamActions.create(org, slug.trim())), {
     stale: [stale.teams(org), stale.projects(org)],
     onDone: (saved) => {
       onClose()
@@ -292,8 +299,8 @@ function SlugDialog({ org, team, taken, onClose, onDone }: { org: string; team?:
     if (!problem) save.run()
   }
   return (
-    <FormDialog open onClose={onClose} title={team ? `Rename #${team}` : 'New team'} submit={team ? 'Rename' : 'Create team'} onSubmit={submit} pending={save.pending} error={save.error} disabled={slug.trim() === team}>
-      <Field label="Name" error={checked ? problem : undefined}>
+    <FormDialog open onClose={onClose} title={team ? text.renameTitle(team) : text.newTeam} submit={team ? text.rename : text.create} onSubmit={submit} pending={save.pending} error={save.error} disabled={slug.trim() === team}>
+      <Field label={t.name} error={checked ? problem : undefined}>
         {(field) => (
           <Input {...field} autoFocus value={slug} onChange={(event) => setSlug(event.target.value)} maxLength={TEAM_SLUG_MAX} className="font-mono" autoComplete="off" autoCapitalize="off" spellCheck={false} />
         )}

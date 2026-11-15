@@ -4,11 +4,11 @@ import type { Organization } from '@/api/organizations'
 import type { Project } from '@/api/projects'
 import type { SignInApp } from '@/api/sign-in-apps'
 import type { Team } from '@/api/teams'
-import { hasWords, plural, searchWords } from '@/lib/text'
+import { messages, percent } from '@/i18n'
+import { hasWords, searchWords } from '@/lib/text'
 import { memberName, teamLabel, teamList } from './labels'
 import { platformName } from './platforms'
 import { ProjectTab } from './project-tabs'
-import { ROLE_LABEL } from './roles'
 import { TeamTab } from './team-tabs'
 
 // One thing the settings search can land on: where it sits, what it is set to, and the page that changes it.
@@ -33,25 +33,27 @@ export function settingsEntries({
   version?: string
 }): Entry[] {
   const org = organization.slug
+  const { settings: t, common } = messages()
+  const words = t.search
   return [
-    { path: [org, 'Name'], value: organization.name, link: { to: '/$org/settings', params: { org } } },
-    { path: [org, 'Usage'], value: usage ?? '', link: { to: '/$org/settings/subscription', params: { org } } },
-    { path: [org, 'Delete organization'], value: '', link: { to: '/$org/settings', params: { org } } },
-    { path: ['Members', 'Invite members'], value: '', link: { to: '/$org/settings/members/new', params: { org } } },
+    { path: [org, t.name], value: organization.name, link: { to: '/$org/settings', params: { org } } },
+    { path: [org, t.usage], value: usage ?? '', link: { to: '/$org/settings/subscription', params: { org } } },
+    { path: [org, t.deleteOrganization], value: '', link: { to: '/$org/settings', params: { org } } },
+    { path: [t.members, t.inviteMembers], value: '', link: { to: '/$org/settings/members/new', params: { org } } },
     ...members.map((member) => ({
-      path: ['Members', memberName(member)],
-      value: `${member.email} · ${member.pending ? 'Invited' : ROLE_LABEL[member.role]}`,
+      path: [t.members, memberName(member)],
+      value: `${member.email} · ${member.pending ? words.invited : t.roles.names[member.role]}`,
       link: { to: '/$org/settings/members/$memberId', params: { org, memberId: member.id } } as LinkProps,
     })),
     ...teams.map((team) => ({
-      path: ['Teams', teamLabel(team.slug)],
-      value: plural(team.memberCount, 'member'),
+      path: [t.teams, teamLabel(team.slug)],
+      value: common.members(team.memberCount),
       link: { to: '/$org/settings/teams/$team/$tab', params: { org, team: team.slug, tab: TeamTab.members } } as LinkProps,
     })),
     ...(signInApps
       ? [
-          { path: ['Sign-in apps', 'New sign-in app'], value: 'single sign-on', link: { to: '/$org/settings', params: { org } } as LinkProps },
-          ...signInApps.map((app) => ({ path: ['Sign-in apps', app.name], value: app.serverUrl ?? app.brand, link: { to: '/$org/settings', params: { org } } as LinkProps })),
+          { path: [t.signInApps.title, words.newSignInApp], value: words.singleSignOn, link: { to: '/$org/settings', params: { org } } as LinkProps },
+          ...signInApps.map((app) => ({ path: [t.signInApps.title, app.name], value: app.serverUrl ?? app.brand, link: { to: '/$org/settings', params: { org } } as LinkProps })),
         ]
       : []),
     ...projects.flatMap((project) => {
@@ -62,17 +64,17 @@ export function settingsEntries({
         link: { to: '/$org/settings/projects/$project', params: { org, project: slug }, search: { tab } },
       })
       return [
-        at('Name', project.name, ProjectTab.general),
-        at('Platform', platformName(project.platform), ProjectTab.general),
-        at('Teams with access', teamList(project.teams.map((team) => team.slug)), ProjectTab.general),
-        at('Events to drop', `${project.eventThrottleRate}%`, ProjectTab.general),
-        at('Delete project', '', ProjectTab.general),
-        at('Set up', project.firstEvent ? '' : 'No events yet', ProjectTab.setup),
-        at('Client keys', 'DSN', ProjectTab.keys),
-        at('Environments', '', ProjectTab.environments),
+        at(t.name, project.name, ProjectTab.general),
+        at(words.platform, platformName(project.platform), ProjectTab.general),
+        at(words.teamsWithAccess, teamList(project.teams.map((team) => team.slug)), ProjectTab.general),
+        at(words.eventsToDrop, percent(project.eventThrottleRate), ProjectTab.general),
+        at(words.deleteProject, '', ProjectTab.general),
+        at(words.setUp, project.firstEvent ? '' : words.noEventsYet, ProjectTab.setup),
+        at(words.clientKeys, t.keys.dsn, ProjectTab.keys),
+        at(words.environments, '', ProjectTab.environments),
       ]
     }),
-    { path: ['Server', 'System info'], value: version ?? '', link: { to: '/system-info' } },
+    { path: [t.server, t.systemInfo], value: version ?? '', link: { to: '/system-info' } },
   ]
 }
 

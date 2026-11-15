@@ -23,7 +23,7 @@ import { InviteDialog } from './invite-dialog'
 import { FormAlert } from '@/components/ui/field'
 import { CopyButton, FoldChevron, Initials, RowSkeleton, SettingsBar, Sheet } from './parts'
 import { memberName, teamList } from './labels'
-import { ROLE_LABEL } from './roles'
+import { messages, useT } from '@/i18n'
 
 /**
  * Who is in the organization and who has been invited. Someone who may change members unfolds a row to do it;
@@ -31,7 +31,8 @@ import { ROLE_LABEL } from './roles'
  * that row unfolded.
  */
 export function Members({ org, openId, inviting }: { org: string; openId?: string; inviting: boolean }) {
-  useTitle('Members', org)
+  const t = useT().settings
+  useTitle(t.members, org)
   const can = useAccess(org)
   const navigate = useNavigate()
   const members = useQuery(membersQuery(org)).data
@@ -52,18 +53,18 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
   const shown = members?.filter((member) => hasWords(`${member.user?.name ?? ''} ${member.email}`, words))
   // In the page bar on a desktop; on a phone the bar has no room, so it heads the list.
   const find = (className: string) => (
-    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a member" aria-label="Find a member" className={className} />
+    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.membersPage.find} aria-label={t.membersPage.find} className={className} />
   )
 
   return (
     <>
-      <SettingsBar org={org} title="Members">
+      <SettingsBar org={org} title={t.members}>
         {find('h-8 w-56 max-lg:hidden')}
         {write && (
           // The filled button is the page's main action; while a row is open that is the row's Save.
           <Button variant={openId ? 'outline' : 'default'} size="bar" onClick={() => void navigate({ to: '/$org/settings/members/new', params: { org }, replace: true })}>
             <Plus />
-            Invite members
+            {t.inviteMembers}
           </Button>
         )}
       </SettingsBar>
@@ -90,7 +91,7 @@ export function Members({ org, openId, inviting }: { org: string; openId?: strin
                 onClose={list}
               />
             ))}
-            {shown.length === 0 && <li className="px-3 py-10 text-center text-muted-foreground md:px-4">No member matches “{query.trim()}”.</li>}
+            {shown.length === 0 && <li className="px-3 py-10 text-center text-muted-foreground md:px-4">{t.membersPage.noMatch(query.trim())}</li>}
           </ul>
         )}
       </Sheet>
@@ -118,20 +119,21 @@ function MemberRow(props: RowProps) {
   const { org, member, me, memberTeams, editable, open, onToggle } = props
   const mine = member.id === me?.id
   const [leaving, setLeaving] = useState(false)
+  const { settings: t, common } = useT()
   const summary = (
     <>
       <Initials name={memberName(member)} hollow={member.pending} />
       <span className="flex min-w-0 flex-1 flex-col py-2">
         <span className="flex items-center gap-2">
           <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{memberName(member)}</span>
-          {mine && <Tag>You</Tag>}
+          {mine && <Tag>{common.you}</Tag>}
         </span>
         <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]" title={member.pending ? exact(member.dateCreated) : undefined}>
-          {member.pending ? `Invited ${ago(member.dateCreated)} ago` : member.user?.name ? member.email : ''}
+          {member.pending ? t.membersPage.invitedAgo(ago(member.dateCreated)) : member.user?.name ? member.email : ''}
         </span>
       </span>
       <span className="mono w-40 text-muted-foreground max-lg:hidden">{memberTeams && teamList(memberTeams)}</span>
-      <span className="w-16 shrink-0 text-sm lg:w-20">{ROLE_LABEL[member.role]}</span>
+      <span className="w-16 shrink-0 text-sm lg:w-20">{t.roles.names[member.role]}</span>
     </>
   )
   // Someone who cannot change members sees a plain list: nothing unfolds. Their own row carries the one thing they can do.
@@ -141,7 +143,7 @@ function MemberRow(props: RowProps) {
         {summary}
         <span className="flex w-16 shrink-0 justify-end">
           {mine && member.role !== OrgRole.owner && (
-            <RowButton onClick={() => setLeaving(true)}>Leave</RowButton>
+            <RowButton onClick={() => setLeaving(true)}>{t.membersPage.leave}</RowButton>
           )}
         </span>
         {leaving && <RemoveMember org={org} member={member} mine onClose={() => setLeaving(false)} />}
@@ -169,8 +171,10 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
   const added = chosen.filter((team) => !memberTeams.includes(team))
   const removed = memberTeams.filter((team) => !chosen.includes(team))
   const owner = me?.role === OrgRole.owner
+  const { settings: t, common } = useT()
+  const text = t.membersPage
   const save = useChange(
-    'save the member',
+    text.saveAction,
     async () => {
       if (role !== member.role) await memberActions.setRole(org, member.id, role)
       for (const team of added) await teamActions.addMember(org, team, member.id)
@@ -178,12 +182,12 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
     },
     { stale: [stale.members(org), stale.teams(org)], onDone: onClose },
   )
-  const resend = useChange('send the invite again', () => memberActions.resend(org, member), {
+  const resend = useChange(text.resendAction, () => memberActions.resend(org, member), {
     stale: [stale.members(org)],
     notice: true,
-    onDone: () => notify(`Invite sent again to ${member.email}`),
+    onDone: () => notify(messages().settings.membersPage.resent(member.email)),
   })
-  const transfer = useChange('transfer ownership', () => memberActions.makeOwner(org, member.id), {
+  const transfer = useChange(text.transferAction, () => memberActions.makeOwner(org, member.id), {
     // The user's own role, and with it what they may do here, changes too.
     stale: [stale.members(org), stale.organization(org)],
     onDone: () => setAsking(undefined),
@@ -194,28 +198,24 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
         {/* Nobody changes their own role: an owner would lock the organization, anyone else would promote themselves. */}
         {!mine && <RoleField value={role} onChange={setRole} allowOwner={owner} />}
         <div className="flex flex-col gap-2">
-          <span className="flex h-5 items-center text-sm font-medium">Teams</span>
+          <span className="flex h-5 items-center text-sm font-medium">{t.teams}</span>
           <TeamChecklist teams={teams} projects={projects} value={chosen} onChange={setChosen} />
         </div>
       </div>
       {save.error && <FormAlert>{save.error}</FormAlert>}
       <div className="flex flex-wrap gap-2">
         <Button variant="default" disabled={save.pending || (role === member.role && !added.length && !removed.length)} aria-busy={save.pending} onClick={() => save.run()}>
-          Save
+          {common.save}
         </Button>
-        {member.pending && <CopyButton text={() => memberActions.inviteLink(org, member)} label="Copy invite link" onError={(error) => failed(error, 'copy the invite link')} />}
+        {member.pending && <CopyButton text={() => memberActions.inviteLink(org, member)} label={text.copyInvite} onError={(error) => failed(error, text.copyInviteAction)} />}
         {member.pending && emailOn && (
           <Button disabled={resend.pending} aria-busy={resend.pending} onClick={() => resend.run()}>
-            Send invite again
+            {text.sendAgain}
           </Button>
         )}
-        {owner && !member.pending && !mine && (
-          <Button onClick={() => setAsking(Question.transfer)}>
-            Transfer ownership
-          </Button>
-        )}
+        {owner && !member.pending && !mine && <Button onClick={() => setAsking(Question.transfer)}>{text.transfer}</Button>}
         {mine && member.role === OrgRole.owner ? (
-          <span className="flex items-center text-sm text-muted-foreground lg:ml-auto">To leave, make someone else the owner first.</span>
+          <span className="flex items-center text-sm text-muted-foreground lg:ml-auto">{text.ownerLeaves}</span>
         ) : (
           <Button variant="destructive" className="lg:ml-auto" onClick={() => setAsking(Question.remove)}>
             {removal(org, member, mine).confirm}
@@ -229,13 +229,13 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
           setAsking(undefined)
           transfer.clear()
         }}
-        title={`Make ${memberName(member)} the owner?`}
-        confirm="Transfer ownership"
+        title={text.makeOwner(memberName(member))}
+        confirm={text.transfer}
         onConfirm={() => transfer.run()}
         pending={transfer.pending}
         error={transfer.error}
       >
-        They will be able to rename or delete the organization and to hand ownership on.
+        {text.ownerCan}
       </Confirm>
     </div>
   )
@@ -243,15 +243,16 @@ function MemberEditor({ org, member, me, teams, projects, memberTeams, emailOn, 
 
 // What taking someone out of the organization is called, asked and costs: leaving it yourself, cancelling an invite, or removing a member.
 function removal(org: string, member: Member, mine: boolean) {
-  if (mine) return { what: 'leave the organization', title: `Leave ${org}?`, confirm: 'Leave organization', loses: 'You lose access to its projects and issues until someone invites you again.' }
-  if (member.pending) return { what: 'cancel the invite', title: `Cancel the invite for ${member.email}?`, confirm: 'Cancel invite', loses: 'The link they were sent stops working.' }
-  return { what: 'remove the member', title: `Remove ${memberName(member)}?`, confirm: 'Remove', loses: "They lose access to this organization's projects and issues." }
+  const text = messages().settings.membersPage
+  if (mine) return { ...text.leaveOrganization, title: text.leaveOrganization.title(org) }
+  if (member.pending) return { ...text.cancelInvite, title: text.cancelInvite.title(member.email) }
+  return { ...text.removeMember, title: text.removeMember.title(memberName(member)) }
 }
 
 function RemoveMember({ org, member, mine, onClose, onDone }: { org: string; member: Member; mine: boolean; onClose: () => void; onDone?: () => void }) {
   const navigate = useNavigate()
-  const { what, title, confirm, loses } = removal(org, member, mine)
-  const remove = useChange(what, () => memberActions.remove(org, member.id), {
+  const { action, title, confirm, loses } = removal(org, member, mine)
+  const remove = useChange(action, () => memberActions.remove(org, member.id), {
     // Leaving takes the organization out of the user's list, so there is nothing here to go back to.
     stale: mine ? [stale.organizations()] : [stale.members(org), stale.teams(org)],
     leavesPage: mine,

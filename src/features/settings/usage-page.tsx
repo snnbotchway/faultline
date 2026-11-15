@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
-import { plural } from '@/lib/text'
+import { localized, messages, useT } from '@/i18n'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { useAccess } from './access'
@@ -20,18 +20,18 @@ import { ProjectTab } from './project-tabs'
 import { DropRows } from './usage-drops'
 import { ProjectRows } from './usage-projects'
 import { FIGURES, FigureRow, GRID, SHARE, SLOT, Share } from './usage-rows'
-import { KIND_LABEL, KIND_WORD, exactCount, organizationDropRate, stepDay } from './usage'
+import { exactCount, organizationDropRate, stepDay } from './usage'
 
 const DROPPED = 'dropped'
-const TODAY = 'Today'
-const PERIOD = `${USAGE_DAYS} days`
 
-const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
-const dayName = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z`))
-const dayLabel = (days: UsageDay[], index: number) => (index === days.length - 1 ? TODAY : dayName(days[index]!.date))
+const dayFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric', timeZone: 'UTC' }))
+const dayName = (date: string) => dayFormat().format(new Date(`${date}T00:00:00Z`))
+const dayLabel = (days: UsageDay[], index: number) => (index === days.length - 1 ? messages().common.time.today : dayName(days[index]!.date))
 
 export function UsagePage({ org }: { org: string }) {
-  useTitle('Usage', org)
+  const { settings, common } = useT()
+  const t = settings.usagePage
+  useTitle(t.title, org)
   const can = useAccess(org)
   const period = useQuery(usagePeriodQuery(org))
   const usage = useQuery(usageDaysQuery(org))
@@ -57,13 +57,13 @@ export function UsagePage({ org }: { org: string }) {
   }
   useHotkeys({ ArrowLeft: () => step(-1), ArrowRight: () => step(1), Escape: () => clear(false) })
 
-  const bar = <SettingsBar org={org} title="Usage" />
+  const bar = <SettingsBar org={org} title={t.title} />
   if (usage.isError || period.isError)
     return (
       <>
         {bar}
-        <Screen title="Usage didn't load">
-          <Button onClick={() => void Promise.all([usage.refetch(), period.refetch()])}>Try again</Button>
+        <Screen title={t.didntLoad}>
+          <Button onClick={() => void Promise.all([usage.refetch(), period.refetch()])}>{common.tryAgain}</Button>
         </Screen>
       </>
     )
@@ -91,18 +91,18 @@ export function UsagePage({ org }: { org: string }) {
         <Sheet className="flex flex-col">
           {/* Dropping everything is one reason there is nothing to show. */}
           {drops}
-          <Screen title={`No events in the last ${PERIOD}`}>
+          <Screen title={t.noEvents(USAGE_DAYS)}>
             {setUp ? (
               <Button asChild>
                 <Link to="/$org/settings/projects/$project" params={{ org, project: setUp.slug ?? '' }} search={{ tab: ProjectTab.setup }}>
-                  Set up {setUp.slug}
+                  {t.setUp(setUp.slug)}
                 </Link>
               </Button>
             ) : (
               can(Scope.projectWrite) && (
                 <Button asChild>
                   <Link to="/$org/settings/projects/new" params={{ org }}>
-                    New project
+                    {settings.newProject}
                   </Link>
                 </Button>
               )
@@ -126,19 +126,19 @@ export function UsagePage({ org }: { org: string }) {
       <Sheet>
         <AxisHeader days={days} picked={picked} pinned={pinned} onStep={step} onClear={() => clear(true)} previousDay={previousDay} allDays={allDays} />
 
-        <section aria-label="All events" className={cn(GRID, 'items-end border-b bg-card py-5')}>
+        <section aria-label={t.allEvents} className={cn(GRID, 'items-end border-b bg-card py-5')}>
           <div>
             <p className={FIGURES}>
-              <span className="min-w-0 flex-1 font-medium">All events</span>
+              <span className="min-w-0 flex-1 font-medium">{t.allEvents}</span>
               <strong className="mono text-2xl leading-none font-semibold lg:text-3xl">{exactCount(totalOf(counts))}</strong>
               <span className={SHARE} />
               <span className={SLOT} />
             </p>
             <p className="mono mt-1 text-xs text-muted-foreground">
-              peak {exactCount(peak)} {peakDay === days.length - 1 ? 'today' : `on ${dayName(days[peakDay]!.date)}`}
+              {peakDay === days.length - 1 ? t.peakToday(exactCount(peak)) : t.peakOn(exactCount(peak), dayName(days[peakDay]!.date))}
             </p>
           </div>
-          <DayBars label="All events a day" buckets={allBuckets} height={64} picked={picked} pick={pick} className="max-lg:mt-3" />
+          <DayBars label={t.allEventsADay} buckets={allBuckets} height={64} picked={picked} pick={pick} className="max-lg:mt-3" />
         </section>
 
         {drops}
@@ -148,7 +148,7 @@ export function UsagePage({ org }: { org: string }) {
           const open = foldable && row.is(kind)
           const buckets = days.map((day) => day.counts[kind])
           return (
-            <section key={kind} aria-label={KIND_LABEL[kind]} className={cn('border-b', open && 'bg-card')}>
+            <section key={kind} aria-label={t.kinds[kind]} className={cn('border-b', open && 'bg-card')}>
               <FigureRow
                 className="items-end py-3"
                 // The chart under the label takes a tap as a day, so on a phone the label line reaches the row's top
@@ -158,12 +158,12 @@ export function UsagePage({ org }: { org: string }) {
                 onToggle={foldable ? () => row.toggle(kind) : undefined}
                 figures={
                   <>
-                    <span className="min-w-0 flex-1 font-medium">{KIND_LABEL[kind]}</span>
+                    <span className="min-w-0 flex-1 font-medium">{t.kinds[kind]}</span>
                     <strong className="mono font-semibold">{exactCount(counts[kind])}</strong>
-                    <Share part={counts[kind]} whole={totalOf(counts)} of="all events" />
+                    <Share part={counts[kind]} whole={totalOf(counts)} of={t.allEventsOf} />
                   </>
                 }
-                aside={<DayBars label={`${KIND_LABEL[kind]} a day`} buckets={buckets} height={32} picked={picked} pick={pick} className="max-lg:mt-2" />}
+                aside={<DayBars label={t.aDay(t.kinds[kind])} buckets={buckets} height={32} picked={picked} pick={pick} className="max-lg:mt-2" />}
               />
               {open && isProjectKind(kind) && (
                 <ProjectRows
@@ -185,7 +185,7 @@ export function UsagePage({ org }: { org: string }) {
 
         {paid && licenseEmail && (
           <div className={cn(GRID, 'min-h-12 items-center border-b py-2 lg:min-h-11')}>
-            <span className="font-medium">Billing email</span>
+            <span className="font-medium">{t.billingEmail}</span>
             <a href={`mailto:${licenseEmail}`} className="mono [overflow-wrap:anywhere] text-brand underline-offset-4 hover:underline">
               {licenseEmail}
             </a>
@@ -214,33 +214,39 @@ function AxisHeader({
   allDays: RefObject<HTMLButtonElement | null>
 }) {
   const pinnedDay = pinned === undefined ? undefined : days[pinned]
+  const { common, settings } = useT()
+  const t = settings.usagePage
   return (
     <div className={cn(GRID, 'sticky top-11 z-10 items-center border-b bg-muted max-lg:pb-1')}>
       <div className="flex h-11 items-center lg:h-9">
-        <h2 className={cn('w-28 whitespace-nowrap', picked === undefined ? 'label-caps' : 'mono text-xs')}>{picked === undefined ? `Last ${PERIOD}` : dayLabel(days, picked)}</h2>
-        <StepButton ref={previousDay} label="Previous day" keys="ArrowLeft" off={pinned === 0} onClick={() => onStep(-1)}>
+        <h2 className={cn('w-28 whitespace-nowrap', picked === undefined ? 'label-caps' : 'mono text-xs')}>{picked === undefined ? t.last(USAGE_DAYS) : dayLabel(days, picked)}</h2>
+        <StepButton ref={previousDay} label={t.previousDay} keys="ArrowLeft" off={pinned === 0} onClick={() => onStep(-1)}>
           <ChevronLeft />
           <Kbd aria-hidden>←</Kbd>
         </StepButton>
-        <StepButton label="Next day" keys="ArrowRight" off={pinned === days.length - 1} onClick={() => onStep(1)}>
+        <StepButton label={t.nextDay} keys="ArrowRight" off={pinned === days.length - 1} onClick={() => onStep(1)}>
           <Kbd aria-hidden>→</Kbd>
           <ChevronRight />
         </StepButton>
         {pinned !== undefined && (
           <Button ref={allDays} size="bar" className="ml-auto gap-1" onClick={onClear}>
             <X className="size-3" />
-            All {PERIOD}
+            {t.all(USAGE_DAYS)}
           </Button>
         )}
       </div>
       <div className="mono flex h-4 items-center justify-between text-xs text-muted-foreground" aria-hidden>
         <span>{dayName(days[0]!.date)}</span>
         <span>{dayName(days[Math.floor(days.length / 2)]!.date)}</span>
-        <span>{TODAY}</span>
+        <span>{common.time.today}</span>
       </div>
       <p className="sr-only" aria-live="polite">
         {pinnedDay &&
-          `${dayLabel(days, pinned!)}: ${plural(exactCount(totalOf(pinnedDay.counts)), 'event')}. ${USAGE_KINDS.map((kind) => plural(exactCount(pinnedDay.counts[kind]), ...KIND_WORD[kind])).join(', ')}.`}
+          t.dayEvents(
+            dayLabel(days, pinned!),
+            totalOf(pinnedDay.counts),
+            USAGE_KINDS.map((kind) => t.counts[kind](pinnedDay.counts[kind])).join(', '),
+          )}
       </p>
     </div>
   )

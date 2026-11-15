@@ -1,3 +1,5 @@
+import { messages } from '@/i18n'
+
 // The platforms a project can name, each with the two things to paste: the install command and the SDK's start-up code.
 // `id` is the value the backend stores; GlitchTip takes any Sentry SDK.
 export const PlatformGroup = { browser: 'Browser', server: 'Server', mobile: 'Mobile', other: 'Other' } as const
@@ -115,7 +117,12 @@ export const PLATFORMS: Platform[] = [
 ]
 
 export const platformOf = (id: string | null | undefined) => PLATFORMS.find((platform) => platform.id === id)
-export const platformName = (id: string | null | undefined) => platformOf(id)?.name ?? id ?? 'No platform'
+// A platform's name on screen. The SDKs' names are the same in every language; "Other" is not.
+export const platformLabel = (platform: Platform) => (platform.id === OTHER.id ? messages().settings.setup.other : platform.name)
+export const platformName = (id: string | null | undefined) => {
+  const platform = platformOf(id)
+  return platform ? platformLabel(platform) : (id ?? messages().settings.project.noPlatform)
+}
 // Stands in for the DSN until the project exists.
 export const DSN_PLACEHOLDER = 'https://<key>@<this-server>/<project-id>'
 export const OTHER_PLATFORM = OTHER.id

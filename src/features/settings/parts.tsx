@@ -7,20 +7,22 @@ import { Field, FormAlert } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 // The bar of a page that sits under Settings: the way back, then where you are.
 export function SettingsBar({ org, title, mono, children }: { org: string; title: string; mono?: boolean; children?: ReactNode }) {
+  const t = useT()
   return (
     <PageBar>
       <Link
         to="/$org/settings"
         params={{ org }}
         className="-ml-2 flex h-11 items-center gap-1 px-1 text-sm font-medium text-muted-foreground hover:text-foreground max-lg:-mr-5 max-lg:w-11 max-lg:justify-center max-lg:px-0"
-        aria-label="Settings"
+        aria-label={t.settings.title}
       >
         <ChevronLeft className="size-4" />
-        <span className="max-lg:hidden">Settings</span>
+        <span className="max-lg:hidden">{t.settings.title}</span>
       </Link>
       <h1 className={cn('min-w-0 truncate text-2xl font-semibold', mono && 'font-mono')}>{title}</h1>
       <span className="ml-auto flex shrink-0 items-center gap-2">{children}</span>
@@ -133,17 +135,16 @@ export function InlineForm({
     event.preventDefault()
     if (!disabled && !pending) onSubmit()
   }
+  const t = useT()
   return (
     <form noValidate onSubmit={submit} className="flex flex-col gap-3">
       {children}
       <FormAlert>{error}</FormAlert>
       <div className="flex gap-2">
         <Button type="submit" variant="default" disabled={disabled || pending} aria-busy={pending}>
-          Save
+          {t.common.save}
         </Button>
-        <Button onClick={onCancel}>
-          Cancel
-        </Button>
+        <Button onClick={onCancel}>{t.common.cancel}</Button>
       </div>
     </form>
   )
@@ -180,6 +181,7 @@ export function FormDialog({
     event.preventDefault()
     if (!disabled && !pending) onSubmit?.()
   }
+  const t = useT()
   return (
     <TaskDialog open={open} onClose={onClose} title={title} className={className}>
       <form noValidate onSubmit={send} className="flex flex-col gap-4">
@@ -191,11 +193,11 @@ export function FormDialog({
               <Button type="submit" variant={destructive ? 'destructive' : 'default'} disabled={disabled || pending} aria-busy={pending} className="sm:order-2">
                 {submit}
               </Button>
-              <Button onClick={onClose}>Cancel</Button>
+              <Button onClick={onClose}>{t.common.cancel}</Button>
             </>
           ) : (
             <Button variant="default" onClick={onClose}>
-              Done
+              {t.common.done}
             </Button>
           )}
         </TaskActions>
@@ -204,11 +206,12 @@ export function FormDialog({
   )
 }
 
-// Deleting something with data behind it: its name has to be typed first.
+// Deleting something with data behind it: its name has to be typed first. `submit` names what it deletes.
 export function DeleteDialog({
   open,
   onClose,
-  what,
+  title,
+  submit,
   name,
   loses,
   onDelete,
@@ -217,7 +220,8 @@ export function DeleteDialog({
 }: {
   open: boolean
   onClose: () => void
-  what: string
+  title: string
+  submit: string
   name: string
   loses: string
   onDelete: () => void
@@ -225,10 +229,11 @@ export function DeleteDialog({
   error?: string
 }) {
   const [typed, setTyped] = useState('')
+  const t = useT()
   return (
-    <FormDialog open={open} onClose={onClose} title={`Delete ${what} ${name}`} submit={`Delete ${what}`} destructive onSubmit={onDelete} pending={pending} error={error} disabled={typed !== name}>
+    <FormDialog open={open} onClose={onClose} title={title} submit={submit} destructive onSubmit={onDelete} pending={pending} error={error} disabled={typed !== name}>
       <p className="prose-text">{loses}</p>
-      <Field label={`Type ${name} to delete it`}>
+      <Field label={t.settings.typeToDelete(name)}>
         {(field) => <Input {...field} value={typed} onChange={(event) => setTyped(event.target.value)} className="font-mono" autoComplete="off" autoCapitalize="off" spellCheck={false} />}
       </Field>
     </FormDialog>
@@ -276,13 +281,14 @@ function useCopy(text: string | (() => Promise<string>)) {
  */
 export function CopyButton({
   text,
-  label = 'Copy',
+  label,
   onError,
   inBox,
   className,
   ...props
 }: { text: string | (() => Promise<string>); label?: string; onError?: (error: unknown) => void; inBox?: boolean } & Omit<React.ComponentProps<typeof Button>, 'onClick' | 'onError'>) {
   const { copied, copy } = useCopy(text)
+  const t = useT()
   return (
     <Button
       variant={inBox ? 'ghost' : 'outline'}
@@ -293,7 +299,7 @@ export function CopyButton({
       {...props}
     >
       {copied ? <Check className="text-ok" /> : <Copy />}
-      <span aria-live="polite">{copied ? 'Copied' : label}</span>
+      <span aria-live="polite">{copied ? t.common.copied : (label ?? t.common.copy)}</span>
     </Button>
   )
 }

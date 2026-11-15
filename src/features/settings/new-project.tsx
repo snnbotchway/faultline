@@ -17,13 +17,15 @@ import { teamLabel } from './labels'
 import { OTHER_PLATFORM, platformName, storedPlatform } from './platforms'
 import { ProjectTab } from './project-tabs'
 import { teamSlugError } from './team-slug'
+import { useT } from '@/i18n'
 
 /**
  * A project needs a name, a platform and the team that gets it. The code for the chosen platform shows beside
  * the choices, so the user sees what they will paste before they commit.
  */
 export function NewProject({ org }: { org: string }) {
-  useTitle('New project', org)
+  const t = useT().settings.newProjectPage
+  useTitle(t.title, org)
   const can = useAccess(org)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -46,7 +48,7 @@ export function NewProject({ org }: { org: string }) {
     return madeTeam.current
   }
   const create = useChange(
-    'create the project',
+    t.action,
     async () => {
       const slug = firstTeam ? await makeFirstTeam() : (team ?? teams![0]!.slug)
       return projectActions.create(org, slug, { name: name.trim(), platform: storedPlatform(platform) })
@@ -65,23 +67,23 @@ export function NewProject({ org }: { org: string }) {
   if (teams && !can(Scope.projectWrite))
     return (
       <>
-        <SettingsBar org={org} title="New project" />
-        <Screen title="You can't create projects here">
-          <p className="prose-text text-muted-foreground">Ask an admin of this organization.</p>
+        <SettingsBar org={org} title={t.title} />
+        <Screen title={t.cant}>
+          <p className="prose-text text-muted-foreground">{t.askAdmin}</p>
         </Screen>
       </>
     )
 
   return (
     <>
-      <SettingsBar org={org} title="New project" />
+      <SettingsBar org={org} title={t.title} />
       <form noValidate onSubmit={submit} className="mx-auto grid w-full max-w-6xl flex-1 content-start lg:grid-cols-[26rem_minmax(0,1fr)] lg:border-x">
         <div className="flex flex-col gap-4 p-3 md:p-4 lg:border-r">
-          <Field label="Project name" error={checked && !name.trim() ? 'Give the project a name.' : undefined}>
+          <Field label={t.name} error={checked && !name.trim() ? t.needsName : undefined}>
             {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={PROJECT_NAME_MAX} autoComplete="off" />}
           </Field>
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Platform</span>
+            <span className="text-sm font-medium">{t.platform}</span>
             <PlatformPicker value={platform} onChange={setPlatform} />
           </div>
         </div>
@@ -92,13 +94,13 @@ export function NewProject({ org }: { org: string }) {
         </div>
         <div className="flex flex-col gap-4 p-3 md:p-4 lg:border-r lg:pt-0">
           {firstTeam ? (
-            <Field label="Team" error={checked ? teamError : undefined}>
+            <Field label={t.team} error={checked ? teamError : undefined}>
               {(field) => (
                 <Input {...field} value={newTeam} onChange={(event) => setNewTeam(event.target.value)} maxLength={TEAM_SLUG_MAX} className="font-mono" autoComplete="off" autoCapitalize="off" spellCheck={false} />
               )}
             </Field>
           ) : (
-            <Field label="Team">
+            <Field label={t.team}>
               {(field) => (
                 <Select {...field} value={team ?? teams?.[0]?.slug ?? ''} onChange={(event) => setTeam(event.target.value)} disabled={!teams}>
                   {teams?.map((t) => (
@@ -112,7 +114,7 @@ export function NewProject({ org }: { org: string }) {
           )}
           {create.error && <FormAlert>{create.error}</FormAlert>}
           <SubmitButton busy={create.pending} disabled={!teams} className="lg:self-start">
-            Create project
+            {t.create}
           </SubmitButton>
         </div>
       </form>

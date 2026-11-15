@@ -9,38 +9,40 @@ import { Confirm } from './fields'
 import { Field } from '@/components/ui/field'
 import { CopyField, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton } from './parts'
 import { useFold } from './rows'
+import { messages, useT } from '@/i18n'
 
 // A key without a name goes by the start of its id, which is also how its DSN begins.
-const keyName = (key: ProjectKey) => key.name || key.label || `Key ${key.id.slice(0, 8)}`
+const keyName = (key: ProjectKey) => key.name || key.label || messages().settings.keys.keyName(key.id.slice(0, 8))
 
 // GlitchTip 7.0.0 ignores changes to a key and does not enforce a key's rate limit, so a key is only made, read and deleted.
 export function Keys({ org, slug, keys, write, admin }: { org: string; slug: string; keys?: ProjectKey[]; write: boolean; admin: boolean }) {
   const row = useFold(keys?.length === 1 ? keys[0]!.id : undefined)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<ProjectKey>()
-  const remove = useChange('delete the key', (key: ProjectKey) => projectActions.removeKey(org, slug, key.id), { stale: [stale.project(org, slug)], onDone: () => setDeleting(undefined) })
+  const text = useT().settings.keys
+  const remove = useChange(text.deleteAction, (key: ProjectKey) => projectActions.removeKey(org, slug, key.id), { stale: [stale.project(org, slug)], onDone: () => setDeleting(undefined) })
   return (
     <>
       <Group
-        label="Client keys"
+        label={text.title}
         action={
           write && (
             <GroupAction onClick={() => setCreating(true)}>
               <Plus />
-              New key
+              {text.newKey}
             </GroupAction>
           )
         }
       >
         {!keys && <RowSkeleton rows={2} />}
-        {keys?.length === 0 && <Row label="No client keys" />}
+        {keys?.length === 0 && <Row label={text.none} />}
         {keys?.map((key) => (
           <FoldRow key={key.id} label={keyName(key)} mono wrap value={key.dsn.public} open={row.is(key.id)} onToggle={() => row.toggle(key.id)}>
-            <Field label="DSN">{() => <CopyField value={key.dsn.public ?? ''} label={`DSN of ${keyName(key)}`} />}</Field>
-            {key.dsn.security && <Field label="Security report address">{() => <CopyField value={key.dsn.security!} label="Security report address" />}</Field>}
+            <Field label={text.dsn}>{() => <CopyField value={key.dsn.public ?? ''} label={text.dsnOf(keyName(key))} />}</Field>
+            {key.dsn.security && <Field label={text.securityAddress}>{() => <CopyField value={key.dsn.security!} label={text.securityAddress} />}</Field>}
             {admin && (
               <Button variant="destructive" className="self-start" onClick={() => setDeleting(key)}>
-                Delete key
+                {text.delete}
               </Button>
             )}
           </FoldRow>
@@ -53,14 +55,14 @@ export function Keys({ org, slug, keys, write, admin }: { org: string; slug: str
           setDeleting(undefined)
           remove.clear()
         }}
-        title={`Delete ${deleting ? keyName(deleting) : 'key'}?`}
-        confirm="Delete key"
+        title={text.deleteTitle(deleting && keyName(deleting))}
+        confirm={text.delete}
         destructive
         onConfirm={() => deleting && remove.run(deleting)}
         pending={remove.pending}
         error={remove.error}
       >
-        Anything still sending with this key's DSN stops being recorded.
+        {text.stopsRecording}
       </Confirm>
     </>
   )
@@ -69,14 +71,15 @@ export function Keys({ org, slug, keys, write, admin }: { org: string; slug: str
 function NewKeyDialog({ org, slug, onClose }: { org: string; slug: string; onClose: () => void }) {
   const [name, setName] = useState('')
   const [checked, setChecked] = useState(false)
-  const save = useChange('create the key', () => projectActions.createKey(org, slug, name.trim()), { stale: [stale.project(org, slug)], onDone: onClose })
+  const t = useT().settings
+  const save = useChange(t.keys.createAction, () => projectActions.createKey(org, slug, name.trim()), { stale: [stale.project(org, slug)], onDone: onClose })
   const submit = () => {
     setChecked(true)
     if (name.trim()) save.run()
   }
   return (
-    <FormDialog open onClose={onClose} title="New client key" submit="Create key" onSubmit={submit} pending={save.pending} error={save.error}>
-      <Field label="Name" error={checked && !name.trim() ? 'Give the key a name.' : undefined}>
+    <FormDialog open onClose={onClose} title={t.keys.newTitle} submit={t.keys.create} onSubmit={submit} pending={save.pending} error={save.error}>
+      <Field label={t.name} error={checked && !name.trim() ? t.keys.needsName : undefined}>
         {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={PROJECT_KEY_NAME_MAX} autoComplete="off" />}
       </Field>
     </FormDialog>

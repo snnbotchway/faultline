@@ -6,11 +6,11 @@ import { projectUsageQuery, type ProjectKind, type UsageDay } from '@/api/usage'
 import { RowButton } from '@/components/ui/row-button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LevelGlyph } from '@/features/issues/level'
-import { plural } from '@/lib/text'
+import { percent, useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { DayBars } from './day-bars'
 import { FIGURES, GRID, PROJECT_ROW, ProjectRow, SLOT, Share } from './usage-rows'
-import { KIND_LABEL, KIND_WORD, effectiveDropRate, exactCount } from './usage'
+import { effectiveDropRate, exactCount } from './usage'
 
 // Each project is its own request, so a large organization asks about this many until the rest are wanted.
 const FIRST_PROJECTS = 20
@@ -47,6 +47,8 @@ export function ProjectRows({
   total: number
 }) {
   const [everyProject, setEveryProject] = useState(false)
+  const { settings, common } = useT()
+  const t = settings.usagePage
   const active = projects.filter((project) => project.firstEvent)
   const quiet = projects.length - active.length
   const shown = everyProject ? active : active.slice(0, FIRST_PROJECTS)
@@ -68,7 +70,7 @@ export function ProjectRows({
   const rest = rows.every((row) => row.count !== undefined) ? total - counted : 0
 
   return (
-    <ul aria-label={`${KIND_LABEL[kind]} by project`}>
+    <ul aria-label={t.byProject(t.kinds[kind])}>
       {rows.map(({ project, result, count, buckets }) => {
         const slug = <span className="mono block [overflow-wrap:anywhere]">{project.slug}</span>
         if (count === undefined && result.isError)
@@ -76,8 +78,8 @@ export function ProjectRows({
             <li key={project.id} className={cn(GRID, PROJECT_ROW)}>
               <span className={FIGURES}>
                 <span className="min-w-0 flex-1">{slug}</span>
-                <span className="text-sm text-muted-foreground">Didn't load</span>
-                <RowButton onClick={() => void result.refetch()}>Try again</RowButton>
+                <span className="text-sm text-muted-foreground">{t.didntLoadRow}</span>
+                <RowButton onClick={() => void result.refetch()}>{common.tryAgain}</RowButton>
               </span>
             </li>
           )
@@ -109,24 +111,24 @@ export function ProjectRows({
                   {dropped > 0 && (
                     <span className="flex items-baseline gap-1 text-sm">
                       <LevelGlyph level={IssueLevel.warning} className="self-center" />
-                      <span className="mono">{dropped}%</span> to drop
+                      <span className="mono">{percent(dropped)}</span> {t.toDrop}
                     </span>
                   )}
                 </span>
                 <span className="mono">{exactCount(count)}</span>
-                <Share part={count} whole={total} of={KIND_WORD[kind][1]} />
+                <Share part={count} whole={total} of={t.kindWords[kind]} />
               </>
             }
-            aside={<DayBars label={`${project.slug} a day`} buckets={buckets} height={BAR_HEIGHT} peak={peak} picked={picked} className="max-lg:mt-2" />}
+            aside={<DayBars label={t.aDay(project.slug ?? '')} buckets={buckets} height={BAR_HEIGHT} peak={peak} picked={picked} className="max-lg:mt-2" />}
           />
         )
       })}
       {rest > 0 && (
         <li className={cn(GRID, PROJECT_ROW, 'text-muted-foreground')}>
           <span className={FIGURES}>
-            <span className="min-w-0 flex-1">Other projects</span>
+            <span className="min-w-0 flex-1">{t.otherProjects}</span>
             <span className="mono">{exactCount(rest)}</span>
-            <Share part={rest} whole={total} of={KIND_WORD[kind][1]} />
+            <Share part={rest} whole={total} of={t.kindWords[kind]} />
             <span className={SLOT} />
           </span>
         </li>
@@ -134,13 +136,13 @@ export function ProjectRows({
       {shown.length < active.length && (
         <li className="border-t">
           <button type="button" className="flex min-h-11 w-full cursor-pointer items-center px-3 text-left text-sm font-medium hover:bg-accent md:px-4 lg:min-h-9" onClick={() => setEveryProject(true)}>
-            Show all {active.length} projects
+            {t.showAll(active.length)}
           </button>
         </li>
       )}
       {quiet > 0 && (
         <li className={cn(GRID, PROJECT_ROW, 'text-muted-foreground')}>
-          <span>{plural(quiet, 'project')} with no events yet</span>
+          <span>{t.quiet(quiet)}</span>
         </li>
       )}
     </ul>

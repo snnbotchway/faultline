@@ -10,6 +10,7 @@ import { Confirm } from './fields'
 import { Field } from '@/components/ui/field'
 import { CopyField, FoldRow, FormDialog, Group, GroupAction, Row, RowSkeleton, Segmented } from './parts'
 import { useFold } from './rows'
+import { useT } from '@/i18n'
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { [SignInProvider.openIdConnect]: 'OpenID Connect', [SignInProvider.google]: 'Google' }
 const providerName = (app: SignInApp) => PROVIDER_NAME[app.brand as SignInProvider] ?? app.brand
@@ -24,43 +25,42 @@ export function SignInApps({ org }: { org: string }) {
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<SignInApp>()
   const [deleting, setDeleting] = useState<SignInApp>()
-  const remove = useChange('delete the sign-in app', (app: SignInApp) => signInAppActions.remove(org, app.id!), { stale: [stale.signInApps(org)], onDone: () => setDeleting(undefined) })
+  const { settings: { signInApps: text }, common } = useT()
+  const remove = useChange(text.deleteAction, (app: SignInApp) => signInAppActions.remove(org, app.id!), { stale: [stale.signInApps(org)], onDone: () => setDeleting(undefined) })
   const full = (apps?.length ?? 0) >= SIGN_IN_APPS_MAX
   return (
     <>
       <Group
-        label="Sign-in apps"
+        label={text.title}
         action={
           apps &&
           !full && (
             <GroupAction onClick={() => setCreating(true)}>
               <Plus />
-              New sign-in app
+              {text.new}
             </GroupAction>
           )
         }
       >
         {!apps && <RowSkeleton rows={1} />}
-        {apps?.length === 0 && <Row label="No sign-in apps yet" />}
+        {apps?.length === 0 && <Row label={text.none} />}
         {apps?.map((app) => (
           <FoldRow key={app.id} label={app.name} value={providerName(app)} open={row.is(String(app.id))} onToggle={() => row.toggle(String(app.id))}>
             <AppAddresses app={app} />
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
               {app.serverUrl && (
                 <>
-                  <dt className="text-muted-foreground">Server</dt>
+                  <dt className="text-muted-foreground">{text.server}</dt>
                   <dd className="mono [overflow-wrap:anywhere]">{app.serverUrl}</dd>
                 </>
               )}
-              <dt className="text-muted-foreground">Client ID</dt>
+              <dt className="text-muted-foreground">{text.clientId}</dt>
               <dd className="mono [overflow-wrap:anywhere]">{app.clientID}</dd>
             </dl>
             <div className="flex gap-2">
-              <Button onClick={() => setEditing(app)}>
-                Edit
-              </Button>
+              <Button onClick={() => setEditing(app)}>{common.edit}</Button>
               <Button variant="destructive" onClick={() => setDeleting(app)}>
-                Delete
+                {common.delete}
               </Button>
             </div>
           </FoldRow>
@@ -74,14 +74,14 @@ export function SignInApps({ org }: { org: string }) {
           setDeleting(undefined)
           remove.clear()
         }}
-        title={`Delete ${deleting?.name ?? 'sign-in app'}?`}
-        confirm="Delete sign-in app"
+        title={text.deleteTitle(deleting?.name)}
+        confirm={text.delete}
         destructive
         onConfirm={() => deleting && remove.run(deleting)}
         pending={remove.pending}
         error={remove.error}
       >
-        People who sign in with it will need a password or another sign-in app.
+        {text.needsOther}
       </Confirm>
     </>
   )
@@ -89,10 +89,11 @@ export function SignInApps({ org }: { org: string }) {
 
 // The two addresses an app hands out: the one to register at the provider, and the organization's sign-in page.
 function AppAddresses({ app }: { app: SignInApp }) {
+  const text = useT().settings.signInApps
   return (
     <>
-      {app.callbackUrl && <Field label="Redirect address for the provider">{() => <CopyField value={app.callbackUrl!} label={`Redirect address of ${app.name}`} />}</Field>}
-      <Field label="Sign-in page">{() => <CopyField value={app.loginUrl} label={`Sign-in page of ${app.name}`} />}</Field>
+      {app.callbackUrl && <Field label={text.redirect}>{() => <CopyField value={app.callbackUrl!} label={text.redirectOf(app.name)} />}</Field>}
+      <Field label={text.signInPage}>{() => <CopyField value={app.loginUrl} label={text.signInPageOf(app.name)} />}</Field>
     </>
   )
 }
@@ -110,15 +111,17 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
   const [checked, setChecked] = useState(false)
   const [created, setCreated] = useState<SignInApp>()
   const google = app ? app.brand === SignInProvider.google : provider === SignInProvider.google
+  const { settings: t, common } = useT()
+  const text = t.signInApps
 
   const problems = {
-    name: !name.trim() ? 'Give the app a name.' : undefined,
-    serverUrl: google ? undefined : !serverUrl.trim() ? "Enter the provider's address." : !/^https:\/\/\S+$/.test(serverUrl.trim()) ? 'Use an address that starts with https://.' : undefined,
-    clientID: !clientID.trim() ? 'Enter the client ID.' : undefined,
-    secret: !app && !secret.trim() ? 'Enter the client secret.' : undefined,
+    name: !name.trim() ? text.needsName : undefined,
+    serverUrl: google ? undefined : !serverUrl.trim() ? text.needsAddress : !/^https:\/\/\S+$/.test(serverUrl.trim()) ? text.needsHttps : undefined,
+    clientID: !clientID.trim() ? text.needsClientId : undefined,
+    secret: !app && !secret.trim() ? text.needsSecret : undefined,
   }
   const save = useChange(
-    app ? 'change the sign-in app' : 'create the sign-in app',
+    app ? text.changeAction : text.createAction,
     () => {
       const input = { name: name.trim(), serverUrl: google ? null : serverUrl.trim(), clientID: clientID.trim(), clientSecret: secret.trim() || null }
       return app ? signInAppActions.update(org, app.id!, input) : signInAppActions.create(org, provider, input)
@@ -140,25 +143,25 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
 
   if (created)
     return (
-      <FormDialog open onClose={onClose} title={`${created.name} is ready`}>
+      <FormDialog open onClose={onClose} title={text.ready(created.name)}>
         <AppAddresses app={created} />
       </FormDialog>
     )
   return (
-    <FormDialog open onClose={onClose} title={app ? app.name : 'New sign-in app'} submit={app ? 'Save' : 'Create app'} onSubmit={submit} pending={save.pending} error={save.error}>
+    <FormDialog open onClose={onClose} title={app ? app.name : text.new} submit={app ? common.save : text.create} onSubmit={submit} pending={save.pending} error={save.error}>
       {!app && (
         <Segmented
-          label="Provider"
+          label={text.provider}
           value={provider}
           onChange={setProvider}
           options={Object.values(SignInProvider).map((value) => ({ value, label: PROVIDER_NAME[value] }))}
         />
       )}
-      <Field label="Name" error={shown(problems.name)}>
+      <Field label={t.name} error={shown(problems.name)}>
         {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={SIGN_IN_APP_NAME_MAX} autoComplete="off" />}
       </Field>
       {!google && (
-        <Field label="Provider address" error={shown(problems.serverUrl)}>
+        <Field label={text.providerAddress} error={shown(problems.serverUrl)}>
           {(field) => (
             <Input
               {...field}
@@ -174,12 +177,12 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
           )}
         </Field>
       )}
-      <Field label="Client ID" error={shown(problems.clientID)}>
+      <Field label={text.clientId} error={shown(problems.clientID)}>
         {(field) => (
           <Input {...field} value={clientID} onChange={(event) => setClientID(event.target.value)} maxLength={SIGN_IN_CLIENT_MAX} autoComplete="off" autoCapitalize="off" spellCheck={false} className="font-mono" />
         )}
       </Field>
-      <Field label={app ? 'New client secret' : 'Client secret'} error={shown(problems.secret)}>
+      <Field label={app ? text.newSecret : text.secret} error={shown(problems.secret)}>
         {(field) => (
           <Input
             {...field}
@@ -192,7 +195,7 @@ function SignInAppDialog({ org, app, onClose, onCreated }: { org: string; app?: 
           />
         )}
       </Field>
-      {!app && <p className="text-sm text-muted-foreground">The redirect address to give the provider comes once the app is created.</p>}
+      {!app && <p className="text-sm text-muted-foreground">{text.redirectLater}</p>}
     </FormDialog>
   )
 }

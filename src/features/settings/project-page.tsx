@@ -26,7 +26,7 @@ import { Field } from '@/components/ui/field'
 import { DeleteDialog, FoldRow, Group, InlineForm, LinkRow, Row, RowSkeleton, SettingsBar, Sheet, Tabs } from './parts'
 import { teamList } from './labels'
 import { useFold } from './rows'
-import { PLATFORMS, platformName, shownPlatform, storedPlatform } from './platforms'
+import { PLATFORMS, platformLabel, platformName, shownPlatform, storedPlatform } from './platforms'
 import { ProjectSetup } from './project-setup'
 import { Environments } from './project-environments'
 import { Keys } from './project-keys'
@@ -34,13 +34,15 @@ import { ProjectTab } from './project-tabs'
 import { ProjectAlerts } from '@/features/alerts/project-alerts'
 import type { AlertParam } from '@/features/alerts/open-rule'
 import { isNotFound } from '@/api/errors'
+import { messages, percent, useT, type Messages } from '@/i18n'
 
 /**
  * One project's settings. Until its first event arrives the page opens on the set-up step; after that on General.
  * Each tab has an address (`?tab=`), the stock one, so links from old emails land on the right tab.
  */
 export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: string; tab?: ProjectTab; alert?: AlertParam }) {
-  useTitle(slug, 'Settings')
+  const t = useT().settings
+  useTitle(slug, t.title)
   const can = useAccess(org)
   const navigate = useNavigate()
   const project = useQuery(projectQuery(org, slug))
@@ -61,10 +63,10 @@ export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: stri
     return (
       <>
         <SettingsBar org={org} title={slug} mono />
-        <Screen title="No such project">
+        <Screen title={t.project.noSuch}>
           <Button asChild>
             <Link to="/$org/settings" params={{ org }}>
-              Back to settings
+              {t.project.back}
             </Link>
           </Button>
         </Screen>
@@ -82,7 +84,7 @@ export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: stri
         {project.data?.firstEvent && (
           <Button asChild size="bar">
             <Link to="/$org/issues" params={{ org }} search={{ project: [Number(project.data.id)] }}>
-              Issues
+              {t.project.issues}
             </Link>
           </Button>
         )}
@@ -93,8 +95,8 @@ export function ProjectPage({ org, slug, tab, alert }: { org: string; slug: stri
         ) : (
           <>
             <Tabs
-              label="Project settings"
-              tabs={PROJECT_TABS.map((entry) => ({ value: entry.value, label: entry.label, count: entry.count?.(context) }))}
+              label={t.project.tabsLabel}
+              tabs={PROJECT_TABS.map((entry) => ({ value: entry.value, label: t.project.tabs[entry.name], count: entry.count?.(context) }))}
               current={current}
               link={(value) => ({ to: '/$org/settings/projects/$project', params: { org, project: slug }, search: { tab: value } })}
             />
@@ -120,34 +122,34 @@ type TabContext = {
 }
 
 // The project page's tabs, in order.
-const PROJECT_TABS: { value: ProjectTab; label: string; count?: (context: TabContext) => number | undefined; render: (context: TabContext & { project: ProjectDetail }) => ReactNode }[] = [
+const PROJECT_TABS: { value: ProjectTab; name: keyof Messages['settings']['project']['tabs']; count?: (context: TabContext) => number | undefined; render: (context: TabContext & { project: ProjectDetail }) => ReactNode }[] = [
   {
     value: ProjectTab.setup,
-    label: 'Set up',
+    name: 'setup',
     render: ({ org, project, keys, can }) => <ProjectSetup org={org} project={project} dsn={keys?.[0]?.dsn.public} keysLoaded={!!keys} write={can(Scope.projectWrite)} />,
   },
   {
     value: ProjectTab.general,
-    label: 'General',
+    name: 'general',
     render: ({ org, project, teams, can }) => (
       <General org={org} project={project} teams={teams} write={can(Scope.projectWrite)} admin={can(Scope.projectAdmin)} linkTeams={can(Scope.orgWrite)} />
     ),
   },
   {
     value: ProjectTab.keys,
-    label: 'Client keys',
+    name: 'keys',
     count: ({ keys }) => keys?.length,
     render: ({ org, slug, keys, can }) => <Keys org={org} slug={slug} keys={keys} write={can(Scope.projectWrite)} admin={can(Scope.projectAdmin)} />,
   },
   {
     value: ProjectTab.environments,
-    label: 'Environments',
+    name: 'environments',
     count: ({ environments }) => environments?.length,
     render: ({ org, slug, environments, can }) => <Environments org={org} slug={slug} environments={environments} write={can(Scope.projectWrite)} />,
   },
   {
     value: ProjectTab.alerts,
-    label: 'Alerts',
+    name: 'alerts',
     count: ({ rules }) => rules,
     render: ({ org, slug, alert, openRule }) => <ProjectAlerts org={org} slug={slug} alert={alert} onOpen={openRule} />,
   },
@@ -165,40 +167,42 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
   const row = useFold()
   const [deleting, setDeleting] = useState(false)
   const edit = (field: GeneralField) => (write ? () => row.toggle(field) : undefined)
+  const { settings: t, common } = useT()
+  const text = t.project
   return (
     <>
-      <Group label="General">
-        <FoldRow label="Name" value={project.name} open={row.is(GeneralField.name)} onToggle={edit(GeneralField.name)}>
+      <Group label={text.general}>
+        <FoldRow label={t.name} value={project.name} open={row.is(GeneralField.name)} onToggle={edit(GeneralField.name)}>
           <NameForm org={org} slug={slug} name={project.name} onDone={row.close} />
         </FoldRow>
-        <FoldRow label="Platform" value={platformName(project.platform)} open={row.is(GeneralField.platform)} onToggle={edit(GeneralField.platform)}>
+        <FoldRow label={text.platform} value={platformName(project.platform)} open={row.is(GeneralField.platform)} onToggle={edit(GeneralField.platform)}>
           <PlatformForm org={org} slug={slug} name={project.name} platform={project.platform} onDone={row.close} />
         </FoldRow>
         <FoldRow
-          label="Teams with access"
+          label={text.teamsWithAccess}
           mono={!!teams?.length}
-          value={teams && (teams.length ? teamList(teams) : 'None')}
+          value={teams && (teams.length ? teamList(teams) : common.none)}
           open={row.is(GeneralField.teams)}
           onToggle={teams && linkTeams ? () => row.toggle(GeneralField.teams) : undefined}
         >
           {teams && <TeamsForm org={org} slug={slug} teams={teams} onDone={row.close} />}
         </FoldRow>
-        <FoldRow label="Events to drop" mono value={`${project.eventThrottleRate}%`} open={row.is(GeneralField.throttle)} onToggle={edit(GeneralField.throttle)}>
+        <FoldRow label={text.eventsToDrop} mono value={percent(project.eventThrottleRate)} open={row.is(GeneralField.throttle)} onToggle={edit(GeneralField.throttle)}>
           <ThrottleForm org={org} slug={slug} name={project.name} rate={project.eventThrottleRate} onDone={row.close} />
         </FoldRow>
       </Group>
-      <Group label="You">
+      <Group label={text.you}>
         {/* Someone who manages the project through their organization role sees no team of theirs above. */}
-        {write && !project.isMember && <Row label="Your access" value="Through your organization role, not a team" />}
-        <LinkRow label="Your notifications" value="Alerts from this project" to="/profile/notifications" />
+        {write && !project.isMember && <Row label={text.yourAccess} value={text.throughRole} />}
+        <LinkRow label={text.yourNotifications} value={text.alertsFromProject} to="/profile/notifications" />
       </Group>
       {admin && (
-        <Group label="Danger">
+        <Group label={t.danger}>
           <Row
-            label="Delete project"
+            label={text.deleteProject}
             action={
               <RowButton danger onClick={() => setDeleting(true)}>
-                Delete
+                {common.delete}
               </RowButton>
             }
           />
@@ -211,27 +215,29 @@ function General({ org, project, teams, write, admin, linkTeams }: { org: string
 
 function NameForm({ org, slug, name, onDone }: { org: string; slug: string; name: string; onDone: () => void }) {
   const [value, setValue] = useState(name)
-  const save = useChange('rename the project', () => projectActions.update(org, slug, { name: value.trim() }), { stale: [stale.projects(org)], onDone })
+  const t = useT().settings
+  const save = useChange(t.project.renameAction, () => projectActions.update(org, slug, { name: value.trim() }), { stale: [stale.projects(org)], onDone })
   return (
     // The backend would take an empty name, so the form does not offer to send one.
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={!value.trim() || value.trim() === name}>
-      <Input aria-label="Name" className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={PROJECT_NAME_MAX} />
+      <Input aria-label={t.name} className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={PROJECT_NAME_MAX} />
     </InlineForm>
   )
 }
 
 function PlatformForm({ org, slug, name, platform, onDone }: { org: string; slug: string; name: string; platform?: string | null; onDone: () => void }) {
   const [value, setValue] = useState(shownPlatform(platform))
-  const save = useChange('change the platform', () => projectActions.update(org, slug, { name, platform: storedPlatform(value) }), { stale: [stale.projects(org)], onDone })
+  const t = useT().settings.project
+  const save = useChange(t.platformAction, () => projectActions.update(org, slug, { name, platform: storedPlatform(value) }), { stale: [stale.projects(org)], onDone })
   // A platform set by another client that this list does not know stays choosable.
   const unknown = platform && !PLATFORMS.some((p) => p.id === platform)
   return (
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={value === shownPlatform(platform)}>
-      <Select aria-label="Platform" className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)}>
+      <Select aria-label={t.platform} className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)}>
         {unknown && <option value={platform}>{platform}</option>}
         {PLATFORMS.map((p) => (
           <option key={p.id} value={p.id}>
-            {p.name}
+            {platformLabel(p)}
           </option>
         ))}
       </Select>
@@ -246,7 +252,7 @@ function TeamsForm({ org, slug, teams, onDone }: { org: string; slug: string; te
   const added = value.filter((team) => !teams.includes(team))
   const removed = teams.filter((team) => !value.includes(team))
   const save = useChange(
-    'change the teams',
+    messages().settings.project.teamsAction,
     async () => {
       for (const team of added) await projectActions.addTeam(org, slug, team)
       for (const team of removed) await projectActions.removeTeam(org, slug, team)
@@ -264,10 +270,11 @@ function ThrottleForm({ org, slug, name, rate, onDone }: { org: string; slug: st
   const [value, setValue] = useState(String(rate))
   const percent = Number(value)
   const valid = /^\d+$/.test(value.trim()) && percent <= 100
-  const save = useChange('change how many events are dropped', () => projectActions.update(org, slug, { name, eventThrottleRate: percent }), { stale: [stale.projects(org)], onDone })
+  const t = useT().settings.project
+  const save = useChange(t.throttleAction, () => projectActions.update(org, slug, { name, eventThrottleRate: percent }), { stale: [stale.projects(org)], onDone })
   return (
     <InlineForm onSubmit={() => save.run()} onCancel={onDone} pending={save.pending} error={save.error} disabled={!valid || percent === rate}>
-      <Field label="Percent of events to drop" className="max-w-56" error={value.trim() && !valid ? 'A whole number from 0 to 100.' : undefined}>
+      <Field label={t.percentToDrop} className="max-w-56" error={value.trim() && !valid ? t.wholeNumber : undefined}>
         {(field) => <Input {...field} autoFocus value={value} onChange={(event) => setValue(event.target.value)} inputMode="numeric" className="font-mono" />}
       </Field>
     </InlineForm>
@@ -276,7 +283,8 @@ function ThrottleForm({ org, slug, name, rate, onDone }: { org: string; slug: st
 
 function DeleteProject({ org, slug, onClose }: { org: string; slug: string; onClose: () => void }) {
   const navigate = useNavigate()
-  const remove = useChange('delete the project', () => projectActions.remove(org, slug), {
+  const t = useT().settings
+  const remove = useChange(t.project.deleteAction, () => projectActions.remove(org, slug), {
     // The project's environments and issues go with it.
     stale: [stale.projects(org), stale.teams(org), stale.environments(org), stale.issueLists(org)],
     leavesPage: true,
@@ -286,9 +294,10 @@ function DeleteProject({ org, slug, onClose }: { org: string; slug: string; onCl
     <DeleteDialog
       open
       onClose={onClose}
-      what="project"
+      title={t.deleteProjectTitle(slug)}
+      submit={t.project.deleteProject}
       name={slug}
-      loses="Its issues, events, client keys and alerts are deleted for good."
+      loses={t.project.loses}
       onDelete={() => remove.run()}
       pending={remove.pending}
       error={remove.error}

@@ -16,12 +16,11 @@ import { cn } from '@/lib/utils'
 import { useAccess } from './access'
 import { useChange } from './change'
 import { DeleteDialog, FoldRow, Group, GroupAction, InlineForm, LinkRow, ROW, Row, RowSkeleton, Sheet } from './parts'
-import { plural } from '@/lib/text'
+import { useT } from '@/i18n'
 import { teamList } from './labels'
 import { useFold } from './rows'
 import { platformName } from './platforms'
 import { matchEntries, settingsEntries } from './search'
-import { exactCount } from './usage'
 import { SignInApps } from './sign-in-apps'
 
 /**
@@ -29,7 +28,8 @@ import { SignInApps } from './sign-in-apps'
  * Typing in the search replaces the page with the settings, people and projects that match.
  */
 export function SettingsIndex({ org }: { org: string }) {
-  useTitle('Settings', org)
+  const { settings: t, common } = useT()
+  useTitle(t.title, org)
   const can = useAccess(org)
   const navigate = useNavigate()
   const organization = useQuery(organizationQuery(org)).data
@@ -38,7 +38,7 @@ export function SettingsIndex({ org }: { org: string }) {
   const projects = useQuery(projectsQuery(org)).data
   const version = useQuery(instanceSettingsQuery).data?.version
   const usagePeriod = useQuery(usagePeriodQuery(org)).data
-  const usage = usagePeriod && `${plural(exactCount(totalOf(usagePeriod.counts)), 'event')} in the last ${USAGE_DAYS} days`
+  const usage = usagePeriod && t.usageSummary(totalOf(usagePeriod.counts), USAGE_DAYS)
   const signInApps = useQuery({ ...signInAppsQuery(org), enabled: can(Scope.orgWrite) }).data
   const [query, setQuery] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -58,7 +58,7 @@ export function SettingsIndex({ org }: { org: string }) {
   return (
     <>
       <PageBar className="max-lg:h-auto max-lg:flex-wrap max-lg:gap-y-0 max-lg:pb-2">
-        <h1 className="text-2xl font-semibold max-lg:flex max-lg:h-11 max-lg:w-full max-lg:items-center">Settings</h1>
+        <h1 className="text-2xl font-semibold max-lg:flex max-lg:h-11 max-lg:w-full max-lg:items-center">{t.title}</h1>
         <div className="relative w-full lg:ml-3 lg:max-w-md">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -68,8 +68,8 @@ export function SettingsIndex({ org }: { org: string }) {
             onKeyDown={(event) => {
               if (event.key === 'Enter' && found[0]) void navigate(found[0].link)
             }}
-            placeholder="Find a setting, project or person"
-            aria-label="Find a setting, project or person"
+            placeholder={t.find}
+            aria-label={t.find}
             className="h-8 pl-9"
           />
           <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 max-lg:hidden">/</Kbd>
@@ -79,7 +79,7 @@ export function SettingsIndex({ org }: { org: string }) {
         {!loaded ? (
           <RowSkeleton rows={8} />
         ) : query.trim() ? (
-          <ul aria-label="Matches">
+          <ul aria-label={t.matches}>
             {found.map((entry, index) => (
               <li key={entry.path.join('/')}>
                 <Link {...entry.link} className={cn(ROW, '-outline-offset-2 hover:bg-accent', index === 0 && 'bg-selected')}>
@@ -99,40 +99,40 @@ export function SettingsIndex({ org }: { org: string }) {
                 </Link>
               </li>
             ))}
-            {found.length === 0 && <li className="px-3 py-10 text-center text-muted-foreground md:px-4">Nothing in settings matches “{query.trim()}”.</li>}
+            {found.length === 0 && <li className="px-3 py-10 text-center text-muted-foreground md:px-4">{t.noMatch(query.trim())}</li>}
           </ul>
         ) : (
           <>
-            <Group label="Organization">
-              <FoldRow label="Name" value={organization.name} open={row.is('name')} onToggle={can(Scope.orgWrite) ? () => row.toggle('name') : undefined}>
+            <Group label={t.organization}>
+              <FoldRow label={t.name} value={organization.name} open={row.is('name')} onToggle={can(Scope.orgWrite) ? () => row.toggle('name') : undefined}>
                 <RenameOrganization org={org} name={organization.name} onDone={row.close} />
               </FoldRow>
-              <LinkRow label="Usage" value={usage} to="/$org/settings/subscription" params={{ org }} />
+              <LinkRow label={t.usage} value={usage} to="/$org/settings/subscription" params={{ org }} />
             </Group>
 
             <Group
-              label="People"
+              label={t.people}
               action={
                 can(Scope.memberWrite) && (
                   <GroupAction asChild>
                     <Link to="/$org/settings/members/new" params={{ org }}>
                       <Plus />
-                      Invite members
+                      {t.inviteMembers}
                     </Link>
                   </GroupAction>
                 )
               }
             >
               <LinkRow
-                label="Members"
-                value={`${plural(members.length - invited, 'member')}${invited ? ` · ${invited} invited` : ''}`}
+                label={t.members}
+                value={t.memberSummary(members.length - invited, invited)}
                 to="/$org/settings/members"
                 params={{ org }}
               />
               <LinkRow
-                label="Teams"
+                label={t.teams}
                 mono={teams.length > 0}
-                value={teams.length ? teamList(teams.map((team) => team.slug)) : 'None yet'}
+                value={teams.length ? teamList(teams.map((team) => team.slug)) : common.noneYet}
                 to="/$org/settings/teams"
                 params={{ org }}
               />
@@ -141,13 +141,13 @@ export function SettingsIndex({ org }: { org: string }) {
             {can(Scope.orgWrite) && <SignInApps org={org} />}
 
             <Group
-              label="Projects"
+              label={t.projects}
               action={
                 can(Scope.projectWrite) && (
                   <GroupAction asChild>
                     <Link to="/$org/settings/projects/new" params={{ org }}>
                       <Plus />
-                      New project
+                      {t.newProject}
                     </Link>
                   </GroupAction>
                 )
@@ -166,27 +166,27 @@ export function SettingsIndex({ org }: { org: string }) {
                           <span className="mono">{teamList(project.teams.map((team) => team.slug))}</span>
                         </span>
                       )}
-                      {!project.firstEvent && ' · no events yet'}
+                      {!project.firstEvent && t.noEventsYet}
                     </>
                   }
                   to="/$org/settings/projects/$project"
                   params={{ org, project: project.slug ?? '' }}
                 />
               ))}
-              {projects.length === 0 && <Row label="No projects yet" />}
+              {projects.length === 0 && <Row label={t.noProjects} />}
             </Group>
 
-            <Group label="Server">
-              <LinkRow label="System info" mono value={version} to="/system-info" />
+            <Group label={t.server}>
+              <LinkRow label={t.systemInfo} mono value={version} to="/system-info" />
             </Group>
 
             {can(Scope.orgAdmin) && (
-              <Group label="Danger">
+              <Group label={t.danger}>
                 <Row
-                  label="Delete organization"
+                  label={t.deleteOrganization}
                   action={
                     <RowButton danger onClick={() => setDeleting(true)}>
-                      Delete
+                      {common.delete}
                     </RowButton>
                   }
                 />
@@ -196,7 +196,7 @@ export function SettingsIndex({ org }: { org: string }) {
         )}
       </Sheet>
       {deleting && loaded && (
-        <DeleteOrganization org={org} loses={`${plural(projects.length, 'project')}, their issues and ${plural(members.length, 'membership')} are deleted for good.`} onClose={() => setDeleting(false)} />
+        <DeleteOrganization org={org} loses={t.organizationLoses(projects.length, members.length)} onClose={() => setDeleting(false)} />
       )}
     </>
   )
@@ -204,21 +204,23 @@ export function SettingsIndex({ org }: { org: string }) {
 
 function RenameOrganization({ org, name, onDone }: { org: string; name: string; onDone: () => void }) {
   const [value, setValue] = useState(name)
-  const rename = useChange('rename the organization', () => organizationActions.rename(org, value.trim()), { stale: [stale.organizations(), stale.organization(org)], onDone })
+  const t = useT().settings
+  const rename = useChange(t.renameOrganizationAction, () => organizationActions.rename(org, value.trim()), { stale: [stale.organizations(), stale.organization(org)], onDone })
   return (
     <InlineForm onSubmit={() => rename.run()} onCancel={onDone} pending={rename.pending} error={rename.error} disabled={!value.trim() || value.trim() === name}>
       {/* The open row already says Name, so the field is named for screen readers only. */}
-      <Input aria-label="Name" className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={ORGANIZATION_NAME_MAX} />
+      <Input aria-label={t.name} className="max-w-sm" autoFocus value={value} onChange={(event) => setValue(event.target.value)} maxLength={ORGANIZATION_NAME_MAX} />
     </InlineForm>
   )
 }
 
 function DeleteOrganization({ org, loses, onClose }: { org: string; loses: string; onClose: () => void }) {
   const navigate = useNavigate()
-  const remove = useChange('delete the organization', () => organizationActions.remove(org), {
+  const t = useT().settings
+  const remove = useChange(t.deleteOrganizationAction, () => organizationActions.remove(org), {
     stale: [stale.organizations()],
     leavesPage: true,
     onDone: () => void navigate({ to: '/' }),
   })
-  return <DeleteDialog open onClose={onClose} what="organization" name={org} loses={loses} onDelete={() => remove.run()} pending={remove.pending} error={remove.error} />
+  return <DeleteDialog open onClose={onClose} title={t.deleteOrganizationTitle(org)} submit={t.deleteOrganization} name={org} loses={loses} onDelete={() => remove.run()} pending={remove.pending} error={remove.error} />
 }

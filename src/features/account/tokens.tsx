@@ -8,7 +8,8 @@ import { ConfirmDialog, TaskActions, TaskDialog } from '@/components/ui/task-dia
 import { CopyButton } from './copy-button'
 import { day } from './format'
 import { RowButton } from '@/components/ui/row-button'
-import { LEVEL_LABELS, RELEASES_LABEL, RESOURCE_LABELS, scopeWords } from './scopes'
+import { useT } from '@/i18n'
+import { scopeWords } from './scopes'
 import { useAction } from './use-action'
 
 const FIRST_SCOPE: TokenScope = `${TokenResource.project}:${TokenLevel.read}`
@@ -18,12 +19,13 @@ const PREFIX = 6
 
 function TokenRow({ token }: { token: ApiToken }) {
   const [confirming, setConfirming] = useState(false)
-  const revoke = useAction(() => tokens.revoke(token.id), { action: 'revoke that token', refresh: [accountKeys.tokens], onDone: () => setConfirming(false) })
+  const text = useT().account.tokens
+  const revoke = useAction(() => tokens.revoke(token.id), { action: text.revokeAction, refresh: [accountKeys.tokens], onDone: () => setConfirming(false) })
   return (
     <li className="flex items-center gap-3 border-b py-2">
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-baseline gap-x-3">
-          <span className="font-medium">{token.label || 'No label'}</span>
+          <span className="font-medium">{token.label || text.noLabel}</span>
           <span className="mono text-muted-foreground">
             {token.token.slice(0, PREFIX)}… · {day(token.created)}
           </span>
@@ -31,13 +33,13 @@ function TokenRow({ token }: { token: ApiToken }) {
         <span className="block text-sm text-muted-foreground">{scopeWords(token.scopes)}</span>
       </span>
       <RowButton danger onClick={() => setConfirming(true)}>
-        Revoke
+        {text.revoke}
       </RowButton>
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
-        title={`Revoke ${token.label || 'this token'}?`}
-        action="Revoke token"
+        title={text.revokeTitle(token.label)}
+        action={text.revokeToken}
         busy={revoke.busy}
         error={revoke.message}
         onConfirm={() => void revoke.run()}
@@ -47,7 +49,8 @@ function TokenRow({ token }: { token: ApiToken }) {
 }
 
 export function TokenRows({ list }: { list: ApiToken[] }) {
-  if (list.length === 0) return <p className="border-b py-3 text-muted-foreground">No tokens</p>
+  const t = useT()
+  if (list.length === 0) return <p className="border-b py-3 text-muted-foreground">{t.account.tokens.none}</p>
   return (
     <ul>
       {list.map((token) => (
@@ -60,7 +63,8 @@ export function TokenRows({ list }: { list: ApiToken[] }) {
 function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => void; onClose: () => void }) {
   const [label, setLabel] = useState('')
   const [scopes, setScopes] = useState<TokenScope[]>([])
-  const create = useAction(async () => onCreated(await tokens.create(label.trim(), scopes)), { action: 'make that token', refresh: [accountKeys.tokens] })
+  const { account: { tokens: text }, common } = useT()
+  const create = useAction(async () => onCreated(await tokens.create(label.trim(), scopes)), { action: text.createAction, refresh: [accountKeys.tokens] })
   const toggle = (scope: TokenScope) => setScopes((list) => (list.includes(scope) ? list.filter((item) => item !== scope) : [...list, scope]))
   const scopesErrorId = useId()
   // The first box stands for the whole set when none is ticked.
@@ -75,18 +79,18 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
   )
 
   function submit(event: FormEvent<HTMLFormElement>) {
-    void create.submit(event, undefined, { fields: scopes.length === 0 ? { scopes: 'Tick at least one thing this token may do.' } : {} })
+    void create.submit(event, undefined, { fields: scopes.length === 0 ? { scopes: text.tickOne } : {} })
   }
 
   return (
     <form noValidate className="space-y-4" onSubmit={submit}>
       <FormAlert>{create.message}</FormAlert>
-      <Field label="Label" error={create.fields.label}>
+      <Field label={text.label} error={create.fields.label}>
         {(field) => <Input {...field} name="label" value={label} onChange={(event) => setLabel(event.target.value)} required maxLength={255} className="h-10" autoComplete="off" />}
       </Field>
       <div>
         <p className="mb-2 text-sm font-medium" id="token-scopes">
-          This token may
+          {text.mayDo}
         </p>
         <table className="w-full border-y" aria-labelledby="token-scopes">
           <thead>
@@ -94,7 +98,7 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
               <td />
               {TOKEN_LEVELS.map((level) => (
                 <th key={level} scope="col" className="label-caps w-16 py-2 text-center font-normal">
-                  {LEVEL_LABELS[level]}
+                  {text.levels[level]}
                 </th>
               ))}
             </tr>
@@ -103,21 +107,21 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
             {TOKEN_RESOURCES.map((resource) => (
               <tr key={resource} className="border-b">
                 <th scope="row" className="text-left font-normal">
-                  {RESOURCE_LABELS[resource]}
+                  {text.resources[resource]}
                 </th>
                 {TOKEN_LEVELS.map((level) => (
                   <td key={level} className="text-center">
-                    {box(`${resource}:${level}`, `${RESOURCE_LABELS[resource]}: ${LEVEL_LABELS[level]}`)}
+                    {box(`${resource}:${level}`, common.valueName(text.resources[resource], text.levels[level]))}
                   </td>
                 ))}
               </tr>
             ))}
             <tr>
               <th scope="row" className="text-left font-normal">
-                {RELEASES_LABEL}
+                {text.releases}
               </th>
               <td />
-              <td className="text-center">{box(RELEASES_SCOPE, RELEASES_LABEL)}</td>
+              <td className="text-center">{box(RELEASES_SCOPE, text.releases)}</td>
               <td />
             </tr>
           </tbody>
@@ -128,17 +132,18 @@ function TokenForm({ onCreated, onClose }: { onCreated: (token: ApiToken) => voi
       </div>
       <TaskActions>
         <SubmitButton busy={create.busy}>
-          Create token
+          {text.create}
         </SubmitButton>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{common.cancel}</Button>
       </TaskActions>
     </form>
   )
 }
 
 export function NewTokenDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (token: ApiToken) => void }) {
+  const t = useT()
   return (
-    <TaskDialog open={open} onClose={onClose} title="New API token">
+    <TaskDialog open={open} onClose={onClose} title={t.account.tokens.newTitle}>
       <TokenForm onCreated={onCreated} onClose={onClose} />
     </TaskDialog>
   )
@@ -146,23 +151,20 @@ export function NewTokenDialog({ open, onClose, onCreated }: { open: boolean; on
 
 // The only time the whole token is on screen. It stays until the person says they are done.
 export function TokenRevealDialog({ token, onClose }: { token: ApiToken | null; onClose: () => void }) {
+  const { account: { tokens: text }, common } = useT()
   return (
     <TaskDialog
       open={token !== null}
       onClose={onClose}
       modal
       quietFocus
-      title={
-        <>
-          Copy <span className="font-semibold">{token?.label}</span> now
-        </>
-      }
-      description="It won't be shown again."
+      title={text.copyNow(<span className="font-semibold">{token?.label}</span>)}
+      description={text.notShownAgain}
     >
       <code className="mono mb-4 block border bg-code p-3 break-all select-all">{token?.token}</code>
       <TaskActions>
-        <CopyButton text={token?.token ?? ''} label="Copy token" variant="default" />
-        <Button onClick={onClose}>Done</Button>
+        <CopyButton text={token?.token ?? ''} label={text.copyToken} variant="default" />
+        <Button onClick={onClose}>{common.done}</Button>
       </TaskActions>
     </TaskDialog>
   )

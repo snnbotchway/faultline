@@ -1,14 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { ChevronsUpDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AlertChoice, accountKeys, alertsQuery, emailsQuery, notificationsQuery, tokensQuery, twoStep, twoStepQuery, type ApiToken } from '@/api/account'
 import { Feature, currentUserQuery, instanceSettingsQuery } from '@/api/organizations'
 import { PageBar } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { FormAlert } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
+import { LOCALE_NAMES, Locale, isLocale, useChosenLocale, useT } from '@/i18n'
+import { useChooseLanguage } from '@/lib/language-sync'
 import { Theme, useTheme } from '@/lib/theme'
 import { useChooseTheme } from '@/lib/theme-sync'
 import { useTitle } from '@/lib/title'
@@ -40,19 +44,47 @@ const Task = {
 } as const
 type Task = (typeof Task)[keyof typeof Task]
 
-const THEMES = [
-  { value: Theme.system, label: 'System' },
-  { value: Theme.light, label: 'Light' },
-  { value: Theme.dark, label: 'Dark' },
-] as const
+const THEMES = [Theme.system, Theme.light, Theme.dark] as const
+
+// The menu's value for following the browser, which is no language of its own.
+const BROWSER = 'browser'
+
+// The language of the screen: the browser's, or one picked here, which the account keeps.
+function LanguageMenu() {
+  const t = useT()
+  const chosen = useChosenLocale()
+  const choose = useChooseLanguage()
+  const label = chosen ? LOCALE_NAMES[chosen] : t.shell.language.browser
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button className="max-lg:h-11" aria-label={t.common.valueName(t.account.rows.language, label)}>
+          {label}
+          <ChevronsUpDown className="size-3 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuRadioGroup value={chosen ?? BROWSER} onValueChange={(value) => choose(isLocale(value) ? value : undefined)}>
+          <DropdownMenuRadioItem value={BROWSER}>{t.shell.language.browser}</DropdownMenuRadioItem>
+          {Object.values(Locale).map((locale) => (
+            <DropdownMenuRadioItem key={locale} value={locale} lang={locale}>
+              {LOCALE_NAMES[locale]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 const SECTION_IDS = { [Landing.twoStep]: 'two-step', [Landing.tokens]: 'api-tokens' } as const
 
 export function ProfileSkeleton() {
+  const t = useT()
   return (
     <>
       <PageBar>
-        <span className="font-semibold">Profile</span>
+        <span className="font-semibold">{t.account.profile}</span>
       </PageBar>
       <div className="mx-auto w-full max-w-180 space-y-3 px-3 pt-8 md:px-4" aria-busy>
         {Array.from({ length: 8 }, (_, index) => (
@@ -64,7 +96,8 @@ export function ProfileSkeleton() {
 }
 
 export function ProfilePage({ landing, connectFailed }: { landing: Landing; connectFailed?: boolean }) {
-  useTitle('Profile')
+  const { account: text, common, shell } = useT()
+  useTitle(text.profile)
   const navigate = useNavigate()
   const user = useQuery(currentUserQuery).data
   const emails = useQuery(emailsQuery).data
@@ -81,7 +114,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
   const open = (next: Task) => () => setTask(next)
   const land = (next: Landing) => void navigate({ to: LANDING_PATHS[next], replace: true })
 
-  const turnOff = useAction(twoStep.deactivateTotp, { action: 'turn off the authenticator app', refresh: [accountKeys.authenticators], onDone: close })
+  const turnOff = useAction(twoStep.deactivateTotp, { action: text.turnOffApp.action, refresh: [accountKeys.authenticators], onDone: close })
 
   const section = landing === Landing.twoStep || landing === Landing.tokens ? SECTION_IDS[landing] : undefined
   useEffect(() => {
@@ -103,23 +136,23 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
   return (
     <>
       <PageBar className="justify-between">
-        <span className="font-semibold">Profile</span>
+        <span className="font-semibold">{text.profile}</span>
         <span className="mono truncate text-muted-foreground">{user.email}</span>
       </PageBar>
       <div className="mx-auto w-full max-w-180 px-3 pb-16 md:px-4">
-        <h1 className="sr-only">Profile</h1>
-        {connectFailed && <FormAlert className="mt-5">That account couldn't be connected. Try again.</FormAlert>}
+        <h1 className="sr-only">{text.profile}</h1>
+        {connectFailed && <FormAlert className="mt-5">{text.connectFailed}</FormAlert>}
 
-        <Heading>Account</Heading>
-        <Fact name="Name" value={user.name || <span className="text-muted-foreground">Not set</span>} action="Edit" onClick={open(Task.details)} />
+        <Heading>{text.groups.account}</Heading>
+        <Fact name={text.rows.name} value={user.name || <span className="text-muted-foreground">{common.notSet}</span>} action={common.edit} onClick={open(Task.details)} />
         <Fact
-          name="Time zone"
-          value={user.options.timezone ? <span className="mono">{user.options.timezone}</span> : <span className="text-muted-foreground">Not set</span>}
-          action="Edit"
+          name={text.rows.timeZone}
+          value={user.options.timezone ? <span className="mono">{user.options.timezone}</span> : <span className="text-muted-foreground">{common.notSet}</span>}
+          action={common.edit}
           onClick={open(Task.details)}
         />
         <Fact
-          name="Emails"
+          name={text.rows.emails}
           value={
             <>
               <span className="mono [overflow-wrap:anywhere]">{primary}</span>{' '}
@@ -128,84 +161,71 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
                 {unverified > 0 && (
                   <span className="text-level-warning">
                     {emails.length > 1 ? ' · ' : ''}
-                    {unverified === 1 && emails.length === 1 ? 'not verified' : `${unverified} not verified`}
+                    {unverified === 1 && emails.length === 1 ? text.notVerified : text.someNotVerified(unverified)}
                   </span>
                 )}
               </span>
             </>
           }
-          action="Manage"
+          action={text.manage}
           onClick={open(Task.emails)}
         />
-        <ControlRow name="Theme">
-          <Segmented label="Theme" value={theme} options={THEMES} onChange={chooseTheme} />
+        <ControlRow name={text.rows.theme}>
+          <Segmented label={text.rows.theme} value={theme} options={THEMES.map((value) => ({ value, label: shell.themes[value] }))} onChange={chooseTheme} />
+        </ControlRow>
+        <ControlRow name={text.rows.language}>
+          <LanguageMenu />
         </ControlRow>
 
-        <Heading>Sign-in</Heading>
-        <Fact name="Password" value={user.hasPasswordAuth ? 'Set' : 'Not set'} action={user.hasPasswordAuth ? 'Change' : 'Set'} onClick={open(Task.password)} />
+        <Heading>{text.groups.signIn}</Heading>
+        <Fact name={text.rows.password} value={user.hasPasswordAuth ? text.isSet : common.notSet} action={user.hasPasswordAuth ? text.change : text.set} onClick={open(Task.password)} />
         {(apps.length > 0 || user.identities.length > 0) && (
           <Fact
-            name="Linked accounts"
-            value={user.identities.map((identity) => providerName(apps, identity.provider)).join(', ') || 'None'}
-            action={user.identities.length > 0 ? 'Manage' : 'Connect'}
+            name={text.rows.linked}
+            value={user.identities.map((identity) => providerName(apps, identity.provider)).join(', ') || common.none}
+            action={user.identities.length > 0 ? text.manage : text.connect}
             onClick={open(Task.linked)}
           />
         )}
 
         <Heading id={SECTION_IDS[Landing.twoStep]} current={landing === Landing.twoStep}>
-          Two-step verification
+          {text.groups.twoStep}
         </Heading>
         {factors.totp ? (
           <Fact
-            name="Authenticator app"
-            value={
-              <>
-                On{' '}
-                <span className="whitespace-nowrap text-muted-foreground">
-                  since <span className="mono">{day(factors.totp.created_at)}</span>
-                </span>
-              </>
-            }
-            action="Turn off"
+            name={text.rows.app}
+            value={text.appOnSince(<span className="mono">{day(factors.totp.created_at)}</span>)}
+            action={text.turnOff}
             onClick={open(Task.totpOff)}
           />
         ) : (
-          <Fact name="Authenticator app" value="Off" action="Turn on" onClick={twoStepTask(Task.totp)} />
+          <Fact name={text.rows.app} value={common.off} action={text.turnOn} onClick={twoStepTask(Task.totp)} />
         )}
         <Fact
-          name="Security keys"
-          value={factors.keys.map((key) => key.name).join(', ') || 'None'}
-          action={factors.keys.length > 0 ? 'Manage' : 'Add'}
+          name={text.rows.keys}
+          value={factors.keys.map((key) => key.name).join(', ') || common.none}
+          action={factors.keys.length > 0 ? text.manage : text.add}
           onClick={factors.keys.length > 0 ? open(Task.keys) : twoStepTask(Task.keys)}
         />
         {factors.recovery && (
           <Fact
-            name="Recovery codes"
-            value={
-              <>
-                <span className="mono">{factors.recovery.unused_code_count}</span> of <span className="mono">{factors.recovery.total_code_count}</span> left
-              </>
-            }
-            action="New codes"
+            name={text.rows.recovery}
+            value={text.codesLeft(<span className="mono">{factors.recovery.unused_code_count}</span>, <span className="mono">{factors.recovery.total_code_count}</span>)}
+            action={text.newCodes}
             onClick={open(Task.recovery)}
           />
         )}
 
-        <Heading>Notifications</Heading>
+        <Heading>{text.groups.notifications}</Heading>
         <Fact
-          name="Alert emails"
+          name={text.rows.alertEmails}
           value={
             <>
-              {alertsOn ? 'On' : 'Off'}
-              {changed > 0 && (
-                <span className="text-muted-foreground">
-                  {' '}
-                  · {changed} {changed === 1 ? 'project' : 'projects'} changed
-                </span>
-              )}
+              {alertsOn ? common.on : common.off}
+              {changed > 0 && <span className="text-muted-foreground"> · {text.projectsChanged(changed)}</span>}
             </>
           }
-          action="Change"
+          action={text.change}
           onClick={() => land(Landing.notifications)}
         />
 
@@ -214,16 +234,16 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
           current={landing === Landing.tokens || landing === Landing.newToken}
           action={
             <Button size="sm" className="max-lg:h-11" onClick={() => land(Landing.newToken)}>
-              New token
+              {text.newToken}
             </Button>
           }
         >
-          API tokens
+          {text.groups.tokens}
         </Heading>
         <TokenRows list={tokenList} />
 
         <div className="mt-8 border-t">
-          <Fact name="Delete account" action="Delete" danger onClick={open(Task.delete)} />
+          <Fact name={text.rows.deleteAccount} action={common.delete} danger onClick={open(Task.delete)} />
         </div>
       </div>
 
@@ -238,9 +258,9 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
       <ConfirmDialog
         open={task === Task.totpOff}
         onClose={close}
-        title="Turn off the authenticator app?"
-        description={factors.keys.length > 0 ? undefined : 'Signing in will then need only your password.'}
-        action="Turn off"
+        title={text.turnOffApp.title}
+        description={factors.keys.length > 0 ? undefined : text.turnOffApp.passwordOnly}
+        action={text.turnOff}
         busy={turnOff.busy}
         error={turnOff.message}
         onConfirm={() => void turnOff.run()}

@@ -8,6 +8,7 @@ import { CODE_INPUT, Field, FieldError, FormAlert, SubmitButton } from '@/compon
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
+import { useT } from '@/i18n'
 import { createSecurityKey, supportsSecurityKeys } from '@/lib/webauthn'
 import { CopyButton } from './copy-button'
 import { day } from './format'
@@ -22,25 +23,26 @@ import { useAction } from './use-action'
 function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) {
   const setup = useQuery(totpSetupQuery)
   const [code, setCode] = useState('')
+  const { account: { twoStep: text }, common } = useT()
   const activate = useAction(() => twoStep.activateTotp(code.trim()), {
-    action: 'check that code',
+    action: text.checkAction,
     refresh: [accountKeys.authenticators],
     onDone,
   })
   if (setup.isError)
     return (
       <>
-        <FormAlert className="mb-4">{explain(setup.error, 'start setting up the authenticator app')}</FormAlert>
+        <FormAlert className="mb-4">{explain(setup.error, text.startAction)}</FormAlert>
         <TaskActions>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{common.close}</Button>
         </TaskActions>
       </>
     )
   return (
     <form noValidate className="space-y-4" onSubmit={(event) => void activate.submit(event)}>
-      {setup.data ? <QrCode value={setup.data.totp_url} label="QR code for your authenticator app" /> : <Skeleton className="size-44" />}
+      {setup.data ? <QrCode value={setup.data.totp_url} label={text.qr} /> : <Skeleton className="size-44" />}
       <div>
-        <p className="label-caps mb-2">Or type this key</p>
+        <p className="label-caps mb-2">{text.typeKey}</p>
         <div className="flex items-center gap-2">
           {setup.data ? (
             <code className="mono min-w-0 flex-1 [overflow-wrap:anywhere]">{setup.data.secret.match(/.{1,4}/g)?.join(' ')}</code>
@@ -51,7 +53,7 @@ function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) 
         </div>
       </div>
       <FormAlert>{activate.message}</FormAlert>
-      <Field label="Code from your authenticator app" error={activate.fields.code}>
+      <Field label={text.appCode} error={activate.fields.code}>
         {(field) => (
           <Input
             {...field}
@@ -68,9 +70,9 @@ function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) 
       </Field>
       <TaskActions>
         <SubmitButton busy={activate.busy} disabled={!setup.data}>
-          Continue
+          {text.continue}
         </SubmitButton>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{common.cancel}</Button>
       </TaskActions>
     </form>
   )
@@ -83,32 +85,33 @@ function Scan({ onDone, onClose }: { onDone: () => void; onClose: () => void }) 
 function RecoveryCodesForm({ action, cancel, onDone, onClose }: { action: string; cancel?: string; onDone: () => void; onClose: () => void }) {
   const preview = useQuery(recoveryPreviewQuery)
   const [code, setCode] = useState('')
+  const { account: { twoStep: text }, common } = useT()
   const confirm = useAction(() => twoStep.confirmRecoveryCodes(code.trim()), {
-    action: 'save those codes',
+    action: text.saveCodesAction,
     refresh: [accountKeys.authenticators],
     onDone,
   })
   const codes = preview.data ?? []
-  const text = codes.join('\n')
+  const codesText = codes.join('\n')
 
   function submit(event: FormEvent<HTMLFormElement>) {
     // The backend only says "invalid"; say which codes are meant.
-    void confirm.submit(event, undefined, { fields: code.trim() && !codes.includes(code.trim()) ? { code: 'Type one of the codes above.' } : {} })
+    void confirm.submit(event, undefined, { fields: code.trim() && !codes.includes(code.trim()) ? { code: text.typeOne } : {} })
   }
 
   if (preview.isError)
     return (
       <>
-        <FormAlert className="mb-4">{explain(preview.error, 'make new recovery codes')}</FormAlert>
+        <FormAlert className="mb-4">{explain(preview.error, text.newCodesAction)}</FormAlert>
         <TaskActions>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{common.close}</Button>
         </TaskActions>
       </>
     )
   return (
     <form noValidate className="space-y-4" onSubmit={submit}>
       {preview.data ? (
-        <ul aria-label="Recovery codes" className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-code">
+        <ul aria-label={text.recoveryCodes} className="mono grid grid-cols-2 gap-x-8 gap-y-2 border bg-code px-4 py-3 tracking-code">
           {codes.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -117,16 +120,16 @@ function RecoveryCodesForm({ action, cancel, onDone, onClose }: { action: string
         <Skeleton className="h-36" />
       )}
       <div className="flex flex-wrap gap-2">
-        <CopyButton text={text} label="Copy codes" />
+        <CopyButton text={codesText} label={text.copyCodes} />
         <Button asChild className="max-lg:h-11">
-          <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(text)}`} download="faultline-recovery-codes.txt">
+          <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(codesText)}`} download="faultline-recovery-codes.txt">
             <Download />
-            Download
+            {text.download}
           </a>
         </Button>
       </div>
       <FormAlert>{confirm.message}</FormAlert>
-      <Field label="Type one of the codes to confirm you saved them" error={confirm.fields.code}>
+      <Field label={text.confirmSaved} error={confirm.fields.code}>
         {(field) => (
           <Input
             {...field}
@@ -155,13 +158,14 @@ type TotpStep = (typeof TotpStep)[keyof typeof TotpStep]
 
 function TotpSteps({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<TotpStep>(TotpStep.scan)
+  const text = useT().account.twoStep
   return (
     // Once the app is on, the backend has also made recovery codes nobody has seen, so the new ones must be confirmed.
-    <TaskDialog open onClose={onClose} title="Turn on two-step verification" step={step === TotpStep.scan ? 'Step 1 of 2' : 'Step 2 of 2'} modal={step === TotpStep.codes}>
+    <TaskDialog open onClose={onClose} title={text.turnOnTitle} step={text.step(step === TotpStep.scan ? 1 : 2, 2)} modal={step === TotpStep.codes}>
       {step === TotpStep.scan ? (
         <Scan onDone={() => setStep(TotpStep.codes)} onClose={onClose} />
       ) : (
-        <RecoveryCodesForm action="Confirm codes" onDone={onClose} onClose={onClose} />
+        <RecoveryCodesForm action={text.confirmCodes} onDone={onClose} onClose={onClose} />
       )}
     </TaskDialog>
   )
@@ -173,9 +177,10 @@ export function TotpDialog({ open, onClose }: { open: boolean; onClose: () => vo
 }
 
 export function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { account: { twoStep: text }, common } = useT()
   return (
-    <TaskDialog open={open} onClose={onClose} title="New recovery codes">
-      <RecoveryCodesForm action="Replace old codes" cancel="Cancel" onDone={onClose} onClose={onClose} />
+    <TaskDialog open={open} onClose={onClose} title={text.newCodesTitle}>
+      <RecoveryCodesForm action={text.replaceCodes} cancel={common.cancel} onDone={onClose} onClose={onClose} />
     </TaskDialog>
   )
 }
@@ -184,8 +189,9 @@ export function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () =
 
 function KeyRow({ item }: { item: SecurityKey }) {
   const [confirming, setConfirming] = useState(false)
+  const { account: { twoStep: text }, common } = useT()
   const remove = useAction(() => twoStep.removeSecurityKey(item.id), {
-    action: 'remove that key',
+    action: text.removeKeyAction,
     refresh: [accountKeys.authenticators],
   })
   return (
@@ -193,19 +199,21 @@ function KeyRow({ item }: { item: SecurityKey }) {
       <div className="flex min-h-8 flex-wrap items-center gap-x-3 gap-y-1">
         <span className="font-medium">{item.name}</span>
         <span className="mono text-muted-foreground">
-          added {day(item.created_at)}
-          {item.last_used_at ? ` · used ${day(item.last_used_at)}` : ''}
+          {text.added(day(item.created_at))}
+          {item.last_used_at ? text.used(day(item.last_used_at)) : ''}
         </span>
         <span className="ml-auto flex items-center gap-x-4">
           {confirming ? (
             <>
               <RowButton danger disabled={remove.busy} onClick={() => void remove.run()}>
-                Remove it
+                {common.removeIt}
               </RowButton>
-              <RowButton onClick={() => setConfirming(false)}>Keep</RowButton>
+              <RowButton onClick={() => setConfirming(false)}>{common.keep}</RowButton>
             </>
           ) : (
-            <RowButton danger onClick={() => setConfirming(true)}>Remove</RowButton>
+            <RowButton danger onClick={() => setConfirming(true)}>
+              {common.remove}
+            </RowButton>
           )}
         </span>
       </div>
@@ -220,6 +228,7 @@ const ALREADY_ADDED = 'InvalidStateError'
 function AddKey() {
   const [name, setName] = useState('')
   const [failure, setFailure] = useState('')
+  const text = useT().account.twoStep
   const add = useAction(
     async () => {
       setFailure('')
@@ -230,26 +239,24 @@ function AddKey() {
       } catch (error) {
         // The browser's prompt was dismissed, timed out, or refused the key. Its own wording is for developers.
         setFailure(
-          error instanceof DOMException && error.name === ALREADY_ADDED
-            ? 'That key is already added.'
-            : "The key wasn't added. Try again, and touch the key when your browser asks.",
+          error instanceof DOMException && error.name === ALREADY_ADDED ? text.keyAlreadyAdded : text.keyNotAdded,
         )
         return
       }
       await twoStep.addSecurityKey(name.trim(), credential)
       setName('')
     },
-    { action: 'add that key', refresh: [accountKeys.authenticators] },
+    { action: text.addKeyAction, refresh: [accountKeys.authenticators] },
   )
   return (
     <form noValidate className="space-y-4" onSubmit={(event) => void add.submit(event)}>
       <FormAlert>{failure || add.message}</FormAlert>
-      <Field label="Name for a new key" error={add.fields.name}>
+      <Field label={text.keyName} error={add.fields.name}>
         {(field) => <Input {...field} name="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={100} className="h-10" autoComplete="off" />}
       </Field>
       <TaskActions>
         <SubmitButton busy={add.busy}>
-          {add.busy ? 'Waiting for your security key' : 'Add security key'}
+          {add.busy ? text.waitingForKey : text.addKey}
         </SubmitButton>
       </TaskActions>
     </form>
@@ -258,8 +265,9 @@ function AddKey() {
 
 // The one place security keys are listed, removed and added.
 export function KeysDialog({ open, onClose, keys }: { open: boolean; onClose: () => void; keys: SecurityKey[] }) {
+  const text = useT().account.twoStep
   return (
-    <TaskDialog open={open} onClose={onClose} title="Security keys" done quietFocus={keys.length > 0}>
+    <TaskDialog open={open} onClose={onClose} title={text.keysTitle} done quietFocus={keys.length > 0}>
       {keys.length > 0 && (
         <ul className="mb-5 border-t">
           {keys.map((item) => (
@@ -270,7 +278,7 @@ export function KeysDialog({ open, onClose, keys }: { open: boolean; onClose: ()
       {supportsSecurityKeys() ? (
         <AddKey />
       ) : (
-        <p className="prose-text text-muted-foreground">This browser can't add a security key. Use a current browser to add one.</p>
+        <p className="prose-text text-muted-foreground">{text.noKeys}</p>
       )}
     </TaskDialog>
   )
@@ -281,44 +289,29 @@ export function KeysDialog({ open, onClose, keys }: { open: boolean; onClose: ()
 // The backend refuses two-step verification while any address on the account is unverified.
 export function VerifyFirstDialog({ open, onClose, emails, canSend }: { open: boolean; onClose: () => void; emails: string[]; canSend: boolean }) {
   const [sent, setSent] = useState(false)
+  const { account: { twoStep: text }, common } = useT()
   const send = useAction(() => Promise.all(emails.map((email) => account.sendVerification(email))), {
-    action: emails.length === 1 ? 'send the link' : 'send the links',
+    action: text.sendLinkAction(emails.length),
     onDone: () => setSent(true),
   })
-  const one = emails.length === 1
+  const count = emails.length
   const addresses = <span className="mono [overflow-wrap:anywhere] text-foreground">{emails.join(', ')}</span>
   return (
     <TaskDialog
       open={open}
       onClose={onClose}
-      title={one ? 'Verify your email first' : 'Verify your emails first'}
+      title={text.verifyFirst(count)}
       quietFocus
-      description={
-        !canSend ? (
-          <>
-            Two-step verification stays off while {addresses} {one ? 'is' : 'are'} not verified, and this server can't send email. Ask an administrator to
-            verify {one ? 'it' : 'them'}, or remove {one ? 'it' : 'them'} under Emails.
-          </>
-        ) : sent ? (
-          <>
-            Open the {one ? 'link' : 'links'} sent to {addresses}, then turn this on.
-          </>
-        ) : (
-          <>
-            Two-step verification stays off while {addresses} {one ? 'is' : 'are'} not verified. Send {one ? 'a link to verify it' : 'links to verify them'}, or
-            remove {one ? 'it' : 'them'} under Emails.
-          </>
-        )
-      }
+      description={!canSend ? text.cantSend(addresses, count) : sent ? text.openLinks(addresses, count) : text.sendFirst(addresses, count)}
     >
       <FormAlert className="mb-4">{send.message}</FormAlert>
       <TaskActions>
         {canSend && !sent && (
           <Button variant="default" disabled={send.busy} aria-busy={send.busy} onClick={() => void send.run()}>
-            {one ? 'Send link' : 'Send links'}
+            {text.sendLinks(count)}
           </Button>
         )}
-        <Button onClick={onClose}>{sent || !canSend ? 'Close' : 'Cancel'}</Button>
+        <Button onClick={onClose}>{sent || !canSend ? common.close : common.cancel}</Button>
       </TaskActions>
     </TaskDialog>
   )

@@ -7,13 +7,15 @@ import { TaskDialog } from '@/components/ui/task-dialog'
 import { FULL_BUTTON, FieldError } from '@/components/ui/field'
 import { providerName } from './format'
 import { RowButton } from '@/components/ui/row-button'
+import { useT } from '@/i18n'
 import { useAction } from './use-action'
 
 type SocialApp = InstanceSettings['socialApps'][number]
 
 function LinkedRow({ linked, name }: { linked: LinkedAccount; name: string }) {
   const [confirming, setConfirming] = useState(false)
-  const disconnect = useAction(() => account.disconnect(linked), { action: `disconnect ${name}`, refresh: [accountKeys.user] })
+  const { account: { linked: text }, common } = useT()
+  const disconnect = useAction(() => account.disconnect(linked), { action: text.disconnectAction(name), refresh: [accountKeys.user] })
   return (
     <li className="border-b py-2">
       <div className="flex min-h-8 items-center gap-x-3">
@@ -25,12 +27,14 @@ function LinkedRow({ linked, name }: { linked: LinkedAccount; name: string }) {
           {confirming ? (
             <>
               <RowButton danger disabled={disconnect.busy} onClick={() => void disconnect.run()}>
-                Disconnect it
+                {text.disconnectIt}
               </RowButton>
-              <RowButton onClick={() => setConfirming(false)}>Keep</RowButton>
+              <RowButton onClick={() => setConfirming(false)}>{common.keep}</RowButton>
             </>
           ) : (
-            <RowButton danger onClick={() => setConfirming(true)}>Disconnect</RowButton>
+            <RowButton danger onClick={() => setConfirming(true)}>
+              {text.disconnect}
+            </RowButton>
           )}
         </span>
       </div>
@@ -42,8 +46,9 @@ function LinkedRow({ linked, name }: { linked: LinkedAccount; name: string }) {
 // The accounts at other providers this person can sign in with, and the providers still to connect.
 export function LinkedDialog({ open, onClose, linked, apps }: { open: boolean; onClose: () => void; linked: LinkedAccount[]; apps: SocialApp[] }) {
   const unlinked = apps.filter((app) => !linked.some((item) => item.provider === app.provider))
+  const text = useT().account.linked
   return (
-    <TaskDialog open={open} onClose={onClose} title="Linked accounts" done quietFocus>
+    <TaskDialog open={open} onClose={onClose} title={text.title} done quietFocus>
       {linked.length > 0 && (
         <ul className="border-t">
           {linked.map((item) => (
@@ -55,7 +60,7 @@ export function LinkedDialog({ open, onClose, linked, apps }: { open: boolean; o
         <div className={linked.length > 0 ? 'mt-4 space-y-2' : 'space-y-2'}>
           {unlinked.map((app) => (
             <Button key={app.provider} className={FULL_BUTTON} onClick={() => redirectToProvider(app.provider, '/profile', AuthProcess.connect)}>
-              Connect {app.name}
+              {text.connect(app.name)}
             </Button>
           ))}
         </div>

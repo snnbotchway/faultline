@@ -4,13 +4,14 @@ import { account, deleteBlockersQuery } from '@/api/account'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog, TaskActions, TaskDialog } from '@/components/ui/task-dialog'
+import { localized, useT } from '@/i18n'
 import { forgetSession } from '@/lib/session'
 import { useAction } from './use-action'
 
-const list = new Intl.ListFormat('en', { type: 'conjunction' })
+const list = localized((tag) => new Intl.ListFormat(tag, { type: 'conjunction' }))
 
 function Names({ names }: { names: string[] }) {
-  return <span className="font-medium text-foreground">{list.format(names)}</span>
+  return <span className="font-medium text-foreground">{list().format(names)}</span>
 }
 
 /**
@@ -21,8 +22,9 @@ export function DeleteAccountDialog({ open, onClose, userId }: { open: boolean; 
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const blockers = useQuery({ ...deleteBlockersQuery(userId), enabled: open })
+  const { account: { delete: text }, common } = useT()
   const remove = useAction(account.delete, {
-    action: 'delete your account',
+    action: text.deleteAction,
     onDone: () => {
       forgetSession(queryClient)
       void navigate({ to: '/login' })
@@ -31,7 +33,7 @@ export function DeleteAccountDialog({ open, onClose, userId }: { open: boolean; 
 
   if (open && blockers.isPending)
     return (
-      <TaskDialog open onClose={onClose} title="Delete your account?" quietFocus>
+      <TaskDialog open onClose={onClose} title={text.title} quietFocus>
         <Skeleton className="h-10" />
       </TaskDialog>
     )
@@ -41,21 +43,13 @@ export function DeleteAccountDialog({ open, onClose, userId }: { open: boolean; 
   const alone = (blockers.data?.alone ?? []).filter((name) => !owned.includes(name))
   if (owned.length > 0 || alone.length > 0)
     return (
-      <TaskDialog open={open} onClose={onClose} title="Your account can't be deleted yet" quietFocus>
+      <TaskDialog open={open} onClose={onClose} title={text.blocked} quietFocus>
         <div className="prose-text mb-4 space-y-2 text-muted-foreground">
-          {owned.length > 0 && (
-            <p>
-              You own <Names names={owned} />. Transfer {owned.length === 1 ? 'it' : 'them'} to another member, or delete {owned.length === 1 ? 'it' : 'them'}, first.
-            </p>
-          )}
-          {alone.length > 0 && (
-            <p>
-              You're the only member of <Names names={alone} />. Add someone, or delete {alone.length === 1 ? 'it' : 'them'}, first.
-            </p>
-          )}
+          {owned.length > 0 && <p>{text.owned(<Names names={owned} />, owned.length)}</p>}
+          {alone.length > 0 && <p>{text.alone(<Names names={alone} />, alone.length)}</p>}
         </div>
         <TaskActions className="sm:justify-end">
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{common.close}</Button>
         </TaskActions>
       </TaskDialog>
     )
@@ -64,9 +58,9 @@ export function DeleteAccountDialog({ open, onClose, userId }: { open: boolean; 
     <ConfirmDialog
       open={open}
       onClose={onClose}
-      title="Delete your account?"
-      description="This can't be undone. Your API tokens stop working."
-      action="Delete account"
+      title={text.title}
+      description={text.cantUndo}
+      action={text.action}
       busy={remove.busy}
       error={remove.message}
       onConfirm={() => void remove.run()}

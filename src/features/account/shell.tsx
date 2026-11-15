@@ -5,12 +5,14 @@ import { organizationsQuery } from '@/api/organizations'
 import { Wordmark } from '@/components/mark'
 import { AppShell, Main, Notice, SkipLink } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
+import { useT } from '@/i18n'
 import { LAST_ORG_KEY, signOut } from '@/lib/session'
 
 // What someone who is in no organization yet sees around a screen: the way to their profile and out.
 export function BareShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const t = useT()
 
   async function leave() {
     await signOut(queryClient)
@@ -24,10 +26,10 @@ export function BareShell({ children }: { children: ReactNode }) {
           <Wordmark />
         </Link>
         <Button variant="ghost" size="sm" className="max-lg:h-11" asChild>
-          <Link to="/profile">Profile</Link>
+          <Link to="/profile">{t.shell.profile}</Link>
         </Button>
         <Button variant="ghost" size="sm" className="max-lg:h-11" onClick={() => void leave()}>
-          Sign out
+          {t.shell.signOut}
         </Button>
       </header>
       <Main>{children}</Main>

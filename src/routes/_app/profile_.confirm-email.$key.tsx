@@ -7,13 +7,15 @@ import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { AccountShell } from '@/features/account/shell'
 import { notify } from '@/lib/notice'
+import { messages, useT } from '@/i18n'
 import { useTitle } from '@/lib/title'
 
 // The link in a verification email.
 export const Route = createFileRoute('/_app/profile_/confirm-email/$key')({ component: ConfirmEmail })
 
 function ConfirmEmail() {
-  useTitle('Verify email')
+  const { account: text } = useT()
+  useTitle(text.confirmEmail.title)
   const { key } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -23,24 +25,24 @@ function ConfirmEmail() {
   useEffect(() => {
     if (!verified.isSuccess) return
     void queryClient.invalidateQueries({ queryKey: accountKeys.emails })
-    notify('Email verified.')
+    notify(messages().account.confirmEmail.verified)
     void navigate({ to: '/profile', replace: true })
   }, [verified.isSuccess, queryClient, navigate])
 
   return (
     <AccountShell>
       <PageBar>
-        <span className="font-semibold">Profile</span>
+        <span className="font-semibold">{text.profile}</span>
       </PageBar>
       {verified.isError ? (
-        <Screen title="This link has expired or was already used">
-          <p className="prose-text text-muted-foreground">Send a new one from your emails.</p>
+        <Screen title={text.confirmEmail.expired}>
+          <p className="prose-text text-muted-foreground">{text.confirmEmail.sendNew}</p>
           <Button asChild className="max-lg:h-11">
-            <Link to="/profile">Open profile</Link>
+            <Link to="/profile">{text.confirmEmail.openProfile}</Link>
           </Button>
         </Screen>
       ) : (
-        <Screen title="Verifying your email" />
+        <Screen title={text.confirmEmail.verifying} />
       )}
     </AccountShell>
   )

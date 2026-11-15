@@ -25,7 +25,8 @@ async function copy(log: LogEvent) {
 
 // The main thing to do with a log, and the rest behind one menu beside it.
 export function LogActions({ log, search, set }: { log: LogEvent; search: LogSearch; set: SetSearch }) {
-  const t = useT().logs.detail
+  const { logs, shell } = useT()
+  const t = logs.detail
   const service = log.service && search.service !== log.service ? log.service : undefined
   const host = log.host && search.host !== log.host ? log.host : undefined
   const traceId = log.traceID && search.traceId !== log.traceID ? log.traceID : undefined
@@ -41,7 +42,7 @@ export function LogActions({ log, search, set }: { log: LogEvent; search: LogSea
         <DropdownMenuTrigger asChild>
           <Button className="max-lg:h-11">
             <Ellipsis />
-            {t.more}
+            {shell.more}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align={traceId ? 'end' : 'start'}>

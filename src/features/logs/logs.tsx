@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
+import { valueName } from '@/lib/text'
 import { CalendarDays, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { HttpStatus, hasStatus } from '@/api/client'
@@ -33,7 +34,7 @@ function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
   const t = useT().logs
   const range = rangeOf(search)
   // The button shows "24h"; its name and hover say it in full, so a phone, which has no hover, still has the words.
-  const name = t.rangeName(range.value, t.ranges[range.value])
+  const name = `${valueName(t.timeRange, range.value)} (${t.ranges[range.value]})`
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

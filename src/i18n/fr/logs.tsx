@@ -1,5 +1,5 @@
 import type { Messages } from '../en'
-import { plural } from '../format'
+import { count as number, plural } from '../format'
 
 export const logs: Messages['logs'] = {
   searchMessages: 'Rechercher dans les messages',
@@ -23,7 +23,7 @@ export const logs: Messages['logs'] = {
       other: 'Recherche faite dans les # premiers journaux de cette trace pour ce span. Le reste ne s’est pas chargé.',
     }),
 
-  rangeName: (short, long) => `Période : ${short} (${long})`,
+  timeRange: 'Période',
   ranges: { '1h': 'Dernière heure', '6h': '6 dernières heures', '24h': '24 dernières heures', '7d': '7 derniers jours' },
   noLogsIn: {
     '1h': 'Aucun journal sur la dernière heure',
@@ -51,14 +51,13 @@ export const logs: Messages['logs'] = {
 
   histogram: {
     bar: (when, count) => `${when}, ${plural(count, { one: '# journal', many: '# de journaux', other: '# journaux' })}`,
-    peak: (count) => `pic : ${count}/h`,
+    peak: (count) => `pic : ${number(count)}/h`,
     none: 'aucun journal',
     now: 'Maintenant',
   },
 
   detail: {
     inTrace: 'Journaux de cette trace',
-    more: 'Plus',
     only: (name) => <>Seulement {name}</>,
     copyJson: 'Copier en JSON',
     copyAction: 'copier le journal',

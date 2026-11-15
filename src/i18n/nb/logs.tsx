@@ -1,5 +1,5 @@
 import type { Messages } from '../en'
-import { plural } from '../format'
+import { count as number, plural } from '../format'
 
 export const logs: Messages['logs'] = {
   searchMessages: 'Søk i meldinger',
@@ -23,7 +23,7 @@ export const logs: Messages['logs'] = {
       other: 'Søkte i de første # loggene i denne tracen for dette spanet. Resten lastet ikke.',
     }),
 
-  rangeName: (short, long) => `Tidsrom: ${short} (${long})`,
+  timeRange: 'Tidsrom',
   ranges: { '1h': 'Siste time', '6h': 'Siste 6 timer', '24h': 'Siste 24 timer', '7d': 'Siste 7 dager' },
   noLogsIn: {
     '1h': 'Ingen logger den siste timen',
@@ -51,14 +51,13 @@ export const logs: Messages['logs'] = {
 
   histogram: {
     bar: (when, count) => `${when}, ${plural(count, { one: '# logg', other: '# logger' })}`,
-    peak: (count) => `topp ${count}/time`,
+    peak: (count) => `topp ${number(count)}/time`,
     none: 'ingen logger',
     now: 'Nå',
   },
 
   detail: {
     inTrace: 'Logger i denne tracen',
-    more: 'Mer',
     only: (name) => <>Bare {name}</>,
     copyJson: 'Kopier som JSON',
     copyAction: 'kopiere loggen',

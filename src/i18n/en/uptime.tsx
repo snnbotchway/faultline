@@ -55,7 +55,8 @@ export const uptime = {
   noCheckYet: 'No check yet',
   // `since` is how long ago the state began (`14m`), empty when unknown.
   downSince: (since: string, reason: string) => `${since ? `Down ${since}` : 'Down'} · ${reason}`,
-  flappingSince: (downs: number, when: string) => `Down ${downs} times since ${when}`,
+  // `day` is `Yesterday` or a date, left out for today; `time` is the time of day.
+  flappingSince: (downs: number, day: string | undefined, time: string) => `Down ${downs} times since ${day ? `${day} ` : ''}${time}`,
   slowLine: (typical: string, timeout: number) => `${typical} of a ${timeout}s timeout`,
   upSince: (since: string) => (since ? `Up ${since}` : 'Up'),
   seconds: (count: number) => `${count}s`,
@@ -71,7 +72,7 @@ export const uptime = {
     // The number is shown apart, in its own type.
     monitors: (count: number) => plural(count, { one: 'monitor', other: 'monitors' }),
     allUp: 'all up',
-    downtimeSince: (since: string) => `Downtime since ${since}`,
+    downtimeSince: (since: ReactNode) => <>Downtime since {since}</>,
     lastChecks: 'Last 60 checks',
     changed: 'Changed',
     more: 'More monitors',

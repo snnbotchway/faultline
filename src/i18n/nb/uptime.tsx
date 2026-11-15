@@ -48,8 +48,8 @@ export const uptime: Messages['uptime'] = {
   heartbeatEvery: (every) => `Heartbeat ${every}`,
   noCheckYet: 'Ingen sjekk ennå',
   downSince: (since, reason) => `${since ? `Nede i ${since}` : 'Nede'} · ${reason}`,
-  flappingSince: (downs, when) => `Nede ${downs} ganger siden ${when.charAt(0).toLowerCase()}${when.slice(1)}`,
-  slowLine: (typical, timeout) => `${typical} av et tidsavbrudd på ${timeout} s`,
+  flappingSince: (downs, day, time) => `Nede ${downs} ganger siden ${day ? `${day.charAt(0).toLowerCase()}${day.slice(1)} ` : ''}kl. ${time}`,
+  slowLine: (typical, timeout) => `${typical} av ${timeout} s tidsavbrudd`,
   upSince: (since) => (since ? `Oppe i ${since}` : 'Oppe'),
   seconds: (count) => `${count} s`,
 
@@ -62,7 +62,7 @@ export const uptime: Messages['uptime'] = {
     waitingGroup: 'Venter på første sjekk',
     monitors: (count) => plural(count, { one: 'monitor', other: 'monitorer' }),
     allUp: 'alle oppe',
-    downtimeSince: (since) => `Nedetid siden ${since}`,
+    downtimeSince: (since) => <>Nedetid siden {since}</>,
     lastChecks: 'Siste 60 sjekker',
     changed: 'Endret',
     more: 'Flere monitorer',
@@ -111,7 +111,7 @@ export const uptime: Messages['uptime'] = {
     alertsGoTo: 'Varsler går til',
     earlier: (release, span) => (
       <>
-        {release}, {span} tidligere
+        {release} ({span} tidligere)
       </>
     ),
     ago: (time) => `${time} siden`,

@@ -38,7 +38,7 @@ export const uptime: Messages['uptime'] = {
   reasons: {
     unknown: 'Aucune réponse',
     timeout: 'Délai dépassé',
-    status: 'Mauvais statut',
+    status: 'Statut inattendu',
     body: 'Texte introuvable',
     certificate: 'Problème de certificat',
     network: 'Connexion impossible',
@@ -49,8 +49,8 @@ export const uptime: Messages['uptime'] = {
   noCheckYet: 'Aucune vérification pour l’instant',
   // The reason first: on a phone the line is cut, and the reason is what matters.
   downSince: (since, reason) => (since ? `${reason} · depuis ${since}` : `Hors ligne · ${reason}`),
-  flappingSince: (downs, when) => `Hors ligne ${downs} fois depuis ${when.charAt(0).toLowerCase()}${when.slice(1)}`,
-  slowLine: (typical, timeout) => `${typical} pour un délai de ${timeout} s`,
+  flappingSince: (downs, day, time) => `Hors ligne ${downs} fois depuis ${day ? `${day.charAt(0).toLowerCase()}${day.slice(1)} ` : ''}${time}`,
+  slowLine: (typical, timeout) => `${typical} sur un délai d’attente de ${timeout} s`,
   upSince: (since) => (since ? `En ligne depuis ${since}` : 'En ligne'),
   seconds: (count) => `${count} s`,
 
@@ -63,9 +63,9 @@ export const uptime: Messages['uptime'] = {
     waitingGroup: 'En attente d’une première vérification',
     monitors: (count) => plural(count, { one: 'moniteur', other: 'moniteurs' }),
     allUp: 'tous en ligne',
-    downtimeSince: (since) => `Indisponibilité depuis ${since}`,
+    downtimeSince: (since) => <>Indisponibilité depuis {since}</>,
     lastChecks: '60 dernières vérifications',
-    changed: 'Changement',
+    changed: 'Depuis',
     more: 'Plus de moniteurs',
     loading: 'Chargement des moniteurs',
   },
@@ -112,7 +112,7 @@ export const uptime: Messages['uptime'] = {
     alertsGoTo: 'Alertes envoyées à',
     earlier: (release, span) => (
       <>
-        {release}, {span} plus tôt
+        {release} ({span} plus tôt)
       </>
     ),
     ago: (time) => `il y a ${time}`,

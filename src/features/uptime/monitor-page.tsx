@@ -384,13 +384,13 @@ function DowntimeRow({
     ...(alertsGoTo ? [{ label: text.alertsGoTo, value: alertsGoTo }] : []),
   ]
   return (
-    <li className="border-b">
+    <li className="border-b" style={{ '--ago': text.agoWidth } as CSSProperties}>
+      {/* Padded, so the time does not run into the edge of the row's fill. */}
       <button
         type="button"
         aria-expanded={unfolded}
         onClick={onToggle}
-        style={{ '--ago': text.agoWidth } as CSSProperties}
-        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[var(--ago)_minmax(0,1fr)_auto_16px] items-center gap-x-3 py-2 text-left', unfolded ? 'bg-accent' : 'hover:bg-accent/60')}
+        className={cn('grid min-h-11 w-full cursor-pointer grid-cols-[var(--ago)_minmax(0,1fr)_auto_16px] items-center gap-x-3 px-3 py-2 text-left', unfolded ? 'bg-accent' : 'hover:bg-accent/60')}
       >
         {/* "ago", so a start is not read as a length; the length is at the right. */}
         <time className="mono text-muted-foreground" dateTime={new Date(period.from).toISOString()} title={exact(new Date(period.from))}>
@@ -406,7 +406,7 @@ function DowntimeRow({
         <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', unfolded && 'rotate-180')} />
       </button>
       {unfolded && (
-        <dl className="border-t bg-card px-3 py-2 lg:pl-19">
+        <dl className="border-t bg-card px-3 py-2 lg:pl-[calc(var(--ago)+1.5rem)]">
           {details.map((detail) => (
             <div key={detail.label} className="flex min-h-8 items-center justify-between gap-4">
               <dt className="shrink-0 text-muted-foreground">{detail.label}</dt>

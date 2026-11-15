@@ -119,7 +119,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
       {/* The shared time axis: where the period starts, the releases inside it, and now. */}
       <div className={cn('sticky top-11 z-10 grid items-center gap-x-3 border-b bg-background px-3 max-lg:h-11 max-lg:grid-cols-[minmax(0,1fr)_auto] lg:h-12 lg:gap-x-0 lg:px-4', COLUMNS)}>
         <span className="label-caps max-lg:hidden">{t.monitor}</span>
-        <span className="label-caps lg:hidden">{t.list.downtimeSince(since)}</span>
+        <span className="label-caps lg:hidden">{t.list.downtimeSince(<span className="whitespace-nowrap">{since}</span>)}</span>
         <div className="lg:hidden">{toggle}</div>
         <div className="relative mx-4 max-lg:hidden">
           <div className="relative h-5">

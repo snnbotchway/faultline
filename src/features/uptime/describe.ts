@@ -1,5 +1,5 @@
 import { CheckReason, MonitorType, type Check, type Monitor } from '@/api/monitors'
-import { clock, dayTime } from '@/features/issues/format'
+import { clock, dayName } from '@/features/issues/format'
 import { messages, type Messages } from '@/i18n'
 import { everyPhrase, span } from './format'
 import { Health, type HealthReport } from './health'
@@ -63,8 +63,8 @@ export function healthLine(monitor: Described, report: HealthReport, now: number
       return words.downSince(since, downReason(monitor, report))
     case Health.flapping: {
       const first = new Date(report.since!)
-      const when = first.toDateString() === new Date(now).toDateString() ? clock(first) : dayTime(first, new Date(now))
-      return words.flappingSince(report.downs!, when)
+      const day = first.toDateString() === new Date(now).toDateString() ? undefined : dayName(first, new Date(now))
+      return words.flappingSince(report.downs!, day, clock(first))
     }
     case Health.slow:
       return words.slowLine(formatMs(report.typical!), monitor.timeout!)

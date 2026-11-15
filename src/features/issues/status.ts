@@ -8,7 +8,6 @@ const STATUS_KEY: Record<IssueStatus, string> = {
   [IssueStatus.ignored]: 'i',
 }
 
-// A status's name, the verb that moves an issue into it, and its key.
 export const statusWords = (status: IssueStatus) => ({ ...messages().issues.status[status], key: STATUS_KEY[status] })
 
 const STATUSES = Object.keys(STATUS_KEY) as IssueStatus[]

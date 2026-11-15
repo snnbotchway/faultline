@@ -51,7 +51,7 @@ const SHOWN_CRUMBS = 12
 const HOUR_MS = 3_600_000
 
 // Seconds before the error, or the clock time when the trail is not from the same moment.
-const secondsFormat = localized((tag) => new Intl.NumberFormat(tag, { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
+const secondsFormat = localized((tag) => new Intl.NumberFormat(tag, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false }))
 
 function crumbTime(crumb: Crumb, errorAt: number) {
   if (!crumb.timestamp) return ''

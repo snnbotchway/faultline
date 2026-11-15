@@ -12,7 +12,7 @@ export const issues: Messages['issues'] = {
 
   status: {
     label: 'Status',
-    unresolved: { label: 'Uløst', action: 'Åpne igjen' },
+    unresolved: { label: 'Uløst', action: 'Gjenåpne' },
     resolved: { label: 'Løst', action: 'Løs' },
     ignored: { label: 'Ignorert', action: 'Ignorer' },
     all: 'Alle',
@@ -34,7 +34,7 @@ export const issues: Messages['issues'] = {
     selectAll: 'Velg alle',
     columns: { issue: 'Problem', events: 'Hendelser', seen: 'Sett', assignee: 'Tildelt' },
     trends: {
-      new: { heading: 'Nye', word: () => 'nye' },
+      new: { heading: 'Nye', word: (count) => (count === 1 ? 'ny' : 'nye') },
       spiking: { heading: 'Økende', word: () => 'økende' },
       ongoing: { heading: 'Pågående', word: () => 'pågående' },
     },
@@ -175,7 +175,7 @@ export const issues: Messages['issues'] = {
     assign: (many) => (many ? 'tildele problemene' : 'tildele problemet'),
     delete: (many) => (many ? 'slette problemene' : 'slette problemet'),
     resolve: 'løse problemet',
-    unresolve: 'åpne problemet igjen',
+    unresolve: 'gjenåpne problemet',
     merge: 'slå sammen problemene',
     copyEvent: 'kopiere hendelsen',
     copyLink: 'kopiere lenken',

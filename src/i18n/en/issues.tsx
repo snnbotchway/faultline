@@ -58,7 +58,6 @@ export const issues = {
     peak: (count: string, unit: string) => `peak ${count}/${unit}`,
   },
 
-  // The row of an issue in the inbox.
   row: {
     select: (shortId: string) => `Select ${shortId}`,
     details: 'Details',
@@ -71,7 +70,6 @@ export const issues = {
     assignedChange: (name: string) => `Assigned to ${name}. Change`,
   },
 
-  // What an unfolded row shows.
   dossier: {
     where: 'Where',
     open: 'Open',
@@ -169,7 +167,6 @@ export const issues = {
     newerEvent: 'Newer event',
     latestEvent: 'Latest event',
     message: 'Message',
-    // The palette's commands.
     commands: { copyEventForAi: 'Copy event for AI', openRawEvent: 'Open raw event' },
     linkCopied: 'Link copied',
   },
@@ -253,6 +250,5 @@ export const issues = {
     libraryFrames: (count: number) => plural(count, { one: '# library frame', other: '# library frames' }),
   },
 
-  // A level's name where it is read aloud.
   levels: { fatal: 'fatal', error: 'error', warning: 'warning', info: 'info', debug: 'debug' },
 }

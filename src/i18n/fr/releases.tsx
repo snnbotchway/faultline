@@ -20,6 +20,7 @@ export const releases: Messages['releases'] = {
   },
 
   page: {
+    columnWidths: { events: '88px', seen: '112px' },
     slashTitle: 'Les versions dont le nom contient une barre oblique ne peuvent pas être ouvertes',
     notFound: 'Version introuvable',
     failed: 'Cette version ne s’est pas chargée',

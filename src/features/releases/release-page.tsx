@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { Issue } from '@/api/issues'
 import { canManageReleases, organizationQuery, projectsQuery } from '@/api/organizations'
 import { canOpenRelease, isNewIn, releaseActions, releaseCommitsQuery, releaseDeploysQuery, releaseFilesQuery, releaseIssuesQuery, releaseKeys, releaseQuery, type Release, type ReleaseFile } from '@/api/releases'
@@ -149,13 +149,13 @@ function ReleaseIssues({ org, version }: { org: string; version: string }) {
   )
 }
 
-// Wide enough for the French and Norwegian headers ("Événements", "Vu en dernier").
-const ISSUE_COLUMNS = 'grid-cols-[minmax(0,1fr)_88px_112px]'
+// The figure columns are as wide as each language's headers need (`columnWidths` in the catalog), so the title keeps the rest.
+const ISSUE_COLUMNS = 'grid-cols-[minmax(0,1fr)_var(--events)_var(--seen)]'
 
 function IssueList({ org, label, count, issues, fresh = false, className }: { org: string; label: string; count: string; issues: Issue[]; fresh?: boolean; className?: string }) {
   const t = useT().releases.page
   return (
-    <section aria-label={label} className={className}>
+    <section aria-label={label} className={className} style={{ '--events': t.columnWidths.events, '--seen': t.columnWidths.seen } as CSSProperties}>
       <h2 className={cn('label-caps flex h-9 items-center gap-2 border-b', fresh && 'font-semibold text-trend-new')}>
         {label}
         <span className="font-normal text-muted-foreground">{count}</span>

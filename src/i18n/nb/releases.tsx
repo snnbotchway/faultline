@@ -20,6 +20,7 @@ export const releases: Messages['releases'] = {
   },
 
   page: {
+    columnWidths: { events: '80px', seen: '80px' },
     slashTitle: 'Utgivelser med skråstrek i versjonen kan ikke åpnes',
     notFound: 'Fant ikke utgivelsen',
     failed: 'Denne utgivelsen lastet ikke',

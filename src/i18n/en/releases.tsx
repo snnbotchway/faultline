@@ -21,6 +21,8 @@ export const releases = {
   },
 
   page: {
+    // Wide enough for the column headers below, set in label caps.
+    columnWidths: { events: '56px', seen: '80px' },
     slashTitle: "Releases with a slash in the version can't be opened",
     notFound: 'Release not found',
     failed: "This release didn't load",

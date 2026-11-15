@@ -215,7 +215,7 @@ Plain keys do nothing while the user is typing or a menu or dialog is open. `Ent
 - Each page has a skip link as its first Tab stop, then the top bar, then one `main`. Each page has one `h1`; where the page bar shows tabs instead of a title, the `h1` is visually hidden. Groups are `h2` sections named by their heading.
 - A control's accessible name contains the words it shows, so speech users can say them. A menu button that shows its current value is named for both ("Sort: Last seen").
 - Key hints (`Kbd`) are hidden from screen readers. A control whose shortcut a screen reader should announce sets `aria-keyshortcuts`.
-- Focus follows the keyboard cursor: `j` and `k` in the inbox move focus to the row's link. Closing a menu or a dialog gives focus back to the control that opened it.
+- Focus follows the keyboard cursor: `j` and `k` in the inbox move focus to the row's link, and the cursor follows focus. Closing a menu or a dialog gives focus back to the control that opened it; for a dialog opened from a menu item, that is the menu's button.
 - A status line that fills in after an action (`role="status"`) is on the page before it fills in, so a screen reader announces it. The bottom message is one such line for the whole app, and it stays while the pointer or focus is on it so its action can be reached. A field error is `role="alert"`.
 - `e2e/accessibility.spec.ts` runs axe on the main screens, light and dark, and fails on serious and critical findings. A new screen gets a row there. A finding is accepted only for one rule on named elements, with the reason beside it.
 

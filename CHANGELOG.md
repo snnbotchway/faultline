@@ -34,11 +34,12 @@ All notable changes to Faultline are listed here. The format follows
 
 - Issue page: the copied issue link and the "Copy for AI" event URL and instance include the path Faultline is served under.
 - The projects list's 14-day error traces count every event; GlitchTip 7.0.0 counts only the first hour of each day when asked by the day, so they are summed from hours.
-- Closing a dialog with Esc or its buttons puts focus back on the control that opened it.
-- `j` and `k` in the inbox move focus with the cursor, so a screen reader reads the row and Enter opens it.
+- Closing a dialog with Esc or its buttons puts focus back on the control that opened it, or on the menu button whose item did.
+- `j` and `k` in the inbox move focus with the cursor, so a screen reader reads the row and Enter opens it, and the cursor follows focus, so Tab or a click picks the row that `e`, `x` and `o` act on.
 - Menu buttons that show a value (organization, projects, environment, sort, time range) and the issue page's relative times are named with the words they show, so speech control can find them; key hints are no longer read out as part of a button's name.
+- Esc on a merge or delete confirmation in the inbox closes only the dialog, and keeps the selection.
 - The command palette tells a screen reader which command is current as the arrow keys move.
-- The bottom message stays while the pointer or focus is on it, so its Undo can be reached.
+- The bottom message stays while the pointer or focus is on it, so its Undo can be reached, and goes its full time after both leave.
 - The settings back link is a full 44px target on a phone.
 - The environment filter lists only the environments of the chosen projects, and drops a choice they do not have.
 - "Resolve in next release" works on 7.0.0, names the release the issue was tied to (or says none was found) with an Undo, and the issue's status shows that release; it used to be refused by the bulk route.

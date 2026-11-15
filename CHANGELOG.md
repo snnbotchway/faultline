@@ -7,6 +7,7 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Added
 
+- French and Norwegian Bokmål on every screen, picked under Profile → Language or in the palette, or taken from the browser; dates and numbers follow the language.
 - Issue page: a breadcrumb's level shows as a shape as well as a colour.
 - The issue list's search box has a syntax popover (`is:`, `level:`, `key:value`, `has:`, `*`).
 - The first-seen range offers "Last hour" and a custom range with date and time pickers, sent to GlitchTip in UTC.

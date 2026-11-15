@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, ChevronsUpDown, Ellipsis, FolderKanban, LifeBuoy, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, UserRound, Users, UsersRound } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsUpDown, Ellipsis, FolderKanban, Languages, LifeBuoy, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, UserRound, Users, UsersRound } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { SessionStatus, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, organizationsQuery, type Feature } from '@/api/organizations'
@@ -29,6 +29,7 @@ import { useChooseTheme, useThemeSync } from '@/lib/theme-sync'
 import { cn } from '@/lib/utils'
 import { OverLimitBanner, VerifyEmailBanner } from './banners'
 import { palette, CommandGroup, useCommands, type Command } from './commands'
+import { LanguageItems } from './language-items'
 import { Palette } from './palette'
 import { ScopeFilters } from './scope-filters'
 import { SupportItems, SupportMenu } from './support-menu'
@@ -216,14 +217,17 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   )
 }
 
+const MoreView = { main: 'main', help: 'help', language: 'language' } as const
+type MoreView = (typeof MoreView)[keyof typeof MoreView]
+
 function TabBar({ org, current }: { org: string; current: string | undefined }) {
   const t = useT()
   const sections = useSections()
   const tabs = sections.filter((section) => TAB_PATHS.includes(section.path))
   const rest = sections.filter((section) => !TAB_PATHS.includes(section.path))
   const leave = useSignOut()
-  // Help swaps the menu for the support links in place, so the menu stays one column that fits a small phone.
-  const [help, setHelp] = useState(false)
+  // Help and language swap the menu for their items in place, so the menu stays one column that fits a small phone.
+  const [view, setView] = useState<MoreView>(MoreView.main)
   const tab = (active: boolean) =>
     cn('flex flex-1 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-xs [&_svg]:size-4', active ? 'border-brand font-semibold' : 'text-muted-foreground')
   return (
@@ -234,26 +238,35 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
           {t.shell.sections[section.name]}
         </SectionLink>
       ))}
-      <DropdownMenu onOpenChange={(open) => !open && setHelp(false)}>
+      <DropdownMenu onOpenChange={(open) => !open && setView(MoreView.main)}>
         <DropdownMenuTrigger className={tab(rest.some((section) => section.path === current))}>
           <Ellipsis className="size-4" />
           {t.shell.more}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top" className="w-56">
-          {help ? (
+          {view !== MoreView.main ? (
             <>
               <DropdownMenuItem
                 onSelect={(event) => {
                   event.preventDefault()
-                  setHelp(false)
+                  setView(MoreView.main)
                 }}
               >
                 <ChevronLeft />
                 {t.shell.back}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>{t.shell.help}</DropdownMenuLabel>
-              <SupportItems />
+              {view === MoreView.help ? (
+                <>
+                  <DropdownMenuLabel>{t.shell.help}</DropdownMenuLabel>
+                  <SupportItems />
+                </>
+              ) : (
+                <>
+                  <DropdownMenuLabel>{t.shell.language.label}</DropdownMenuLabel>
+                  <LanguageItems />
+                </>
+              )}
             </>
           ) : (
             <>
@@ -272,7 +285,17 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
               <DropdownMenuItem
                 onSelect={(event) => {
                   event.preventDefault()
-                  setHelp(true)
+                  setView(MoreView.language)
+                }}
+              >
+                <Languages />
+                {t.shell.language.label}
+                <ChevronRight className="ml-auto" />
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault()
+                  setView(MoreView.help)
                 }}
               >
                 <LifeBuoy />

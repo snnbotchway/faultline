@@ -224,7 +224,7 @@ Plain keys do nothing while the user is typing or a menu or dialog is open. `Ent
 
 Designed at 390px, checked at 375px.
 
-- Navigation moves to a bottom tab bar: issues, releases, uptime, alerts, more. Performance, logs, settings, theme, help (which swaps the menu for the support links, with a way back), profile and sign out are under more, which fits a 375×667 screen without scrolling.
+- Navigation moves to a bottom tab bar: issues, releases, uptime, alerts, more. Performance, logs, settings, theme, language and help (each of the last two swaps the menu for its own items, with a way back), profile and sign out are under more, which fits a 375×667 screen without scrolling.
 - Project and environment filters stay on the inbox, as a row under the page bar. Performance's tabs and logs' filters in force are one row that scrolls sideways; logs' other filters sit behind a Filters button that shows how many are set, with a button beside it that clears them.
 - A transaction, a repeated query and a log open on their own: a transaction on its page, a repeated query in place of the list, a log unfolded under its row.
 - Tapping a row opens the issue; rows do not unfold. Titles wrap to two lines instead of cutting off.

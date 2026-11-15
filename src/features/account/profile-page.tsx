@@ -5,14 +5,14 @@ import { useEffect, useState } from 'react'
 import { AlertChoice, accountKeys, alertsQuery, emailsQuery, notificationsQuery, tokensQuery, twoStep, twoStepQuery, type ApiToken } from '@/api/account'
 import { Feature, currentUserQuery, instanceSettingsQuery } from '@/api/organizations'
 import { PageBar } from '@/components/shell/app-shell'
+import { LanguageItems } from '@/components/shell/language-items'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { FormAlert } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/task-dialog'
-import { LOCALE_NAMES, Locale, isLocale, useChosenLocale, useT } from '@/i18n'
-import { useChooseLanguage } from '@/lib/language-sync'
+import { LOCALE_NAMES, useChosenLocale, useT } from '@/i18n'
 import { Theme, useTheme } from '@/lib/theme'
 import { useChooseTheme } from '@/lib/theme-sync'
 import { useTitle } from '@/lib/title'
@@ -46,14 +46,10 @@ type Task = (typeof Task)[keyof typeof Task]
 
 const THEMES = [Theme.system, Theme.light, Theme.dark] as const
 
-// The menu's value for following the browser, which is no language of its own.
-const BROWSER = 'browser'
-
 // The language of the screen: the browser's, or one picked here, which the account keeps.
 function LanguageMenu() {
   const t = useT()
   const chosen = useChosenLocale()
-  const choose = useChooseLanguage()
   const label = chosen ? LOCALE_NAMES[chosen] : t.shell.language.browser
   return (
     <DropdownMenu>
@@ -64,14 +60,7 @@ function LanguageMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuRadioGroup value={chosen ?? BROWSER} onValueChange={(value) => choose(isLocale(value) ? value : undefined)}>
-          <DropdownMenuRadioItem value={BROWSER}>{t.shell.language.browser}</DropdownMenuRadioItem>
-          {Object.values(Locale).map((locale) => (
-            <DropdownMenuRadioItem key={locale} value={locale} lang={locale}>
-              {LOCALE_NAMES[locale]}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+        <LanguageItems />
       </DropdownMenuContent>
     </DropdownMenu>
   )

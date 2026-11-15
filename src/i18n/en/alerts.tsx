@@ -14,7 +14,6 @@ export const alerts = {
   loading: 'Loading alert rules',
   nobody: 'Nobody',
   columns: { rule: 'Rule', when: 'Alerts when', environments: 'Environments', notifies: 'Notifies' },
-  // "10 events in 5 minutes", "a monitor goes down", or both.
   events: (quantity: number, minutes: number) => `${plural(quantity, { one: '# event', other: '# events' })} in ${plural(minutes, { one: '# minute', other: '# minutes' })}`,
   monitorDown: 'a monitor goes down',
   either: (conditions: string[]) => conditions.join(', or '),

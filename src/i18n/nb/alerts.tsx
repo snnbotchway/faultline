@@ -16,7 +16,7 @@ export const alerts: Messages['alerts'] = {
   columns: { rule: 'Regel', when: 'Utløses når', environments: 'Miljøer', notifies: 'Mottakere' },
   events: (quantity, minutes) => `${plural(quantity, { one: '# hendelse', other: '# hendelser' })} på ${plural(minutes, { one: '# minutt', other: '# minutter' })}`,
   monitorDown: 'en monitor går ned',
-  either: (conditions) => conditions.join(', eller '),
+  either: (conditions) => conditions.join(' eller '),
 
   editor: {
     name: 'Navn',
@@ -38,7 +38,7 @@ export const alerts: Messages['alerts'] = {
     sendTest: (count) => `Send test til ${count}`,
     deleteTitle: (name) => `Slett «${name}»?`,
     deleteUntitled: 'Slett denne regelen?',
-    deleteLoses: 'Ingen får beskjed når den ville ha utløst.',
+    deleteLoses: 'Ingen får beskjed når den ellers ville ha slått til.',
     saveAction: 'lagre regelen',
     deleteAction: 'slette regelen',
     testAction: 'sende testen',

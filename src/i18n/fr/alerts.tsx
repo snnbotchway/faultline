@@ -16,7 +16,7 @@ export const alerts: Messages['alerts'] = {
   columns: { rule: 'Règle', when: 'Déclenchée quand', environments: 'Environnements', notifies: 'Destinataires' },
   events: (quantity, minutes) => `${plural(quantity, { one: '# événement', many: '# d’événements', other: '# événements' })} en ${plural(minutes, { one: '# minute', many: '# de minutes', other: '# minutes' })}`,
   monitorDown: 'un moniteur tombe en panne',
-  either: (conditions) => conditions.join(', ou '),
+  either: (conditions) => conditions.join(' ou '),
 
   editor: {
     name: 'Nom',
@@ -38,7 +38,7 @@ export const alerts: Messages['alerts'] = {
     sendTest: (count) => `Envoyer le test à ${count}`,
     deleteTitle: (name) => `Supprimer « ${name} » ?`,
     deleteUntitled: 'Supprimer cette règle ?',
-    deleteLoses: 'Personne ne sera prévenu lorsqu’elle se serait déclenchée.',
+    deleteLoses: 'Plus personne ne sera prévenu quand elle aurait dû se déclencher.',
     saveAction: 'enregistrer la règle',
     deleteAction: 'supprimer la règle',
     testAction: 'envoyer le test',

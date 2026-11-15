@@ -42,7 +42,6 @@ export const releases = {
     files: 'Files',
     filesFailed: "The files didn't load.",
     noFiles: 'No source maps uploaded.',
-    // "12 files, 340 kB"
     filesSummary: (count: number | string, size: string) => `${plural(count, { one: '# file', other: '# files' })}, ${size}`,
     moreFiles: 'More files',
     deleteFileTitle: (name: string) => `Delete ${name}?`,

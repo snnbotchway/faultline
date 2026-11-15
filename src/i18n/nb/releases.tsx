@@ -45,7 +45,7 @@ export const releases: Messages['releases'] = {
     moreFiles: 'Flere filer',
     deleteFileTitle: (name) => `Slett ${name}?`,
     deleteFileLoses: 'Nye feil i denne utgivelsen som trenger denne filen, blir ikke koblet til kildekoden din. Dette kan ikke angres.',
-    deleteFile: 'Slett filen',
+    deleteFile: 'Slett fil',
     deleteFileAction: 'slette filen',
   },
 }

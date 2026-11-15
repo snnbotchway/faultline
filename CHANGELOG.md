@@ -25,6 +25,7 @@ All notable changes to Faultline are listed here. The format follows
 - `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps. Give GlitchTip the same `BASE_PATH`.
 - Usage, under Settings (the stock `/:org/settings/subscription` path): the errors, transactions, logs and uptime checks an organization took in over the last 30 days, a day at a time on one axis. Pick a day to see its figures, unfold errors or transactions to see which project sent them, and see the share of new events the organization and each project are set to drop, when they drop any.
 - A "Skip to content" link as the first Tab stop on every signed-in page, and the page content in one `main` landmark with a heading.
+- French and Norwegian Bokmål, picked in Profile → Language or taken from the browser: the sign-in pages, shell, account, settings, alerts, releases and projects are translated, dates and numbers follow the language, and the other areas follow.
 
 ### Changed
 

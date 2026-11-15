@@ -48,9 +48,12 @@ function Chart({ org, issueId }: { org: string; issueId: string }) {
   return (
     <div>
       <div className="mb-1 flex items-center gap-3">
-        <h2 className="label-caps font-semibold text-foreground">{t.inbox.eventsPer(unit)}</h2>
-        <span className="mono text-muted-foreground">{t.inbox.peak(compact(Math.max(...buckets, 0)), unit)}</span>
-        <div className="ml-auto">
+        {/* Where the two do not fit beside the toggle, the peak goes under the heading rather than either breaking. */}
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3">
+          <h2 className="label-caps font-semibold whitespace-nowrap text-foreground">{t.inbox.eventsPer(unit)}</h2>
+          <span className="mono whitespace-nowrap text-muted-foreground">{t.inbox.peak(compact(Math.max(...buckets, 0)), unit)}</span>
+        </div>
+        <div className="ml-auto shrink-0">
           <PeriodToggle period={period} onChange={setPeriod} />
         </div>
       </div>
@@ -76,7 +79,7 @@ function Fact({ label, value, detail, moment }: { label: string; value: string; 
   const figure = <span className="text-lg font-semibold lg:text-xl">{value}</span>
   return (
     <div className="min-w-0">
-      <dt className="label-caps">{label}</dt>
+      <dt className={cn('label-caps', !label.includes(' ') && 'whitespace-nowrap')}>{label}</dt>
       <dd className={cn('mono mt-1', !moment && 'truncate')}>
         {moment ? (
           <Popover>
@@ -318,7 +321,8 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
             </span>
           </h1>
           {data.culprit && <p className="mono mt-1 truncate pl-6 text-muted-foreground">{data.culprit}</p>}
-          <dl className="mt-4 flex gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-6">
+          {/* On a phone the counts keep their width and the two times share the rest, so no label is squeezed into the next. */}
+          <dl className={cn('mt-4 grid gap-x-4 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-6', users === undefined ? 'grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]' : 'grid-cols-[auto_auto_minmax(0,1fr)_minmax(0,1fr)]')}>
             <Fact label={w.page.facts.events} value={compact(data.count)} />
             {users !== undefined && <Fact label={w.page.facts.users} value={compact(users)} />}
             <Fact label={w.page.facts.firstSeen} value={ago(data.firstSeen)} detail={data.firstRelease ? releaseName(data.firstRelease.shortVersion) : undefined} moment={data.firstSeen} />

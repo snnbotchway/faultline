@@ -66,12 +66,12 @@ export const performance: Messages['performance'] = {
   },
   errors: {
     denied: 'Vous ne pouvez pas voir les performances de cette organisation',
-    transactions: 'Les transactions ne se sont pas chargées',
-    repeats: 'Les requêtes répétées ne se sont pas chargées',
-    slower: 'Les transactions plus lentes ne se sont pas chargées',
+    transactions: 'Impossible de charger les transactions',
+    repeats: 'Impossible de charger les requêtes répétées',
+    slower: 'Impossible de charger les transactions plus lentes',
     transactionMissing: 'Cette transaction n’existe plus',
     transactionDenied: 'Vous ne pouvez pas voir cette transaction',
-    transaction: 'Cette transaction ne s’est pas chargée',
+    transaction: 'Impossible de charger cette transaction',
   },
 
   detail: {

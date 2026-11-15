@@ -57,7 +57,7 @@ export const uptime: Messages['uptime'] = {
   every: (unit, count) => plural(count, EVERY[unit]),
 
   list: {
-    failed: 'Monitorene ble ikke lastet',
+    failed: 'Kunne ikke laste monitorene',
     empty: 'Legg til en monitor for å se når et nettsted eller en jobb går ned',
     waitingGroup: 'Venter på første sjekk',
     monitors: (count) => plural(count, { one: 'monitor', other: 'monitorer' }),
@@ -73,7 +73,7 @@ export const uptime: Messages['uptime'] = {
 
   page: {
     notFound: 'Fant ikke monitoren',
-    failed: 'Monitoren ble ikke lastet',
+    failed: 'Kunne ikke laste monitoren',
     goToUptime: 'Gå til oppetid',
     loading: 'Laster monitor',
     downtime: 'Nedetid',
@@ -84,7 +84,7 @@ export const uptime: Messages['uptime'] = {
       </>
     ),
     upSinceFirst: (share) => <>{share} oppe siden første sjekk</>,
-    downtimeFailed: 'Nedetiden ble ikke lastet.',
+    downtimeFailed: 'Kunne ikke laste nedetiden.',
     waitingNothing: 'Ingenting å vise før første sjekk.',
     noDowntime: (inLast) => `Ingen nedetid ${inLast}.`,
     heartbeatAddress: 'Heartbeat-adresse',
@@ -129,7 +129,7 @@ export const uptime: Messages['uptime'] = {
     checks: 'Sjekker',
     showChecks: 'Vis sjekker',
     views: { all: 'Alle', incidents: 'Bare endringer' },
-    checksFailed: 'Sjekkene ble ikke lastet.',
+    checksFailed: 'Kunne ikke laste sjekkene.',
     backToNewest: 'Tilbake til nyeste',
     noIncidents: 'Ingen endringer registrert.',
     noChecks: 'Ingen sjekker ennå.',
@@ -191,7 +191,7 @@ export const uptime: Messages['uptime'] = {
   statusPages: {
     title: 'Statussider',
     new: 'Ny statusside',
-    failed: 'Statussidene ble ikke lastet',
+    failed: 'Kunne ikke laste statussidene',
     empty: 'Lag en statusside for å vise andre hvilke tjenester som er oppe',
     loading: 'Laster statussider',
     public: 'Offentlig',

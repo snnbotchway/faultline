@@ -58,7 +58,7 @@ export const uptime: Messages['uptime'] = {
   every: (unit, count) => plural(count, EVERY[unit]),
 
   list: {
-    failed: 'Les moniteurs ne se sont pas chargés',
+    failed: 'Impossible de charger les moniteurs',
     empty: 'Ajoutez un moniteur pour savoir quand un site ou une tâche tombe en panne',
     waitingGroup: 'En attente d’une première vérification',
     monitors: (count) => plural(count, { one: 'moniteur', other: 'moniteurs' }),
@@ -74,7 +74,7 @@ export const uptime: Messages['uptime'] = {
 
   page: {
     notFound: 'Moniteur introuvable',
-    failed: 'Ce moniteur ne s’est pas chargé',
+    failed: 'Impossible de charger ce moniteur',
     goToUptime: 'Aller à la disponibilité',
     loading: 'Chargement du moniteur',
     downtime: 'Indisponibilité',
@@ -85,7 +85,7 @@ export const uptime: Messages['uptime'] = {
       </>
     ),
     upSinceFirst: (share) => <>{share} en ligne depuis sa première vérification</>,
-    downtimeFailed: 'L’indisponibilité ne s’est pas chargée.',
+    downtimeFailed: 'Impossible de charger l’indisponibilité.',
     waitingNothing: 'Rien à afficher avant la première vérification.',
     noDowntime: (inLast) => `Aucune indisponibilité ${inLast}.`,
     heartbeatAddress: 'Adresse du heartbeat',
@@ -130,7 +130,7 @@ export const uptime: Messages['uptime'] = {
     checks: 'Vérifications',
     showChecks: 'Afficher les vérifications',
     views: { all: 'Toutes', incidents: 'Incidents seulement' },
-    checksFailed: 'Les vérifications ne se sont pas chargées.',
+    checksFailed: 'Impossible de charger les vérifications.',
     backToNewest: 'Retour aux plus récentes',
     noIncidents: 'Aucun incident enregistré.',
     noChecks: 'Aucune vérification pour l’instant.',
@@ -192,7 +192,7 @@ export const uptime: Messages['uptime'] = {
   statusPages: {
     title: 'Pages d’état',
     new: 'Nouvelle page d’état',
-    failed: 'Les pages d’état ne se sont pas chargées',
+    failed: 'Impossible de charger les pages d’état',
     empty: 'Créez une page d’état pour montrer aux autres quels services sont en ligne',
     loading: 'Chargement des pages d’état',
     public: 'Publique',

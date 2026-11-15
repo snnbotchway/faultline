@@ -66,12 +66,12 @@ export const performance: Messages['performance'] = {
   },
   errors: {
     denied: 'Du kan ikke se ytelse i denne organisasjonen',
-    transactions: 'Transaksjonene lastet ikke',
-    repeats: 'De gjentatte spørringene lastet ikke',
-    slower: 'De tregere transaksjonene lastet ikke',
+    transactions: 'Kunne ikke laste transaksjonene',
+    repeats: 'Kunne ikke laste de gjentatte spørringene',
+    slower: 'Kunne ikke laste de tregere transaksjonene',
     transactionMissing: 'Denne transaksjonen finnes ikke lenger',
     transactionDenied: 'Du kan ikke se denne transaksjonen',
-    transaction: 'Denne transaksjonen lastet ikke',
+    transaction: 'Kunne ikke laste denne transaksjonen',
   },
 
   detail: {

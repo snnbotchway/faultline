@@ -298,7 +298,7 @@ export const settings: Messages['settings'] = {
 
   usagePage: {
     title: 'Forbruk',
-    didntLoad: 'Forbruket lastet ikke',
+    didntLoad: 'Kunne ikke laste forbruket',
     period: (days) => `${days} dager`,
     noEvents: (days) => `Ingen hendelser de siste ${days} dagene`,
     setUp: (slug) => `Sett opp ${slug}`,

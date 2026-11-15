@@ -60,7 +60,7 @@ export const auth: Messages['auth'] = {
 
   invite: {
     title: 'Invitasjon',
-    didntLoad: 'Denne invitasjonen lastet ikke',
+    didntLoad: 'Kunne ikke laste denne invitasjonen',
     expired: 'Denne invitasjonen er utløpt eller allerede brukt',
     askForNew: 'Be den som inviterte deg, om å sende en ny.',
     invitedAs: 'Invitert som',

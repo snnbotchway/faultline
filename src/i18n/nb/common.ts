@@ -36,7 +36,7 @@ export const common: Messages['common'] = {
   allEnvironments: 'Alle miljøer',
   notFound: 'Ikke funnet',
   pageNotFound: 'Fant ikke siden',
-  pageFailed: 'Denne siden lastet ikke',
+  pageFailed: 'Kunne ikke laste denne siden',
 
   errors: {
     couldnt: (action) => `Kunne ikke ${action}. Prøv igjen.`,

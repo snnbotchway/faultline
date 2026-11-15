@@ -12,15 +12,15 @@ export const logs: Messages['logs'] = {
   fields: 'Champs',
   chartNote: 'Le graphique compte tous les journaux de la période ; la recherche, l’hôte et la trace ne le restreignent pas.',
   loadOlder: 'Charger les journaux plus anciens',
-  olderFailed: 'Les journaux plus anciens ne se sont pas chargés.',
+  olderFailed: 'Impossible de charger les journaux plus anciens.',
 
   logs: (count) => plural(count, { one: '# journal', many: '# de journaux', other: '# journaux' }),
   searchedSpan: (count) =>
     plural(count, { one: 'Recherche faite dans le premier journal de cette trace pour ce span.', other: 'Recherche faite dans les # premiers journaux de cette trace pour ce span.' }),
   searchedSpanFailed: (count) =>
     plural(count, {
-      one: 'Recherche faite dans le premier journal de cette trace pour ce span. Le reste ne s’est pas chargé.',
-      other: 'Recherche faite dans les # premiers journaux de cette trace pour ce span. Le reste ne s’est pas chargé.',
+      one: 'Recherche faite dans le premier journal de cette trace pour ce span. Impossible de charger le reste.',
+      other: 'Recherche faite dans les # premiers journaux de cette trace pour ce span. Impossible de charger le reste.',
     }),
 
   timeRange: 'Période',
@@ -35,12 +35,12 @@ export const logs: Messages['logs'] = {
 
   errors: {
     denied: 'Vous ne pouvez pas voir les journaux de cette organisation',
-    list: 'Les journaux ne se sont pas chargés',
+    list: 'Impossible de charger les journaux',
     noMatch: 'Aucun journal ne correspond',
     missing: 'Ce journal n’existe plus',
     missingNote: 'Ce journal n’existe plus.',
-    openFailed: 'Ce journal ne s’est pas chargé',
-    openFailedNote: 'Ce journal ne s’est pas chargé.',
+    openFailed: 'Impossible de charger ce journal',
+    openFailedNote: 'Impossible de charger ce journal.',
     retention: 'Il a peut-être été supprimé à la fin de sa durée de conservation.',
   },
 

@@ -12,15 +12,15 @@ export const logs: Messages['logs'] = {
   fields: 'Felt',
   chartNote: 'Diagrammet teller alle loggene i perioden. Søk, vert og trace snevrer det ikke inn.',
   loadOlder: 'Last inn eldre logger',
-  olderFailed: 'Eldre logger lastet ikke.',
+  olderFailed: 'Kunne ikke laste eldre logger.',
 
   logs: (count) => plural(count, { one: '# logg', other: '# logger' }),
   searchedSpan: (count) =>
     plural(count, { one: 'Søkte i den første loggen i denne tracen for dette spanet.', other: 'Søkte i de første # loggene i denne tracen for dette spanet.' }),
   searchedSpanFailed: (count) =>
     plural(count, {
-      one: 'Søkte i den første loggen i denne tracen for dette spanet. Resten lastet ikke.',
-      other: 'Søkte i de første # loggene i denne tracen for dette spanet. Resten lastet ikke.',
+      one: 'Søkte i den første loggen i denne tracen for dette spanet. Kunne ikke laste resten.',
+      other: 'Søkte i de første # loggene i denne tracen for dette spanet. Kunne ikke laste resten.',
     }),
 
   timeRange: 'Tidsrom',
@@ -35,12 +35,12 @@ export const logs: Messages['logs'] = {
 
   errors: {
     denied: 'Du kan ikke se logger i denne organisasjonen',
-    list: 'Loggene lastet ikke',
+    list: 'Kunne ikke laste loggene',
     noMatch: 'Ingen logger samsvarer',
     missing: 'Denne loggen finnes ikke lenger',
     missingNote: 'Denne loggen finnes ikke lenger.',
-    openFailed: 'Denne loggen lastet ikke',
-    openFailedNote: 'Denne loggen lastet ikke.',
+    openFailed: 'Kunne ikke laste denne loggen',
+    openFailedNote: 'Kunne ikke laste denne loggen.',
     retention: 'Den kan ha blitt fjernet da oppbevaringstiden gikk ut.',
   },
 

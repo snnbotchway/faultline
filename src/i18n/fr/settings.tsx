@@ -299,7 +299,7 @@ export const settings: Messages['settings'] = {
 
   usagePage: {
     title: 'Utilisation',
-    didntLoad: 'L’utilisation ne s’est pas chargée',
+    didntLoad: 'Impossible de charger l’utilisation',
     period: (days) => `${days} jours`,
     noEvents: (days) => `Aucun événement ces ${days} derniers jours`,
     setUp: (slug) => `Configurer ${slug}`,

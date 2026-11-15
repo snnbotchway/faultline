@@ -38,7 +38,7 @@ export const common: Messages['common'] = {
   allEnvironments: 'Tous les environnements',
   notFound: 'Introuvable',
   pageNotFound: 'Page introuvable',
-  pageFailed: 'Cette page ne s’est pas chargée',
+  pageFailed: 'Impossible de charger cette page',
 
   errors: {
     couldnt: (action) => `Impossible ${of(action)}. Réessayez.`,

@@ -34,13 +34,13 @@ function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
   const t = useT().logs
   const range = rangeOf(search)
   // The button shows "24h"; its name and hover say it in full, so a phone, which has no hover, still has the words.
-  const name = `${valueName(t.timeRange, range.value)} (${t.ranges[range.value]})`
+  const name = `${valueName(t.timeRange, t.rangeShort[range.value])} (${t.ranges[range.value]})`
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={name} title={name}>
           <CalendarDays />
-          <span className="mono">{range.value}</span>
+          <span className="mono">{t.rangeShort[range.value]}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

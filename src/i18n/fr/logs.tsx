@@ -24,6 +24,7 @@ export const logs: Messages['logs'] = {
     }),
 
   timeRange: 'Période',
+  rangeShort: { '1h': '1 h', '6h': '6 h', '24h': '24 h', '7d': '7 j' },
   ranges: { '1h': 'Dernière heure', '6h': '6 dernières heures', '24h': '24 dernières heures', '7d': '7 derniers jours' },
   noLogsIn: {
     '1h': 'Aucun journal sur la dernière heure',
@@ -51,7 +52,7 @@ export const logs: Messages['logs'] = {
 
   histogram: {
     bar: (when, count) => `${when}, ${plural(count, { one: '# journal', many: '# de journaux', other: '# journaux' })}`,
-    peak: (count) => `pic : ${number(count)}/h`,
+    peak: (count) => `pic ${number(count)}/h`,
     none: 'aucun journal',
     now: 'Maintenant',
   },

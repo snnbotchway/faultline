@@ -24,6 +24,7 @@ export const logs: Messages['logs'] = {
     }),
 
   timeRange: 'Tidsrom',
+  rangeShort: { '1h': '1 t', '6h': '6 t', '24h': '24 t', '7d': '7 d' },
   ranges: { '1h': 'Siste time', '6h': 'Siste 6 timer', '24h': 'Siste 24 timer', '7d': 'Siste 7 dager' },
   noLogsIn: {
     '1h': 'Ingen logger den siste timen',

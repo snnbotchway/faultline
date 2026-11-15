@@ -24,6 +24,8 @@ export const logs = {
 
   // "Time range: 24h (Last 24 hours)": the button shows only `24h`, so a phone, which has no hover, still has the words.
   timeRange: 'Time range',
+  // What the button shows.
+  rangeShort: { '1h': '1h', '6h': '6h', '24h': '24h', '7d': '7d' },
   ranges: { '1h': 'Last hour', '6h': 'Last 6 hours', '24h': 'Last 24 hours', '7d': 'Last 7 days' },
   noLogsIn: { '1h': 'No logs in the last hour', '6h': 'No logs in the last 6 hours', '24h': 'No logs in the last 24 hours', '7d': 'No logs in the last 7 days' },
 

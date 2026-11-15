@@ -7,7 +7,7 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Added
 
-- French and Norwegian Bokmål, picked under Profile → Language: sign-in, account, settings, performance and logs are translated; the other screens follow.
+- French and Norwegian Bokmål, picked under Profile → Language or taken from the browser: sign-in, account, settings, performance, logs, uptime, alerts, releases and projects are translated, dates and numbers follow the language, and the issue screens follow.
 - Issue page: a breadcrumb's level shows as a shape as well as a colour.
 - The issue list's search box has a syntax popover (`is:`, `level:`, `key:value`, `has:`, `*`).
 - The first-seen range offers "Last hour" and a custom range with date and time pickers, sent to GlitchTip in UTC.
@@ -25,7 +25,6 @@ All notable changes to Faultline are listed here. The format follows
 - `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps. Give GlitchTip the same `BASE_PATH`.
 - Usage, under Settings (the stock `/:org/settings/subscription` path): the errors, transactions, logs and uptime checks an organization took in over the last 30 days, a day at a time on one axis. Pick a day to see its figures, unfold errors or transactions to see which project sent them, and see the share of new events the organization and each project are set to drop, when they drop any.
 - A "Skip to content" link as the first Tab stop on every signed-in page, and the page content in one `main` landmark with a heading.
-- French and Norwegian Bokmål, picked in Profile → Language or taken from the browser: the sign-in pages, shell, account, settings, alerts, releases and projects are translated, dates and numbers follow the language, and the other areas follow.
 
 ### Changed
 

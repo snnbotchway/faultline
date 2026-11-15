@@ -11,7 +11,7 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Changed
 
-- With a single project, home opens its issues straight away; the organization's Projects page still lists it.
+- With a single project, home opens its issues straight away, or its setup page until its first event arrives; the organization's Projects page still lists it.
 
 ## [0.3.0] - 2026-11-15
 

@@ -210,7 +210,7 @@ export function ProfilePage({ landing, connectFailed }: { landing: Landing; conn
         {factors.recovery && (
           <Fact
             name={text.rows.recovery}
-            value={text.codesLeft(<span className="mono">{factors.recovery.unused_code_count}</span>, <span className="mono">{factors.recovery.total_code_count}</span>)}
+            value={text.codesLeft(factors.recovery.unused_code_count, factors.recovery.total_code_count)}
             action={text.newCodes}
             onClick={open(Task.recovery)}
           />

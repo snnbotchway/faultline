@@ -38,9 +38,9 @@ export const account = {
       <span className="whitespace-nowrap text-muted-foreground">since {date}</span>
     </>
   ),
-  codesLeft: (left: ReactNode, total: ReactNode) => (
+  codesLeft: (left: number, total: number) => (
     <>
-      {left} of {total} left
+      <span className="mono">{left}</span> of <span className="mono">{total}</span> left
     </>
   ),
   newCodes: 'New codes',

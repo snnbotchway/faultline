@@ -17,6 +17,7 @@ import { hasWords, searchWords } from '@/lib/text'
 import { useSeen } from '@/lib/seen'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
+import { projectLink } from './link'
 
 // On a phone the open column is as wide as each language's header needs (`openWidth` in the catalog).
 const GRID =
@@ -154,11 +155,7 @@ function ProjectRow({ org, project }: { org: string; project: Project }) {
   const alerts = useQuery({ ...projectAlertCountQuery(org, slug), enabled: seen, refetchOnWindowFocus: false }).data
   return (
     <li ref={ref} className={cn(GRID, 'relative min-h-14 border-b hover:bg-accent')}>
-      {fresh ? (
-        <Link to="/$org/settings/projects/$project" params={{ org, project: slug }} className="absolute inset-0 -outline-offset-2" aria-label={t.setUp(slug)} />
-      ) : (
-        <Link to="/$org/issues" params={{ org }} search={{ project: [Number(project.id)] }} className="absolute inset-0 -outline-offset-2" aria-label={t.issuesIn(slug)} />
-      )}
+      <Link {...projectLink(org, project)} className="absolute inset-0 -outline-offset-2" aria-label={fresh ? t.setUp(slug) : t.issuesIn(slug)} />
       <span className={cn('mono text-right text-lg font-medium', activity?.unresolved === 0 && 'text-muted-foreground')}>
         {activity && `${activity.unresolved}${activity.capped ? '+' : ''}`}
       </span>

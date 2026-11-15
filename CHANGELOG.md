@@ -9,6 +9,10 @@ All notable changes to Faultline are listed here. The format follows
 
 - On a phone, the More menu offers Language, as Profile does.
 
+### Changed
+
+- With a single project, home opens its issues straight away; the organization's Projects page still lists it.
+
 ## [0.3.0] - 2026-11-15
 
 Parity with the stock GlitchTip frontend, in English, French and Norwegian Bokmål. Tested against GlitchTip 7.0.0.

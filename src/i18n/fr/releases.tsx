@@ -32,6 +32,7 @@ export const releases: Messages['releases'] = {
     moreIssues: 'Plus de problèmes',
     events: 'Événements',
     lastSeen: 'Vu en dernier',
+    seenAgo: (ago) => `vu il y a ${ago}`,
     deploys: 'Déploiements',
     deploysFailed: 'Les déploiements ne se sont pas chargés.',
     noDeploys: 'Aucun déploiement enregistré.',

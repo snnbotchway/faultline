@@ -32,6 +32,7 @@ export const releases: Messages['releases'] = {
     moreIssues: 'Flere problemer',
     events: 'Hendelser',
     lastSeen: 'Sist sett',
+    seenAgo: (ago) => `sett for ${ago} siden`,
     deploys: 'Utrullinger',
     deploysFailed: 'Utrullingene lastet ikke.',
     noDeploys: 'Ingen utrullinger registrert.',

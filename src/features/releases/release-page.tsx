@@ -150,17 +150,19 @@ function ReleaseIssues({ org, version }: { org: string; version: string }) {
 }
 
 // The figure columns are as wide as each language's headers need (`columnWidths` in the catalog), so the title keeps the rest.
-const ISSUE_COLUMNS = 'grid-cols-[minmax(0,1fr)_var(--events)_var(--seen)]'
+// On a phone the figures move to the line under the title, as in the inbox, so the title has the full width.
+const ISSUE_COLUMNS = 'lg:grid-cols-[minmax(0,1fr)_var(--events)_var(--seen)]'
 
 function IssueList({ org, label, count, issues, fresh = false, className }: { org: string; label: string; count: string; issues: Issue[]; fresh?: boolean; className?: string }) {
-  const t = useT().releases.page
+  const { releases, issues: words } = useT()
+  const t = releases.page
   return (
     <section aria-label={label} className={className} style={{ '--events': t.columnWidths.events, '--seen': t.columnWidths.seen } as CSSProperties}>
       <h2 className={cn('label-caps flex h-9 items-center gap-2 border-b', fresh && 'font-semibold text-trend-new')}>
         {label}
         <span className="font-normal text-muted-foreground">{count}</span>
       </h2>
-      <div aria-hidden className={cn('grid h-8 items-center gap-x-4 border-b whitespace-nowrap', ISSUE_COLUMNS)}>
+      <div aria-hidden className={cn('grid h-8 items-center gap-x-4 border-b whitespace-nowrap max-lg:hidden', ISSUE_COLUMNS)}>
         <span />
         <span className="label-caps text-right">{t.events}</span>
         <span className="label-caps text-right">{t.lastSeen}</span>
@@ -179,10 +181,19 @@ function IssueList({ org, label, count, issues, fresh = false, className }: { or
                       {text}
                     </span>
                   </span>
-                  <span className="mono block pl-5 text-muted-foreground">{issue.shortId}</span>
+                  <span className="mono block pl-5 text-muted-foreground">
+                    <span className="whitespace-nowrap">{issue.shortId}</span>
+                    <span className="lg:hidden">
+                      {' '}
+                      <span className="whitespace-nowrap">· {words.eventCount(Number(issue.count) < 1000 ? Number(issue.count) : compact(issue.count))}</span>{' '}
+                      <time className="whitespace-nowrap" dateTime={issue.lastSeen} title={exact(issue.lastSeen)}>
+                        · {t.seenAgo(ago(issue.lastSeen))}
+                      </time>
+                    </span>
+                  </span>
                 </span>
-                <span className="mono text-right">{compact(issue.count)}</span>
-                <time className="mono text-right text-muted-foreground" dateTime={issue.lastSeen} title={exact(issue.lastSeen)}>
+                <span className="mono text-right max-lg:hidden">{compact(issue.count)}</span>
+                <time className="mono text-right text-muted-foreground max-lg:hidden" dateTime={issue.lastSeen} title={exact(issue.lastSeen)}>
                   {ago(issue.lastSeen)}
                 </time>
               </Link>

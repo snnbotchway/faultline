@@ -34,6 +34,8 @@ export const releases = {
     moreIssues: 'More issues',
     events: 'Events',
     lastSeen: 'Last seen',
+    // On a phone, after the issue's id and event count.
+    seenAgo: (ago: string) => `seen ${ago}`,
     deploys: 'Deploys',
     deploysFailed: "The deploys didn't load.",
     noDeploys: 'No deploys recorded.',

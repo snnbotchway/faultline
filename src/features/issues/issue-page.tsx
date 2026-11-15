@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
+import { messages, useT } from '@/i18n'
 import { useHotkeys } from '@/lib/hotkeys'
 import { failed, notify } from '@/lib/notice'
 import { releaseName } from '@/lib/text'
@@ -27,7 +28,7 @@ import { ago, brief, compact, exact } from './format'
 import { ContextRail, CspSection, Fingerprints, RequestSection, Section, TagsRail, Timeline, UserReports } from './issue-sections'
 import { LevelGlyph } from './level'
 import { StackTrace } from './stack-trace'
-import { ACTION, STATUS, isStatus, statusActions } from './status'
+import { ACTION, isStatus, statusActions, statusWords } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { axisFor, axisStartLabel, fillBuckets, periodInfo, releaseMarks } from './trend'
 import { isNotFound } from '@/api/errors'
@@ -36,6 +37,7 @@ import { isNotFound } from '@/api/errors'
 const EVENT_ID_SHOWN = 8
 
 function Chart({ org, issueId }: { org: string; issueId: string }) {
+  const t = useT().issues
   const [period, setPeriod] = useState<StatsPeriod>(StatsPeriod.fortnight)
   const stats = useQuery(issueStatsQuery(org, [issueId], period))
   const releases = useQuery(recentReleasesQuery(org)).data
@@ -46,10 +48,8 @@ function Chart({ org, issueId }: { org: string; issueId: string }) {
   return (
     <div>
       <div className="mb-1 flex items-center gap-3">
-        <h2 className="label-caps font-semibold text-foreground">Events / {unit}</h2>
-        <span className="mono text-muted-foreground">
-          peak {compact(Math.max(...buckets, 0))}/{unit}
-        </span>
+        <h2 className="label-caps font-semibold text-foreground">{t.inbox.eventsPer(unit)}</h2>
+        <span className="mono text-muted-foreground">{t.inbox.peak(compact(Math.max(...buckets, 0)), unit)}</span>
         <div className="ml-auto">
           <PeriodToggle period={period} onChange={setPeriod} />
         </div>
@@ -72,6 +72,7 @@ function Chart({ org, issueId }: { org: string; issueId: string }) {
 
 // A headline figure. A relative time opens to the exact moment, on tap as well as on hover.
 function Fact({ label, value, detail, moment }: { label: string; value: string; detail?: string; moment?: string }) {
+  const t = useT().issues.page
   const figure = <span className="text-lg font-semibold lg:text-xl">{value}</span>
   return (
     <div className="min-w-0">
@@ -79,7 +80,7 @@ function Fact({ label, value, detail, moment }: { label: string; value: string; 
       <dd className={cn('mono mt-1', !moment && 'truncate')}>
         {moment ? (
           <Popover>
-            <PopoverTrigger title={exact(moment)} aria-label={`${label} ${value}`} className="underline decoration-border decoration-dotted underline-offset-4 max-lg:-my-3 max-lg:min-w-11 max-lg:py-3 max-lg:text-left">
+            <PopoverTrigger title={exact(moment)} aria-label={t.fact(label, value)} className="underline decoration-border decoration-dotted underline-offset-4 max-lg:-my-3 max-lg:min-w-11 max-lg:py-3 max-lg:text-left">
               {figure}
             </PopoverTrigger>
             <PopoverContent className="mono w-auto px-3 py-2">
@@ -98,12 +99,15 @@ function Fact({ label, value, detail, moment }: { label: string; value: string; 
 // `resolvingNext` holds the label while the backend picks the release.
 function statusLabel(issue: IssueDetail, resolvingNext: boolean) {
   const release = issue.statusDetails?.inRelease
-  if (issue.status === IssueStatus.resolved && release) return `Resolved in ${releaseName(release)}`
-  if (issue.status === IssueStatus.resolved && resolvingNext) return 'Resolved in next release'
-  return isStatus(issue.status) ? STATUS[issue.status].label : issue.status
+  const words = messages().issues.status
+  if (issue.status === IssueStatus.resolved && release) return words.resolvedIn(releaseName(release))
+  if (issue.status === IssueStatus.resolved && resolvingNext) return words.resolvedInNext
+  return isStatus(issue.status) ? statusWords(issue.status).label : issue.status
 }
 
 export function IssuePage({ org, issueId, eventId }: { org: string; issueId: string; eventId?: string }) {
+  const t = useT()
+  const w = t.issues
   const navigate = useNavigate()
   const issue = useQuery(issueQuery(org, issueId))
   const event = useQuery(issueEventQuery(org, issueId, eventId))
@@ -117,7 +121,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const actions = useIssueActions(org)
   const [assigning, setAssigning] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  useTitle(issue.data?.shortId ?? 'Issue')
+  useTitle(issue.data?.shortId ?? w.issue)
 
   const data = issue.data
   const status = data?.status
@@ -139,15 +143,15 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
   const newer = event.data?.nextEventID
   const rawUrl = event.data ? rawEventUrl(org, issueId, event.data.id) : undefined
   const copyAi = () => {
-    if (event.data) copyForAi(event.data, { instanceName: settings?.glitchtipInstanceName, org, issueId }, settings?.enabledFeatures).catch((error: unknown) => failed(error, 'copy the event'))
+    if (event.data) copyForAi(event.data, { instanceName: settings?.glitchtipInstanceName, org, issueId }, settings?.enabledFeatures).catch((error: unknown) => failed(error, w.actions.copyEvent))
   }
   // Without a secure context there is no clipboard at all, so the call itself can throw.
   const copyLink = () =>
     void Promise.resolve()
       .then(() => navigator.clipboard.writeText(issueAddress(window.location.origin, org, issueId)))
       .then(
-        () => notify('Link copied'),
-        (error: unknown) => failed(error, 'copy the link'),
+        () => notify(w.page.linkCopied),
+        (error: unknown) => failed(error, w.actions.copyLink),
       )
 
   useHotkeys({
@@ -165,12 +169,12 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           { id: 'issue:assign', group: CommandGroup.issue, label: ACTION.assign.label, keys: ACTION.assign.key, run: () => setAssigning(true) },
         ]
       : []),
-    ...(older ? [{ id: 'issue:older', group: CommandGroup.issue, label: 'Older event', keys: '[', run: () => toEvent(older) }] : []),
-    ...(newer ? [{ id: 'issue:newer', group: CommandGroup.issue, label: 'Newer event', keys: ']', run: () => toEvent(newer) }] : []),
-    { id: 'issue:copy', group: CommandGroup.issue, label: 'Copy link', run: copyLink },
-    ...(event.data ? [{ id: 'issue:copy-ai', group: CommandGroup.issue, label: 'Copy event for AI', run: copyAi }] : []),
-    ...(rawUrl ? [{ id: 'issue:json', group: CommandGroup.issue, label: 'Open raw event', run: () => void window.open(rawUrl, '_blank') }] : []),
-    ...(canWrite ? [{ id: 'issue:delete', group: CommandGroup.issue, label: 'Delete issue', run: () => setDeleting(true) }] : []),
+    ...(older ? [{ id: 'issue:older', group: CommandGroup.issue, label: w.page.olderEvent, keys: '[', run: () => toEvent(older) }] : []),
+    ...(newer ? [{ id: 'issue:newer', group: CommandGroup.issue, label: w.page.newerEvent, keys: ']', run: () => toEvent(newer) }] : []),
+    { id: 'issue:copy', group: CommandGroup.issue, label: w.page.copyLink, run: copyLink },
+    ...(event.data ? [{ id: 'issue:copy-ai', group: CommandGroup.issue, label: w.page.commands.copyEventForAi, run: copyAi }] : []),
+    ...(rawUrl ? [{ id: 'issue:json', group: CommandGroup.issue, label: w.page.commands.openRawEvent, run: () => void window.open(rawUrl, '_blank') }] : []),
+    ...(canWrite ? [{ id: 'issue:delete', group: CommandGroup.issue, label: w.page.deleteIssue, run: () => setDeleting(true) }] : []),
   ]
   useCommands(data ? commands : [])
 
@@ -183,7 +187,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground max-lg:h-11"
       >
         <ChevronLeft className="size-4" />
-        Issues
+        {t.shell.sections.issues}
       </Link>
       {data && (
         <>
@@ -205,7 +209,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                   {resolveNext && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="icon-sm" variant="default" className="border-l-primary-foreground/30" aria-label="More ways to resolve">
+                        <Button size="icon-sm" variant="default" className="border-l-primary-foreground/30" aria-label={w.moreWaysToResolve}>
                           <ChevronDown />
                         </Button>
                       </DropdownMenuTrigger>
@@ -231,16 +235,16 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="max-lg:size-11" aria-label="More">
+              <Button variant="ghost" size="icon-sm" className="max-lg:size-11" aria-label={w.page.more}>
                 <Ellipsis />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={copyLink}>Copy link</DropdownMenuItem>
+              <DropdownMenuItem onSelect={copyLink}>{w.page.copyLink}</DropdownMenuItem>
               {rawUrl && (
                 <DropdownMenuItem asChild>
                   <a href={rawUrl} target="_blank" rel="noreferrer">
-                    Raw event
+                    {w.page.rawEvent}
                   </a>
                 </DropdownMenuItem>
               )}
@@ -253,7 +257,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem destructive onSelect={() => setDeleting(true)}>
-                    Delete issue
+                    {w.page.deleteIssue}
                   </DropdownMenuItem>
                 </>
               )}
@@ -269,15 +273,15 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
     return (
       <>
         {bar}
-        <Screen title={missing ? 'Issue not found' : "This issue didn't load"}>
+        <Screen title={missing ? w.page.notFound : w.page.failed}>
           {missing ? (
             <Button asChild>
               <Link to="/$org/issues" params={{ org }}>
-                Go to issues
+                {t.common.goToIssues}
               </Link>
             </Button>
           ) : (
-            <Button onClick={() => void issue.refetch()}>Try again</Button>
+            <Button onClick={() => void issue.refetch()}>{t.common.tryAgain}</Button>
           )}
         </Screen>
       </>
@@ -287,7 +291,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
     return (
       <>
         {bar}
-        <div className="space-y-4 p-4" aria-busy aria-label="Loading issue">
+        <div className="space-y-4 p-4" aria-busy aria-label={w.page.loading}>
           <Skeleton className="h-7 w-2/3" />
           <Skeleton className="h-4 w-1/3" />
           <Skeleton className="h-24" />
@@ -315,10 +319,10 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           </h1>
           {data.culprit && <p className="mono mt-1 truncate pl-6 text-muted-foreground">{data.culprit}</p>}
           <dl className="mt-4 flex gap-x-5 lg:mt-5 lg:flex lg:gap-x-10 lg:pl-6">
-            <Fact label="Events" value={compact(data.count)} />
-            {users !== undefined && <Fact label="Users" value={compact(users)} />}
-            <Fact label="First seen" value={ago(data.firstSeen)} detail={data.firstRelease ? releaseName(data.firstRelease.shortVersion) : undefined} moment={data.firstSeen} />
-            <Fact label="Last seen" value={ago(data.lastSeen)} detail={data.lastRelease ? releaseName(data.lastRelease.shortVersion) : undefined} moment={data.lastSeen} />
+            <Fact label={w.page.facts.events} value={compact(data.count)} />
+            {users !== undefined && <Fact label={w.page.facts.users} value={compact(users)} />}
+            <Fact label={w.page.facts.firstSeen} value={ago(data.firstSeen)} detail={data.firstRelease ? releaseName(data.firstRelease.shortVersion) : undefined} moment={data.firstSeen} />
+            <Fact label={w.page.facts.lastSeen} value={ago(data.lastSeen)} detail={data.lastRelease ? releaseName(data.lastRelease.shortVersion) : undefined} moment={data.lastSeen} />
           </dl>
         </div>
         <Chart org={org} issueId={issueId} />
@@ -329,12 +333,12 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
           {event.isPending ? (
             <Skeleton className="h-72" />
           ) : event.isError || !event.data ? (
-            <p className="text-muted-foreground">This event didn't load.</p>
+            <p className="text-muted-foreground">{w.page.eventFailed}</p>
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-x-2 border-b pb-2">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-                  <span className="label-caps font-semibold text-foreground">Event</span>
+                  <span className="label-caps font-semibold text-foreground">{w.page.event}</span>
                   <span className="mono" title={event.data.eventID}>
                     {event.data.eventID.slice(0, EVENT_ID_SHOWN)}
                   </span>
@@ -346,15 +350,15 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                 <div className="ml-auto flex shrink-0 items-center">
                   <Button variant="ghost" size="bar" onClick={copyAi}>
                     <Copy />
-                    Copy for AI
+                    {w.page.copyForAi}
                   </Button>
-                  <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!older} onClick={() => toEvent(older)} aria-label="Older event">
+                  <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!older} onClick={() => toEvent(older)} aria-label={w.page.olderEvent}>
                     <ChevronLeft />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!newer} onClick={() => toEvent(newer)} aria-label="Newer event">
+                  <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!newer} onClick={() => toEvent(newer)} aria-label={w.page.newerEvent}>
                     <ChevronRight />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!newer} asChild={!!newer} aria-label="Latest event">
+                  <Button variant="ghost" size="icon-sm" className="max-lg:size-11" disabled={!newer} asChild={!!newer} aria-label={w.page.latestEvent}>
                     {newer ? (
                       <Link to="/$org/issues/$issueId" params={{ org, issueId }}>
                         <ChevronsRight />
@@ -378,7 +382,7 @@ export function IssuePage({ org, issueId, eventId }: { org: string; issueId: str
                   <StackTrace exceptions={exceptions} platform={event.data.platform} />
                 ) : (
                   message && (
-                    <Section title="Message">
+                    <Section title={w.page.message}>
                       <pre className="mono overflow-x-auto border bg-code p-3 whitespace-pre-wrap">{message.formatted ?? message.message}</pre>
                     </Section>
                   )

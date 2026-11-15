@@ -5,18 +5,18 @@ import { IssueKind, IssueStatus, type Issue } from '@/api/issues'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tag } from '@/components/ui/tag'
-import { plural } from '@/lib/text'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { AssigneeBadge } from './assignee'
 import { Dossier, type RowHandlers } from './dossier'
 import { errorParts } from './event'
 import { ago, compact, exact } from './format'
 import { LevelGlyph } from './level'
-import { ACTION, STATUS, type StatusView } from './status'
+import { ACTION, statusWords, type StatusView } from './status'
 import { Trace } from './trace'
 import type { Mark, Trend } from './trend'
 
-export const COLUMNS = 'lg:grid-cols-[var(--spacing-check)_minmax(0,5fr)_minmax(0,4fr)_64px_64px_96px_36px]'
+export const COLUMNS = 'lg:grid-cols-[var(--spacing-check)_minmax(0,5fr)_minmax(0,4fr)_64px_80px_96px_36px]'
 const PHONE_COLUMNS = 'grid-cols-[var(--spacing-check)_minmax(0,1fr)_64px]'
 
 export type Row = { issue: Issue; buckets: number[]; trend: Trend }
@@ -45,6 +45,7 @@ type Props = {
 
 // Memoised: moving the cursor or ticking a box re-renders only the rows whose own props changed.
 export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected, current, unfolded, canWrite, handlers }: Props) {
+  const t = useT().issues
   const { issue, buckets, trend } = row
   const shift = useRef(false)
   return (
@@ -63,7 +64,7 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
             checked={selected}
             onClick={(event) => (shift.current = event.shiftKey)}
             onCheckedChange={(checked) => handlers.toggle(issue.id, shift.current, checked === true)}
-            aria-label={`Select ${issue.shortId}`}
+            aria-label={t.row.select(issue.shortId)}
             className="relative z-10 lg:mx-auto"
           />
         ) : (
@@ -80,11 +81,11 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
           </Link>
           <div className="mono mt-1 flex items-center gap-x-2 pl-5 text-muted-foreground max-lg:flex-wrap">
             <span className="shrink-0">{issue.shortId}</span>
-            {issue.type === IssueKind.csp && <Tag>CSP report</Tag>}
-            {issue.status !== IssueStatus.unresolved && issue.status !== view && <Tag ok={issue.status === IssueStatus.resolved}>{STATUS[issue.status].label}</Tag>}
+            {issue.type === IssueKind.csp && <Tag>{t.sections.csp}</Tag>}
+            {issue.status !== IssueStatus.unresolved && issue.status !== view && <Tag ok={issue.status === IssueStatus.resolved}>{statusWords(issue.status).label}</Tag>}
             <span className="truncate max-lg:hidden">{issue.culprit}</span>
-            <span className="shrink-0 lg:hidden">
-              seen {ago(issue.lastSeen)} · {ago(issue.firstSeen)} old · {plural(compact(issue.count), 'event')}
+            <span className="lg:hidden">
+              {t.row.summary(ago(issue.lastSeen), ago(issue.firstSeen), t.eventCount(Number(issue.count) < 1000 ? Number(issue.count) : compact(issue.count)))}
             </span>
             {issue.numComments > 0 && (
               <span className="flex shrink-0 items-center gap-1">
@@ -97,12 +98,12 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
         <Trace buckets={buckets} trend={trend} marks={marks} height={22} className="lg:mx-4 max-lg:[&>[data-mark]]:hidden" />
         <span className="mono text-right max-lg:hidden">{compact(issue.count)}</span>
         <div className="mono text-right text-muted-foreground max-lg:hidden">
-          <time dateTime={issue.lastSeen} title={`Last seen ${exact(issue.lastSeen)}`}>
+          <time dateTime={issue.lastSeen} title={t.row.lastSeenAt(exact(issue.lastSeen))}>
             {ago(issue.lastSeen)}
           </time>
           <div className="text-xs">
-            <time dateTime={issue.firstSeen} title={`First seen ${exact(issue.firstSeen)}`}>
-              {ago(issue.firstSeen)} old
+            <time dateTime={issue.firstSeen} title={t.row.firstSeenAt(exact(issue.firstSeen))}>
+              {t.row.age(ago(issue.firstSeen))}
             </time>
           </div>
         </div>
@@ -111,7 +112,7 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
             <button
               type="button"
               onClick={() => handlers.assign(issue.id)}
-              aria-label={issue.assignedTo ? `Assigned to ${issue.assignedTo.name}. Change` : ACTION.assign.label}
+              aria-label={issue.assignedTo ? t.row.assignedChange(issue.assignedTo.name) : ACTION.assign.label}
               title={issue.assignedTo ? issue.assignedTo.name : ACTION.assign.label}
               className="relative z-10 grid size-8 place-items-center hover:bg-card"
             >
@@ -127,8 +128,8 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
           type="button"
           onClick={() => handlers.unfold(issue.id)}
           aria-expanded={unfolded}
-          aria-label={`Details of ${issue.shortId}`}
-          title="Details"
+          aria-label={t.row.detailsOf(issue.shortId)}
+          title={t.row.details}
           className="relative z-10 ml-auto grid size-8 place-items-center text-muted-foreground hover:bg-card hover:text-foreground max-lg:hidden"
         >
           <ChevronDown className={cn('size-4 transition-transform duration-200', unfolded && 'rotate-180')} />
@@ -144,8 +145,9 @@ export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected
 })
 
 export function SkeletonRows() {
+  const t = useT().issues
   return (
-    <ul aria-busy aria-label="Loading issues">
+    <ul aria-busy aria-label={t.inbox.loading}>
       {Array.from({ length: 8 }, (_, index) => (
         <li key={index} className={cn('grid items-center border-b py-3 pr-3 lg:pr-4', PHONE_COLUMNS, COLUMNS)}>
           <span />

@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Segmented } from '@/components/ui/segmented'
 import { CopyButton } from '@/features/settings/parts'
+import { useT } from '@/i18n'
 import { useStoredChoice } from '@/lib/stored'
 import { cn } from '@/lib/utils'
 import { frameFile, framesOf, valueText, type ExceptionValue, type Frame } from './event'
@@ -49,6 +50,7 @@ function Vars({ vars }: { vars: Record<string, unknown> }) {
 }
 
 function FrameRow({ frame, startOpen, platform }: { frame: Frame; startOpen: boolean; platform?: string | null }) {
+  const t = useT().issues
   const [open, setOpen] = useState(startOpen)
   const detail = !!frame.context?.length || (frame.vars && Object.keys(frame.vars).length > 0)
   return (
@@ -64,7 +66,7 @@ function FrameRow({ frame, startOpen, platform }: { frame: Frame; startOpen: boo
         <span className="min-w-0 [overflow-wrap:anywhere]">
           <span className={cn(frame.inApp && 'font-medium')}>{frameFile(frame)}</span>
           {frame.lineNo != null && <span>:{frame.lineNo}</span>}
-          {frame.function && <span className="text-muted-foreground"> in {frame.function}</span>}
+          {frame.function && <span className="text-muted-foreground"> {t.sections.in(frame.function)}</span>}
         </span>
       </button>
       {open && detail && (
@@ -79,6 +81,7 @@ function FrameRow({ frame, startOpen, platform }: { frame: Frame; startOpen: boo
 
 // Frames from the app start expanded; runs of library frames fold into one line.
 function Frames({ frames, platform }: { frames: Frame[]; platform?: string | null }) {
+  const t = useT().issues
   const [shown, setShown] = useState<Set<number>>(new Set())
   const runs: { inApp: boolean; start: number; frames: Frame[] }[] = []
   frames.forEach((frame, index) => {
@@ -101,7 +104,7 @@ function Frames({ frames, platform }: { frames: Frame[]; platform?: string | nul
               className="flex min-h-8 w-full items-center gap-2 px-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground max-lg:min-h-11"
             >
               <ChevronRight className="size-3 shrink-0" />
-              {run.frames.length} library {run.frames.length === 1 ? 'frame' : 'frames'}
+              {t.stackTrace.libraryFrames(run.frames.length)}
             </button>
           </li>
         ),
@@ -115,20 +118,12 @@ type TraceView = (typeof TraceView)[keyof typeof TraceView]
 const FrameOrder = { newest: 'newest', oldest: 'oldest' } as const
 type FrameOrder = (typeof FrameOrder)[keyof typeof FrameOrder]
 
-const VIEWS = [
-  { value: TraceView.full, label: 'Full' },
-  { value: TraceView.raw, label: 'Raw' },
-] as const
-const ORDERS = [
-  { value: FrameOrder.newest, label: 'Newest first' },
-  { value: FrameOrder.oldest, label: 'Oldest first' },
-] as const
-
 // Kept per browser, so a reader who prefers the raw trace or the oldest call first gets it on every issue.
 const VIEW_KEY = 'faultline-trace-view'
 const ORDER_KEY = 'faultline-frame-order'
 
 function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mechanism']> }) {
+  const t = useT().issues
   const [open, setOpen] = useState(false)
   const { function: caughtIn, ...data } = mechanism.data ?? {}
   const caught = caughtIn == null ? undefined : valueText(caughtIn)
@@ -137,7 +132,7 @@ function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mecha
   const type = mechanism.type && !caught?.includes(mechanism.type) ? mechanism.type : undefined
   const parts = [
     type && { text: type },
-    mechanism.handled != null && { text: mechanism.handled ? 'handled' : 'unhandled', error: !mechanism.handled },
+    mechanism.handled != null && { text: mechanism.handled ? t.stackTrace.handled : t.stackTrace.unhandled, error: !mechanism.handled },
     caught && { text: caught },
   ].filter((part): part is { text: string; error?: boolean } => !!part)
   if (parts.length === 0 && extra.length === 0 && !mechanism.description) return null
@@ -155,7 +150,7 @@ function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mecha
             <>
               {parts.length > 0 && ' · '}
               <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="inline-flex items-center gap-1 font-sans text-sm underline decoration-dotted underline-offset-4 hover:text-foreground max-lg:min-h-11">
-                {extra.length} more
+                {t.sections.more(extra.length)}
               </button>
             </>
           )}
@@ -172,19 +167,28 @@ function Mechanism({ mechanism }: { mechanism: NonNullable<ExceptionValue['mecha
 }
 
 export function StackTrace({ exceptions, platform }: { exceptions: ExceptionValue[]; platform?: string | null }) {
+  const t = useT().issues.stackTrace
   const [view, setView] = useStoredChoice(VIEW_KEY, Object.values(TraceView), TraceView.full)
   const [order, setOrder] = useStoredChoice(ORDER_KEY, Object.values(FrameOrder), FrameOrder.newest)
   // The raised exception first, then what caused it.
   const ordered = [...exceptions].reverse().map((exception) => ({ exception, frames: order === FrameOrder.newest ? framesOf(exception) : (exception.stacktrace?.frames ?? []) }))
+  const views = [
+    { value: TraceView.full, label: t.views.full },
+    { value: TraceView.raw, label: t.views.raw },
+  ]
+  const orders = [
+    { value: FrameOrder.newest, label: t.orders.newest },
+    { value: FrameOrder.oldest, label: t.orders.oldest },
+  ]
   const raw = view === TraceView.raw ? rawTrace(ordered, platform) : undefined
   return (
     <Section
-      title="Stack trace"
+      title={t.title}
       actions={
         <>
           {raw !== undefined && <CopyButton text={raw} />}
-          <Segmented label="View" value={view} options={VIEWS} onChange={setView} />
-          <Segmented label="Frame order" value={order} options={ORDERS} onChange={setOrder} />
+          <Segmented label={t.view} value={view} options={views} onChange={setView} />
+          <Segmented label={t.order} value={order} options={orders} onChange={setOrder} />
         </>
       }
     >
@@ -195,7 +199,7 @@ export function StackTrace({ exceptions, platform }: { exceptions: ExceptionValu
           {ordered.map(({ exception, frames }, index) => (
             <div key={index}>
               <p className="mb-2">
-                {index > 0 && <span className="text-muted-foreground">caused by </span>}
+                {index > 0 && <span className="text-muted-foreground">{t.causedBy}</span>}
                 <span className="error-type">{exception.type}</span> <span>{exception.value}</span>
               </p>
               {exception.mechanism && <Mechanism mechanism={exception.mechanism} />}

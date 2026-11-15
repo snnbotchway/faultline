@@ -3,6 +3,7 @@ import type { IssueStatus } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
+import { useT } from '@/i18n'
 import type { SelectionOffer } from './selection'
 import { ACTION } from './status'
 
@@ -26,17 +27,17 @@ type Props = {
 
 // The selection's actions in the page bar.
 export function SelectionBar({ offer, matching, actions }: Props) {
+  const t = useT()
+  const w = t.issues.selection
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-2" role="toolbar" aria-label="Selection">
-      <Button variant="ghost" size="icon-sm" onClick={actions.clear} aria-label="Clear selection">
+    <div className="flex min-w-0 flex-1 items-center gap-2" role="toolbar" aria-label={w.label}>
+      <Button variant="ghost" size="icon-sm" onClick={actions.clear} aria-label={w.clear}>
         <X />
       </Button>
-      <span className="font-medium">
-        <span className="mono">{offer.count}</span> selected
-      </span>
+      <span className="font-medium">{w.selected(<span className="mono">{offer.count}</span>, offer.count !== '1')}</span>
       {actions.selectAllMatching && (
         <Button variant="link" onClick={actions.selectAllMatching}>
-          Select all {matching} matching
+          {w.selectAllMatching(matching ?? '')}
         </Button>
       )}
       <div className="ml-auto flex items-center gap-2">
@@ -59,7 +60,7 @@ export function SelectionBar({ offer, matching, actions }: Props) {
           </Button>
         )}
         <Button size="sm" variant="destructive" onClick={actions.remove}>
-          Delete
+          {t.common.delete}
         </Button>
       </div>
     </div>
@@ -68,20 +69,20 @@ export function SelectionBar({ offer, matching, actions }: Props) {
 
 // The same actions on a phone, in a bar that takes the place of the tab bar.
 export function SelectionSheet({ offer, matching, actions }: Props) {
+  const t = useT()
+  const w = t.issues.selection
   return (
-    <div role="toolbar" aria-label="Selection" className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <div role="toolbar" aria-label={w.label} className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
       {actions.selectAllMatching && (
         <button type="button" onClick={actions.selectAllMatching} className="flex h-11 w-full items-center justify-center border-b text-sm text-brand">
-          Select all {matching} matching
+          {w.selectAllMatching(matching ?? '')}
         </button>
       )}
       <div className="flex h-14 items-center gap-2 px-2">
-        <Button variant="ghost" size="icon-touch" onClick={actions.clear} aria-label="Clear selection">
+        <Button variant="ghost" size="icon-touch" onClick={actions.clear} aria-label={w.clear}>
           <X />
         </Button>
-        <span className="mr-auto font-medium">
-          <span className="mono">{offer.count}</span> selected
-        </span>
+        <span className="mr-auto font-medium">{w.selected(<span className="mono">{offer.count}</span>, offer.count !== '1')}</span>
         {offer.statuses.slice(0, 2).map((action, index) => (
           <Button key={action.status} size="touch" variant={index === 0 ? 'default' : 'outline'} onClick={() => actions.setStatus(action.status)}>
             {action.action}
@@ -89,7 +90,7 @@ export function SelectionSheet({ offer, matching, actions }: Props) {
         ))}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon-touch" aria-label="More actions">
+            <Button size="icon-touch" aria-label={w.moreActions}>
               <Ellipsis />
             </Button>
           </DropdownMenuTrigger>
@@ -103,7 +104,7 @@ export function SelectionSheet({ offer, matching, actions }: Props) {
             {actions.merge && <DropdownMenuItem onSelect={actions.merge}>{ACTION.merge.label}</DropdownMenuItem>}
             <DropdownMenuSeparator />
             <DropdownMenuItem destructive onSelect={actions.remove}>
-              Delete
+              {t.common.delete}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

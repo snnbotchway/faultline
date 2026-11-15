@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
+import { localized, messages, percent, useT } from '@/i18n'
 import { failed } from '@/lib/notice'
 import { cn } from '@/lib/utils'
 import { cookiesOf, crumbKind, crumbText, crumbsOf, cspOf, requestOf, valueText, type Crumb } from './event'
@@ -50,26 +51,29 @@ const SHOWN_CRUMBS = 12
 const HOUR_MS = 3_600_000
 
 // Seconds before the error, or the clock time when the trail is not from the same moment.
+const secondsFormat = localized((tag) => new Intl.NumberFormat(tag, { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
+
 function crumbTime(crumb: Crumb, errorAt: number) {
   if (!crumb.timestamp) return ''
   const at = new Date(crumb.timestamp).getTime()
   const before = errorAt - at
-  return before >= 0 && before < HOUR_MS ? `-${(before / 1000).toFixed(1)}s` : hourLabel(at / 1000)
+  return before >= 0 && before < HOUR_MS ? messages().issues.sections.secondsBefore(secondsFormat().format(before / 1000)) : hourLabel(at / 1000)
 }
 
 export function Timeline({ event, title, level }: { event: IssueEvent; title: string; level: string }) {
+  const t = useT().issues
   const crumbs = crumbsOf(event)
   const [all, setAll] = useState(false)
   const shown = all ? crumbs : crumbs.slice(-SHOWN_CRUMBS)
   const errorAt = new Date(event.dateCreated).getTime()
   if (crumbs.length === 0) return null
   return (
-    <Section title="What happened">
+    <Section title={t.sections.whatHappened}>
       <ol className="mono border">
         {crumbs.length > shown.length && (
           <li className="border-b">
             <button type="button" onClick={() => setAll(true)} className="flex min-h-8 w-full items-center px-3 text-left font-sans text-sm text-muted-foreground hover:bg-accent hover:text-foreground max-lg:min-h-11">
-              {crumbs.length - shown.length} earlier steps
+              {t.sections.earlierSteps(crumbs.length - shown.length)}
             </button>
           </li>
         )}
@@ -87,11 +91,11 @@ export function Timeline({ event, title, level }: { event: IssueEvent; title: st
           </li>
         ))}
         <li className="grid grid-cols-[64px_12px_minmax(0,1fr)] gap-x-3 bg-hit px-3 py-2 font-semibold lg:grid-cols-[64px_12px_96px_minmax(0,1fr)]">
-          <span className="text-right">0.0s</span>
+          <span className="text-right">{t.sections.seconds(secondsFormat().format(0))}</span>
           <span className="flex h-[1lh] items-center">
             <LevelGlyph level={level} />
           </span>
-          <span className="max-lg:hidden">threw</span>
+          <span className="max-lg:hidden">{t.dossier.threw}</span>
           <span className="min-w-0 break-words">{title}</span>
         </li>
       </ol>
@@ -130,34 +134,35 @@ function Fold({ label, count, children }: { label: string; count: number; childr
 }
 
 export function RequestSection({ event }: { event: IssueEvent }) {
+  const t = useT().issues.sections
   const request = requestOf(event)
   if (!request?.url) return null
   const cookies = cookiesOf(request)
   const body = request.data == null || request.data === '' ? undefined : typeof request.data === 'string' ? request.data : JSON.stringify(request.data, null, 2)
   return (
-    <Section title="Request">
+    <Section title={t.request}>
       <div className="border">
         <p className="mono flex gap-3 px-3 py-2">
           {request.method && <span className="font-semibold">{request.method}</span>}
           <span className="min-w-0 break-all">{request.url}</span>
         </p>
         {!!request.query?.length && (
-          <Fold label="Query" count={request.query.length}>
+          <Fold label={t.query} count={request.query.length}>
             <Pairs pairs={request.query} />
           </Fold>
         )}
         {!!request.headers?.length && (
-          <Fold label="Headers" count={request.headers.length}>
+          <Fold label={t.headers} count={request.headers.length}>
             <Pairs pairs={request.headers} />
           </Fold>
         )}
         {cookies.length > 0 && (
-          <Fold label="Cookies" count={cookies.length}>
+          <Fold label={t.cookies} count={cookies.length}>
             <Pairs pairs={cookies} />
           </Fold>
         )}
         {body && (
-          <Fold label="Body" count={body.length}>
+          <Fold label={t.body} count={body.length}>
             <pre className="mono overflow-x-auto">{body}</pre>
           </Fold>
         )}
@@ -167,12 +172,13 @@ export function RequestSection({ event }: { event: IssueEvent }) {
 }
 
 export function CspSection({ event }: { event: IssueEvent }) {
+  const t = useT().issues.sections
   const report = cspOf(event)
   const pairs = Object.entries(report ?? {}).filter(([, value]) => value != null && value !== '')
   if (pairs.length === 0) return null
   const directive = report?.effective_directive
   return (
-    <Section title="CSP report">
+    <Section title={t.csp}>
       <div className="border px-3 py-2">
         {typeof directive === 'string' && <p className="mono mb-2 font-semibold">{directive}</p>}
         <Pairs pairs={pairs} />
@@ -182,10 +188,11 @@ export function CspSection({ event }: { event: IssueEvent }) {
 }
 
 export function AdditionalData({ event }: { event: IssueEvent }) {
+  const t = useT().issues.sections
   const pairs = Object.entries(event.context ?? {}).filter(([, value]) => value != null && value !== '')
   if (pairs.length === 0) return null
   return (
-    <Section title="Additional data">
+    <Section title={t.additionalData}>
       <Pairs pairs={pairs} />
     </Section>
   )
@@ -193,8 +200,6 @@ export function AdditionalData({ event }: { event: IssueEvent }) {
 
 // The backend builds the `browser` tag as "name version" and writes "None" when the SDK sent no version.
 const tagLabel = (key: string, value: string) => (key === TagKey.browser ? value.replace(/ None$/, '') : value)
-
-const percent = (share: number) => `${Math.round(share * 100)}%`
 
 function Share({ share, flat, children }: { share: number; flat: boolean; children: ReactNode }) {
   return (
@@ -204,7 +209,7 @@ function Share({ share, flat, children }: { share: number; flat: boolean; childr
       ) : (
         <>
           <span className="absolute inset-y-1 left-12 bg-foreground/10" style={{ width: `calc((100% - 3rem) * ${share})` }} aria-hidden />
-          <span className="relative w-9 shrink-0 text-right text-muted-foreground">{percent(share)}</span>
+          <span className="relative w-9 shrink-0 text-right text-muted-foreground">{percent(share * 100)}</span>
         </>
       )}
       <span className="relative min-w-0 flex-1 truncate">{children}</span>
@@ -215,6 +220,7 @@ function Share({ share, flat, children }: { share: number; flat: boolean; childr
 type TagRowValue = Facets['rows'][number]
 
 function TagValue({ org, tagKey, row, flat, origin }: { org: string; tagKey: string; row: TagRowValue; flat: boolean; origin?: string }) {
+  const t = useT().issues.sections
   return (
     <li className="flex items-center">
       <Link
@@ -233,8 +239,8 @@ function TagValue({ org, tagKey, row, flat, origin }: { org: string; tagKey: str
           href={row.value}
           target="_blank"
           rel="noreferrer"
-          aria-label={`Open ${row.value} in a new tab`}
-          title="Open in a new tab"
+          aria-label={t.openInNewTab(row.value)}
+          title={t.openInNewTabTitle}
           className="grid size-6 shrink-0 place-items-center text-muted-foreground hover:bg-accent hover:text-foreground max-lg:size-11"
         >
           <ExternalLink className="size-3" />
@@ -245,6 +251,7 @@ function TagValue({ org, tagKey, row, flat, origin }: { org: string; tagKey: str
 }
 
 function TagValues({ org, tag }: { org: string; tag: IssueTag }) {
+  const t = useT().issues.sections
   const [open, setOpen] = useState(false)
   const facets = tagFacets(tag)
   const origin = sharedOrigin(facets.rows.map((row) => row.value))
@@ -268,14 +275,14 @@ function TagValues({ org, tag }: { org: string; tag: IssueTag }) {
               aria-expanded={open}
               className="flex min-h-6 w-full items-center pl-12 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground max-lg:min-h-11"
             >
-              {open ? 'Show fewer' : `${more.length} more`}
+              {open ? t.showFewer : t.more(more.length)}
             </button>
           </li>
         )}
         {facets.other > 0 && (
           <li className="mono relative flex min-h-6 items-center gap-3 pr-2 text-muted-foreground max-lg:min-h-11">
             <Share share={facets.other} flat={false}>
-              other
+              {t.other}
             </Share>
           </li>
         )}
@@ -286,11 +293,12 @@ function TagValues({ org, tag }: { org: string; tag: IssueTag }) {
 
 // Clicking a value opens the inbox filtered to it; a value that is a web address also opens on its own.
 export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
+  const t = useT().issues.sections
   const tags = useQuery(issueTagsQuery(org, issueId))
   if (tags.isPending) return <Skeleton className="h-40" />
   if (!tags.data?.length) return null
   return (
-    <Section title="Tags">
+    <Section title={t.tags}>
       <div className="space-y-3">
         {tags.data.map((tag) => (
           <TagValues key={tag.key} org={org} tag={tag} />
@@ -301,13 +309,14 @@ export function TagsRail({ org, issueId }: { org: string; issueId: string }) {
 }
 
 export function ContextRail({ event }: { event: IssueEvent }) {
+  const t = useT().issues.sections
   const user = event.user as Record<string, unknown> | null | undefined
   const contexts = Object.entries((event.contexts ?? {}) as Record<string, Record<string, unknown>>)
   const pairsOf = (record: Record<string, unknown>) => Object.entries(record).filter(([key, value]) => key !== 'type' && value != null && value !== '')
   return (
     <>
       {user && pairsOf(user).length > 0 && (
-        <Section title="User">
+        <Section title={t.user}>
           <Pairs pairs={pairsOf(user)} />
         </Section>
       )}
@@ -320,7 +329,7 @@ export function ContextRail({ event }: { event: IssueEvent }) {
         ))}
       <AdditionalData event={event} />
       {event.sdk && (
-        <Section title="SDK">
+        <Section title={t.sdk}>
           <Pairs pairs={pairsOf(event.sdk as Record<string, unknown>).filter(([, value]) => typeof value === 'string')} />
         </Section>
       )}
@@ -330,14 +339,15 @@ export function ContextRail({ event }: { event: IssueEvent }) {
 
 // The whole report opens its event, but a click that ends a text selection does not, so the comment can be copied.
 export function UserReports({ org, issueId }: { org: string; issueId: string }) {
+  const t = useT().issues.sections
   const navigate = useNavigate()
   const reports = useQuery(issueUserReportsQuery(org, issueId)).data
   if (!reports?.length) return null
   return (
-    <Section title="User reports" count={reports.length}>
+    <Section title={t.userReports} count={reports.length}>
       <ul className="space-y-4">
         {reports.map((report) => {
-          const who = report.name || report.email || 'Anonymous'
+          const who = report.name || report.email || t.anonymous
           const open = { to: '/$org/issues/$issueId/events/$eventId', params: { org, issueId, eventId: report.eventID } } as const
           return (
             <li
@@ -349,7 +359,7 @@ export function UserReports({ org, issueId }: { org: string; issueId: string }) 
               className="cursor-pointer border-l pl-3 hover:bg-accent max-lg:min-h-11"
             >
               <span className="mono flex flex-wrap items-center gap-x-3 text-muted-foreground">
-                <Link {...open} aria-label={`${who}, open event`} className="text-foreground hover:underline max-lg:min-h-11 max-lg:content-center">
+                <Link {...open} aria-label={t.openEvent(who)} className="text-foreground hover:underline max-lg:min-h-11 max-lg:content-center">
                   {who}
                 </Link>
                 {report.name && <span>{report.email}</span>}
@@ -368,6 +378,7 @@ export function UserReports({ org, issueId }: { org: string; issueId: string }) 
 
 // Issues merged into this one keep their fingerprints. Splitting some off makes them a separate issue again; one always stays.
 export function Fingerprints({ org, issueId }: { org: string; issueId: string }) {
+  const t = useT().issues
   const queryClient = useQueryClient()
   const hashes = useQuery(issueHashesQuery(org, issueId)).data
   const [picked, setPicked] = useState<Set<string>>(new Set())
@@ -377,12 +388,12 @@ export function Fingerprints({ org, issueId }: { org: string; issueId: string })
       setPicked(new Set())
       void queryClient.invalidateQueries({ queryKey: issueKeys.all(org) })
     },
-    onError: (error) => failed(error, 'split off the fingerprints'),
+    onError: (error) => failed(error, t.actions.splitFingerprints),
   })
   if (!hashes || hashes.length < 2) return null
   const canSplit = picked.size > 0 && picked.size < hashes.length
   return (
-    <Section title="Merged fingerprints" count={hashes.length}>
+    <Section title={t.sections.mergedFingerprints} count={hashes.length}>
       <ul className="border">
         {hashes.map((hash) => (
           <li key={hash.id} className="flex items-center gap-1 border-b pr-3 last:border-b-0">
@@ -394,7 +405,7 @@ export function Fingerprints({ org, issueId }: { org: string; issueId: string })
                 if (!next.delete(hash.id)) next.add(hash.id)
                 setPicked(next)
               }}
-              aria-label={`Select fingerprint ${hash.id}`}
+              aria-label={t.sections.selectFingerprint(hash.id)}
             />
             <span className="mono shrink-0">{hash.id.slice(0, 12)}</span>
             <span className="min-w-0 flex-1 truncate text-muted-foreground">{hash.latestEvent?.title}</span>
@@ -404,9 +415,9 @@ export function Fingerprints({ org, issueId }: { org: string; issueId: string })
       {picked.size > 0 && (
         <div className="mt-2 flex items-center gap-3">
           <Button size="sm" disabled={!canSplit || split.isPending} onClick={() => split.mutate()}>
-            Split off {picked.size}
+            {t.sections.splitOff(picked.size)}
           </Button>
-          {!canSplit && <span className="text-sm text-muted-foreground">One fingerprint has to stay.</span>}
+          {!canSplit && <span className="text-sm text-muted-foreground">{t.sections.oneStays}</span>}
         </div>
       )}
     </Section>

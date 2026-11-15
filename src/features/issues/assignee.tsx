@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AssigneeType, type Issue } from '@/api/issues'
 import { membersQuery, teamsQuery } from '@/api/organizations'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import type { Assignee } from './actions'
 
@@ -16,11 +17,12 @@ const initials = (assignee: Assignee) =>
     .join('')
 
 export function AssigneeBadge({ assignee, className }: { assignee: Issue['assignedTo']; className?: string }) {
-  if (!assignee) return <UserRound className={cn('size-4 text-muted-foreground', className)} aria-label="Unassigned" />
+  const t = useT().issues.assignDialog
+  if (!assignee) return <UserRound className={cn('size-4 text-muted-foreground', className)} aria-label={t.unassigned} />
   return (
     <span
       title={assignee.name || assignee.email || undefined}
-      aria-label={`Assigned to ${assignee.name || assignee.email}`}
+      aria-label={t.assignedTo(assignee.name || assignee.email || '')}
       className={cn('grid size-6 place-items-center bg-foreground font-mono text-xs font-semibold text-background uppercase', className)}
     >
       {initials(assignee)}
@@ -42,6 +44,7 @@ export function AssignDialog({
   onClose: () => void
   onPick: (assignee: Assignee | null) => void
 }) {
+  const t = useT().issues.assignDialog
   const members = useQuery({ ...membersQuery(org), enabled: open }).data ?? []
   const teams = useQuery({ ...teamsQuery(org), enabled: open }).data ?? []
   const [text, setText] = useState('')
@@ -58,14 +61,14 @@ export function AssignDialog({
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent aria-describedby={undefined} className="max-w-sm">
-        <DialogTitle className="sr-only">Assign</DialogTitle>
+        <DialogTitle className="sr-only">{t.title}</DialogTitle>
         <input
           autoFocus
           value={text}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => event.key === 'Enter' && shown[0] && pick(shown[0])}
-          placeholder="Assign to"
-          aria-label="Assign to"
+          placeholder={t.to}
+          aria-label={t.to}
           className="h-11 w-full border-b bg-transparent px-3 outline-none placeholder:text-muted-foreground touch-input focus-visible:outline-none"
         />
         <div className="max-h-72 overflow-y-auto py-1">
@@ -78,7 +81,7 @@ export function AssignDialog({
             >
               <AssigneeBadge assignee={person} />
               <span className="min-w-0 flex-1 truncate">{person.name}</span>
-              {current?.type === person.type && current.id === person.id && <span className="label-caps">current</span>}
+              {current?.type === person.type && current.id === person.id && <span className="label-caps">{t.current}</span>}
             </button>
           ))}
           {shown.length === 0 && <UserRound className="mx-auto my-4 size-4 text-muted-foreground" aria-hidden />}
@@ -87,7 +90,7 @@ export function AssignDialog({
               <span className="grid size-6 place-items-center">
                 <UserRound className="size-4 text-muted-foreground" />
               </span>
-              Unassign
+              {t.unassign}
             </button>
           )}
         </div>

@@ -9,6 +9,7 @@ import { CommandGroup, useCommands, type Command } from '@/components/shell/comm
 import { ScopeFilters } from '@/components/shell/scope-filters'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { messages, useT } from '@/i18n'
 import { hitsText, type Hits } from '@/lib/format'
 import { useHotkeys } from '@/lib/hotkeys'
 import { useTitle } from '@/lib/title'
@@ -23,14 +24,14 @@ import { COLUMNS, IssueRow, SkeletonRows, type Row } from './inbox-row'
 import { DEFAULT_QUERY, isFiltered, statusOf, toFilters, withStatus, type InboxSearch } from './search'
 import { useSelection, useSelectionOffer } from './selection'
 import { SelectionBar, SelectionSheet, type SelectionActions } from './selection-bar'
-import { ACTION, STATUS_VIEWS, StatusView } from './status'
+import { ACTION, StatusView, statusViews } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { Trend, axisFor, axisStartLabel, classify, fillBuckets, periodInfo, releaseMarks } from './trend'
 
 const GROUPS = [
-  { trend: Trend.new, label: 'New', color: 'text-trend-new' },
-  { trend: Trend.spiking, label: 'Spiking', color: 'text-trend-spiking' },
-  { trend: Trend.ongoing, label: 'Ongoing', color: 'text-muted-foreground' },
+  { trend: Trend.new, color: 'text-trend-new' },
+  { trend: Trend.spiking, color: 'text-trend-spiking' },
+  { trend: Trend.ongoing, color: 'text-muted-foreground' },
 ]
 const UUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i
 
@@ -49,12 +50,11 @@ function axisTotals(rows: Row[], length: number) {
 }
 
 // "Issues" for the default view, otherwise the view's name: "Resolved issues".
-function viewHeading(view: StatusView) {
-  if (view === StatusView.unresolved) return 'Issues'
-  return view === StatusView.all ? 'All issues' : `${STATUS_VIEWS.find((item) => item.view === view)?.label} issues`
-}
+const viewHeading = (view: StatusView) => (view === StatusView.unresolved ? messages().issues.heading : messages().issues.views[view])
 
 export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
+  const t = useT()
+  const w = t.issues
   const navigate = useNavigate()
   const filters = useMemo(() => toFilters(search), [search])
   const query = filters.query ?? ''
@@ -187,19 +187,21 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
         ...offer.statuses.map((action) => ({
           id: `selection:${action.status}`,
           group: CommandGroup.selection,
-          label: `${action.action} ${offer.what}`,
+          label: w.selection.applyTo(action.action, offer.what),
           keys: action.key,
           run: () => setStatus(action.status),
         })),
-        ...(selected.assign ? [{ id: 'selection:assign', group: CommandGroup.selection, label: `${ACTION.assign.label} ${offer.what}`, keys: ACTION.assign.key, run: selected.assign }] : []),
-        ...(selected.merge ? [{ id: 'selection:merge', group: CommandGroup.selection, label: `${ACTION.merge.label} ${offer.what}`, keys: ACTION.merge.key, run: selected.merge }] : []),
-        { id: 'selection:delete', group: CommandGroup.selection, label: `Delete ${offer.what}`, run: selected.remove },
-        { id: 'selection:clear', group: CommandGroup.selection, label: 'Clear selection', keys: 'esc', run: selected.clear },
+        ...(selected.assign ? [{ id: 'selection:assign', group: CommandGroup.selection, label: w.selection.applyTo(ACTION.assign.label, offer.what), keys: ACTION.assign.key, run: selected.assign }] : []),
+        ...(selected.merge ? [{ id: 'selection:merge', group: CommandGroup.selection, label: w.selection.applyTo(ACTION.merge.label, offer.what), keys: ACTION.merge.key, run: selected.merge }] : []),
+        { id: 'selection:delete', group: CommandGroup.selection, label: w.selection.deleteWhat(offer.what), run: selected.remove },
+        { id: 'selection:clear', group: CommandGroup.selection, label: w.selection.clear, keys: 'esc', run: selected.clear },
       ]
     : []
   useCommands([
     ...commands,
-    ...STATUS_VIEWS.filter((item) => item.view !== view).map((item) => ({ id: `show:${item.view}`, group: CommandGroup.show, label: `${item.label} issues`, run: () => setView(item.view) })),
+    ...statusViews()
+      .filter((item) => item.view !== view)
+      .map((item) => ({ id: `show:${item.view}`, group: CommandGroup.show, label: w.views[item.view], run: () => setView(item.view) })),
   ])
 
   const directHit = rows.length === 1 && UUID.test(query.trim()) ? rows[0]!.issue : undefined
@@ -255,12 +257,12 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
       {list.isPending ? (
         <SkeletonRows />
       ) : list.isError ? (
-        <Screen title="The issues didn't load">
-          <Button onClick={() => void list.refetch()}>Try again</Button>
+        <Screen title={w.inbox.failed}>
+          <Button onClick={() => void list.refetch()}>{t.common.tryAgain}</Button>
         </Screen>
       ) : rows.length === 0 ? (
-        <Screen title={isFiltered(search) ? 'No issues match' : 'Nothing unresolved'}>
-          {isFiltered(search) && <Button onClick={() => void navigate({ to: '/$org/issues', params: { org }, search: {} })}>Show unresolved issues</Button>}
+        <Screen title={isFiltered(search) ? w.inbox.noMatch : w.inbox.nothingUnresolved}>
+          {isFiltered(search) && <Button onClick={() => void navigate({ to: '/$org/issues', params: { org }, search: {} })}>{w.inbox.showUnresolved}</Button>}
         </Screen>
       ) : (
         <>
@@ -268,19 +270,19 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
             <span className="max-lg:hidden" />
             <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
               <span>
-                <span className="font-mono text-2xl font-semibold lg:text-3xl">{hits && hitsText(hits)}</span> {hits?.n === 1 ? 'issue' : 'issues'}
+                <span className="font-mono text-2xl font-semibold lg:text-3xl">{hits && hitsText(hits)}</span> {w.issueNoun(hits && !hits.capped ? hits.n : 2)}
               </span>
               {groups
                 .filter((group) => group.trend !== Trend.ongoing)
                 .map((group) => (
                   <span key={group.trend} className={group.color}>
-                    <span className="mono font-semibold">{group.rows.length}</span> {group.label.toLowerCase()}
+                    <span className="mono font-semibold">{group.rows.length}</span> {w.inbox.trends[group.trend].word(group.rows.length)}
                   </span>
                 ))}
             </p>
             <ReleaseTrace buckets={totals} marks={marks} height={36} className="max-lg:hidden lg:mx-4" />
             <span className="mono col-span-4 pb-px text-muted-foreground max-lg:hidden">
-              peak {compact(Math.max(...totals, 0))}/{unit.unit}
+              {w.inbox.peak(compact(Math.max(...totals, 0)), unit.unit)}
             </span>
           </div>
 
@@ -291,30 +293,30 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
                 className="mx-auto"
                 checked={offer.everyLoaded ? true : offer.selecting ? 'indeterminate' : false}
                 onCheckedChange={() => (offer.everyLoaded ? selection.clear() : selection.set(loadedIds))}
-                aria-label="Select all"
+                aria-label={w.inbox.selectAll}
               />
             ) : (
               <span />
             )}
-            <span className="label-caps">Issue</span>
+            <span className="label-caps">{w.inbox.columns.issue}</span>
             <span className="label-caps mx-4 flex items-center justify-between">
               <span>{axisStartLabel(period, axis.start)}</span>
               <span className="flex items-center gap-2">
-                Events / {unit.unit}
+                {w.inbox.eventsPer(unit.unit)}
                 <PeriodToggle period={period} onChange={setPeriod} />
               </span>
               <span>{unit.now}</span>
             </span>
-            <span className="label-caps text-right">Events</span>
-            <span className="label-caps text-right">Seen</span>
-            <span className="label-caps text-right">Assignee</span>
+            <span className="label-caps text-right">{w.inbox.columns.events}</span>
+            <span className="label-caps text-right">{w.inbox.columns.seen}</span>
+            <span className="label-caps text-right">{w.inbox.columns.assignee}</span>
             <span />
           </div>
 
           {groups.map((group) => (
-            <section key={group.trend} aria-label={group.label}>
+            <section key={group.trend} aria-label={w.inbox.trends[group.trend].heading}>
               <h2 className={cn('label-caps flex h-8 items-center gap-2 border-b bg-muted/60 px-3 font-semibold lg:pl-check', group.color)}>
-                {group.label}
+                {w.inbox.trends[group.trend].heading}
                 <span className="font-normal text-muted-foreground">{group.rows.length}</span>
               </h2>
               <ul>
@@ -338,7 +340,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
           <div ref={observe} className="grid h-14 place-items-center">
             {canLoadMore && (
               <Button variant="ghost" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage} aria-busy={isFetchingNextPage}>
-                Load more
+                {w.inbox.loadMore}
               </Button>
             )}
           </div>
@@ -368,13 +370,9 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
       />
       <ConfirmDialog
         open={merging && offer.canMerge}
-        title={`Merge ${offer.what}?`}
-        detail={
-          <>
-            They become one issue. <span className="mono">{offer.survivor?.issue.shortId}</span>, the newest, stays and takes the others' events.
-          </>
-        }
-        confirm={`Merge ${offer.what}`}
+        title={w.inbox.merging.title(offer.what)}
+        detail={w.inbox.merging.detail(<span className="mono">{offer.survivor?.issue.shortId}</span>)}
+        confirm={w.inbox.merging.confirm(offer.what)}
         onClose={() => setMerging(false)}
         onConfirm={() => {
           void actions.merge(offer.ids)

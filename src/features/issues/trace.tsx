@@ -1,7 +1,8 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { StatsPeriod } from '@/api/issues'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
-import { PERIODS, Trend, barHeights, markLabels, type Mark } from './trend'
+import { PERIODS, Trend, barHeights, markLabels, periodInfo, type Mark } from './trend'
 
 /**
  * The shell every chart on a time axis shares: a baseline in the grid colour, the release rules
@@ -93,9 +94,10 @@ export function ReleaseTrace({ buckets, marks, height, className }: { buckets: n
 }
 
 export function PeriodToggle({ period, onChange }: { period: StatsPeriod; onChange: (period: StatsPeriod) => void }) {
+  const t = useT().issues.inbox
   return (
-    <div className="flex border" role="group" aria-label="Period">
-      {PERIODS.map((item) => (
+    <div className="flex border" role="group" aria-label={t.period}>
+      {PERIODS.map((item) => periodInfo(item.value)).map((item) => (
         <button
           key={item.value}
           type="button"

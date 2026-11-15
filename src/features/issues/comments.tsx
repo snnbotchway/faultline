@@ -4,12 +4,15 @@ import { SessionStatus, sessionQuery } from '@/api/auth'
 import { issueActions, issueCommentsQuery, issueKeys } from '@/api/issues'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
+import { useT } from '@/i18n'
 import { failed } from '@/lib/notice'
 import { ago, exact } from './format'
 import { Section } from './issue-sections'
 
 // The issue's comments. Anyone can add one; its author, or someone who manages the organization, can change it.
 export function Comments({ org, issueId, canManage }: { org: string; issueId: string; canManage: boolean }) {
+  const t = useT()
+  const w = t.issues
   const queryClient = useQueryClient()
   const comments = useQuery(issueCommentsQuery(org, issueId))
   const session = useQuery(sessionQuery).data
@@ -26,7 +29,7 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
       setText('')
       refresh()
     },
-    onError: (error) => failed(error, 'add the comment'),
+    onError: (error) => failed(error, w.actions.addComment),
   })
   const edit = useMutation({
     mutationFn: (comment: { id: number; text: string }) => issueActions.editComment(org, issueId, comment.id, comment.text.trim()),
@@ -34,17 +37,17 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
       setEditing(undefined)
       refresh()
     },
-    onError: (error) => failed(error, 'save the comment'),
+    onError: (error) => failed(error, w.actions.saveComment),
   })
   const remove = useMutation({
     mutationFn: (id: number) => issueActions.deleteComment(org, issueId, id),
     onSuccess: refresh,
-    onError: (error) => failed(error, 'delete the comment'),
+    onError: (error) => failed(error, w.actions.deleteComment),
   })
   const [removing, setRemoving] = useState<number>()
 
   return (
-    <Section title="Comments" count={comments.data?.length}>
+    <Section title={w.comments.title} count={comments.data?.length}>
       <ul className="space-y-4">
         {comments.data?.map((comment) => {
           const id = comment.id
@@ -53,7 +56,7 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
           return (
             <li key={id} className="border-l pl-3">
               <p className="mono flex flex-wrap items-center gap-x-3 text-muted-foreground">
-                <span className="text-foreground">{comment.user?.email ?? 'Someone'}</span>
+                <span className="text-foreground">{comment.user?.email ?? w.comments.someone}</span>
                 <time dateTime={comment.dateCreated} title={exact(comment.dateCreated)}>
                   {ago(comment.dateCreated)}
                 </time>
@@ -62,19 +65,19 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
                     {removing === id ? (
                       <>
                         <button type="button" className="font-medium text-destructive hover:underline" onClick={() => remove.mutate(id)}>
-                          Delete comment
+                          {w.comments.delete}
                         </button>
                         <button type="button" className="hover:text-foreground" onClick={() => setRemoving(undefined)}>
-                          Keep
+                          {t.common.keep}
                         </button>
                       </>
                     ) : (
                       <>
                         <button type="button" className="hover:text-foreground" onClick={() => setEditing({ id, text: comment.data.text ?? '' })}>
-                          Edit
+                          {t.common.edit}
                         </button>
                         <button type="button" className="hover:text-destructive" onClick={() => setRemoving(id)}>
-                          Delete
+                          {t.common.delete}
                         </button>
                       </>
                     )}
@@ -89,13 +92,13 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
                     if (editing.text.trim()) edit.mutate(editing)
                   }}
                 >
-                  <Textarea autoFocus rows={3} value={editing.text} onChange={(event) => setEditing({ ...editing, text: event.target.value })} aria-label="Edit comment" />
+                  <Textarea autoFocus rows={3} value={editing.text} onChange={(event) => setEditing({ ...editing, text: event.target.value })} aria-label={w.comments.edit} />
                   <div className="mt-2 flex gap-2">
                     <Button type="submit" variant="default" size="sm" disabled={edit.isPending}>
-                      Save
+                      {t.common.save}
                     </Button>
                     <Button size="sm" onClick={() => setEditing(undefined)}>
-                      Cancel
+                      {t.common.cancel}
                     </Button>
                   </div>
                 </form>
@@ -118,12 +121,12 @@ export function Comments({ org, issueId, canManage }: { org: string; issueId: st
           value={text}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => (event.metaKey || event.ctrlKey) && event.key === 'Enter' && text.trim() && add.mutate()}
-          placeholder="Add a comment"
-          aria-label="Add a comment"
+          placeholder={w.comments.add}
+          aria-label={w.comments.add}
         />
         {text.trim() && (
           <Button type="submit" size="sm" className="mt-2" disabled={add.isPending} aria-busy={add.isPending}>
-            Comment
+            {w.comments.submit}
           </Button>
         )}
       </form>

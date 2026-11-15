@@ -6,7 +6,7 @@ export const performance: Messages['performance'] = {
   transactions: 'Transaksjoner',
   loading: 'Laster',
   all: 'Alle',
-  allTime: 'Totalt',
+  allTime: 'Hele perioden',
   askAdmin: 'Be administratoren din om å slå på forespørselsdetaljer.',
   noDetails: 'Ingen forespørselsdetaljer de siste 7 dagene',
   clearSearch: 'Tøm søket',
@@ -23,10 +23,10 @@ export const performance: Messages['performance'] = {
   each: (time) => `${time} hver`,
 
   duration: {
-    milliseconds: (value) => `${value} ms`,
-    seconds: (value) => `${value} s`,
-    minutes: (minutes, seconds) => `${minutes} min ${seconds} s`,
-    hours: (hours, minutes) => `${hours} t ${minutes} min`,
+    milliseconds: (value) => `${value} ms`,
+    seconds: (value) => `${value} s`,
+    minutes: (minutes, seconds) => `${minutes} min ${seconds} s`,
+    hours: (hours, minutes) => `${hours} t ${minutes} min`,
   },
 
   slower: (factor, since) => (since ? <>{factor} tregere siden {since}</> : <>{factor} tregere denne uken</>),
@@ -52,9 +52,9 @@ export const performance: Messages['performance'] = {
   },
   repeatOrders: { share: 'Størst andel av forespørselen', total: 'Mest tid brukt' },
   headings: {
-    time: { left: 'Andel av brukt tid', right: 'Totalt' },
-    duration: { left: 'Typisk til treg', right: 'Treg, totalt' },
-    requests: { left: 'Forespørsler', right: 'Totalt' },
+    time: { left: 'Andel av brukt tid', right: 'Totalt, hele perioden' },
+    duration: { left: 'Typisk til treg', right: 'Treg, hele perioden' },
+    requests: { left: 'Forespørsler', right: 'Hele perioden' },
   },
 
   empty: {

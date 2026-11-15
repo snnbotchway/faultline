@@ -119,7 +119,8 @@ function Today() {
   )
 }
 
-const AXIS_WIDTH = 'w-14'
+// Room for "2 min 54 s", the longest a language writes a peak of a minute or more.
+const AXIS_WIDTH = 'w-20'
 const dayOfMonth = localized((tag) => new Intl.DateTimeFormat(tag, { day: 'numeric' }))
 
 // Seven days of a duration on the shared time axis: the peak and zero are labelled with their unit,
@@ -130,7 +131,7 @@ export function WeekChart({ buckets, marks, axis, slower, height, className }: {
   const peak = Math.max(...buckets, 0)
   return (
     <div className={cn('flex', className)} role="img" aria-label={t.performance.weekChart(axis.count, formatMs(peak))}>
-      <div className={cn('mono shrink-0 pt-5 pr-2 text-right text-xs text-muted-foreground', AXIS_WIDTH)} aria-hidden>
+      <div className={cn('mono shrink-0 pt-5 pr-2 text-right text-xs whitespace-nowrap text-muted-foreground', AXIS_WIDTH)} aria-hidden>
         <div className="flex flex-col justify-between" style={{ height }}>
           <span className="-translate-y-1/2">{formatMs(peak)}</span>
           <span className="translate-y-1/2">0</span>

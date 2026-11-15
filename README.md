@@ -71,6 +71,7 @@ Faultline is tested in CI against real GlitchTip backends. See [docs/compatibili
 
 | Faultline | GlitchTip |
 |---|---|
+| 0.3.0 | 7.0.0 |
 | 0.2.1 | 7.0.0 |
 | 0.2.0 | 7.0.0 |
 | 0.1.1 | 7.0.0 |

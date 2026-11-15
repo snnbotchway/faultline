@@ -5,6 +5,10 @@ All notable changes to Faultline are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-15
+
+Parity with the stock GlitchTip frontend, in English, French and Norwegian Bokmål. Tested against GlitchTip 7.0.0.
+
 ### Added
 
 - French and Norwegian Bokmål on every screen, picked under Profile → Language or in the palette, or taken from the browser; dates and numbers follow the language.
@@ -100,7 +104,8 @@ The first release. Tested against GlitchTip 7.0.0.
 - Performance (`/:org/performance/transaction-groups`): transactions ranked by the time they take, with tabs for repeated queries, those slower this week (and the release they slowed down at) and failing ones. A transaction shows its all-time figures, a 7-day chart and where an average request spends its time; on a desktop it opens beside the list. Breakdowns, charts and repeated queries need GlitchTip's cold storage.
 - Logs (`/:org/logs`): search, filters by level, service, environment, host and project with counts, a time window and logs per hour, a log's attributes, and the other logs in its trace.
 
-[Unreleased]: https://github.com/snnbotchway/faultline/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/snnbotchway/faultline/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/snnbotchway/faultline/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/snnbotchway/faultline/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/snnbotchway/faultline/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/snnbotchway/faultline/compare/v0.1.0...v0.1.1

@@ -2,6 +2,7 @@ import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { projectsQuery } from '@/api/organizations'
 import { NotBuilt } from '@/components/shell/not-built'
 import { OTHER_SECTION_PATHS, SECTIONS } from '@/components/shell/sections'
+import { useT } from '@/i18n'
 
 // Every stock section and anything beneath it, until each gets its own screen.
 export const Route = createFileRoute('/_app/$org/$section')({
@@ -18,5 +19,7 @@ export const Route = createFileRoute('/_app/$org/$section')({
 
 function SectionPlaceholder() {
   const { section } = Route.useParams()
-  return <NotBuilt name={SECTIONS.find((s) => s.path === section)?.label ?? section} />
+  const t = useT()
+  const known = SECTIONS.find((s) => s.path === section)
+  return <NotBuilt name={known ? t.shell.sections[known.name] : section} />
 }

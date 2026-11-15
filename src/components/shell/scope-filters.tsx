@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { InboxSearch } from '@/features/issues/search'
 import { useAccess } from '@/features/settings/access'
-import { ALL_ENVIRONMENTS, valueName } from '@/lib/text'
+import { useT } from '@/i18n'
+import { valueName } from '@/lib/text'
 import { cn } from '@/lib/utils'
 
 const TRIGGER = 'flex h-7 min-w-0 items-center gap-2 px-2 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11 max-lg:border max-lg:bg-card max-lg:px-3'
@@ -25,6 +26,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
   const search = useSearch({ strict: false }) as InboxSearch
   const navigate = useNavigate()
   const can = useAccess(org)
+  const t = useT()
   const projects = useQuery(projectsQuery(org)).data ?? []
   const picked = search.project ?? []
   // Only the environments of the chosen projects; with none chosen, those of the whole organization.
@@ -38,7 +40,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
       ...(search.environment ? [search.environment] : []),
     ]),
   ].sort()
-  const environment = search.environment ?? ALL_ENVIRONMENTS
+  const environment = search.environment ?? t.common.allEnvironments
   const update = (patch: Partial<InboxSearch>) =>
     void navigate({ to: '/$org/issues', params: { org }, search: (previous) => ({ ...previous, ...patch }), replace: true })
   // Each pick reads the URL as it is then, so quick clicks while the menu stays open all count.
@@ -55,22 +57,22 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
     })
   const projectLabel =
     picked.length === 0
-      ? 'All projects'
+      ? t.common.allProjects
       : picked.length === 1
-        ? (projects.find((project) => Number(project.id) === picked[0])?.slug ?? '1 project')
-        : `${picked.length} projects`
+        ? (projects.find((project) => Number(project.id) === picked[0])?.slug ?? t.common.projects(1))
+        : t.common.projects(picked.length)
 
   return (
     <div className={cn('flex min-w-0 items-center gap-1', className)}>
       <DropdownMenu>
-        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName('Projects', projectLabel)}>
+        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName(t.shell.projects, projectLabel)}>
           <span className={cn('truncate', picked.length === 1 && 'mono')}>{projectLabel}</span>
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem onSelect={() => update({ project: undefined })}>
             <Check className={cn(picked.length > 0 && 'invisible')} />
-            All projects
+            {t.common.allProjects}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {projects.map((project) => (
@@ -91,7 +93,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
               <DropdownMenuItem asChild>
                 <Link to="/$org/settings/projects/new" params={{ org }}>
                   <Plus />
-                  New project
+                  {t.shell.newProject}
                 </Link>
               </DropdownMenuItem>
             </>
@@ -100,13 +102,13 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
       </DropdownMenu>
       <span className="text-muted-foreground max-lg:hidden">/</span>
       <DropdownMenu>
-        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName('Environment', environment)}>
+        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName(t.shell.environment, environment)}>
           <span className={cn('truncate', search.environment && 'mono')}>{environment}</span>
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuRadioGroup value={search.environment ?? NO_ENVIRONMENT} onValueChange={(value) => update({ environment: value || undefined })}>
-            <DropdownMenuRadioItem value={NO_ENVIRONMENT}>{ALL_ENVIRONMENTS}</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value={NO_ENVIRONMENT}>{t.common.allEnvironments}</DropdownMenuRadioItem>
             {environments.map((name) => (
               <DropdownMenuRadioItem key={name} value={name} className="mono">
                 {name}

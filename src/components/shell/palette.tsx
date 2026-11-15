@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from 'react'
 import { Mark } from '@/components/mark'
 import { DialogContent } from '@/components/ui/dialog'
 import { Kbd } from '@/components/ui/kbd'
+import { useT } from '@/i18n'
 import { hasWords, searchWords } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { CommandGroup, palette, registry, usePaletteOpen, type Command } from './commands'
@@ -23,18 +24,20 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
   const [text, setText] = useState('')
   const [cursor, setCursor] = useState(0)
   const id = useId()
+  const t = useT()
+  const heading = t.shell.palette.groups
 
   const shown = useMemo(() => {
     const words = searchWords(text)
     const matches = [...registry.values()]
       .flat()
-      .filter((command) => hasWords(`${command.group} ${command.label} ${command.detail ?? ''}`, words))
+      .filter((command) => hasWords(`${heading[command.group]} ${command.label} ${command.detail ?? ''}`, words))
       .sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group))
     if (text.trim() && onSearch) {
-      matches.push({ id: 'search', group: CommandGroup.search, label: `Search issues for “${text.trim()}”`, run: () => onSearch(text.trim()) })
+      matches.push({ id: 'search', group: CommandGroup.search, label: t.shell.palette.searchIssues(text.trim()), run: () => onSearch(text.trim()) })
     }
     return matches
-  }, [text, onSearch])
+  }, [text, onSearch, heading, t])
 
   // Each run of commands under one heading is a group the heading names; `index` is the command's place in the whole list.
   const groups = useMemo(() => {
@@ -55,7 +58,7 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
 
   return (
     <DialogContent aria-describedby={undefined} className="top-[12vh] max-w-160 max-lg:top-3">
-      <Primitive.Title className="sr-only">Commands</Primitive.Title>
+      <Primitive.Title className="sr-only">{t.shell.commands}</Primitive.Title>
       <div className="flex items-center gap-2 border-b px-3">
         <ChevronRight className="size-4 shrink-0 text-brand" strokeWidth={2.4} aria-hidden />
         <input
@@ -79,17 +82,17 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
               setCursor(Math.max(0, cursor - 1))
             } else if (event.key === 'Enter') run(shown[cursor])
           }}
-          placeholder="Run a command or search issues"
-          aria-label="Command"
+          placeholder={t.shell.palette.placeholder}
+          aria-label={t.shell.palette.command}
           className="h-12 min-w-0 flex-1 touch-input bg-transparent text-base outline-none placeholder:text-muted-foreground focus-visible:outline-none"
         />
         <Kbd>esc</Kbd>
       </div>
-      <div className="max-h-[min(68vh,560px)] overflow-y-auto py-1" id={`${id}-list`} role="listbox" aria-label="Commands">
+      <div className="max-h-[min(68vh,560px)] overflow-y-auto py-1" id={`${id}-list`} role="listbox" aria-label={t.shell.commands}>
         {groups.map((group, at) => (
           <div key={group.name} role="group" aria-labelledby={`${id}-group-${at}`}>
             <div id={`${id}-group-${at}`} className="label-caps px-3 pt-3 pb-1">
-              {group.name}
+              {heading[group.name]}
             </div>
             {group.items.map(({ command, index }) => (
               // Focus stays in the field; the field's active descendant tells a screen reader which command is current.

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useT } from '@/i18n'
 import { clearNotice } from '@/lib/notice'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
@@ -37,6 +38,7 @@ export function TaskDialog({
   className?: string
   children: ReactNode
 }) {
+  const t = useT()
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent
@@ -65,7 +67,7 @@ export function TaskDialog({
           {done && (
             <DialogClose asChild>
               <Button size="sm" className="max-lg:h-11">
-                Done
+                {t.common.done}
               </Button>
             </DialogClose>
           )}
@@ -113,6 +115,7 @@ export function ConfirmDialog({
   error?: string
   onConfirm: () => void
 }) {
+  const t = useT()
   return (
     <TaskDialog open={open} onClose={onClose} title={title} description={description} quietFocus>
       <FormAlert className="mb-4">{error}</FormAlert>
@@ -120,7 +123,7 @@ export function ConfirmDialog({
         <Button variant="destructive" disabled={busy} aria-busy={busy} onClick={onConfirm} className="sm:order-2">
           {action}
         </Button>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t.common.cancel}</Button>
       </TaskActions>
     </TaskDialog>
   )

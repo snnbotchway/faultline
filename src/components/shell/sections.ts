@@ -1,17 +1,18 @@
 import { Activity, Bell, Gauge, Package, ScrollText, Settings, TriangleAlert, type LucideIcon } from 'lucide-react'
 import { Feature } from '@/api/organizations'
+import type { Messages } from '@/i18n'
 
-// Paths under /:org, the same as the stock GlitchTip UI so existing links keep working.
-export type Section = { path: string; label: string; icon: LucideIcon; feature?: Feature }
+// Paths under /:org, the same as the stock GlitchTip UI so existing links keep working. `name` picks the label in the catalog.
+export type Section = { path: string; name: keyof Messages['shell']['sections']; icon: LucideIcon; feature?: Feature }
 
 export const SECTIONS: Section[] = [
-  { path: 'issues', label: 'Issues', icon: TriangleAlert },
-  { path: 'releases', label: 'Releases', icon: Package },
-  { path: 'uptime-monitors', label: 'Uptime', icon: Activity, feature: Feature.uptime },
-  { path: 'performance', label: 'Performance', icon: Gauge },
-  { path: 'logs', label: 'Logs', icon: ScrollText, feature: Feature.logs },
-  { path: 'alerts', label: 'Alerts', icon: Bell },
-  { path: 'settings', label: 'Settings', icon: Settings },
+  { path: 'issues', name: 'issues', icon: TriangleAlert },
+  { path: 'releases', name: 'releases', icon: Package },
+  { path: 'uptime-monitors', name: 'uptime', icon: Activity, feature: Feature.uptime },
+  { path: 'performance', name: 'performance', icon: Gauge },
+  { path: 'logs', name: 'logs', icon: ScrollText, feature: Feature.logs },
+  { path: 'alerts', name: 'alerts', icon: Bell },
+  { path: 'settings', name: 'settings', icon: Settings },
 ]
 
 // Pages outside any organization's path that still belong to one of its sections, by their first path segment.

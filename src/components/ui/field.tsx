@@ -1,4 +1,5 @@
 import { useId, useState, type ComponentProps, type ReactNode } from 'react'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
 import { Input } from './input'
@@ -54,6 +55,7 @@ export function FormAlert({ className, children }: { className?: string; childre
 
 export function PasswordInput({ className, ...props }: Omit<React.ComponentProps<typeof Input>, 'type'>) {
   const [shown, setShown] = useState(false)
+  const t = useT()
   return (
     <div className="relative">
       <Input type={shown ? 'text' : 'password'} className={cn('h-10 pr-14', className)} {...props} />
@@ -62,7 +64,7 @@ export function PasswordInput({ className, ...props }: Omit<React.ComponentProps
         className="absolute inset-y-0 right-0 px-3 text-sm text-muted-foreground hover:text-foreground"
         onClick={() => setShown(!shown)}
       >
-        {shown ? 'Hide' : 'Show'}
+        {shown ? t.common.hide : t.common.show}
       </button>
     </div>
   )

@@ -5,6 +5,7 @@ import { account, emailsQuery } from '@/api/account'
 import { Feature, currentUserQuery, instanceSettingsQuery, organizationAdminUrl, organizationQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { useAction } from '@/features/account/use-action'
+import { useT } from '@/i18n'
 
 function Banner({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
   return (
@@ -20,31 +21,29 @@ export function VerifyEmailBanner() {
   const primary = useQuery(emailsQuery).data?.find((address) => address.isPrimary)
   const canSend = useQuery(instanceSettingsQuery).data?.enabledFeatures.includes(Feature.email)
   const [sent, setSent] = useState(false)
+  const t = useT()
+  const text = t.shell.banners
   const send = useAction(() => account.sendVerification(primary!.email), {
-    action: 'send the verification email',
+    action: text.sendVerificationAction,
     onDone: () => setSent(true),
   })
   if (!primary || primary.isVerified || !canSend) return null
   return (
-    <Banner label="Verify your email" icon={<MailWarning />}>
-      <span className="min-w-0 [overflow-wrap:anywhere]">
-        <span className="mono">{primary.email}</span> isn't verified.
-      </span>
+    <Banner label={text.verifyEmail} icon={<MailWarning />}>
+      <span className="min-w-0 [overflow-wrap:anywhere]">{text.notVerified(<span className="mono">{primary.email}</span>)}</span>
       {send.message && <span className="text-destructive">{send.message}</span>}
       {/* Present before the send, so a screen reader announces the line when it fills in. */}
       <span role="status" className="ml-auto flex min-w-0 items-center gap-2 [overflow-wrap:anywhere]">
         {sent && (
           <>
             <Check />
-            <span>
-              Sent to <span className="mono">{primary.email}</span>
-            </span>
+            <span>{text.sentTo(<span className="mono">{primary.email}</span>)}</span>
           </>
         )}
       </span>
       {!sent && (
         <Button size="bar" disabled={send.busy} aria-busy={send.busy} onClick={() => void send.run()}>
-          Send verification email
+          {text.sendVerification}
         </Button>
       )}
     </Banner>
@@ -58,24 +57,26 @@ export function OverLimitBanner({ org }: { org: string }) {
   const organization = useQuery(organizationQuery(org)).data
   const billing = useQuery(instanceSettingsQuery).data?.billingEnabled
   const superuser = useQuery(currentUserQuery).data?.isSuperuser === true
+  const { shell, common } = useT()
+  const text = shell.banners
   const rate = organization?.eventThrottleRate ?? 0
   if (!organization || (organization.isAcceptingEvents && rate <= 0)) return null
-  const state = !organization.isAcceptingEvents ? "isn't accepting events" : `is dropping ${rate >= 100 ? 'every new event' : `${rate}% of new events`}`
+  const state = !organization.isAcceptingEvents ? text.isntAccepting : rate >= 100 ? text.droppingAll : text.droppingShare(rate)
   return (
-    <Banner label={organization.isAcceptingEvents ? 'Events dropped' : 'Not accepting events'} icon={<Gauge />}>
-      <span className="min-w-0">{billing ? `${organization.name} is over its plan's event limit and ${state}.` : `${organization.name} ${state}.`}</span>
+    <Banner label={organization.isAcceptingEvents ? text.eventsDropped : text.notAccepting} icon={<Gauge />}>
+      <span className="min-w-0">{billing ? text.overPlan(organization.name, state) : text.state(organization.name, state)}</span>
       {billing ? (
-        <span className="text-muted-foreground">An owner can raise the plan's limit.</span>
+        <span className="text-muted-foreground">{text.ownerCanRaise}</span>
       ) : superuser ? (
         <Button variant="link" className="ml-auto gap-1" asChild>
           <a href={organizationAdminUrl(organization.id)} target="_blank" rel="noreferrer">
-            Change it
+            {text.changeIt}
             <ExternalLink className="size-3" />
-            <span className="sr-only">(opens in a new tab)</span>
+            <span className="sr-only">{common.opensInNewTab}</span>
           </a>
         </Button>
       ) : (
-        <span className="text-muted-foreground">{organization.isAcceptingEvents ? 'Ask a server admin to lift it.' : 'Ask a server admin to turn them back on.'}</span>
+        <span className="text-muted-foreground">{organization.isAcceptingEvents ? text.askToLift : text.askToTurnOn}</span>
       )}
     </Banner>
   )

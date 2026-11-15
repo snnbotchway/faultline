@@ -1,13 +1,14 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
-// The palette's groups, in the order they are listed.
+// The palette's groups, in the order they are listed. Each heading's words are in the catalog under its value.
 export const CommandGroup = {
   selection: 'selection',
   issue: 'issue',
   show: 'show',
-  goTo: 'go to',
+  goTo: 'goTo',
   organization: 'organization',
   theme: 'theme',
+  language: 'language',
   account: 'account',
   search: 'search',
 } as const

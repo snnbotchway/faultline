@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronsUpDown } from 'lucide-react'
 import { projectsQuery } from '@/api/organizations'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { plural, valueName } from '@/lib/text'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 const ALL = ''
@@ -13,11 +13,12 @@ export function ProjectMenu({ org, value, onChange, className }: { org: string; 
   const projects = useQuery(projectsQuery(org)).data ?? []
   const project = value?.length === 1 ? value[0] : undefined
   const current = projects.find((item) => Number(item.id) === project)
-  const label = current?.slug ?? (value && value.length > 1 ? plural(value.length, 'project') : 'All projects')
+  const { common } = useT()
+  const label = current?.slug ?? (value && value.length > 1 ? common.projects(value.length) : common.allProjects)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={valueName('Project', label)}
+        aria-label={common.valueName(common.project, label)}
         className={cn('flex h-7 min-w-0 shrink-0 items-center gap-2 border bg-card px-3 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11', className)}
       >
         <span className={cn('truncate', current && 'mono')}>{label}</span>
@@ -25,7 +26,7 @@ export function ProjectMenu({ org, value, onChange, className }: { org: string; 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuRadioGroup value={project === undefined ? ALL : String(project)} onValueChange={(picked) => onChange(picked === ALL ? undefined : [Number(picked)])}>
-          <DropdownMenuRadioItem value={ALL}>All projects</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value={ALL}>{common.allProjects}</DropdownMenuRadioItem>
           {projects.map((item) => (
             <DropdownMenuRadioItem key={item.id} value={String(item.id)} className="mono">
               {item.slug}

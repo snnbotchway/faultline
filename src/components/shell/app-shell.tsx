@@ -18,11 +18,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
+import { LOCALE_NAMES, Locale, useLocale, useT } from '@/i18n'
 import { overlayOpen, useHotkeys } from '@/lib/hotkeys'
 import { clearActionNotice, clearNotice, holdNotice, NoticeHold, releaseNotice, useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
 import { valueName } from '@/lib/text'
 import { Theme, useTheme } from '@/lib/theme'
+import { useChooseLanguage, useLanguageSync } from '@/lib/language-sync'
 import { useChooseTheme, useThemeSync } from '@/lib/theme-sync'
 import { cn } from '@/lib/utils'
 import { OverLimitBanner, VerifyEmailBanner } from './banners'
@@ -33,17 +35,17 @@ import { SupportItems, SupportMenu } from './support-menu'
 import { SECTIONS, SECTION_OF_PAGE, TAB_PATHS, sectionLink, type Section } from './sections'
 
 const THEMES = [
-  { value: Theme.system, label: 'System', icon: Monitor },
-  { value: Theme.light, label: 'Light', icon: Sun },
-  { value: Theme.dark, label: 'Dark', icon: Moon },
+  { value: Theme.system, icon: Monitor },
+  { value: Theme.light, icon: Sun },
+  { value: Theme.dark, icon: Moon },
 ]
 
 // The organization's own pages, one click from its name: the org menu and the command palette both list them.
 const ORG_PAGES = [
-  { label: 'Projects', to: '/$org/projects', icon: FolderKanban },
-  { label: 'Members', to: '/$org/settings/members', icon: Users },
-  { label: 'Teams', to: '/$org/settings/teams', icon: UsersRound },
-  { label: 'Settings', to: '/$org/settings', icon: Settings },
+  { name: 'projects', to: '/$org/projects', icon: FolderKanban },
+  { name: 'members', to: '/$org/settings/members', icon: Users },
+  { name: 'teams', to: '/$org/settings/teams', icon: UsersRound },
+  { name: 'settings', to: '/$org/settings', icon: Settings },
 ] as const
 
 function useSections(): Section[] {
@@ -61,14 +63,15 @@ function SectionLink({ org, section, className, children }: { org: string; secti
 }
 
 function ThemeItems() {
+  const t = useT()
   const theme = useTheme()
   const chooseTheme = useChooseTheme()
   return (
     <DropdownMenuRadioGroup value={theme} onValueChange={(value) => chooseTheme(value as Theme)}>
-      {THEMES.map(({ value, label, icon: Icon }) => (
+      {THEMES.map(({ value, icon: Icon }) => (
         <DropdownMenuRadioItem key={value} value={value}>
           <Icon />
-          {label}
+          {t.shell.themes[value]}
         </DropdownMenuRadioItem>
       ))}
     </DropdownMenuRadioGroup>
@@ -100,6 +103,7 @@ function useSignOut() {
 }
 
 function TopBar({ org, current, inbox }: { org: string; current: string | undefined; inbox: boolean }) {
+  const t = useT()
   const sections = useSections()
   const theme = useTheme()
   const session = useQuery(sessionQuery).data
@@ -111,28 +115,28 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b px-3 md:px-4">
-      <Link to="/" aria-label="Faultline, all projects" className="flex h-11 items-center">
+      <Link to="/" aria-label={t.shell.home} className="flex h-11 items-center">
         <Wordmark />
       </Link>
       <div className="flex min-w-0 items-center gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger
             className="flex h-7 min-w-0 items-center gap-2 px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-11 lg:max-w-40 xl:max-w-56"
-            aria-label={valueName('Organization', organizationName)}
+            aria-label={valueName(t.shell.organization, organizationName)}
             title={organizationName}
           >
             <span className="truncate">{organizationName}</span>
             <ChevronsUpDown className="size-3 shrink-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuLabel>Organization</DropdownMenuLabel>
+            <DropdownMenuLabel>{t.shell.organization}</DropdownMenuLabel>
             <OrgItems org={org} />
             <DropdownMenuSeparator />
             {ORG_PAGES.map((page) => (
               <DropdownMenuItem key={page.to} asChild>
                 <Link to={page.to} params={{ org }}>
                   <page.icon />
-                  {page.label}
+                  {t.shell[page.name]}
                 </Link>
               </DropdownMenuItem>
             ))}
@@ -141,7 +145,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setCreating(true)}>
                   <Plus />
-                  New organization
+                  {t.shell.newOrganization}
                 </DropdownMenuItem>
               </>
             )}
@@ -155,7 +159,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
           </>
         )}
       </div>
-      <nav className="ml-auto flex h-full items-stretch gap-4 max-lg:hidden" aria-label="Sections">
+      <nav className="ml-auto flex h-full items-stretch gap-4 max-lg:hidden" aria-label={t.shell.sectionsNav}>
         {sections.map((section) => (
           <SectionLink
             key={section.path}
@@ -166,19 +170,19 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
               section.path === current ? 'border-b-brand' : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            {section.label}
+            {t.shell.sections[section.name]}
           </SectionLink>
         ))}
       </nav>
       <div className="flex items-center gap-1 max-lg:ml-auto lg:border-l lg:pl-3">
-        <Button size="sm" className="gap-2 px-2 max-lg:size-11 max-lg:px-0" onClick={palette.open} aria-label="Commands" aria-keyshortcuts="Control+K Meta+K" title="Commands">
+        <Button size="sm" className="gap-2 px-2 max-lg:size-11 max-lg:px-0" onClick={palette.open} aria-label={t.shell.commands} aria-keyshortcuts="Control+K Meta+K" title={t.shell.commands}>
           <Search className="size-3 max-lg:size-4" />
           <Kbd className="border-0 px-0 opacity-100">⌘K</Kbd>
         </Button>
         <SupportMenu />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="max-lg:hidden" aria-label="Theme">
+            <Button variant="ghost" size="icon-sm" className="max-lg:hidden" aria-label={t.shell.theme}>
               <ThemeIcon />
             </Button>
           </DropdownMenuTrigger>
@@ -188,7 +192,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="max-lg:hidden" aria-label="Account">
+            <Button variant="ghost" size="icon-sm" className="max-lg:hidden" aria-label={t.shell.account}>
               <span className="grid size-5 place-items-center bg-foreground text-xs font-semibold text-background uppercase">{email[0] ?? '?'}</span>
             </Button>
           </DropdownMenuTrigger>
@@ -198,12 +202,12 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
             <DropdownMenuItem asChild>
               <Link to="/profile">
                 <UserRound />
-                Profile
+                {t.shell.profile}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => void leave()}>
               <LogOut />
-              Sign out
+              {t.shell.signOut}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -213,6 +217,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
 }
 
 function TabBar({ org, current }: { org: string; current: string | undefined }) {
+  const t = useT()
   const sections = useSections()
   const tabs = sections.filter((section) => TAB_PATHS.includes(section.path))
   const rest = sections.filter((section) => !TAB_PATHS.includes(section.path))
@@ -222,17 +227,17 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
   const tab = (active: boolean) =>
     cn('flex flex-1 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-xs [&_svg]:size-4', active ? 'border-brand font-semibold' : 'text-muted-foreground')
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-stretch border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Sections">
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-stretch border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label={t.shell.sectionsNav}>
       {tabs.map((section) => (
         <SectionLink key={section.path} org={org} section={section} className={tab(section.path === current)}>
           <section.icon />
-          {section.label}
+          {t.shell.sections[section.name]}
         </SectionLink>
       ))}
       <DropdownMenu onOpenChange={(open) => !open && setHelp(false)}>
         <DropdownMenuTrigger className={tab(rest.some((section) => section.path === current))}>
           <Ellipsis className="size-4" />
-          More
+          {t.shell.more}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top" className="w-56">
           {help ? (
@@ -244,10 +249,10 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
                 }}
               >
                 <ChevronLeft />
-                Back
+                {t.shell.back}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Help</DropdownMenuLabel>
+              <DropdownMenuLabel>{t.shell.help}</DropdownMenuLabel>
               <SupportItems />
             </>
           ) : (
@@ -256,12 +261,12 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
                 <DropdownMenuItem key={section.path} asChild>
                   <SectionLink org={org} section={section}>
                     <section.icon />
-                    {section.label}
+                    {t.shell.sections[section.name]}
                   </SectionLink>
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Theme</DropdownMenuLabel>
+              <DropdownMenuLabel>{t.shell.theme}</DropdownMenuLabel>
               <ThemeItems />
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -271,18 +276,18 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
                 }}
               >
                 <LifeBuoy />
-                Help
+                {t.shell.help}
                 <ChevronRight className="ml-auto" />
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/profile">
                   <UserRound />
-                  Profile
+                  {t.shell.profile}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => void leave()}>
                 <LogOut />
-                Sign out
+                {t.shell.signOut}
               </DropdownMenuItem>
             </>
           )}
@@ -301,7 +306,11 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
   const navigate = useNavigate()
   const leave = useSignOut()
   const chooseTheme = useChooseTheme()
+  const chooseLanguage = useChooseLanguage()
+  const t = useT()
+  const shownLocale = useLocale()
   useThemeSync()
+  useLanguageSync()
 
   const commands: Command[] = [
     ...sections
@@ -309,14 +318,14 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
       .map((section) => ({
         id: `go:${section.path}`,
         group: CommandGroup.goTo,
-        label: section.label,
+        label: t.shell.sections[section.name],
         run: () => void navigate(sectionLink(org, section)),
       })),
     // A page that is also a section is already listed above.
     ...ORG_PAGES.filter((page) => !SECTIONS.some((section) => page.to === `/$org/${section.path}`)).map((page) => ({
       id: `go:${page.to}`,
       group: CommandGroup.goTo,
-      label: page.label,
+      label: t.shell[page.name],
       run: () => void navigate({ to: page.to, params: { org } }),
     })),
     ...organizations
@@ -324,14 +333,18 @@ export function AppShell({ org, children }: { org: string; children: ReactNode }
       .map((organization) => ({
         id: `org:${organization.slug}`,
         group: CommandGroup.organization,
-        label: `Switch to ${organization.name}`,
+        label: t.shell.palette.switchTo(organization.name),
         // Names can repeat; the slug tells two apart and can be searched.
         detail: organization.name === organization.slug ? undefined : organization.slug,
         run: () => void navigate({ to: '/$org/issues', params: { org: organization.slug } }),
       })),
-    ...THEMES.map((t) => ({ id: `theme:${t.value}`, group: CommandGroup.theme, label: `${t.label} theme`, run: () => chooseTheme(t.value) })),
-    { id: 'profile', group: CommandGroup.account, label: 'Profile', run: () => void navigate({ to: '/profile' }) },
-    { id: 'sign-out', group: CommandGroup.account, label: 'Sign out', run: () => void leave() },
+    ...THEMES.map(({ value }) => ({ id: `theme:${value}`, group: CommandGroup.theme, label: t.shell.palette.theme(t.shell.themes[value]), run: () => chooseTheme(value) })),
+    // The other languages, each by its own name, so a reader finds theirs whatever the screen is in now.
+    ...Object.values(Locale)
+      .filter((locale) => locale !== shownLocale)
+      .map((locale) => ({ id: `language:${locale}`, group: CommandGroup.language, label: LOCALE_NAMES[locale], run: () => chooseLanguage(locale) })),
+    { id: 'profile', group: CommandGroup.account, label: t.shell.profile, run: () => void navigate({ to: '/profile' }) },
+    { id: 'sign-out', group: CommandGroup.account, label: t.shell.signOut, run: () => void leave() },
   ]
   useCommands(commands)
   useHotkeys({ 'mod+k': palette.toggle })
@@ -354,6 +367,7 @@ const MAIN_ID = 'main'
 
 // The first stop on Tab, shown only while focused, so a keyboard user can pass the top bar.
 export function SkipLink() {
+  const t = useT()
   return (
     <a
       href={`#${MAIN_ID}`}
@@ -363,7 +377,7 @@ export function SkipLink() {
       }}
       className="fixed top-0 left-0 z-[70] flex h-11 min-w-36 -translate-y-full items-center border-r border-b bg-card px-3 text-sm font-medium shadow-float transition-transform focus:translate-y-0 md:px-4 motion-reduce:transition-none"
     >
-      Skip to content
+      {t.shell.skipToContent}
     </a>
   )
 }

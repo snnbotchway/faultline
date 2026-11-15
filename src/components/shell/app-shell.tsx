@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, ChevronsUpDown, Ellipsis, FolderKanban, LifeBuoy, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, UserRound, Users, UsersRound } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { SessionStatus, sessionQuery } from '@/api/auth'
 import { instanceSettingsQuery, organizationsQuery, type Feature } from '@/api/organizations'
 import { Mark, Wordmark } from '@/components/mark'
@@ -19,7 +19,7 @@ import {
 import { Kbd } from '@/components/ui/kbd'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
 import { useHotkeys } from '@/lib/hotkeys'
-import { holdNotice, useNotice } from '@/lib/notice'
+import { holdNotice, NoticeHold, releaseNotice, useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
 import { Theme, useTheme } from '@/lib/theme'
 import { useChooseTheme, useThemeSync } from '@/lib/theme-sync'
@@ -377,6 +377,7 @@ export function Main({ children }: { children: ReactNode }) {
 
 export function Notice() {
   const notice = useNotice()
+  useEffect(() => releaseNotice, [])
   return (
     // While a dialog or sheet is open (the page's scroll is locked), the message moves to the top so it never covers it.
     <div
@@ -385,10 +386,10 @@ export function Notice() {
     >
       {notice && (
         <p
-          onPointerEnter={() => holdNotice(true)}
-          onPointerLeave={() => holdNotice(false)}
-          onFocus={() => holdNotice(true)}
-          onBlur={() => holdNotice(false)}
+          onPointerEnter={() => holdNotice(NoticeHold.pointer, true)}
+          onPointerLeave={() => holdNotice(NoticeHold.pointer, false)}
+          onFocus={() => holdNotice(NoticeHold.focus, true)}
+          onBlur={() => holdNotice(NoticeHold.focus, false)}
           className={cn('pointer-events-auto flex max-w-md items-center gap-3 border bg-card px-3 py-2 shadow-float', notice.error && 'border-destructive text-destructive')}>
           {notice.text}
           {notice.action && (

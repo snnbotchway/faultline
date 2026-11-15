@@ -8,37 +8,51 @@ export type NoticeAction = { label: string; run: () => void }
 let current: { id: number; text: string; error: boolean; action?: NoticeAction } | undefined
 const listeners = new Set<() => void>()
 const SHOWN_FOR = 6000
-// While the pointer or focus is on the message it stays, so its action can still be reached; it goes once let go.
-let held = false
+let timer: ReturnType<typeof setTimeout> | undefined
 
-export function holdNotice(hold: boolean) {
-  held = hold
+// While the pointer or focus is on the message it stays, so its action can still be reached. Letting go of both
+// starts its time again.
+export const NoticeHold = { pointer: 'pointer', focus: 'focus' } as const
+export type NoticeHold = (typeof NoticeHold)[keyof typeof NoticeHold]
+const held: Record<NoticeHold, boolean> = { pointer: false, focus: false }
+const holding = () => held.pointer || held.focus
+
+const emit = () => listeners.forEach((listener) => listener())
+
+function show(next: typeof current) {
+  clearTimeout(timer)
+  held.pointer = held.focus = false
+  current = next
+  timer = next && setTimeout(() => show(undefined), SHOWN_FOR)
+  emit()
+}
+
+export function holdNotice(by: NoticeHold, on: boolean) {
+  const was = holding()
+  held[by] = on
+  if (holding()) clearTimeout(timer)
+  else if (was && current) timer = setTimeout(() => show(undefined), SHOWN_FOR)
+}
+
+// For the message's element going away, which leaves no pointer or focus to let go of it.
+export function releaseNotice() {
+  if (!holding()) return
+  holdNotice(NoticeHold.pointer, false)
+  holdNotice(NoticeHold.focus, false)
 }
 
 export function notify(text: string, error = false, action?: NoticeAction) {
   const id = (current?.id ?? 0) + 1
-  const hide = () => {
-    if (current?.id !== id) return
-    if (held) return void setTimeout(hide, SHOWN_FOR)
-    current = undefined
-    listeners.forEach((listener) => listener())
-  }
   // Taking the action is the end of the message.
-  current = { id, text, error, action: action && { label: action.label, run: () => {
-        held = false
-        hide()
+  show({ id, text, error, action: action && { label: action.label, run: () => {
+        if (current?.id === id) show(undefined)
         action.run()
-      } } }
-  listeners.forEach((listener) => listener())
-  setTimeout(hide, SHOWN_FOR)
+      } } })
 }
 
 // Drops the message now: a dialog that opens starts a new task, and an old message would sit over it.
 export function clearNotice() {
-  if (!current) return
-  held = false
-  current = undefined
-  listeners.forEach((listener) => listener())
+  if (current) show(undefined)
 }
 
 // `action` completes "Couldn't …": "resolve the issue".

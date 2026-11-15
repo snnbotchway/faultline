@@ -1,3 +1,4 @@
+import { StatsPeriod } from '@/api/issues'
 import type { Messages } from '../en'
 import type { IntervalUnit } from '../en/uptime'
 import { count as number, plural, type PluralForms } from '../format'
@@ -25,11 +26,11 @@ export const uptime: Messages['uptime'] = {
   tabs: { label: 'Oppetid', monitors: 'Monitorer', statusPages: 'Statussider' },
 
   health: {
-    down: { label: 'Nede', inline: 'nede', headline: (name) => `${name} er nede` },
-    flapping: { label: 'Ustabil', inline: 'ustabil', headline: (name) => `${name} er ustabil` },
-    slow: { label: 'Treg', inline: 'treg', headline: (name) => `${name} er treg` },
-    up: { label: 'Oppe', inline: 'oppe', headline: (name) => `${name} er oppe` },
-    waiting: { label: 'Venter', inline: 'venter', headline: (name) => `${name} har ikke rapportert ennå` },
+    down: { counted: () => 'nede', label: 'Nede', inline: 'nede', headline: (name) => `${name} er nede` },
+    flapping: { counted: (n) => plural(n, { one: 'ustabil', other: 'ustabile' }), label: 'Ustabil', inline: 'ustabil', headline: (name) => `${name} er ustabil` },
+    slow: { counted: (n) => plural(n, { one: 'treg', other: 'trege' }), label: 'Treg', inline: 'treg', headline: (name) => `${name} er treg` },
+    up: { counted: () => 'oppe', label: 'Oppe', inline: 'oppe', headline: (name) => `${name} er oppe` },
+    waiting: { counted: () => 'venter', label: 'Venter', inline: 'venter', headline: (name) => `${name} har ikke rapportert ennå` },
   },
   downNow: 'Nede nå',
   recovered: 'Gjenopprettet',
@@ -76,7 +77,7 @@ export const uptime: Messages['uptime'] = {
     goToUptime: 'Gå til oppetid',
     loading: 'Laster monitor',
     downtime: 'Nedetid',
-    inLast: { day: 'de siste 24 timene', fortnight: 'de siste 14 dagene' },
+    inLast: { [StatsPeriod.day]: 'de siste 24 timene', [StatsPeriod.fortnight]: 'de siste 14 dagene' },
     upShare: (share, inLast) => (
       <>
         {share} oppe {inLast}
@@ -114,15 +115,15 @@ export const uptime: Messages['uptime'] = {
       </>
     ),
     ago: (time) => `${time} siden`,
-    agoWidth: '92px',
-    soFar: 'så langt',
+    agoWidth: '100px',
+    lasting: (span, ongoing) => (ongoing ? `${span} så langt` : span),
 
     checks: 'Sjekker',
     showChecks: 'Vis sjekker',
-    views: { all: 'Alle', incidents: 'Bare hendelser' },
+    views: { all: 'Alle', incidents: 'Bare endringer' },
     checksFailed: 'Sjekkene ble ikke lastet.',
     backToNewest: 'Tilbake til nyeste',
-    noIncidents: 'Ingen hendelser registrert.',
+    noIncidents: 'Ingen endringer registrert.',
     noChecks: 'Ingen sjekker ennå.',
     caption: (total) => `${total === undefined ? '' : `${plural(total, { one: '# sjekk', other: '# sjekker' })}, `}nyeste først`,
     time: 'Tid',
@@ -153,7 +154,7 @@ export const uptime: Messages['uptime'] = {
     groups: { check: 'Sjekk', expect: 'Forventet', schedule: 'Tidsplan', belongsTo: 'Tilhører' },
     type: 'Type',
     types: { ping: 'Ping', port: 'Port', heartbeat: 'Heartbeat' },
-    addressToCall: 'Adresse å kalle',
+    addressToCall: 'Adresse som skal kalles',
     address: {
       url: { label: 'URL', missing: 'Skriv inn URL-en som skal sjekkes.' },
       host: { label: 'Vert', missing: 'Skriv inn verten som skal sjekkes.' },
@@ -197,6 +198,6 @@ export const uptime: Messages['uptime'] = {
     nameMissing: 'Gi siden et navn.',
     anyoneWithLink: 'Alle med lenken kan se den',
     create: 'Opprett statusside',
-    createAction: 'opprette statusside',
+    createAction: 'opprette statussiden',
   },
 }

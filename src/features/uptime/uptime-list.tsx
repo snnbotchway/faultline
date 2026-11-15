@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { periodLength } from './format'
 import { Health } from './health'
 import { UptimeTab } from './address'
-import { HEALTH, HEALTH_ORDER, downReason, healthInline, healthLabel, healthLine, isAlarm, isHeartbeat, targetText } from './describe'
+import { HEALTH, HEALTH_ORDER, downReason, healthCounted, healthLabel, healthLine, isAlarm, isHeartbeat, targetText } from './describe'
 import { CheckBars, DowntimeStrip, HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth, type MonitorHealth } from './use-health'
 import { formatMs } from '@/features/performance/format'
@@ -106,7 +106,7 @@ export function UptimeList({ org, period = StatsPeriod.day }: { org: string; per
             </span>
             {alarms.map((state) => (
               <span key={state} className={HEALTH[state].color}>
-                <span className="mono font-semibold">{count(state)}</span> {healthInline(state)}
+                <span className="mono font-semibold">{count(state)}</span> {healthCounted(state, count(state))}
               </span>
             ))}
             {alarms.length === 0 && <span className="text-ok">{t.list.allUp}</span>}

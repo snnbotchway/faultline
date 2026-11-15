@@ -17,6 +17,7 @@ export const HEALTH: Record<Health, { color: string; bar: string }> = {
 // A health's name (`Down`), as it follows a count (`down`), and how a monitor's title says it (`Checkout is down`).
 export const healthLabel = (health: Health) => messages().uptime.health[health].label
 export const healthInline = (health: Health) => messages().uptime.health[health].inline
+export const healthCounted = (health: Health, count: number) => messages().uptime.health[health].counted(count)
 export const healthHeadline = (health: Health, name: string) => messages().uptime.health[health].headline(name)
 
 // Every health in the order monitors are listed: what needs attention first.

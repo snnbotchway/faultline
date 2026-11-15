@@ -1,7 +1,9 @@
+import { StatsPeriod } from '@/api/issues'
 import type { ReactNode } from 'react'
 import { count as number, plural, type PluralForms } from '../format'
 
-export type IntervalUnit = 'day' | 'hour' | 'minute' | 'second'
+export const IntervalUnit = { day: 'day', hour: 'hour', minute: 'minute', second: 'second' } as const
+export type IntervalUnit = (typeof IntervalUnit)[keyof typeof IntervalUnit]
 
 const INTERVAL: Record<IntervalUnit, PluralForms> = {
   day: { one: 'day', other: '# days' },
@@ -26,13 +28,13 @@ export const uptime = {
   now: 'Now',
   tabs: { label: 'Uptime', monitors: 'Monitors', statusPages: 'Status pages' },
 
-  // `label` names a health; `inline` follows a count ("2 down"); `headline` is a monitor's title.
+  // `label` names a health; `inline` describes one monitor; `counted` follows a count ("2 down"); `headline` is a monitor's title.
   health: {
-    down: { label: 'Down', inline: 'down', headline: (name: string) => `${name} is down` },
-    flapping: { label: 'Flapping', inline: 'flapping', headline: (name: string) => `${name} is flapping` },
-    slow: { label: 'Slow', inline: 'slow', headline: (name: string) => `${name} is slow` },
-    up: { label: 'Up', inline: 'up', headline: (name: string) => `${name} is up` },
-    waiting: { label: 'Waiting', inline: 'waiting', headline: (name: string) => `${name} has not reported yet` },
+    down: { counted: (_count: number) => 'down', label: 'Down', inline: 'down', headline: (name: string) => `${name} is down` },
+    flapping: { counted: (_count: number) => 'flapping', label: 'Flapping', inline: 'flapping', headline: (name: string) => `${name} is flapping` },
+    slow: { counted: (_count: number) => 'slow', label: 'Slow', inline: 'slow', headline: (name: string) => `${name} is slow` },
+    up: { counted: (_count: number) => 'up', label: 'Up', inline: 'up', headline: (name: string) => `${name} is up` },
+    waiting: { counted: (_count: number) => 'waiting', label: 'Waiting', inline: 'waiting', headline: (name: string) => `${name} has not reported yet` },
   },
   downNow: 'Down now',
   recovered: 'Recovered',
@@ -84,7 +86,7 @@ export const uptime = {
     goToUptime: 'Go to uptime',
     loading: 'Loading monitor',
     downtime: 'Downtime',
-    inLast: { day: 'in the last 24 hours', fortnight: 'in the last 14 days' },
+    inLast: { [StatsPeriod.day]: 'in the last 24 hours', [StatsPeriod.fortnight]: 'in the last 14 days' },
     upShare: (share: ReactNode, inLast: string) => (
       <>
         {share} up {inLast}
@@ -125,7 +127,7 @@ export const uptime = {
     ago: (time: string) => `${time} ago`,
     // The width of the first column of a downtime row, which holds `ago`.
     agoWidth: '64px',
-    soFar: 'so far',
+    lasting: (span: string, ongoing: boolean) => (ongoing ? `${span} so far` : span),
 
     checks: 'Checks',
     showChecks: 'Show checks',

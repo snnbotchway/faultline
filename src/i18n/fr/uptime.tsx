@@ -1,3 +1,4 @@
+import { StatsPeriod } from '@/api/issues'
 import type { Messages } from '../en'
 import type { IntervalUnit } from '../en/uptime'
 import { count as number, plural, type PluralForms } from '../format'
@@ -25,11 +26,11 @@ export const uptime: Messages['uptime'] = {
   tabs: { label: 'Disponibilité', monitors: 'Moniteurs', statusPages: 'Pages d’état' },
 
   health: {
-    down: { label: 'Hors ligne', inline: 'hors ligne', headline: (name) => `${name} est hors ligne` },
-    flapping: { label: 'Instable', inline: 'instable', headline: (name) => `${name} est instable` },
-    slow: { label: 'Lent', inline: 'lent', headline: (name) => `${name} est lent` },
-    up: { label: 'En ligne', inline: 'en ligne', headline: (name) => `${name} est en ligne` },
-    waiting: { label: 'En attente', inline: 'en attente', headline: (name) => `${name} n’a encore rien signalé` },
+    down: { counted: () => 'hors ligne', label: 'Hors ligne', inline: 'hors ligne', headline: (name) => `${name} est hors ligne` },
+    flapping: { counted: (n) => plural(n, { one: 'instable', other: 'instables' }), label: 'Instable', inline: 'instable', headline: (name) => `${name} est instable` },
+    slow: { counted: (n) => plural(n, { one: 'lent', other: 'lents' }), label: 'Lent', inline: 'lent', headline: (name) => `${name} est lent` },
+    up: { counted: () => 'en ligne', label: 'En ligne', inline: 'en ligne', headline: (name) => `${name} est en ligne` },
+    waiting: { counted: () => 'en attente', label: 'En attente', inline: 'en attente', headline: (name) => `${name} n’a encore rien signalé` },
   },
   downNow: 'Hors ligne en ce moment',
   recovered: 'Rétabli',
@@ -46,7 +47,8 @@ export const uptime: Messages['uptime'] = {
   noHeartbeatYet: 'Aucun heartbeat pour l’instant',
   heartbeatEvery: (every) => `Heartbeat attendu ${every}`,
   noCheckYet: 'Aucune vérification pour l’instant',
-  downSince: (since, reason) => `${since ? `Hors ligne depuis ${since}` : 'Hors ligne'} · ${reason}`,
+  // The reason first: on a phone the line is cut, and the reason is what matters.
+  downSince: (since, reason) => (since ? `${reason} · depuis ${since}` : `Hors ligne · ${reason}`),
   flappingSince: (downs, when) => `Hors ligne ${downs} fois depuis ${when.charAt(0).toLowerCase()}${when.slice(1)}`,
   slowLine: (typical, timeout) => `${typical} pour un délai de ${timeout} s`,
   upSince: (since) => (since ? `En ligne depuis ${since}` : 'En ligne'),
@@ -57,13 +59,13 @@ export const uptime: Messages['uptime'] = {
 
   list: {
     failed: 'Les moniteurs ne se sont pas chargés',
-    empty: 'Ajoutez un moniteur pour savoir quand un site ou une tâche tombe',
+    empty: 'Ajoutez un moniteur pour savoir quand un site ou une tâche tombe en panne',
     waitingGroup: 'En attente d’une première vérification',
     monitors: (count) => plural(count, { one: 'moniteur', other: 'moniteurs' }),
     allUp: 'tous en ligne',
     downtimeSince: (since) => `Indisponibilité depuis ${since}`,
     lastChecks: '60 dernières vérifications',
-    changed: 'Modifié',
+    changed: 'Changement',
     more: 'Plus de moniteurs',
     loading: 'Chargement des moniteurs',
   },
@@ -76,7 +78,7 @@ export const uptime: Messages['uptime'] = {
     goToUptime: 'Aller à la disponibilité',
     loading: 'Chargement du moniteur',
     downtime: 'Indisponibilité',
-    inLast: { day: 'au cours des 24 dernières heures', fortnight: 'au cours des 14 derniers jours' },
+    inLast: { [StatsPeriod.day]: 'au cours des 24 dernières heures', [StatsPeriod.fortnight]: 'au cours des 14 derniers jours' },
     upShare: (share, inLast) => (
       <>
         {share} en ligne {inLast}
@@ -90,7 +92,7 @@ export const uptime: Messages['uptime'] = {
     setup: 'Configuration',
     alerts: 'Alertes',
     nobody: 'Personne',
-    nobodyHears: 'Personne n’est prévenu quand il tombe.',
+    nobodyHears: 'Personne n’est prévenu quand il tombe en panne.',
     addRule: 'Ajouter une règle',
     linkProject: 'Associer un projet',
     facts: { check: 'Vérification', status: 'Statut', text: 'Texte', timeout: 'Délai d’attente', downAfter: 'Hors ligne après', environment: 'Environnement' },
@@ -106,7 +108,7 @@ export const uptime: Messages['uptime'] = {
     wentDown: 'Passé hors ligne',
     cameBack: 'Rétabli',
     notYet: 'Pas encore',
-    releaseBefore: 'Version précédente',
+    releaseBefore: 'Dernière version avant',
     alertsGoTo: 'Alertes envoyées à',
     earlier: (release, span) => (
       <>
@@ -114,8 +116,8 @@ export const uptime: Messages['uptime'] = {
       </>
     ),
     ago: (time) => `il y a ${time}`,
-    agoWidth: '104px',
-    soFar: 'en cours',
+    agoWidth: '108px',
+    lasting: (span, ongoing) => (ongoing ? `${span} jusqu’ici` : span),
 
     checks: 'Vérifications',
     showChecks: 'Afficher les vérifications',

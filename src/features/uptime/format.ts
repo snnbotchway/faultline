@@ -1,7 +1,7 @@
 import type { StatsPeriod } from '@/api/issues'
 import { periodInfo } from '@/features/issues/trend'
 import { messages } from '@/i18n'
-import type { IntervalUnit } from '@/i18n/en/uptime'
+import { IntervalUnit } from '@/i18n/en/uptime'
 import { DAY, HOUR, MINUTE, MINUTE_MS, SECOND_MS } from '@/lib/time'
 
 // `14m`, `3h 20m`, `2d 4h`, `9d` in English: how long something lasted, as exact as it is worth being.
@@ -16,10 +16,10 @@ export function span(ms: number): string {
 }
 
 const UNITS: [number, IntervalUnit][] = [
-  [DAY, 'day'],
-  [HOUR, 'hour'],
-  [MINUTE, 'minute'],
-  [1, 'second'],
+  [DAY, IntervalUnit.day],
+  [HOUR, IntervalUnit.hour],
+  [MINUTE, IntervalUnit.minute],
+  [1, IntervalUnit.second],
 ]
 
 const unitOf = (seconds: number) => {

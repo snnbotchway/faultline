@@ -124,7 +124,7 @@ function MonitorBody({ org, monitor, now }: { org: string; monitor: MonitorDetai
   const changes = useQuery(monitorChangesQuery(org, monitor.id, monitor.lastChange, periodMs))
   const from = now - periodMs
   const marks = releaseMarks(releases, spanAxis(from, now))
-  const inLast = t.page.inLast[period === StatsPeriod.day ? 'day' : 'fortnight']
+  const inLast = t.page.inLast[period]
 
   const report = healthOf(monitor, monitor.checks, changes.data?.changes ?? [], now)
   const health = report.health
@@ -401,8 +401,7 @@ function DowntimeRow({
           <span className="truncate">{reasonText(monitor, period.reason)}</span>
         </span>
         <span className={cn('mono', period.ongoing && cn('font-semibold', HEALTH[Health.down].color))}>
-          {span(period.to - period.from)}
-          {period.ongoing && ` ${text.soFar}`}
+          {text.lasting(span(period.to - period.from), period.ongoing)}
         </span>
         <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', unfolded && 'rotate-180')} />
       </button>

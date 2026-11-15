@@ -141,7 +141,7 @@ function SortMenu({ orders, order, onChange }: { orders: { value: string; label:
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label={valueName('Sort', label)} title="Sort">
+        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label={valueName('Sort', label)} title={valueName('Sort', label)}>
           <ArrowDownWideNarrow />
           <span className="truncate max-lg:hidden">{label}</span>
         </Button>

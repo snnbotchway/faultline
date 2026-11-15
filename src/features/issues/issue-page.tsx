@@ -79,7 +79,7 @@ function Fact({ label, value, detail, moment }: { label: string; value: string; 
       <dd className={cn('mono mt-1', !moment && 'truncate')}>
         {moment ? (
           <Popover>
-            <PopoverTrigger title={exact(moment)} className="underline decoration-border decoration-dotted underline-offset-4 max-lg:-my-3 max-lg:min-w-11 max-lg:py-3 max-lg:text-left">
+            <PopoverTrigger title={exact(moment)} aria-label={`${label} ${value}`} className="underline decoration-border decoration-dotted underline-offset-4 max-lg:-my-3 max-lg:min-w-11 max-lg:py-3 max-lg:text-left">
               {figure}
             </PopoverTrigger>
             <PopoverContent className="mono w-auto px-3 py-2">

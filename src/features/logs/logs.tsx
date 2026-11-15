@@ -24,6 +24,9 @@ import { LogLevelGlyph } from './level'
 import { LogActions, LogFields } from './log-detail'
 import { NO_FILTERS, RANGES, facetCount, isNarrowed, levelOf, rangeOf, type LogSearch, type SetSearch } from './search'
 
+// The button shows "24h"; its name and hover say it in full, so a phone, which has no hover, still has the words.
+const rangeName = (range: { value: string; label: string }) => `${valueName('Time range', range.value)} (${range.label})`
+
 const HISTOGRAM_HEIGHT = 64
 
 function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
@@ -31,7 +34,7 @@ function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={valueName('Time range', range.value)} title={range.label}>
+        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={rangeName(range)} title={rangeName(range)}>
           <CalendarDays />
           <span className="mono">{range.value}</span>
         </Button>

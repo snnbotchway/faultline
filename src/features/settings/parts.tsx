@@ -16,7 +16,7 @@ export function SettingsBar({ org, title, mono, children }: { org: string; title
       <Link
         to="/$org/settings"
         params={{ org }}
-        className="-ml-2 flex h-11 items-center gap-1 px-1 text-sm font-medium text-muted-foreground hover:text-foreground max-lg:min-w-11"
+        className="-ml-2 flex h-11 items-center gap-1 px-1 text-sm font-medium text-muted-foreground hover:text-foreground max-lg:-mr-5 max-lg:w-11 max-lg:justify-center max-lg:px-0"
         aria-label="Settings"
       >
         <ChevronLeft className="size-4" />

@@ -23,7 +23,7 @@ import { COLUMNS, IssueRow, SkeletonRows, type Row } from './inbox-row'
 import { DEFAULT_QUERY, isFiltered, statusOf, toFilters, withStatus, type InboxSearch } from './search'
 import { useSelection, useSelectionOffer } from './selection'
 import { SelectionBar, SelectionSheet, type SelectionActions } from './selection-bar'
-import { ACTION, STATUS_VIEWS, type StatusView } from './status'
+import { ACTION, STATUS_VIEWS, StatusView } from './status'
 import { PeriodToggle, ReleaseTrace } from './trace'
 import { Trend, axisFor, axisStartLabel, classify, fillBuckets, periodInfo, releaseMarks } from './trend'
 
@@ -48,12 +48,19 @@ function axisTotals(rows: Row[], length: number) {
   return totals
 }
 
+// "Issues" for the default view, otherwise the view's name: "Resolved issues".
+function viewHeading(view: StatusView) {
+  if (view === StatusView.unresolved) return 'Issues'
+  return view === StatusView.all ? 'All issues' : `${STATUS_VIEWS.find((item) => item.view === view)?.label} issues`
+}
+
 export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
-  useTitle('Issues')
   const navigate = useNavigate()
   const filters = useMemo(() => toFilters(search), [search])
   const query = filters.query ?? ''
   const view = statusOf(query)
+  const heading = viewHeading(view)
+  useTitle(heading)
   const list = useInfiniteQuery(issueListQuery(org, filters))
   const pages = list.data?.pages
   const canWrite = canWriteEvents(useQuery(organizationQuery(org)).data?.access)
@@ -223,7 +230,7 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
 
   return (
     <>
-      <h1 className="sr-only">Issues</h1>
+      <h1 className="sr-only">{heading}</h1>
       <PageBar className={cn(offer.selecting && 'max-lg:hidden')}>
         {offer.selecting ? (
           <SelectionBar {...bar} />

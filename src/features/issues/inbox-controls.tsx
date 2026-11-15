@@ -130,7 +130,7 @@ export function SortMenu({ sort, disabled, onChange }: { sort: IssueSort | undef
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label={valueName('Sort', label)} title="Sort" disabled={disabled}>
+        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label={valueName('Sort', label)} title={valueName('Sort', label)} disabled={disabled}>
           <ArrowDownWideNarrow />
           <span className="max-lg:hidden">{label}</span>
         </Button>

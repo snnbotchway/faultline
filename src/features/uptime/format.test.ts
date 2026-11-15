@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import { Locale, setLocale } from '@/i18n'
 import { DAY_MS, HOUR_MS, MINUTE_MS } from '@/lib/time'
-import { every, span } from './format'
+import { every, everyPhrase, span } from './format'
 
 describe('span', () => {
   it('rounds to the minute and never says less than one', () => {
@@ -27,5 +28,18 @@ describe('every', () => {
 
   it('falls back to seconds when the interval is not a whole minute', () => {
     expect(every(90)).toBe('90 seconds')
+  })
+})
+
+describe('in another language', () => {
+  afterEach(() => setLocale(Locale.en))
+
+  it('agrees "every" with the unit in French and numbers it in Norwegian', async () => {
+    await setLocale(Locale.fr)
+    expect([60, 300, 3600, 7200, 86_400].map(everyPhrase)).toEqual(['chaque minute', 'toutes les 5 minutes', 'chaque heure', 'toutes les 2 heures', 'chaque jour'])
+    expect(span(3 * HOUR_MS + 20 * MINUTE_MS).replace(/\u00a0/g, ' ')).toBe('3 h 20 min')
+    await setLocale(Locale.nb)
+    expect([60, 300, 3600, 86_400].map(everyPhrase)).toEqual(['hvert minutt', 'hvert 5. minutt', 'hver time', 'hver dag'])
+    expect(every(120)).toBe('2 minutter')
   })
 })

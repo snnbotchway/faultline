@@ -23,6 +23,6 @@ Demo login: `demo@example.com` / `demo-pass-123`, organisation `demo-co`.
 - **Every backend path proxied on the same origin** is listed in `src/api/backend-paths.ts`, and `docker/Caddyfile` mirrors it (a test enforces this).
 - **UI follows `DESIGN.md`.** Read it before building or changing a screen.
 - **Tests:** Vitest only for browser logic the server does not check; Playwright (`e2e/`) for happy paths only, against a real GlitchTip. No mocks of the backend.
-- **UI text goes through `src/i18n/`.** Add each new string to the English catalog of its area and to the French and Norwegian ones in the same change; components read words with `useT()`, other code with `messages()`. `docs/i18n.md` says how, and which areas are still English.
+- **UI text goes through `src/i18n/`.** Add each new string to the English catalog of its area and to the French and Norwegian ones in the same change; components read words with `useT()`, other code with `messages()`. `docs/i18n.md` says how.
 - **Fixed value sets** are `as const` objects with a same-name type, not raw strings or `enum`.
 - **Compatibility:** when testing a new GlitchTip version, follow `docs/compatibility.md`.

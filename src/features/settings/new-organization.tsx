@@ -16,7 +16,7 @@ export function NewOrganizationDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [checked, setChecked] = useState(false)
-  const t = useT().settings
+  const { settings: t, common } = useT()
   const text = t.newOrganization
   const problem = !name.trim() ? text.needsName : undefined
   const create = useChange(text.action, (value: string) => organizationActions.create(value), {
@@ -27,8 +27,10 @@ export function NewOrganizationDialog({ onClose }: { onClose: () => void }) {
     setChecked(true)
     if (!problem) create.run(name.trim())
   }
+  // Refused because creation is closed to this user: trying again gets the same answer, so only Done is left.
+  const closed = create.error === common.errors.detail.creationClosed
   return (
-    <FormDialog open onClose={onClose} title={text.title} submit={text.create} onSubmit={submit} pending={create.pending} error={create.error}>
+    <FormDialog open onClose={onClose} title={text.title} submit={closed ? undefined : text.create} onSubmit={submit} pending={create.pending} error={create.error}>
       <Field label={t.name} error={checked ? problem : undefined}>
         {(field) => <Input {...field} autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={ORGANIZATION_NAME_MAX} autoComplete="organization" />}
       </Field>

@@ -65,7 +65,7 @@ export const common = {
       serverUrlRequired: "Enter the provider's address.",
       tooManyApps: 'This organization has as many sign-in apps as it can hold. Delete one first.',
       notInPlan: "Your plan doesn't include sign-in apps.",
-      creationClosed: 'Only an administrator can create organizations on this server.',
+      creationClosed: 'Only a server administrator can create organizations here. Ask an owner to invite you to theirs.',
       alreadyMember: "They're already a member of this organization.",
       alreadyInvited: "They're already invited. Open their row to send the invite again.",
     },

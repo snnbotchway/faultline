@@ -214,6 +214,7 @@ export const issues: Messages['issues'] = {
     user: 'Utilisateur',
     sdk: 'SDK',
     userReports: 'Retours utilisateurs',
+    contexts: { app: 'Application', browser: 'Navigateur', culture: 'Langue et région', device: 'Appareil', gpu: 'Carte graphique', os: 'Système d’exploitation', response: 'Réponse', runtime: 'Environnement d’exécution', trace: 'Trace' },
     anonymous: 'Anonyme',
     openEvent: (who) => `${who}, ouvrir l’événement`,
     mergedFingerprints: 'Empreintes fusionnées',

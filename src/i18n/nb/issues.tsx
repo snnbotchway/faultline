@@ -210,6 +210,7 @@ export const issues: Messages['issues'] = {
     user: 'Bruker',
     sdk: 'SDK',
     userReports: 'Brukerrapporter',
+    contexts: { app: 'App', browser: 'Nettleser', culture: 'Språk og region', device: 'Enhet', gpu: 'Grafikkort', os: 'Operativsystem', response: 'Svar', runtime: 'Kjøretid', trace: 'Sporing' },
     anonymous: 'Anonym',
     openEvent: (who) => `${who}, åpne hendelsen`,
     mergedFingerprints: 'Sammenslåtte fingeravtrykk',

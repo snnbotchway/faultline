@@ -225,6 +225,8 @@ export const issues = {
     sdk: 'SDK',
     userReports: 'User reports',
     anonymous: 'Anonymous',
+    // The headings of the contexts SDKs send under these names; any other context is headed by its own name.
+    contexts: { app: 'App', browser: 'Browser', culture: 'Culture', device: 'Device', gpu: 'GPU', os: 'OS', response: 'Response', runtime: 'Runtime', trace: 'Trace' },
     openEvent: (who: string) => `${who}, open event`,
     mergedFingerprints: 'Merged fingerprints',
     selectFingerprint: (id: string) => `Select fingerprint ${id}`,

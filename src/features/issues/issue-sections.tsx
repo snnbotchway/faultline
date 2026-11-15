@@ -323,7 +323,7 @@ export function ContextRail({ event }: { event: IssueEvent }) {
       {contexts
         .filter(([, context]) => context && typeof context === 'object' && pairsOf(context).length > 0)
         .map(([name, context]) => (
-          <Section key={name} title={name}>
+          <Section key={name} title={Object.hasOwn(t.contexts, name) ? t.contexts[name as keyof typeof t.contexts] : name}>
             <Pairs pairs={pairsOf(context)} />
           </Section>
         ))}

@@ -361,7 +361,7 @@ export function SkipLink() {
         event.preventDefault()
         document.getElementById(MAIN_ID)?.focus({ preventScroll: true })
       }}
-      className="fixed top-0 left-0 z-[70] flex h-11 min-w-44 -translate-y-full items-center border-r border-b bg-card px-3 text-sm font-medium shadow-float transition-transform focus:translate-y-0 md:px-4 motion-reduce:transition-none"
+      className="fixed top-0 left-0 z-[70] flex h-11 min-w-36 -translate-y-full items-center border-r border-b bg-card px-3 text-sm font-medium shadow-float transition-transform focus:translate-y-0 md:px-4 motion-reduce:transition-none"
     >
       Skip to content
     </a>

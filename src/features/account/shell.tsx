@@ -22,7 +22,7 @@ export function BareShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       <SkipLink />
       <header className="flex h-11 shrink-0 items-center gap-1 border-b px-3 md:px-4">
-        <Link to="/" aria-label="Faultline" className="mr-auto">
+        <Link to="/" state={{ projectList: true }} aria-label="Faultline" className="mr-auto">
           <Wordmark />
         </Link>
         <Button variant="ghost" size="sm" className="max-lg:h-11" asChild>

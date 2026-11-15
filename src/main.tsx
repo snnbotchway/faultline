@@ -16,6 +16,10 @@ declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
+  interface HistoryState {
+    // Set by the Faultline mark: the user asked for home, so it stays on the project list even with a single project.
+    projectList?: boolean
+  }
 }
 
 // The session ended on the server (expired, or signed out elsewhere): send the user back through sign-in.

@@ -5,6 +5,10 @@ All notable changes to Faultline are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- With a single project, the Faultline mark shows the project list instead of reopening the project's issues.
+
 ## [0.4.0] - 2026-11-15
 
 Tested against GlitchTip 7.0.0.

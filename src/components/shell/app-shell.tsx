@@ -117,7 +117,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b px-3 md:px-4">
-      <Link to="/" aria-label={t.shell.home} className="flex h-11 items-center">
+      <Link to="/" state={{ projectList: true }} aria-label={t.shell.home} className="flex h-11 items-center">
         <Wordmark />
       </Link>
       <div className="flex min-w-0 items-center gap-1">

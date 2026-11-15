@@ -69,3 +69,9 @@ test('a pick is kept in this browser, and clearing it follows the browser again'
   await setLocale(undefined)
   expect([localStorage.getItem('language'), document.documentElement.lang]).toEqual([null, 'en'])
 })
+
+test('a pick overtaken by a later one while loading is not applied, so it is not saved either', async () => {
+  const [first, last] = await Promise.all([setLocale(Locale.fr), setLocale(Locale.nb)])
+  expect([first, last]).toEqual([false, true])
+  expect(localStorage.getItem('language')).toBe(Locale.nb)
+})

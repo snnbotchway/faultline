@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { currentUserQuery } from '@/api/organizations'
-import { useSaveOption } from './options-sync'
+import { SyncedOption, useSaveOption } from './options-sync'
 import { Theme, getTheme, isTheme, setTheme } from './theme'
 
 /**
@@ -20,6 +20,6 @@ export function useChooseTheme() {
   const save = useSaveOption()
   return (theme: Theme) => {
     setTheme(theme)
-    save('preferredTheme', theme)
+    save(SyncedOption.preferredTheme, theme)
   }
 }

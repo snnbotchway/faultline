@@ -44,17 +44,27 @@ async function apply(locale: Locale): Promise<boolean> {
  * Loads this browser's language before the first render, as public/theme.js applies the theme, so the first paint is
  * already in it. A language that fails to load leaves English.
  */
-export const startLocale = () => apply(chosenLocale() ?? browserLocale(navigator.languages)).catch(() => false)
+export const startLocale = () =>
+  apply(chosenLocale() ?? browserLocale(navigator.languages)).then(
+    (applied) => {
+      // The page may already be drawn in English, when the language took too long (main.tsx).
+      if (applied) emit()
+      return applied
+    },
+    () => false,
+  )
 
 /**
- * Takes a pick, or `undefined` to follow the browser again. Resolves once the screen is in the new language; rejects,
- * keeping the old one, when the language could not be fetched.
+ * Takes a pick, or `undefined` to follow the browser again. Resolves once the screen is in the new language, saying
+ * whether this pick is the one shown (a later pick may have overtaken it); rejects, keeping the old one, when the
+ * language could not be fetched.
  */
-export async function setLocale(locale: Locale | undefined) {
-  if (!(await apply(locale ?? browserLocale(navigator.languages)))) return
+export async function setLocale(locale: Locale | undefined): Promise<boolean> {
+  if (!(await apply(locale ?? browserLocale(navigator.languages)))) return false
   if (locale) localStorage.setItem(KEY, locale)
   else localStorage.removeItem(KEY)
   emit()
+  return true
 }
 
 // The words of the language on screen, for code outside a component: a notice, a page title, an error.
@@ -69,4 +79,9 @@ const subscribe = (listener: () => void) => {
 /** The words of the language on screen. A component that shows text reads them here, so it redraws when the language changes. */
 export const useT = () => useSyncExternalStore(subscribe, messages)
 export const useLocale = () => useSyncExternalStore(subscribe, currentLocale)
-export const useChosenLocale = () => useSyncExternalStore(subscribe, chosenLocale)
+// A pick whose language failed to load reads as none, so choosing it again tries again.
+const shownChoice = () => {
+  const chosen = chosenLocale()
+  return chosen === current.locale ? chosen : undefined
+}
+export const useChosenLocale = () => useSyncExternalStore(subscribe, shownChoice)

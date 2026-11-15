@@ -6,7 +6,8 @@ import { notify } from './notice'
 
 type Options = CurrentUser['options']
 // The preferences this browser picks and the account keeps, so they follow the user (theme-sync.ts, language-sync.ts).
-export type SyncedOption = 'preferredTheme' | 'language'
+export const SyncedOption = { preferredTheme: 'preferredTheme', language: 'language' } as const
+export type SyncedOption = (typeof SyncedOption)[keyof typeof SyncedOption]
 
 // One save at a time, of the latest picks: picks made while a save is out wait, and only the last of each is sent.
 let waiting: Partial<Options> = {}

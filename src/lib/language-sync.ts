@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { currentUserQuery } from '@/api/organizations'
-import { chosenLocale, isLocale, messages, setLocale, type Locale } from '@/i18n'
+import { chosenLocale, currentLocale, isLocale, messages, setLocale, type Locale } from '@/i18n'
 import { notify } from './notice'
-import { useSaveOption } from './options-sync'
+import { SyncedOption, useSaveOption } from './options-sync'
 
 /**
  * Takes the language saved on the account, when it first loads and whenever it changes. The account is the record of
@@ -17,7 +17,8 @@ export function useLanguageSync() {
   useEffect(() => {
     if (!loaded) return
     const wanted = isLocale(saved) ? saved : undefined
-    if (wanted !== chosenLocale()) void setLocale(wanted).catch(() => undefined)
+    // Also when this browser's pick failed to load at start, so it is tried again.
+    if (wanted !== chosenLocale() || (wanted && wanted !== currentLocale())) void setLocale(wanted).catch(() => undefined)
   }, [loaded, saved])
 }
 
@@ -26,7 +27,7 @@ export function useChooseLanguage() {
   const save = useSaveOption()
   return (locale: Locale | undefined) =>
     void setLocale(locale).then(
-      () => save('language', locale ?? null),
+      (applied) => applied && save(SyncedOption.language, locale ?? null),
       () => notify(messages().shell.language.loadFailed, true),
     )
 }

@@ -26,8 +26,10 @@ setSignedOutHandler(() => {
   void router.navigate({ to: '/login', search: { next: href } })
 })
 
-// The page stays blank until this browser's language is loaded, so it never paints in English first.
-void startLocale().then(() =>
+// The page waits for this browser's language, so it does not paint in English first; but not for long, since a
+// stalled request would leave it blank. The language then replaces English when it arrives.
+const LANGUAGE_WAIT_MS = 2500
+void Promise.race([startLocale(), new Promise((resolve) => setTimeout(resolve, LANGUAGE_WAIT_MS))]).then(() =>
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>

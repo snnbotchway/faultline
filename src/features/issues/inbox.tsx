@@ -135,8 +135,12 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
     const next = loadedIds[Math.max(0, Math.min(loadedIds.length - 1, index + step))]
     if (!next) return
     setCursor(next)
-    // Focus follows the cursor, so a screen reader reads the row and Enter opens it as the link it is.
-    document.querySelector<HTMLElement>(`[data-issue="${next}"] a`)?.focus({ preventScroll: true })
+    // Focus follows the cursor, so a screen reader reads the row and Enter opens it as the link it is. The row is
+    // scrolled here rather than whenever it becomes current: a click that moves the cursor must not move the row
+    // out from under the pointer before the click lands.
+    const row = document.querySelector<HTMLElement>(`[data-issue="${next}"]`)
+    row?.scrollIntoView({ block: 'nearest' })
+    row?.querySelector('a')?.focus({ preventScroll: true })
   }
 
   const { toggle, extendTo } = selection
@@ -147,8 +151,10 @@ export function Inbox({ org, search }: { org: string; search: InboxSearch }) {
       unfold: (id) => setUnfolded((open) => (open === id ? undefined : id)),
       assign: (id) => setAssigning(oneIssue(id)),
       setStatus: (id, status) => void changeStatus(oneIssue(id), status),
+      // The cursor follows focus too, so a Tab or a click into a row makes `e`, `x` and `o` act on that issue.
+      focus: setCursor,
     }),
-    [toggle, extendTo, loadedIds, changeStatus, setAssigning, setUnfolded],
+    [toggle, extendTo, loadedIds, changeStatus, setAssigning, setUnfolded, setCursor],
   )
 
   const ticked = (id: string) => selection.all || selection.ids.has(id)

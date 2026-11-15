@@ -16,6 +16,7 @@ export type RowHandlers = {
   unfold: (id: string) => void
   assign: (id: string) => void
   setStatus: (id: string, status: IssueStatus) => void
+  focus: (id: string) => void
 }
 
 // The unfolded row: enough of the latest event to decide what to do without leaving the list.

@@ -12,11 +12,17 @@ test('the inbox is worked from the keyboard', async ({ page }) => {
   await page.keyboard.press('k')
   await expect(links.first()).toBeFocused()
 
+  // The cursor follows focus, however it got there.
+  const third = page.getByRole('listitem').filter({ has: page.getByRole('link') }).nth(2)
+  await third.getByRole('link').focus()
   await page.keyboard.press('x')
+  await expect(third.getByRole('checkbox')).toBeChecked()
   await expect(page.getByRole('toolbar', { name: 'Selection' })).toContainText('1 selected')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('toolbar', { name: 'Selection' })).toHaveCount(0)
 
+  await page.keyboard.press('k')
+  await page.keyboard.press('k')
   const opened = (await links.first().getAttribute('href'))!
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(new RegExp(`${opened}$`))

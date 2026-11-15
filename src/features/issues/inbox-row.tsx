@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { ChevronDown, MessageSquare } from 'lucide-react'
-import { memo, useEffect, useRef } from 'react'
+import { memo, useRef } from 'react'
 import { IssueKind, IssueStatus, type Issue } from '@/api/issues'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,13 +46,9 @@ type Props = {
 // Memoised: moving the cursor or ticking a box re-renders only the rows whose own props changed.
 export const IssueRow = memo(function IssueRow({ org, row, marks, view, selected, current, unfolded, canWrite, handlers }: Props) {
   const { issue, buckets, trend } = row
-  const ref = useRef<HTMLLIElement>(null)
   const shift = useRef(false)
-  useEffect(() => {
-    if (current) ref.current?.scrollIntoView({ block: 'nearest' })
-  }, [current])
   return (
-    <li ref={ref} data-issue={issue.id} className="scroll-mt-28 scroll-mb-20 border-b">
+    <li data-issue={issue.id} onFocus={() => handlers.focus(issue.id)} className="scroll-mt-28 scroll-mb-20 border-b">
       <div
         className={cn(
           'relative grid items-center pr-3 transition-colors duration-100 lg:pr-4',

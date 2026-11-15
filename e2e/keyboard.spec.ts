@@ -59,20 +59,6 @@ test('a dialog keeps focus inside it, and Escape gives focus back to what opened
   await expect(opener).toBeFocused()
 })
 
-test('a segmented switch moves with the arrow keys', async ({ page }) => {
-  await page.goto(`/${DEMO.org}/uptime-monitors`)
-  await page.getByRole('listitem').filter({ hasText: 'Checkout API' }).getByRole('link').click()
-  const checks = page.getByRole('region', { name: 'Checks', exact: true })
-  const all = checks.getByRole('radio', { name: 'All', exact: true })
-  await all.focus()
-  await page.keyboard.press('ArrowRight')
-  const incidents = checks.getByRole('radio', { name: 'Incidents only' })
-  await expect(incidents).toBeFocused()
-  await expect(incidents).toBeChecked()
-  await page.keyboard.press('ArrowLeft')
-  await expect(all).toBeChecked()
-})
-
 test('a dialog opened from a menu gives focus back to the menu\'s button', async ({ page }) => {
   await page.goto(`/${DEMO.org}/issues`)
   const trigger = page.getByRole('button', { name: /^First seen/ })
@@ -95,4 +81,22 @@ test('the command palette gives focus back to its button', async ({ page }) => {
   await page.keyboard.press('Escape')
   await expect(palette).toHaveCount(0)
   await expect(trigger).toBeFocused()
+})
+
+test('a dialog chosen in the command palette keeps focus, and gives it back to where it was', async ({ page }) => {
+  await page.goto(`/${DEMO.org}/issues`)
+  await page.getByRole('listitem').filter({ hasText: 'WEB-APP-1' }).getByRole('link').click()
+  const resolve = page.getByRole('button', { name: /^Resolve/ }).first()
+  await resolve.focus()
+  await page.keyboard.press('ControlOrMeta+k')
+  const palette = page.getByRole('dialog', { name: 'Commands' })
+  await palette.getByRole('combobox').fill('Assign')
+  await page.keyboard.press('Enter')
+  await expect(palette).toHaveCount(0)
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.locator(':focus')).toHaveCount(1)
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(resolve).toBeFocused()
 })

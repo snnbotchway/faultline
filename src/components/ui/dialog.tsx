@@ -12,6 +12,7 @@ export const DialogClose = Primitive.Close
 // takes the latest one outside itself as its opener. Focus in a menu or popover counts as focus on the button that
 // opened it, as the menu is gone by the time the dialog closes.
 const recent: HTMLElement[] = []
+const REMEMBERED = 3
 const FLOATING = '[data-radix-popper-content-wrapper]'
 
 function control(element: HTMLElement): HTMLElement | undefined {
@@ -28,7 +29,7 @@ if (typeof document !== 'undefined') {
       const focused = event.target instanceof HTMLElement ? control(event.target) : undefined
       if (!focused || focused === recent[0]) return
       recent.unshift(focused)
-      recent.length = Math.min(recent.length, 3)
+      recent.length = Math.min(recent.length, REMEMBERED)
     },
     true,
   )
@@ -37,7 +38,7 @@ if (typeof document !== 'undefined') {
 export function DialogContent({ className, children, onCloseAutoFocus, ...props }: React.ComponentProps<typeof Primitive.Content>) {
   const opener = useRef<HTMLElement | undefined>(undefined)
   const remember = useCallback((node: HTMLDivElement | null) => {
-    if (node) opener.current = recent.find((element) => !node.contains(element))
+    if (node) opener.current = recent.find((element) => element.isConnected && !node.contains(element))
   }, [])
   return (
     <Primitive.Portal>
@@ -53,6 +54,9 @@ export function DialogContent({ className, children, onCloseAutoFocus, ...props 
           const target = opener.current
           if (event.defaultPrevented || !target?.isConnected) return
           event.preventDefault()
+          // A dialog opened from this one (the palette's choice) already holds focus; leave it there.
+          const active = document.activeElement
+          if (active && active !== document.body && active.isConnected) return
           target.focus()
         }}
         {...props}

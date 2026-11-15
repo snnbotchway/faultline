@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState, type ReactNode, type Ref, type RefObject } from 'react'
 import { Scope, instanceSettingsQuery, organizationQuery, projectsQuery } from '@/api/organizations'
 import { USAGE_DAYS, USAGE_KINDS, isProjectKind, licenseEmailQuery, totalOf, usageDaysQuery, usagePeriodQuery, type UsageDay } from '@/api/usage'
 import { Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
+import { Kbd } from '@/components/ui/kbd'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
 import { plural } from '@/lib/text'
@@ -15,10 +16,11 @@ import { useAccess } from './access'
 import { DayBars, type DayPick } from './day-bars'
 import { SettingsBar, Sheet } from './parts'
 import { useFold } from './rows'
+import { ProjectTab } from './project-tabs'
 import { DropRows } from './usage-drops'
 import { ProjectRows } from './usage-projects'
-import { FIGURES, FigureRow, GRID, SHARE, SLOT } from './usage-rows'
-import { KIND_LABEL, KIND_WORD, exactCount, organizationDropRate, share, stepDay } from './usage'
+import { FIGURES, FigureRow, GRID, SHARE, SLOT, Share } from './usage-rows'
+import { KIND_LABEL, KIND_WORD, exactCount, organizationDropRate, stepDay } from './usage'
 
 const DROPPED = 'dropped'
 const TODAY = 'Today'
@@ -46,7 +48,14 @@ export function UsagePage({ org }: { org: string }) {
   const pinned = found < 0 ? undefined : found
   const setPinned = (index: number | undefined) => setPinnedDate(index === undefined ? undefined : days?.[index]?.date)
   const step = (by: -1 | 1) => days && setPinned(stepDay(pinned, by, days.length))
-  useHotkeys({ ArrowLeft: () => step(-1), ArrowRight: () => step(1), Escape: () => setPinned(undefined) })
+  const previousDay = useRef<HTMLButtonElement>(null)
+  const allDays = useRef<HTMLButtonElement>(null)
+  // The button back to all days leaves with the pinned day, so focus on it moves to Previous day, not to the page.
+  const clear = (refocus: boolean) => {
+    if (refocus || document.activeElement === allDays.current) previousDay.current?.focus()
+    setPinned(undefined)
+  }
+  useHotkeys({ ArrowLeft: () => step(-1), ArrowRight: () => step(1), Escape: () => clear(false) })
 
   const bar = <SettingsBar org={org} title="Usage" />
   if (usage.isError || period.isError)
@@ -73,7 +82,9 @@ export function UsagePage({ org }: { org: string }) {
   const drops = (
     <DropRows org={org} organization={organizationRate} accepting={organization.isAcceptingEvents} projects={projects} open={row.is(DROPPED)} onToggle={() => row.toggle(DROPPED)} />
   )
-  if (totalOf(totals) === 0)
+  if (totalOf(totals) === 0) {
+    // Events arrive once an SDK has a project's DSN; a project that never sent one is the likeliest gap.
+    const setUp = projects.find((project) => !project.firstEvent) ?? projects[0]
     return (
       <>
         {bar}
@@ -81,28 +92,39 @@ export function UsagePage({ org }: { org: string }) {
           {/* Dropping everything is one reason there is nothing to show. */}
           {drops}
           <Screen title={`No events in the last ${PERIOD}`}>
-            {projects.length === 0 && can(Scope.projectWrite) && (
+            {setUp ? (
               <Button asChild>
-                <Link to="/$org/settings/projects/new" params={{ org }}>
-                  New project
+                <Link to="/$org/settings/projects/$project" params={{ org, project: setUp.slug ?? '' }} search={{ tab: ProjectTab.setup }}>
+                  Set up {setUp.slug}
                 </Link>
               </Button>
+            ) : (
+              can(Scope.projectWrite) && (
+                <Button asChild>
+                  <Link to="/$org/settings/projects/new" params={{ org }}>
+                    New project
+                  </Link>
+                </Button>
+              )
             )}
           </Screen>
         </Sheet>
       </>
     )
+  }
 
   const picked = hovered ?? pinned
   const counts = picked === undefined ? totals : days[picked]!.counts
   const pick: DayPick = { picked, hover: setHovered, pin: (index, toggle) => setPinned(toggle && pinned === index ? undefined : index) }
   const allBuckets = days.map((day) => totalOf(day.counts))
+  const peak = Math.max(...allBuckets)
+  const peakDay = allBuckets.indexOf(peak)
 
   return (
     <>
       {bar}
       <Sheet>
-        <AxisHeader days={days} picked={picked} pinned={pinned} onStep={step} onClear={() => setPinned(undefined)} />
+        <AxisHeader days={days} picked={picked} pinned={pinned} onStep={step} onClear={() => clear(true)} previousDay={previousDay} allDays={allDays} />
 
         <section aria-label="All events" className={cn(GRID, 'items-end border-b bg-card py-5')}>
           <div>
@@ -112,7 +134,9 @@ export function UsagePage({ org }: { org: string }) {
               <span className={SHARE} />
               <span className={SLOT} />
             </p>
-            <p className="mono mt-1 text-xs text-muted-foreground">peak {exactCount(Math.max(...allBuckets, 0))}/day</p>
+            <p className="mono mt-1 text-xs text-muted-foreground">
+              peak {exactCount(peak)} {peakDay === days.length - 1 ? 'today' : `on ${dayName(days[peakDay]!.date)}`}
+            </p>
           </div>
           <DayBars label="All events a day" buckets={allBuckets} height={64} picked={picked} pick={pick} className="max-lg:mt-3" />
         </section>
@@ -127,13 +151,16 @@ export function UsagePage({ org }: { org: string }) {
             <section key={kind} aria-label={KIND_LABEL[kind]} className={cn('border-b', open && 'bg-card')}>
               <FigureRow
                 className="items-end py-3"
+                // The chart under the label takes a tap as a day, so on a phone the label line reaches the row's top
+                // edge and is 44px tall, a target of its own.
+                foldClassName="max-lg:-mt-3 max-lg:-mb-2 max-lg:min-h-11 max-lg:pt-3"
                 open={open}
                 onToggle={foldable ? () => row.toggle(kind) : undefined}
                 figures={
                   <>
                     <span className="min-w-0 flex-1 font-medium">{KIND_LABEL[kind]}</span>
                     <strong className="mono font-semibold">{exactCount(counts[kind])}</strong>
-                    <span className={SHARE}>{share(counts[kind], totalOf(counts))}</span>
+                    <Share part={counts[kind]} whole={totalOf(counts)} of="all events" />
                   </>
                 }
                 aside={<DayBars label={`${KIND_LABEL[kind]} a day`} buckets={buckets} height={32} picked={picked} pick={pick} className="max-lg:mt-2" />}
@@ -169,28 +196,44 @@ export function UsagePage({ org }: { org: string }) {
   )
 }
 
-function AxisHeader({ days, picked, pinned, onStep, onClear }: { days: UsageDay[]; picked: number | undefined; pinned: number | undefined; onStep: (by: -1 | 1) => void; onClear: () => void }) {
+function AxisHeader({
+  days,
+  picked,
+  pinned,
+  onStep,
+  onClear,
+  previousDay,
+  allDays,
+}: {
+  days: UsageDay[]
+  picked: number | undefined
+  pinned: number | undefined
+  onStep: (by: -1 | 1) => void
+  onClear: () => void
+  previousDay: RefObject<HTMLButtonElement | null>
+  allDays: RefObject<HTMLButtonElement | null>
+}) {
   const pinnedDay = pinned === undefined ? undefined : days[pinned]
   return (
     <div className={cn(GRID, 'sticky top-11 z-10 items-center border-b bg-muted max-lg:pb-1')}>
       <div className="flex h-11 items-center lg:h-9">
-        <h2 className="label-caps w-28 whitespace-nowrap">{picked === undefined ? `Last ${PERIOD}` : dayLabel(days, picked)}</h2>
+        <h2 className={cn('w-28 whitespace-nowrap', picked === undefined ? 'label-caps' : 'mono text-xs')}>{picked === undefined ? `Last ${PERIOD}` : dayLabel(days, picked)}</h2>
+        <StepButton ref={previousDay} label="Previous day" keys="ArrowLeft" off={pinned === 0} onClick={() => onStep(-1)}>
+          <ChevronLeft />
+          <Kbd aria-hidden>←</Kbd>
+        </StepButton>
+        <StepButton label="Next day" keys="ArrowRight" off={pinned === days.length - 1} onClick={() => onStep(1)}>
+          <Kbd aria-hidden>→</Kbd>
+          <ChevronRight />
+        </StepButton>
         {pinned !== undefined && (
-          <>
-            <Button variant="ghost" size="icon-sm" className="max-lg:size-11" aria-label="Previous day" disabled={pinned === 0} onClick={() => onStep(-1)}>
-              <ChevronLeft />
-            </Button>
-            <Button variant="ghost" size="icon-sm" className="max-lg:size-11" aria-label="Next day" disabled={pinned === days.length - 1} onClick={() => onStep(1)}>
-              <ChevronRight />
-            </Button>
-            <Button size="bar" className="ml-auto gap-1" onClick={onClear}>
-              <X className="size-3" />
-              All {PERIOD}
-            </Button>
-          </>
+          <Button ref={allDays} size="bar" className="ml-auto gap-1" onClick={onClear}>
+            <X className="size-3" />
+            All {PERIOD}
+          </Button>
         )}
       </div>
-      <div className="mono flex justify-between text-xs text-muted-foreground" aria-hidden>
+      <div className="mono flex h-4 items-center justify-between text-xs text-muted-foreground" aria-hidden>
         <span>{dayName(days[0]!.date)}</span>
         <span>{dayName(days[Math.floor(days.length / 2)]!.date)}</span>
         <span>{TODAY}</span>
@@ -200,6 +243,24 @@ function AxisHeader({ days, picked, pinned, onStep, onClear }: { days: UsageDay[
           `${dayLabel(days, pinned!)}: ${plural(exactCount(totalOf(pinnedDay.counts)), 'event')}. ${USAGE_KINDS.map((kind) => plural(exactCount(pinnedDay.counts[kind]), ...KIND_WORD[kind])).join(', ')}.`}
       </p>
     </div>
+  )
+}
+
+// At either end the step is announced as unavailable but keeps focus, which a disabled button would drop to the page.
+function StepButton({ ref, label, keys, off, onClick, children }: { ref?: Ref<HTMLButtonElement>; label: string; keys: string; off: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <Button
+      ref={ref}
+      variant="ghost"
+      size="icon-sm"
+      className="gap-1 aria-disabled:cursor-default aria-disabled:opacity-50 aria-disabled:hover:bg-transparent max-lg:size-11 lg:w-auto lg:px-1"
+      aria-label={label}
+      aria-keyshortcuts={keys}
+      aria-disabled={off || undefined}
+      onClick={() => !off && onClick()}
+    >
+      {children}
+    </Button>
   )
 }
 

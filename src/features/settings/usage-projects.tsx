@@ -9,8 +9,8 @@ import { LevelGlyph } from '@/features/issues/level'
 import { plural } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { DayBars } from './day-bars'
-import { FIGURES, GRID, PROJECT_ROW, ProjectRow, SHARE, SLOT } from './usage-rows'
-import { KIND_LABEL, effectiveDropRate, exactCount, share } from './usage'
+import { FIGURES, GRID, PROJECT_ROW, ProjectRow, SLOT, Share } from './usage-rows'
+import { KIND_LABEL, KIND_WORD, effectiveDropRate, exactCount } from './usage'
 
 // Each project is its own request, so a large organization asks about this many until the rest are wanted.
 const FIRST_PROJECTS = 20
@@ -114,7 +114,7 @@ export function ProjectRows({
                   )}
                 </span>
                 <span className="mono">{exactCount(count)}</span>
-                <span className={SHARE}>{share(count, total)}</span>
+                <Share part={count} whole={total} of={KIND_WORD[kind][1]} />
               </>
             }
             aside={<DayBars label={`${project.slug} a day`} buckets={buckets} height={BAR_HEIGHT} peak={peak} picked={picked} className="max-lg:mt-2" />}
@@ -126,7 +126,7 @@ export function ProjectRows({
           <span className={FIGURES}>
             <span className="min-w-0 flex-1">Other projects</span>
             <span className="mono">{exactCount(rest)}</span>
-            <span className={SHARE}>{share(rest, total)}</span>
+            <Share part={rest} whole={total} of={KIND_WORD[kind][1]} />
             <span className={SLOT} />
           </span>
         </li>

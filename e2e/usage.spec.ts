@@ -28,5 +28,6 @@ test('usage shows what the organization took in, the projects behind its errors,
   await expect(page.getByRole('heading', { name: 'Today' })).toHaveCount(0)
   await page.getByRole('button', { name: 'All 30 days' }).click()
   await expect(page.getByRole('heading', { name: 'Last 30 days' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Previous day' })).toBeFocused()
   expect(await count('Errors')).toBe(errors)
 })

@@ -136,8 +136,9 @@ Uptime draws checks and downtime on the same rules:
 
 Usage draws what an organization took in on the same rules:
 
-- **One row a kind.** All events, then errors, transactions, logs and uptime checks, each a row of daily bars on one 30-day axis that is labelled once, in a header that stays under the page bar. Each row is scaled to its own peak and its count gives the magnitude, as in the inbox; only the all-events row is labelled with its peak. A project's bars under a kind are scaled to that kind's peak, so projects compare, and they draw as each project's count arrives.
-- **Picking a day.** A click, a tap or a drag on any chart picks the nearest day, and every figure on the page becomes that day's. The picked column is a band in `selected` with its bar in full `foreground`, and the rest is `dimmed`. The header names the day in place of the period, with previous and next chevrons and a button back to all 30 days.
+- **One row a kind.** All events, then errors, transactions, logs and uptime checks, each a row of daily bars on one 30-day axis that is labelled once, in a header that stays under the page bar. Each row is scaled to its own peak and its count gives the magnitude, as in the inbox; only the all-events row is labelled with its peak and the day it fell on (`peak 6,238 on Nov 14`). A project's bars under a kind are scaled to that kind's peak, so projects compare, and they draw as each project's count arrives.
+- **Picking a day.** A click, a tap or a drag on any chart picks the nearest day, and every figure on the page becomes that day's. The picked bar is full `foreground` and the rest is `dimmed`; on the charts that pick, its column is also a band in `selected`. A project's short trace has no band, since there it reads as a second bar stacked on the day's. The header names the day in mono, as the axis does, in place of the period. Its previous and next chevrons are always there, with their key hints on desktop: with no day picked, previous picks today. A button back to all 30 days shows while a day is picked, and focus moves to previous when it is used.
+- **Folding on a phone.** A kind's chart takes a tap as a day, so the row folds from its label line, which is a 44px target of its own.
 
 ## Components
 

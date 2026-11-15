@@ -49,7 +49,8 @@ export function DayBars({ label, buckets, height, peak, picked, pick, className 
       })}
     >
       {heights.map((barHeight, index) => (
-        <span key={index} className={cn('flex h-full min-w-0 flex-1 items-end', picked === index && 'bg-selected')}>
+        // Only a chart that picks draws the band: on a short trace without one it reads as a second bar stacked on the day's.
+        <span key={index} className={cn('flex h-full min-w-0 flex-1 items-end', pick && picked === index && 'bg-selected')}>
           <span className={cn('w-full', picked === index ? 'bg-foreground' : 'bg-foreground/50', picked !== undefined && picked !== index && 'dimmed')} style={{ height: barHeight }} />
         </span>
       ))}

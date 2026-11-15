@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { TaskActions, TaskDialog } from '@/components/ui/task-dialog'
+import { valueName } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { DEFAULT_SORT, SORTS, TIME_RANGES, localToUtc, timeRange, utcToLocal, type InboxSearch } from './search'
 import { STATUS_VIEWS, isView, type StatusView } from './status'
@@ -129,7 +130,7 @@ export function SortMenu({ sort, disabled, onChange }: { sort: IssueSort | undef
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label={`Sort: ${label}`} title="Sort" disabled={disabled}>
+        <Button variant="ghost" size="sm" className="max-lg:size-11 max-lg:px-0" aria-label={valueName('Sort', label)} title="Sort" disabled={disabled}>
           <ArrowDownWideNarrow />
           <span className="max-lg:hidden">{label}</span>
         </Button>
@@ -163,7 +164,7 @@ export function TimeRangeMenu({
   const [picking, setPicking] = useState(false)
   const range = timeRange(search)
   // The backend filters the range on when an issue was first seen, not on recent activity.
-  const label = `First seen: ${range.label}`
+  const label = valueName('First seen', range.label)
   const custom = range.start === undefined && (search.start !== undefined || search.end !== undefined)
   return (
     <>

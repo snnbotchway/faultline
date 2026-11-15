@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronsUpDown } from 'lucide-react'
 import { projectsQuery } from '@/api/organizations'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { plural } from '@/lib/text'
+import { plural, valueName } from '@/lib/text'
 import { cn } from '@/lib/utils'
 
 const ALL = ''
@@ -17,7 +17,7 @@ export function ProjectMenu({ org, value, onChange, className }: { org: string; 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={`Project: ${label}`}
+        aria-label={valueName('Project', label)}
         className={cn('flex h-7 min-w-0 shrink-0 items-center gap-2 border bg-card px-3 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11', className)}
       >
         <span className={cn('truncate', current && 'mono')}>{label}</span>

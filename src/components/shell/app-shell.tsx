@@ -21,6 +21,7 @@ import { NewOrganizationDialog } from '@/features/settings/new-organization'
 import { useHotkeys } from '@/lib/hotkeys'
 import { holdNotice, NoticeHold, releaseNotice, useNotice } from '@/lib/notice'
 import { signOut } from '@/lib/session'
+import { valueName } from '@/lib/text'
 import { Theme, useTheme } from '@/lib/theme'
 import { useChooseTheme, useThemeSync } from '@/lib/theme-sync'
 import { cn } from '@/lib/utils'
@@ -117,7 +118,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
         <DropdownMenu>
           <DropdownMenuTrigger
             className="flex h-7 min-w-0 items-center gap-2 px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent max-lg:h-11 lg:max-w-40 xl:max-w-56"
-            aria-label={`Organization: ${organizationName}`}
+            aria-label={valueName('Organization', organizationName)}
             title={organizationName}
           >
             <span className="truncate">{organizationName}</span>

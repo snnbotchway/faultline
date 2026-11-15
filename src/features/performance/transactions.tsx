@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import { CountLabel } from '@/components/count-label'
 import { compact } from '@/features/issues/format'
 import { LOADING, UNAVAILABLE, counted, type Count } from '@/lib/format'
-import { plural } from '@/lib/text'
+import { plural, valueName } from '@/lib/text'
 import { useHotkeys } from '@/lib/hotkeys'
 import { isDesktop, openBeside } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
@@ -141,7 +141,7 @@ function SortMenu({ orders, order, onChange }: { orders: { value: string; label:
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label={`Sort: ${label}`} title="Sort">
+        <Button variant="ghost" size="sm" className="min-w-0 max-lg:size-11 max-lg:px-0" aria-label={valueName('Sort', label)} title="Sort">
           <ArrowDownWideNarrow />
           <span className="truncate max-lg:hidden">{label}</span>
         </Button>

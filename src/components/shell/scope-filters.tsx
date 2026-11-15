@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { InboxSearch } from '@/features/issues/search'
 import { useAccess } from '@/features/settings/access'
+import { valueName } from '@/lib/text'
 import { cn } from '@/lib/utils'
 
 const TRIGGER = 'flex h-7 min-w-0 items-center gap-2 px-2 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11 max-lg:border max-lg:bg-card max-lg:px-3'
@@ -61,7 +62,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
   return (
     <div className={cn('flex min-w-0 items-center gap-1', className)}>
       <DropdownMenu>
-        <DropdownMenuTrigger className={TRIGGER} aria-label={`Projects: ${projectLabel}`}>
+        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName('Projects', projectLabel)}>
           <span className={cn('truncate', picked.length === 1 && 'mono')}>{projectLabel}</span>
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
@@ -98,7 +99,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
       </DropdownMenu>
       <span className="text-muted-foreground max-lg:hidden">/</span>
       <DropdownMenu>
-        <DropdownMenuTrigger className={TRIGGER} aria-label={`Environment: ${search.environment ?? 'All environments'}`}>
+        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName('Environment', search.environment ?? 'All environments')}>
           <span className={cn('truncate', search.environment && 'mono')}>{search.environment ?? 'All environments'}</span>
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>

@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHotkeys } from '@/lib/hotkeys'
 import { hitsText } from '@/lib/format'
-import { plural } from '@/lib/text'
+import { plural, valueName } from '@/lib/text'
 import { isDesktop, useIsDesktop } from '@/lib/layout'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
@@ -31,7 +31,7 @@ function RangeMenu({ search, set }: { search: LogSearch; set: SetSearch }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={`Time range: ${range.value}, ${range.label}`}>
+        <Button size="sm" className="shrink-0 gap-2 max-lg:h-11" aria-label={valueName('Time range', range.value)} title={range.label}>
           <CalendarDays />
           <span className="mono">{range.value}</span>
         </Button>

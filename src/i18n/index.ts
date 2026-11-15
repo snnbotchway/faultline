@@ -3,7 +3,7 @@ import { en, type Messages } from './en'
 import { formatIn } from './format'
 import { Locale, browserLocale, isLocale } from './locale'
 
-export { LOCALE_NAMES, Locale, isLocale } from './locale'
+export { LOCALE_NAMES, Locale, browserLocale, isLocale } from './locale'
 export { count, hourStyle, localized, percent, plural } from './format'
 export type { Messages } from './en'
 

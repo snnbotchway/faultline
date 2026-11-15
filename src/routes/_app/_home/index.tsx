@@ -14,5 +14,7 @@ export const Route = createFileRoute('/_app/_home/')({
     const all = lists.flatMap((list, index) => (list ?? []).map((project) => ({ org: organizations[index]!.slug, project })))
     if (all.length === 1) throw redirect({ ...projectLink(all[0]!.org, all[0]!.project), replace: true })
   },
+  // The list's own loading rows, while the loader decides whether to open the only project.
+  pendingComponent: ProjectList,
   component: ProjectList,
 })

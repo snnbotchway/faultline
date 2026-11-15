@@ -12,7 +12,7 @@ export const shell: Messages['shell'] = {
     settings: 'Innstillinger',
   },
   sectionsNav: 'Seksjoner',
-  home: 'Faultline, alle prosjekter',
+  home: 'Faultline, hjem',
   organization: 'Organisasjon',
   projects: 'Prosjekter',
   members: 'Medlemmer',

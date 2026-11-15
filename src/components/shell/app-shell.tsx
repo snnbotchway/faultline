@@ -243,7 +243,15 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
           <Ellipsis className="size-4" />
           {t.shell.more}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="top" className="w-56">
+        <DropdownMenuContent
+          align="end"
+          side="top"
+          className="w-56"
+          // Left goes back from a list opened from More, as it would close a submenu.
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft' && view !== MoreView.main) setView(MoreView.main)
+          }}
+        >
           {view !== MoreView.main ? (
             <>
               <DropdownMenuItem
@@ -281,7 +289,6 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
               <DropdownMenuSeparator />
               <DropdownMenuLabel>{t.shell.theme}</DropdownMenuLabel>
               <ThemeItems />
-              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={(event) => {
                   event.preventDefault()
@@ -292,6 +299,7 @@ function TabBar({ org, current }: { org: string; current: string | undefined }) 
                 {t.shell.language.label}
                 <ChevronRight className="ml-auto" />
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={(event) => {
                   event.preventDefault()

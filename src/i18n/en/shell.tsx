@@ -13,7 +13,7 @@ export const shell = {
     settings: 'Settings',
   },
   sectionsNav: 'Sections',
-  home: 'Faultline, all projects',
+  home: 'Faultline, home',
   organization: 'Organization',
   projects: 'Projects',
   members: 'Members',

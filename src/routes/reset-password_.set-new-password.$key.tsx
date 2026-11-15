@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 import { FULL_BUTTON, Field, FormAlert, PasswordInput, SubmitButton } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AuthFrame } from '@/features/auth/frame'
-import { PASSWORD_RULE } from '@/features/auth/forms'
 import { useSessionForm } from '@/features/auth/session-form'
+import { useT } from '@/i18n'
 
 // The link in the reset email.
 export const Route = createFileRoute('/reset-password_/set-new-password/$key')({ component: SetNewPassword })
@@ -19,7 +19,8 @@ function SetNewPassword() {
   const queryClient = useQueryClient()
   const usable = useQuery({ queryKey: ['auth', 'reset-key', key], queryFn: () => auth.resetKeyIsValid(key), staleTime: Infinity, retry: false })
   const [expired, setExpired] = useState(false)
-  const form = useSessionForm('set your password')
+  const t = useT().auth
+  const form = useSessionForm(t.reset.setAction)
   const [password, setPassword] = useState('')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -37,7 +38,7 @@ function SetNewPassword() {
 
   if (usable.isPending)
     return (
-      <AuthFrame title="Set a new password">
+      <AuthFrame title={t.reset.setNew}>
         <Skeleton className="h-10" />
       </AuthFrame>
     )
@@ -45,22 +46,22 @@ function SetNewPassword() {
   // A link works once and for a limited time. The backend reports both the same way, as an error about the key.
   if (usable.data === false || expired)
     return (
-      <AuthFrame title="This reset link has expired or was already used">
+      <AuthFrame title={t.reset.expired}>
         <Button asChild variant="default" className="max-lg:h-11">
-          <Link to="/reset-password">Send a new link</Link>
+          <Link to="/reset-password">{t.reset.sendNewLink}</Link>
         </Button>
       </AuthFrame>
     )
 
   return (
-    <AuthFrame title="Set a new password">
+    <AuthFrame title={t.reset.setNew}>
       <form noValidate className="space-y-4" onSubmit={(event) => void submit(event)}>
         <FormAlert>{form.message}</FormAlert>
-        <Field label="New password" aside={PASSWORD_RULE} error={form.fields.password}>
+        <Field label={t.newPassword} aside={t.passwordRule} error={form.fields.password}>
           {(field) => <PasswordInput {...field} name="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" autoFocus required minLength={8} />}
         </Field>
         <SubmitButton className={FULL_BUTTON} busy={form.busy}>
-          Set password
+          {t.reset.setPassword}
         </SubmitButton>
       </form>
     </AuthFrame>

@@ -5,6 +5,7 @@ import { ApiError, HttpStatus } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { CODE_INPUT, FULL_BUTTON, Field, FormAlert, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { messages, useT } from '@/i18n'
 import { askSecurityKey, supportsSecurityKeys } from '@/lib/webauthn'
 import { AuthLinks } from './frame'
 import { useSessionForm } from './session-form'
@@ -13,16 +14,18 @@ const KeyState = { idle: 'idle', waiting: 'waiting', failed: 'failed' } as const
 type KeyState = (typeof KeyState)[keyof typeof KeyState]
 
 const codeLabel = (types: MfaType[]) => {
+  const text = messages().auth.twoStep
   const app = types.includes(MfaType.totp)
   const recovery = types.includes(MfaType.recoveryCodes)
-  if (app && recovery) return 'Authenticator or recovery code'
-  return app ? 'Authenticator code' : 'Recovery code'
+  if (app && recovery) return text.appOrRecovery
+  return app ? text.app : text.recovery
 }
 
 // The second step of signing in: a code from the authenticator app, a recovery code, or a security key.
 // `onTimedOut` runs when the backend has dropped the half-finished sign-in, so it must start again.
 export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedOut: () => void }) {
-  const form = useSessionForm('check that code')
+  const { auth: t, common } = useT()
+  const form = useSessionForm(t.twoStep.checkAction)
   const [code, setCode] = useState('')
   const [key, setKey] = useState<KeyState>(KeyState.idle)
   const waiting = useRef<AbortController | null>(null)
@@ -95,34 +98,34 @@ export function TwoStepCheck({ types, onTimedOut }: { types: MfaType[]; onTimedO
             )}
           </Field>
           <SubmitButton className={FULL_BUTTON} busy={form.busy}>
-            Verify
+            {t.twoStep.verify}
           </SubmitButton>
         </form>
       )}
       {takesKey && (
         <div className={takesCode ? 'mt-6 space-y-3 border-t pt-6' : 'space-y-3'}>
-          {key === KeyState.failed && <FormAlert>{takesCode ? "That security key didn't work. Try it again, or enter a code." : "That security key didn't work. Try it again."}</FormAlert>}
+          {key === KeyState.failed && <FormAlert>{takesCode ? t.twoStep.keyFailedOrCode : t.twoStep.keyFailed}</FormAlert>}
           {key === KeyState.waiting ? (
             <div className="flex min-h-10 items-center justify-between gap-3 border bg-card px-3 max-lg:min-h-11" role="status">
               <span className="flex items-center gap-2 font-medium">
                 <KeyRound className="size-4 animate-pulse" />
-                Waiting for your security key
+                {t.twoStep.waitingForKey}
               </span>
               <Button variant="link" onClick={stopWaiting}>
-                Cancel
+                {common.cancel}
               </Button>
             </div>
           ) : (
             <Button variant={takesCode ? 'outline' : 'default'} className={FULL_BUTTON} onClick={() => void tryKey()}>
               <KeyRound />
-              {key === KeyState.failed ? 'Try the security key again' : 'Use a security key'}
+              {key === KeyState.failed ? t.twoStep.tryKeyAgain : t.twoStep.useKey}
             </Button>
           )}
         </div>
       )}
       <AuthLinks>
         <Button variant="link" onClick={() => void form.startOver()}>
-          Use another account
+          {t.useAnotherAccount}
         </Button>
       </AuthLinks>
     </>

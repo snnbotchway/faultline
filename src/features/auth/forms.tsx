@@ -2,10 +2,8 @@ import { useState } from 'react'
 import { auth, type Session } from '@/api/auth'
 import { FULL_BUTTON, Field, FormAlert, PasswordInput, SubmitButton } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { useT } from '@/i18n'
 import { useSessionForm } from './session-form'
-
-// The backend's rule; shown because the person cannot see it otherwise.
-export const PASSWORD_RULE = '8 or more characters'
 
 type Props = {
   // An address the screen already knows, such as the one an invitation was sent to.
@@ -20,8 +18,9 @@ function useCredentials(email = '') {
   return { value, set: (field: keyof typeof value) => (event: { target: { value: string } }) => setValue({ ...value, [field]: event.target.value }) }
 }
 
-export function SignInForm({ email, action = 'Sign in', onSession }: Props) {
-  const form = useSessionForm('sign you in')
+export function SignInForm({ email, action, onSession }: Props) {
+  const t = useT().auth
+  const form = useSessionForm(t.signInAction)
   const { value, set } = useCredentials(email)
   return (
     <form
@@ -32,21 +31,22 @@ export function SignInForm({ email, action = 'Sign in', onSession }: Props) {
       }
     >
       <FormAlert>{form.message}</FormAlert>
-      <Field label="Email" error={form.fields.email}>
+      <Field label={t.email} error={form.fields.email}>
         {(field) => <Input {...field} name="email" type="email" value={value.email} onChange={set('email')} autoComplete="username" autoFocus={!email} required className="h-10" />}
       </Field>
-      <Field label="Password" error={form.fields.password}>
+      <Field label={t.password} error={form.fields.password}>
         {(field) => <PasswordInput {...field} name="password" value={value.password} onChange={set('password')} autoComplete="current-password" autoFocus={!!email} required />}
       </Field>
       <SubmitButton className={FULL_BUTTON} busy={form.busy}>
-        {action}
+        {action ?? t.signIn}
       </SubmitButton>
     </form>
   )
 }
 
-export function SignUpForm({ email, action = 'Create account', onSession }: Props) {
-  const form = useSessionForm('create your account')
+export function SignUpForm({ email, action, onSession }: Props) {
+  const t = useT().auth
+  const form = useSessionForm(t.createAccountAction)
   const { value, set } = useCredentials(email)
   return (
     <form
@@ -55,14 +55,14 @@ export function SignUpForm({ email, action = 'Create account', onSession }: Prop
       onSubmit={(event) => void form.submit(event, () => auth.signup({ email: value.email.trim(), password: value.password })).then((session) => session && onSession(session))}
     >
       <FormAlert>{form.message}</FormAlert>
-      <Field label="Email" error={form.fields.email}>
+      <Field label={t.email} error={form.fields.email}>
         {(field) => <Input {...field} name="email" type="email" value={value.email} onChange={set('email')} autoComplete="username" autoFocus={!email} required className="h-10" />}
       </Field>
-      <Field label="Password" aside={PASSWORD_RULE} error={form.fields.password}>
+      <Field label={t.password} aside={t.passwordRule} error={form.fields.password}>
         {(field) => <PasswordInput {...field} name="password" value={value.password} onChange={set('password')} autoComplete="new-password" autoFocus={!!email} required minLength={8} />}
       </Field>
       <SubmitButton className={FULL_BUTTON} busy={form.busy}>
-        {action}
+        {action ?? t.createAccount}
       </SubmitButton>
     </form>
   )

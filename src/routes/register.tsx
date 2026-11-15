@@ -7,6 +7,7 @@ import { AuthFrame, AuthLinks } from '@/features/auth/frame'
 import { SignUpForm } from '@/features/auth/forms'
 import { authSearch, sendSignedInOn } from '@/features/auth/session-form'
 import { SocialButtons } from '@/features/auth/social'
+import { useT } from '@/i18n'
 
 export const Route = createFileRoute('/register')({
   validateSearch: authSearch,
@@ -21,14 +22,15 @@ function Register() {
   const settings = useQuery(instanceSettingsQuery).data
   const router = useRouter()
   const navigate = useNavigate()
+  const t = useT().auth
 
   if (settings && !settings.enableUserRegistration)
     return (
-      <AuthFrame title="Sign-up is closed">
-        <p className="prose-text mb-4 text-muted-foreground">Ask an administrator to invite you.</p>
+      <AuthFrame title={t.signUp.closed}>
+        <p className="prose-text mb-4 text-muted-foreground">{t.signUp.askAdmin}</p>
         <Button asChild className="max-lg:h-11">
           <Link to="/login" search={{ next }}>
-            Back to sign in
+            {t.backToSignIn}
           </Link>
         </Button>
       </AuthFrame>
@@ -38,13 +40,13 @@ function Register() {
   const onSession = (session: Session) => void (session.status === SessionStatus.authenticated ? router.invalidate() : navigate({ to: '/login', search: { next } }))
 
   return (
-    <AuthFrame title="Create account">
+    <AuthFrame title={t.createAccount}>
       <SignUpForm onSession={onSession} />
       {settings?.enableSocialAppsUserRegistration && <SocialButtons apps={settings.socialApps} next={next} />}
       <AuthLinks>
         <Button variant="link" asChild>
           <Link to="/login" search={{ next }}>
-            Sign in instead
+            {t.signInInstead}
           </Link>
         </Button>
       </AuthLinks>

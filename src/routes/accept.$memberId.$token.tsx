@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AuthFrame, AuthLinks } from '@/features/auth/frame'
 import { SignInForm, SignUpForm } from '@/features/auth/forms'
 import { SocialButtons } from '@/features/auth/social'
+import { useT } from '@/i18n'
 import { signOut } from '@/lib/session'
 
 // The link in an invitation email. Anyone holding it may accept, signed in or not.
@@ -36,10 +37,12 @@ function AcceptInvite() {
   const [joining, setJoining] = useState<Joining>(Joining.signUp)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const { auth: t, common } = useT()
+  const text = t.invite
 
   if (invite.isPending)
     return (
-      <AuthFrame title="Invitation">
+      <AuthFrame title={text.title}>
         <Skeleton className="h-10" />
       </AuthFrame>
     )
@@ -47,18 +50,18 @@ function AcceptInvite() {
   const gone = invite.error instanceof ApiError && GONE.includes(invite.error.status)
   if (invite.isError && !gone)
     return (
-      <AuthFrame title="This invitation didn't load">
+      <AuthFrame title={text.didntLoad}>
         <Button className="max-lg:h-11" onClick={() => void invite.refetch()}>
-          Try again
+          {common.tryAgain}
         </Button>
       </AuthFrame>
     )
   if (gone || !invite.data?.orgUser.pending)
     return (
-      <AuthFrame title="This invitation has expired or was already used">
-        <p className="prose-text mb-4 text-muted-foreground">Ask whoever invited you to send a new one.</p>
+      <AuthFrame title={text.expired}>
+        <p className="prose-text mb-4 text-muted-foreground">{text.askForNew}</p>
         <Button asChild className="max-lg:h-11">
-          {signedIn ? <Link to="/">Go to issues</Link> : <Link to="/login">Sign in</Link>}
+          {signedIn ? <Link to="/">{common.goToIssues}</Link> : <Link to="/login">{t.signIn}</Link>}
         </Button>
       </AuthFrame>
     )
@@ -74,7 +77,7 @@ function AcceptInvite() {
       await queryClient.invalidateQueries({ queryKey: organizationKeys.all })
       await open()
     } catch (error) {
-      setMessage(explain(error, 'accept the invitation'))
+      setMessage(explain(error, text.acceptAction))
     } finally {
       setBusy(false)
     }
@@ -85,33 +88,33 @@ function AcceptInvite() {
 
   const role = (
     <p className="-mt-3 mb-5 text-muted-foreground">
-      Invited as <span className="font-medium text-foreground">{roleName}</span>
+      {text.invitedAs} <span className="font-medium text-foreground">{roleName}</span>
     </p>
   )
 
   if (signedIn && organizations?.some((item) => item.slug === organization.slug))
     return (
-      <AuthFrame title={`You're already in ${organization.name}`}>
+      <AuthFrame title={text.alreadyIn(organization.name)}>
         <Button variant="default" className={FULL_BUTTON} onClick={() => void open()}>
-          Open {organization.name}
+          {text.open(organization.name)}
         </Button>
       </AuthFrame>
     )
 
   if (signedIn)
     return (
-      <AuthFrame title={`Join ${organization.name}`}>
+      <AuthFrame title={text.join(organization.name)}>
         {role}
         <FormAlert className="mb-4">{message}</FormAlert>
         <p className="prose-text mb-4 text-muted-foreground">
-          Signed in as <span className="mono [overflow-wrap:anywhere] text-foreground">{session.user.email ?? session.user.display}</span>
+          {text.signedInAs} <span className="mono [overflow-wrap:anywhere] text-foreground">{session.user.email ?? session.user.display}</span>
         </p>
         <Button variant="default" className={FULL_BUTTON} disabled={busy} aria-busy={busy} onClick={() => void join()}>
-          Join {organization.name}
+          {text.join(organization.name)}
         </Button>
         <AuthLinks>
           <Button variant="link" onClick={() => void signOut(queryClient)}>
-            Use another account
+            {t.useAnotherAccount}
           </Button>
         </AuthLinks>
       </AuthFrame>
@@ -121,19 +124,19 @@ function AcceptInvite() {
   const canSignUp = settings?.enableUserRegistration !== false
   const signingUp = canSignUp && joining === Joining.signUp
   return (
-    <AuthFrame title={`Join ${organization.name}`}>
+    <AuthFrame title={text.join(organization.name)}>
       {role}
       <FormAlert className="mb-4">{message}</FormAlert>
       {signingUp ? (
-        <SignUpForm key="sign-up" email={email} action="Create account and join" onSession={onSession} />
+        <SignUpForm key="sign-up" email={email} action={text.createAndJoin} onSession={onSession} />
       ) : (
-        <SignInForm key="sign-in" email={email} action="Sign in and join" onSession={onSession} />
+        <SignInForm key="sign-in" email={email} action={text.signInAndJoin} onSession={onSession} />
       )}
       <SocialButtons apps={settings?.socialApps} next={here} />
       {canSignUp && (
         <AuthLinks>
           <Button variant="link" onClick={() => setJoining(signingUp ? Joining.signIn : Joining.signUp)}>
-            {signingUp ? 'Sign in instead' : 'Create an account instead'}
+            {signingUp ? t.signInInstead : text.createInstead}
           </Button>
         </AuthLinks>
       )}

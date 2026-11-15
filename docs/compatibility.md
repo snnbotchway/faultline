@@ -5,6 +5,7 @@ so each Faultline release lists the backend versions its end-to-end suite ran ag
 
 | Faultline | GlitchTip backend | Tested in CI |
 |---|---|---|
+| 0.4.0 | 7.0.0 | yes |
 | 0.3.0 | 7.0.0 | yes |
 | 0.2.1 | 7.0.0 | yes |
 | 0.2.0 | 7.0.0 | yes |

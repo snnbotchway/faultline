@@ -76,7 +76,7 @@ Set GlitchTip's `GLITCHTIP_DOMAIN` to Faultline's public URL, so the links in al
 
 ## Compatibility
 
-Every release is tested in CI against a real GlitchTip backend. Faultline 0.4.0 is tested against GlitchTip 7.0.0; [docs/compatibility.md](docs/compatibility.md) lists every release, and the organisation slugs that clash with backend paths.
+Every release is tested in CI against a real GlitchTip backend. Faultline 0.4.1 is tested against GlitchTip 7.0.0; [docs/compatibility.md](docs/compatibility.md) lists every release, and the organisation slugs that clash with backend paths.
 
 ## Develop
 

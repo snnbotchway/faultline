@@ -7,7 +7,7 @@ Verified against a live 7.0.0 instance (the dev backend in `dev/compose.yml`, se
 | `FE` | `gitlab.com/glitchtip/glitchtip-frontend` `v7.0.0` | `f2d8ae690eeda6ccc7aed84e68b38938e47d57c1` (2026-11-09) | Served bundle matches this tag. `master` was already 4 days ahead (`7f733a2`); not used. |
 | `BE` | `gitlab.com/glitchtip/glitchtip-backend` `v7.0.0` | `ff0d7bb2f6fb312305ee23792b14d0f3d751956b` (2026-11-09) | `django-ninja 1.7.1`, `django-allauth-async 65.19.1.1` (wraps allauth 65.x), Django 6.1.1 |
 
-Citations are repo-relative: `FE src/app/...` and `BE glitchtip/...`. "Live" means I ran it with curl against 7.0.0.
+Citations are repo-relative: `FE src/app/...` and `BE glitchtip/...`. "Live" means it was run with curl against 7.0.0.
 Machine-readable specs: `GET /api/openapi.json` (REST, `ENABLE_OPENAPI`), `GET /_allauth/openapi.json` (allauth headless, `HEADLESS_SERVE_SPECIFICATION=True`, `BE glitchtip/settings.py:1484`). The FE generates types from both (`FE package.json` scripts `openapi-typescript`, `openapi-typescript-allauth`).
 
 ---
@@ -27,7 +27,7 @@ Machine-readable specs: `GET /api/openapi.json` (REST, `ENABLE_OPENAPI`), `GET /
 | Who sets the cookie | `GET /_allauth/browser/v1/auth/session` (and `/config`) emit `Set-Cookie: csrftoken`. `GET /` (the SPA shell) does **not** | live |
 | Rotation | Login re-issues `csrftoken` (new value in the login response). Read the cookie fresh on every request, do not cache | live |
 | Bearer tokens | `Authorization: Bearer <api token>` bypasses CSRF and sessions (`TokenAuth` before `SessionAuth`). Not used by the SPA | `BE glitchtip/api/api.py:50-54`, `glitchtip/api/authentication.py` |
-| Origin check | Django CSRF compares `Origin`/`Referer` with the request host and `CSRF_TRUSTED_ORIGINS`. Same-origin proxying with `Host` preserved needs nothing. If the proxy rewrites `Host`, also rewrite `Origin` and `Referer` (Kudcrafts does this) | `BE settings.py:826`; Kudcrafts `vite.config.ts`, `deploy/default.conf.template` |
+| Origin check | Django CSRF compares `Origin`/`Referer` with the request host and `CSRF_TRUSTED_ORIGINS`. Same-origin proxying with `Host` preserved needs nothing. If the proxy rewrites `Host`, also rewrite `Origin` and `Referer` | `BE settings.py:826` |
 | Proxy headers | `X-Forwarded-Proto` is honoured from any peer; `X-Forwarded-For` only from `TRUSTED_PROXIES` (default `private`). Login/signup/reset rate limits are keyed on the client IP, so forward the real one | `BE glitchtip/proxy_headers.py:7-11`; CHANGELOG 7.0.0 |
 
 All allauth responses are `{"status": <http>, "data": {...}, "meta": {...}}` or `{"status": 400, "errors":[{"message","code","param"}]}`.
@@ -175,7 +175,7 @@ Query syntax (parsed with `shlex.split`, falling back to whitespace split; `BE s
 | `has:<tagkey>` | Issue has any value for the tag |
 | `<key>:<value>` | Tag equality (e.g. `browser:Chrome`, `release:1.2.0`, `user.email:x`). Quotes stripped: `"key":"value"` works as the tag links do. One value per key; no OR, no negation |
 | bare word(s) | Full-text search over the issue index. **The first bare token ends structured parsing**: everything from there on is joined into the text search. Put filters first |
-| `word*` | If any `*` appears in the text, becomes `title ILIKE %word%` OR FTS. Kudcrafts appends `*` to the trailing text for as-you-type matches |
+| `word*` | If any `*` appears in the text, becomes `title ILIKE %word%` OR FTS. |
 | a UUID | Event lookup: filters to issues containing that event, sets `X-Sentry-Direct-Hit: 1`, and `matchingEventId` is filled; stock then navigates to `/:org/issues/:id/events/:matchingEventId` |
 
 Response: array of `IssueSchema` (camelCase): `id` (string), `count` (string), `status`, `level`, `type`, `title`, `culprit`, `metadata`, `project{id,slug,name,platform}`, `shortId`, `numComments`, `userCount`, `firstSeen`, `lastSeen`, `firstRelease`, `lastRelease`, `statusDetails`, `assignedTo`, `matchingEventId`, `permalink`, `stats{"24h":[]}` (empty here; use issues-stats).
@@ -228,7 +228,7 @@ Permissions: `event:write` or `event:admin` on the org; reads need `event:read`.
 
 ## 4. Paths that must be reachable on the SPA origin
 
-`FE proxy.conf.json` (the stock dev proxy) lists `/api`, `/accounts`, `/_allauth`, `/oauth`, `/admin`. The backend's own SPA catch-all regex is `^(auth|login|register|(.*)/issues|(.*)/settings|(.*)/performance|(.*)/projects|(.*)/releases|organizations|profile|(.*)/uptime-monitors|(.*)/logs|accept|reset-password|system-info).*$` (`BE glitchtip/urls.py:66-70` (after `re_path(r"^$", index)`)). Kudcrafts proxies `api|_allauth|accounts|oauth|mcp|admin|media|static|.well-known` (`deploy/default.conf.template`).
+`FE proxy.conf.json` (the stock dev proxy) lists `/api`, `/accounts`, `/_allauth`, `/oauth`, `/admin`. The backend's own SPA catch-all regex is `^(auth|login|register|(.*)/issues|(.*)/settings|(.*)/performance|(.*)/projects|(.*)/releases|organizations|profile|(.*)/uptime-monitors|(.*)/logs|accept|reset-password|system-info).*$` (`BE glitchtip/urls.py:66-70` (after `re_path(r"^$", index)`)).
 
 | Prefix | Needed for | Required? | Evidence |
 |---|---|---|---|
@@ -308,26 +308,7 @@ Sub-path deployment: backend honours `BASE_PATH`/`FORCE_SCRIPT_NAME` and rewrite
 
 ---
 
-## 7. Kudcrafts alternative (`/home/jarvis/dev/scratch/glitchtip-demo/frontend`): what to borrow, what to avoid
-
-| Topic | What it does | Verdict |
-|---|---|---|
-| Session/CSRF | Plain `fetch` wrapper for allauth (`credentials:"include"`, `X-CSRFToken` from cookie), `openapi-fetch` for `/api/0` with the same header on non-GET (`src/lib/api.ts`). Session probe is `GET /auth/session` | Same as stock. Correct |
-| CSRF edge | Sends an **empty** `X-CSRFToken` if the cookie is missing, and sets it on every non-GET even for GET-safe allauth calls | Works only because `session` is fetched first (it sets the cookie). Better: fetch `/auth/session` before any write and fail loudly if no cookie |
-| Login | Email + password, then a single "Authenticator code" field if a pending `mfa_authenticate` flow appears (`flows.find(f => f.is_pending)`) | TOTP/recovery only; no WebAuthn, no social, no signup, no reset. Note the stock UI matches on `flow.id === "mfa_authenticate"` without `is_pending` |
-| 401 handling | `unwrap()` dispatches a `glitchtip:unauthorized` event on any 401/403 | Simpler than stock's body sniffing; but it would also fire on legitimate 403s (permissions) |
-| Pagination | Reads only `rel="next"` with `results="true"` and the `cursor="..."` attribute via regex, so the `{'...'}` wrapper is harmless; `x-hits` for totals | Good. Does not use `previous` (infinite scroll) |
-| Search | `toApiQuery()` keeps structured tokens first (`/^[\w.-]+:\S/`) and appends `*` to trailing free text (prefix/mid-word matching while typing) | Clever and matches the backend rule that the first bare word ends structured parsing. Caveat: `*` switches to `ILIKE %text%` on the title and ORs the FTS, which can be slow on big orgs; debounce is 140 ms |
-| Status tabs | Rewrites `is:<status>` inside the query string when switching tabs | Fine; stock has no tabs, only the query |
-| Sort | Only `-last_seen`, `-first_seen`, `-count`, `-priority` | Drops the ascending variants stock offers |
-| Bulk | `PUT .../issues/?id=` for selected only | No "all matching" mode, no merge, no delete |
-| Keyboard | `j`/`k`/arrows move the row cursor, `e` toggles resolve (`routes/issues.tsx:130-138`), a command palette (`components/command.tsx`) searches issues and projects | Not in stock; keep as an extra |
-| Hosting | Nginx proxies `api\|_allauth\|accounts\|oauth\|mcp\|admin\|media\|static\|.well-known`, rewrites `Origin`/`Referer`/`Host` to the backend, forces `X-Forwarded-Proto https` and takes the client IP from `CF-Connecting-IP` | Needed only because the SPA host differs from the backend host. Prefer same-host path routing |
-| Stale types | Schema uses `{organization_slug}` path params, from an older backend | 7.0.0 uses `{organization_id_or_slug}`; regenerate types from the target backend's `/api/openapi.json` |
-
----
-
-## 8. Commands used (for reproducing)
+## 7. Commands used (for reproducing)
 
 ```sh
 # session + csrf cookie

@@ -12,7 +12,7 @@ export const DialogClose = Primitive.Close
 // takes the latest one outside itself as its opener. Focus in a menu or popover counts as focus on the button that
 // opened it, as the menu is gone by the time the dialog closes.
 const recent: HTMLElement[] = []
-const REMEMBERED = 3
+const REMEMBERED = 10
 const FLOATING = '[data-radix-popper-content-wrapper]'
 
 function control(element: HTMLElement): HTMLElement | undefined {
@@ -28,6 +28,8 @@ if (typeof document !== 'undefined') {
     (event) => {
       const focused = event.target instanceof HTMLElement ? control(event.target) : undefined
       if (!focused || focused === recent[0]) return
+      const seen = recent.indexOf(focused)
+      if (seen !== -1) recent.splice(seen, 1)
       recent.unshift(focused)
       recent.length = Math.min(recent.length, REMEMBERED)
     },

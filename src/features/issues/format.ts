@@ -1,4 +1,4 @@
-import { Locale, currentLocale, localized, messages, type Messages } from '@/i18n'
+import { Locale, currentLocale, hourStyle, localized, messages, type Messages } from '@/i18n'
 import { DAY_MS } from '@/lib/time'
 
 const STEPS: [number, keyof Messages['common']['time']['ago']][] = [
@@ -21,7 +21,7 @@ export function ago(time: string | Date, now = new Date()): string {
 }
 
 // `Nov 14, 12:54 PM`: the moment without the year or seconds, for narrow screens.
-const briefFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
+const briefFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric', hour: hourStyle(tag), minute: '2-digit' }))
 export const brief = (time: string | Date) => briefFormat().format(new Date(time))
 
 const exactFormat = localized((tag) => new Intl.DateTimeFormat(tag, { dateStyle: 'medium', timeStyle: 'medium' }))
@@ -40,7 +40,7 @@ export const dayLabel = (seconds: number) => dayFormat().format(new Date(seconds
 export const hourLabel = (seconds: number) => hourFormat().format(new Date(seconds * 1000))
 
 // `2:02 PM`: the time of day of a moment, in the same style as `brief`.
-const clockFormat = localized((tag) => new Intl.DateTimeFormat(tag, { hour: 'numeric', minute: '2-digit' }))
+const clockFormat = localized((tag) => new Intl.DateTimeFormat(tag, { hour: hourStyle(tag), minute: '2-digit' }))
 export const clock = (time: string | Date) => clockFormat().format(new Date(time))
 
 // `Today`, `Yesterday`, or the date, in the viewer's time zone.

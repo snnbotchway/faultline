@@ -4,7 +4,7 @@ import { formatIn } from './format'
 import { Locale, browserLocale, isLocale } from './locale'
 
 export { LOCALE_NAMES, Locale, isLocale } from './locale'
-export { count, localized, percent, plural } from './format'
+export { count, hourStyle, localized, percent, plural } from './format'
 export type { Messages } from './en'
 
 // English is in the main bundle and is what a missing language falls back to. Each other language is its own chunk,

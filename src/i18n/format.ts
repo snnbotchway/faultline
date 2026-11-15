@@ -21,6 +21,9 @@ export function localized<T>(make: (tag: string) => T): () => T {
   }
 }
 
+// The hour of a time of day: `2:02 PM` in English as before, `03:59` in French and Norwegian, which write the hour in two digits.
+export const hourStyle = (tag: string) => (new Intl.Locale(tag).language === Locale.en ? 'numeric' : '2-digit')
+
 const numbers = localized((tag) => new Intl.NumberFormat(tag))
 const rules = localized((tag) => new Intl.PluralRules(tag))
 

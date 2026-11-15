@@ -1,5 +1,5 @@
 import type { IssueFilters, IssueSort } from '@/api/issues'
-import { localized, messages } from '@/i18n'
+import { hourStyle, localized, messages } from '@/i18n'
 import { StatusView, isStatus } from './status'
 
 export const DEFAULT_QUERY = 'is:unresolved'
@@ -58,8 +58,8 @@ const RANGE_STARTS = ['now-1h', 'now-1d', 'now-7d', 'now-14d', 'now-30d'] as con
 
 export const timeRanges = () => RANGE_STARTS.map((start) => ({ start, label: messages().issues.search.ranges[start] }))
 
-const dateTimeFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
-const dateTimeYearFormat = localized((tag) => new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
+const dateTimeFormat = localized((tag) => new Intl.DateTimeFormat(tag, { month: 'short', day: 'numeric', hour: hourStyle(tag), minute: '2-digit' }))
+const dateTimeYearFormat = localized((tag) => new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'short', day: 'numeric', hour: hourStyle(tag), minute: '2-digit' }))
 // The year is left out for a date in the current one.
 const dateTime = (value: string) => {
   const at = new Date(value)

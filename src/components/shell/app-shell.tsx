@@ -112,7 +112,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const organizationName = useQuery(organizationsQuery).data?.find((organization) => organization.slug === org)?.name ?? org
   const email = session?.status === SessionStatus.authenticated ? (session.user.email ?? session.user.display ?? '') : ''
   const leave = useSignOut()
-  const canCreate = useOrganizationCreationOpen()
+  const creationOpen = useOrganizationCreationOpen()
   const [creating, setCreating] = useState(false)
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (
@@ -142,7 +142,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
                 </Link>
               </DropdownMenuItem>
             ))}
-            {canCreate && (
+            {creationOpen && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setCreating(true)}>

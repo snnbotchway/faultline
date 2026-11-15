@@ -26,7 +26,7 @@ export const issues: Messages['issues'] = {
 
   inbox: {
     loading: 'Laster problemer',
-    failed: 'Problemene ble ikke lastet',
+    failed: 'Problemene lastet ikke',
     noMatch: 'Ingen problemer samsvarer',
     nothingUnresolved: 'Ingenting uløst',
     showUnresolved: 'Vis uløste problemer',
@@ -45,8 +45,8 @@ export const issues: Messages['issues'] = {
     },
     period: 'Periode',
     periods: {
-      '24h': { label: '24 t', unit: 'time', now: 'Nå' },
-      '14d': { label: '14 d', unit: 'dag', now: 'I dag' },
+      '24h': { label: '24 t', unit: 'time', now: 'Nå' },
+      '14d': { label: '14 d', unit: 'dag', now: 'I dag' },
     },
     eventsPer: (unit) => `Hendelser / ${unit}`,
     peak: (count, unit) => `topp ${count}/${unit}`,

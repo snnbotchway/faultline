@@ -58,8 +58,8 @@ export const issues: Messages['issues'] = {
     detailsOf: (shortId) => `Détails de ${shortId}`,
     summary: (seen, age, events) => `il y a ${seen} · âge ${age} · ${events}`,
     age: (age) => `âge ${age}`,
-    lastSeenAt: (moment) => `Dernière vue : ${moment}`,
-    firstSeenAt: (moment) => `Première vue : ${moment}`,
+    lastSeenAt: (moment) => `Vu en dernier : ${moment}`,
+    firstSeenAt: (moment) => `Vu en premier : ${moment}`,
     assignedChange: (name) => `Assigné à ${name}. Modifier`,
   },
 
@@ -86,7 +86,7 @@ export const issues: Messages['issues'] = {
     rule: 'Chaque partie doit correspondre. Il n’y a ni OR ni NOT.',
     sort: 'Tri',
     sorts: {
-      '-last_seen': 'Dernière vue',
+      '-last_seen': 'Vu en dernier',
       last_seen: 'Vu le moins récemment',
       '-first_seen': 'Plus récents',
       first_seen: 'Plus anciens',
@@ -95,7 +95,7 @@ export const issues: Messages['issues'] = {
       '-priority': 'Priorité la plus haute',
       priority: 'Priorité la plus basse',
     },
-    firstSeen: 'Première vue',
+    firstSeen: 'Vu en premier',
     anyTime: 'Toute période',
     customRange: 'Période personnalisée',
     ranges: { 'now-1h': 'Dernière heure', 'now-1d': '24 dernières heures', 'now-7d': '7 derniers jours', 'now-14d': '14 derniers jours', 'now-30d': '30 derniers jours' },
@@ -106,7 +106,7 @@ export const issues: Messages['issues'] = {
     },
     since: (when) => `Depuis ${when}`,
     before: (when) => `Avant ${when}`,
-    firstSeenBetween: 'Première vue entre',
+    firstSeenBetween: 'Vu en premier entre',
     from: 'Du',
     to: 'Au',
     apply: 'Appliquer',
@@ -145,7 +145,7 @@ export const issues: Messages['issues'] = {
   },
 
   page: {
-    facts: { events: 'Événements', users: 'Utilisateurs', firstSeen: 'Première vue', lastSeen: 'Dernière vue' },
+    facts: { events: 'Événements', users: 'Utilisateurs', firstSeen: 'Vu en premier', lastSeen: 'Vu en dernier' },
     fact: (label, value) => `${label} ${value}`,
     notFound: 'Problème introuvable',
     failed: 'Ce problème ne s’est pas chargé',

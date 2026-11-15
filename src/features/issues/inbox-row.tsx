@@ -16,7 +16,7 @@ import { ACTION, statusWords, type StatusView } from './status'
 import { Trace } from './trace'
 import type { Mark, Trend } from './trend'
 
-export const COLUMNS = 'lg:grid-cols-[var(--spacing-check)_minmax(0,5fr)_minmax(0,4fr)_64px_80px_96px_36px]'
+export const COLUMNS = 'lg:grid-cols-[var(--spacing-check)_minmax(0,5fr)_minmax(0,4fr)_88px_88px_96px_36px]'
 const PHONE_COLUMNS = 'grid-cols-[var(--spacing-check)_minmax(0,1fr)_64px]'
 
 export type Row = { issue: Issue; buckets: number[]; trend: Trend }

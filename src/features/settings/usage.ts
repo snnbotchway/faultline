@@ -37,7 +37,11 @@ export function dropRange(organization: number, projects: number[]): { min: numb
   return { min: Math.min(...rates), max: Math.max(...rates) }
 }
 
-export const rangeText = ({ min, max }: { min: number; max: number }) => (min === max ? `${max}%` : `${min}–${max}%`)
+// Projects that drop nothing are not part of the range: 0–20% would read as a spread across every project.
+export function rangeText({ min, max }: { min: number; max: number }): string {
+  if (min === max) return `${max}%`
+  return min === 0 ? `up to ${max}%` : `${min}–${max}%`
+}
 
 export function dayAt(x: number, left: number, width: number, count: number): number {
   if (width <= 0 || count <= 0) return 0

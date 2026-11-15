@@ -16,10 +16,10 @@ test('either rate at 100, or an organization not accepting events, drops everyth
   expect(effectiveDropRate(organizationDropRate({ eventThrottleRate: 25, isAcceptingEvents: true }), 0)).toBe(25)
 })
 
-test('the headline rate is one figure when every project drops the same share and a range when they differ', () => {
+test('the headline rate is one figure when every project drops the same share, a range when they differ, and a ceiling when some drop nothing', () => {
   expect(rangeText(dropRange(25, [0, 0]))).toBe('25%')
   expect(rangeText(dropRange(25, [0, 10]))).toBe('25–33%')
-  expect(rangeText(dropRange(0, [0, 10]))).toBe('0–10%')
+  expect(rangeText(dropRange(0, [0, 10]))).toBe('up to 10%')
   expect(rangeText(dropRange(40, []))).toBe('40%')
 })
 

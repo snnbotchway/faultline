@@ -183,7 +183,8 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
             </span>
           </div>
           <label className="flex min-h-11 cursor-pointer items-center gap-2 border-b">
-            <Checkbox checked={draft.down} onCheckedChange={(checked) => set('down', checked === true)} />a monitor goes down
+            <Checkbox checked={draft.down} onCheckedChange={(checked) => set('down', checked === true)} />
+            {alerts.monitorDown}
           </label>
           <FieldError className="mt-2">{tried && (errors.when ?? (errors.quantity ? t.fieldError(t.events, errors.quantity) : errors.minutes && t.fieldError(t.minutes, errors.minutes)))}</FieldError>
         </fieldset>

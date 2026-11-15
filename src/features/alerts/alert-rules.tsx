@@ -7,7 +7,7 @@ import { RowButton } from '@/components/ui/row-button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { AlertDialog } from './alert-dialog'
-import { ALL_ENVIRONMENTS } from '@/lib/text'
+import { useT } from '@/i18n'
 import { conditions } from './conditions'
 import { RuleEditor, type OpenRule } from './open-rule'
 import { RecipientChip } from './recipients'
@@ -20,6 +20,7 @@ const COLUMNS = 'lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,1.5fr)_minma
  * The caller owns the address: `onOpen` is told which rule to open, or nothing to close the editor.
  */
 export function AlertRules({ org, project, open, onOpen }: { org: string; project?: string; open?: OpenRule; onOpen: (rule?: OpenRule) => void }) {
+  const { alerts: t, common } = useT()
   const projects = useQuery(projectsQuery(org))
   const access = useQuery(organizationQuery(org)).data?.access
   const canWrite = canWriteProjects(access)
@@ -29,19 +30,19 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
 
   if (!project && projects.isError)
     return (
-      <Screen title="The alert rules didn't load">
-        <Button onClick={() => void projects.refetch()}>Try again</Button>
+      <Screen title={t.rulesFailed}>
+        <Button onClick={() => void projects.refetch()}>{common.tryAgain}</Button>
       </Screen>
     )
-  if (!project && projects.isSuccess && slugs.length === 0) return <Screen title="Alert rules belong to a project. Add a project first." />
+  if (!project && projects.isSuccess && slugs.length === 0) return <Screen title={t.needsProject} />
 
   return (
     <>
       <div className={cn('grid h-8 items-center gap-x-4 border-b px-4 max-lg:hidden', COLUMNS)}>
-        <span className="label-caps">Rule</span>
-        <span className="label-caps">Alerts when</span>
-        <span className="label-caps">Environments</span>
-        <span className="label-caps">Notifies</span>
+        <span className="label-caps">{t.columns.rule}</span>
+        <span className="label-caps">{t.columns.when}</span>
+        <span className="label-caps">{t.columns.environments}</span>
+        <span className="label-caps">{t.columns.notifies}</span>
         <span />
       </div>
       {!project && projects.isPending && <RuleSkeleton />}
@@ -59,13 +60,13 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
               <RuleSkeleton rows={2} />
             ) : query.isError ? (
               <p className="flex min-h-11 items-center gap-3 border-b px-3 text-muted-foreground lg:px-4">
-                These rules didn't load.
-                <RowButton onClick={() => void query.refetch()}>Try again</RowButton>
+                {t.rowsFailed}
+                <RowButton onClick={() => void query.refetch()}>{common.tryAgain}</RowButton>
               </p>
             ) : query.data.length === 0 ? (
               <p className="flex min-h-11 items-center gap-3 border-b px-3 text-muted-foreground lg:px-4">
-                No rules yet.
-                {canWrite && <RowButton onClick={() => onOpen({ alert: RuleEditor.new, project: slug })}>Add rule</RowButton>}
+                {t.noRules}
+                {canWrite && <RowButton onClick={() => onOpen({ alert: RuleEditor.new, project: slug })}>{t.addRule}</RowButton>}
               </p>
             ) : (
               <ul>
@@ -88,21 +89,22 @@ export function AlertRules({ org, project, open, onOpen }: { org: string; projec
 
 // The whole row opens the rule; "Edit" names what that does (DESIGN.md, Rows).
 function RuleRow({ rule, onOpen }: { rule: Alert; onOpen?: () => void }) {
-  const when = conditions(rule).join(', or ')
+  const { alerts: t, common } = useT()
+  const when = t.either(conditions(rule))
   const cells = (
     <>
       <span className="truncate font-medium">{rule.name || when}</span>
       <span className="truncate">{when}</span>
-      <span className={cn('truncate text-muted-foreground', rule.environments.length > 0 && 'mono')}>{rule.environments.join(', ') || ALL_ENVIRONMENTS}</span>
+      <span className={cn('truncate text-muted-foreground', rule.environments.length > 0 && 'mono')}>{rule.environments.join(', ') || common.allEnvironments}</span>
       <span className="flex flex-wrap gap-x-3 gap-y-1">
-        {rule.alertRecipients.length === 0 && <span className="text-sm text-muted-foreground">Nobody</span>}
+        {rule.alertRecipients.length === 0 && <span className="text-sm text-muted-foreground">{t.nobody}</span>}
         {rule.alertRecipients.map((recipient) => (
           <RecipientChip key={recipient.id ?? `${recipient.recipientType}${recipient.url}`} recipient={recipient} />
         ))}
       </span>
       {onOpen && (
         <span aria-hidden className="text-right text-sm font-medium group-hover:underline max-lg:hidden">
-          Edit
+          {common.edit}
         </span>
       )}
     </>
@@ -118,8 +120,9 @@ function RuleRow({ rule, onOpen }: { rule: Alert; onOpen?: () => void }) {
 }
 
 function RuleSkeleton({ rows = 3 }: { rows?: number }) {
+  const t = useT().alerts
   return (
-    <div aria-busy aria-label="Loading alert rules">
+    <div aria-busy aria-label={t.loading}>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className={cn('grid gap-x-4 gap-y-2 border-b px-3 py-3 lg:px-4', COLUMNS)}>
           <Skeleton className="h-4 w-32" />

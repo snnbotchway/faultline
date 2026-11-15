@@ -9,7 +9,7 @@ import { Field, FieldError, SubmitButton } from '@/components/ui/field'
 import { Input, Select } from '@/components/ui/input'
 import { RowButton } from '@/components/ui/row-button'
 import { ConfirmDialog, TaskActions, TaskDialog } from '@/components/ui/task-dialog'
-import { ALL_ENVIRONMENTS } from '@/lib/text'
+import { useT } from '@/i18n'
 import { failed, notify } from '@/lib/notice'
 import { cn } from '@/lib/utils'
 import { recipientHost, recipientMeta } from './recipient-kinds'
@@ -46,6 +46,8 @@ function draftFrom(rule: Alert | undefined, project: string): Draft {
  * saved rule stays in its own, as the backend has no way to move one.
  */
 export function AlertDialog({ org, project, rule, projects, canDelete, onClose }: { org: string; project: string; rule?: Alert; projects?: string[]; canDelete: boolean; onClose: () => void }) {
+  const { alerts, common } = useT()
+  const t = alerts.editor
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState(() => draftFrom(rule, project))
   const [tried, setTried] = useState(false)
@@ -57,10 +59,10 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
   const refresh = (slug: string) => void queryClient.invalidateQueries({ queryKey: alertKeys.project(org, slug) })
 
   const errors = {
-    name: !draft.name.trim() ? 'Give the rule a name.' : undefined,
-    quantity: draft.events && !wholeIn(draft.quantity, MAX_EVENTS) ? `From 1 to ${MAX_EVENTS}.` : undefined,
-    minutes: draft.events && !wholeIn(draft.minutes, Number.MAX_SAFE_INTEGER) ? 'At least 1.' : undefined,
-    when: !draft.events && !draft.down ? 'Pick at least one.' : undefined,
+    name: !draft.name.trim() ? t.nameRequired : undefined,
+    quantity: draft.events && !wholeIn(draft.quantity, MAX_EVENTS) ? t.quantityRange(MAX_EVENTS) : undefined,
+    minutes: draft.events && !wholeIn(draft.minutes, Number.MAX_SAFE_INTEGER) ? t.minutesMin : undefined,
+    when: !draft.events && !draft.down ? t.pickOne : undefined,
   }
   const shown = (error: string | undefined) => (tried ? error : undefined)
 
@@ -80,7 +82,7 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
       refresh(draft.project)
       onClose()
     },
-    onError: (error) => failed(error, 'save the rule'),
+    onError: (error) => failed(error, t.saveAction),
   })
   const remove = useMutation({
     mutationFn: () => alertActions.remove(org, project, rule!.id!),
@@ -88,7 +90,7 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
       refresh(project)
       onClose()
     },
-    onError: (error) => setDeleteError(explain(error, 'delete the rule')),
+    onError: (error) => setDeleteError(explain(error, t.deleteAction)),
   })
   // Email is never tested, so the test goes to the other recipients the rule has saved.
   const testable = (rule?.alertRecipients ?? []).filter((recipient) => recipient.recipientType !== RecipientType.email)
@@ -96,10 +98,10 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
     mutationFn: () => alertActions.test(org, project, rule!.id!),
     onSuccess: (results) => {
       const broken = results.filter((result) => result.status === TestStatus.error).map((result) => recipientMeta(result).label)
-      if (broken.length) notify(`Couldn't reach ${[...new Set(broken)].join(', ')}. Check the address, then try again.`, true)
-      else notify(`Test sent to ${results.filter((result) => result.status === TestStatus.sent).length}`)
+      if (broken.length) notify(t.couldntReach([...new Set(broken)].join(', ')), true)
+      else notify(t.testSent(results.filter((result) => result.status === TestStatus.sent).length))
     },
-    onError: (error) => failed(error, 'send the test'),
+    onError: (error) => failed(error, t.testAction),
   })
 
   const submit = () => {
@@ -118,7 +120,7 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
   }
 
   return (
-    <TaskDialog open onClose={onClose} title={rule ? 'Edit rule' : 'New rule'} quietFocus={!!rule} className="sm:max-w-xl">
+    <TaskDialog open onClose={onClose} title={rule ? alerts.editRule : alerts.newRule} quietFocus={!!rule} className="sm:max-w-xl">
       <form
         noValidate
         className="flex flex-col gap-5"
@@ -128,10 +130,10 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
         }}
       >
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Name" error={shown(errors.name)}>
+          <Field label={t.name} error={shown(errors.name)}>
             {(props) => <Input {...props} value={draft.name} onChange={(event) => set('name', event.target.value)} />}
           </Field>
-          <Field label="Project">
+          <Field label={common.project}>
             {(props) => (
               <Select
                 {...props}
@@ -149,15 +151,15 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
         </div>
 
         <fieldset className="min-w-0">
-          <legend className="mb-2 text-sm font-medium">Alert when</legend>
+          <legend className="mb-2 text-sm font-medium">{t.when}</legend>
           <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 border-y py-2">
-            <Checkbox id={eventsId} checked={draft.events} onCheckedChange={(checked) => set('events', checked === true)} aria-label="An issue gets many events" />
+            <Checkbox id={eventsId} checked={draft.events} onCheckedChange={(checked) => set('events', checked === true)} aria-label={t.manyEvents} />
             {/* Tapping the words ticks the box, as it does for "a monitor goes down". */}
             <label htmlFor={eventsId} className="cursor-pointer">
-              an issue gets
+              {t.issueGets}
             </label>
             <Input
-              aria-label="Events"
+              aria-label={t.events}
               aria-invalid={!!shown(errors.quantity)}
               inputMode="numeric"
               disabled={!draft.events}
@@ -165,11 +167,11 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
               onChange={(event) => set('quantity', event.target.value)}
               className="h-8 w-16 shrink-0 px-1 text-center font-mono max-lg:h-11"
             />
-            <span>events in</span>
+            <span>{t.eventsIn}</span>
             {/* The number and its unit stay on one line. */}
             <span className="flex items-center gap-2 whitespace-nowrap">
               <Input
-                aria-label="Minutes"
+                aria-label={t.minutes}
                 aria-invalid={!!shown(errors.minutes)}
                 inputMode="numeric"
                 disabled={!draft.events}
@@ -177,17 +179,17 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
                 onChange={(event) => set('minutes', event.target.value)}
                 className="h-8 w-16 shrink-0 px-1 text-center font-mono max-lg:h-11"
               />
-              minutes
+              {t.minutesUnit}
             </span>
           </div>
           <label className="flex min-h-11 cursor-pointer items-center gap-2 border-b">
             <Checkbox checked={draft.down} onCheckedChange={(checked) => set('down', checked === true)} />a monitor goes down
           </label>
-          <FieldError className="mt-2">{tried && (errors.when ?? (errors.quantity ? `Events: ${errors.quantity}` : errors.minutes && `Minutes: ${errors.minutes}`))}</FieldError>
+          <FieldError className="mt-2">{tried && (errors.when ?? (errors.quantity ? t.fieldError(t.events, errors.quantity) : errors.minutes && t.fieldError(t.minutes, errors.minutes)))}</FieldError>
         </fieldset>
 
         <fieldset className="min-w-0">
-          <legend className="mb-2 text-sm font-medium">Notifies</legend>
+          <legend className="mb-2 text-sm font-medium">{alerts.columns.notifies}</legend>
           <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {draft.recipients.map((entry) => (
               <RecipientTag
@@ -207,10 +209,10 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
         </fieldset>
 
         <fieldset className="min-w-0">
-          <legend className="mb-2 text-sm font-medium">Environments</legend>
+          <legend className="mb-2 text-sm font-medium">{alerts.columns.environments}</legend>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" aria-pressed={draft.environments.length === 0} onClick={() => set('environments', [])} className={chip(draft.environments.length === 0)}>
-              {ALL_ENVIRONMENTS}
+              {common.allEnvironments}
             </button>
             {environments?.map((environment) => (
               <button key={environment.name} type="button" aria-pressed={draft.environments.includes(environment.name)} onClick={() => toggleEnvironment(environment.name)} className={cn(chip(draft.environments.includes(environment.name)), 'font-mono')}>
@@ -222,24 +224,24 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
 
         {rule && canDelete && (
           <RowButton danger onClick={() => setDeleting(true)} className="self-start text-left sm:hidden">
-            Delete rule
+            {t.deleteRule}
           </RowButton>
         )}
         {/* Main action first, so it leads on a phone; on a desktop it sits at the right and Delete at the left. */}
         <TaskActions className="sm:justify-end">
           <SubmitButton busy={save.isPending} className="sm:order-last">
-            {rule ? 'Save rule' : 'Create rule'}
+            {rule ? t.save : t.create}
           </SubmitButton>
           {rule && testable.length > 0 && (
             <Button aria-busy={test.isPending} disabled={test.isPending} onClick={() => test.mutate()}>
-              Send test to {testable.length}
+              {t.sendTest(testable.length)}
             </Button>
           )}
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common.cancel}</Button>
           {/* On a phone the pinned row holds only the way forward and back; Delete sits above it. */}
           {rule && canDelete && (
             <Button variant="destructive" onClick={() => setDeleting(true)} className="max-sm:hidden sm:order-first sm:mr-auto">
-              Delete
+              {common.delete}
             </Button>
           )}
         </TaskActions>
@@ -247,9 +249,9 @@ export function AlertDialog({ org, project, rule, projects, canDelete, onClose }
       {rule && (
         <ConfirmDialog
           open={deleting}
-          title={rule.name ? `Delete “${rule.name}”?` : 'Delete this rule?'}
-          description="Nobody is told when it would have fired."
-          action="Delete rule"
+          title={rule.name ? t.deleteTitle(rule.name) : t.deleteUntitled}
+          description={t.deleteLoses}
+          action={t.deleteRule}
           busy={remove.isPending}
           error={deleteError}
           onConfirm={() => {

@@ -32,7 +32,6 @@ export const performance: Messages['performance'] = {
   slower: (factor, since) => (since ? <>{factor} plus lente depuis {since}</> : <>{factor} plus lente cette semaine</>),
   queryRepeats: (times) => <>Requête répétée {times}</>,
   failedShare: (share) => <>{share} en échec</>,
-  todayShort: 'Auj.',
   weekChart: (days, peak) => `Temps par requête sur chacun des ${days} derniers jours, pic à ${peak}`,
 
   views: {

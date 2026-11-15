@@ -32,7 +32,6 @@ export const performance: Messages['performance'] = {
   slower: (factor, since) => (since ? <>{factor} tregere siden {since}</> : <>{factor} tregere denne uken</>),
   queryRepeats: (times) => <>Spørring gjentas {times}</>,
   failedShare: (share) => <>{share} feilet</>,
-  todayShort: 'I dag',
   weekChart: (days, peak) => `Tid per forespørsel for hver av de siste ${days} dagene, topp ${peak}`,
 
   views: {

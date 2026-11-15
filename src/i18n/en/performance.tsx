@@ -36,8 +36,6 @@ export const performance = {
   slower: (factor: ReactNode, since: string | undefined) => (since ? <>{factor} slower since {since}</> : <>{factor} slower this week</>),
   queryRepeats: (times: ReactNode) => <>Query repeats {times}</>,
   failedShare: (share: ReactNode) => <>{share} failed</>,
-  // The last day's label on the chart's axis, where a phone leaves room for about five characters.
-  todayShort: 'Today',
   weekChart: (days: number, peak: string) => `Time per request for each of the last ${days} days, peak ${peak}`,
 
   // The tabs. `short` is the one on a phone, where all four have to fit across.

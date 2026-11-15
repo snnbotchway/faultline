@@ -108,20 +108,12 @@ export function DurationBar({ p50, p95, className }: { p50: number; p95: number;
   )
 }
 
-// The full word where the day's column is wide enough for it, a shorter one on a phone.
-function Today() {
-  const t = useT()
-  return (
-    <>
-      <span className="max-md:hidden">{t.common.time.today}</span>
-      <span className="md:hidden">{t.performance.todayShort}</span>
-    </>
-  )
-}
-
 // Room for "2 min 54 s", the longest a language writes a peak of a minute or more.
 const AXIS_WIDTH = 'w-20'
 const dayOfMonth = localized((tag) => new Intl.DateTimeFormat(tag, { day: 'numeric' }))
+// The most characters a day's column holds on a 375px phone. A longer word for today runs back over the day before,
+// whose label then gives way.
+const DAY_COLUMN_CHARACTERS = 5
 
 // Seven days of a duration on the shared time axis: the peak and zero are labelled with their unit,
 // every day is named, and releases are marked. A day with no requests stays on the zero line. The
@@ -143,11 +135,30 @@ export function WeekChart({ buckets, marks, axis, slower, height, className }: {
           <Trace buckets={buckets} marks={marks} height={height} trend={slower ? Trend.spiking : Trend.ongoing} className="border-t border-b-border" />
         </div>
         <div className="mono mt-1 flex gap-px text-xs text-muted-foreground">
-          {buckets.map((_, index) => (
-            <span key={index} className="min-w-0 flex-1 truncate text-center">
-              {index === buckets.length - 1 ? <Today /> : index === 0 ? dayLabel(axis.start) : dayOfMonth().format((axis.start + index * axis.size) * 1000)}
-            </span>
-          ))}
+          {buckets.map((_, index) => {
+            const last = buckets.length - 1
+            const day = dayOfMonth().format((axis.start + index * axis.size) * 1000)
+            // Today is right-aligned, so a long word grows to the left, inside the chart.
+            if (index === last)
+              return (
+                <span key={index} className="flex min-w-0 flex-1 justify-end whitespace-nowrap">
+                  {t.common.time.today}
+                </span>
+              )
+            return (
+              <span key={index} className={cn('min-w-0 flex-1 truncate text-center', index === last - 1 && t.common.time.today.length > DAY_COLUMN_CHARACTERS && 'max-md:invisible')}>
+                {/* On a phone the first day is its number alone, as the others are, so it is not cut. */}
+                {index === 0 ? (
+                  <>
+                    <span className="md:hidden">{day}</span>
+                    <span className="max-md:hidden">{dayLabel(axis.start)}</span>
+                  </>
+                ) : (
+                  day
+                )}
+              </span>
+            )
+          })}
         </div>
       </div>
     </div>

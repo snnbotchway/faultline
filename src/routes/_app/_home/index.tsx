@@ -8,7 +8,8 @@ export const Route = createFileRoute('/_app/_home/')({
   loader: async ({ context: { queryClient } }) => {
     // Both fetched again once stale, so an organization just deleted or left, a second project, or a project's first
     // event is seen. A list that fails to load is left for the screen to report.
-    const organizations = await queryClient.fetchQuery(organizationsQuery)
+    const organizations = await queryClient.fetchQuery(organizationsQuery).catch(() => undefined)
+    if (!organizations) return
     const lists = await Promise.all(organizations.map(({ slug }) => queryClient.fetchQuery(projectsQuery(slug)).catch(() => undefined)))
     if (lists.some((list) => list === undefined)) return
     const all = lists.flatMap((list, index) => (list ?? []).map((project) => ({ org: organizations[index]!.slug, project })))

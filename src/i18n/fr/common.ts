@@ -63,6 +63,7 @@ export const common: Messages['common'] = {
       serverUrlRequired: 'Saisissez l’adresse du fournisseur.',
       tooManyApps: 'Cette organisation a atteint le nombre maximal d’applications de connexion. Supprimez-en une d’abord.',
       notInPlan: 'Votre offre n’inclut pas les applications de connexion.',
+      creationClosed: 'Seul un administrateur peut créer des organisations sur ce serveur. Demandez à un propriétaire de vous inviter dans la sienne.',
       alreadyMember: 'Cette personne est déjà membre de cette organisation.',
       alreadyInvited: 'Cette personne est déjà invitée. Ouvrez sa ligne pour renvoyer l’invitation.',
     },

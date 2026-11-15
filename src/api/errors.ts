@@ -22,6 +22,7 @@ const DETAIL_TEXT: Record<string, keyof Errors['detail']> = {
   'Server URL is required': 'serverUrlRequired',
   'Maximum number of SSO providers reached': 'tooManyApps',
   'Custom SSO is not included in your plan': 'notInPlan',
+  'Organization creation is not open': 'creationClosed',
 }
 
 // Details that name a person or thing, matched by their ending.

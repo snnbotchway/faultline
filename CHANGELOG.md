@@ -19,7 +19,7 @@ All notable changes to Faultline are listed here. The format follows
 - Tags: the four commonest values, with the rest of the ten one click away and an "other" bar, single-valued tags without a bar, and an open-in-new-tab link on web addresses.
 - A Support menu in the top bar, and Help in More on a phone, with links to GlitchTip's support page, the Faultline and GlitchTip docs, and a way to report a Faultline bug.
 - A banner under the top bar while your primary email is unverified, with a button to send the link again and a line saying where it went.
-- A banner under the top bar while the open organization is dropping some of its new events, with the share dropped and who can change it.
+- A banner under the top bar while the open organization is dropping some of its new events or isn't accepting any, with the share dropped and who can change it.
 - Your theme choice is saved to your account, so it follows you to another browser; this browser's copy stays the fallback.
 - `BASE_PATH` serves Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps. Give GlitchTip the same `BASE_PATH`.
 - Usage, under Settings (the stock `/:org/settings/subscription` path): the errors, transactions, logs and uptime checks an organization took in over the last 30 days, a day at a time on one axis. Pick a day to see its figures, unfold errors or transactions to see which project sent them, and see the share of new events the organization and each project are set to drop, when they drop any.

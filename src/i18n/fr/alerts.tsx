@@ -35,7 +35,7 @@ export const alerts: Messages['alerts'] = {
     deleteRule: 'Supprimer la règle',
     save: 'Enregistrer la règle',
     create: 'Créer la règle',
-    sendTest: (count) => `Envoyer le test à ${count}`,
+    sendTest: (count) => plural(count, { one: 'Envoyer un test à # destinataire', other: 'Envoyer un test à # destinataires' }),
     deleteTitle: (name) => `Supprimer « ${name} » ?`,
     deleteUntitled: 'Supprimer cette règle ?',
     deleteLoses: 'Plus personne ne sera prévenu quand elle aurait dû se déclencher.',
@@ -43,7 +43,7 @@ export const alerts: Messages['alerts'] = {
     deleteAction: 'supprimer la règle',
     testAction: 'envoyer le test',
     couldntReach: (kinds) => `Impossible de joindre ${kinds}. Vérifiez l’adresse, puis réessayez.`,
-    testSent: (count) => `Test envoyé à ${count}`,
+    testSent: (count) => plural(count, { one: 'Test envoyé à # destinataire', other: 'Test envoyé à # destinataires' }),
   },
 
   recipients: {

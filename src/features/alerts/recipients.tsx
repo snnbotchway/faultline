@@ -32,7 +32,8 @@ export function RecipientTag({ recipient, index, onRemove }: { recipient: Recipi
     <li className="flex h-9 max-w-full min-w-0 items-center gap-2 border bg-background pl-3 max-lg:h-11" title={host || undefined}>
       <meta.icon className="size-3 shrink-0 text-muted-foreground" />
       <span className="shrink-0 text-sm font-medium">{meta.label}</span>
-      <span className="mono flex min-w-0 flex-1 gap-2 text-xs text-muted-foreground">
+      {/* A host is machine text; email's "project members" is words. */}
+      <span className={cn('flex min-w-0 flex-1 gap-2 text-xs text-muted-foreground', recipient.recipientType !== RecipientType.email && 'mono')}>
         <span className="truncate">{host}</span>
         {index !== undefined && <span className="shrink-0">#{index}</span>}
       </span>

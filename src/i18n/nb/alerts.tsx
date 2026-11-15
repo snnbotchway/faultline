@@ -35,7 +35,7 @@ export const alerts: Messages['alerts'] = {
     deleteRule: 'Slett regel',
     save: 'Lagre regel',
     create: 'Opprett regel',
-    sendTest: (count) => `Send test til ${count}`,
+    sendTest: (count) => plural(count, { one: 'Send test til # mottaker', other: 'Send test til # mottakere' }),
     deleteTitle: (name) => `Slett «${name}»?`,
     deleteUntitled: 'Slett denne regelen?',
     deleteLoses: 'Ingen får beskjed når den ellers ville ha slått til.',
@@ -43,7 +43,7 @@ export const alerts: Messages['alerts'] = {
     deleteAction: 'slette regelen',
     testAction: 'sende testen',
     couldntReach: (kinds) => `Kunne ikke nå ${kinds}. Sjekk adressen og prøv igjen.`,
-    testSent: (count) => `Test sendt til ${count}`,
+    testSent: (count) => plural(count, { one: 'Test sendt til # mottaker', other: 'Test sendt til # mottakere' }),
   },
 
   recipients: {

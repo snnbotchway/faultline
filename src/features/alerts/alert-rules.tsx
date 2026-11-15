@@ -94,7 +94,7 @@ function RuleRow({ rule, onOpen }: { rule: Alert; onOpen?: () => void }) {
   const cells = (
     <>
       <span className="truncate font-medium">{rule.name || when}</span>
-      <span className="truncate">{when}</span>
+      <span className="lg:truncate">{when}</span>
       <span className={cn('truncate text-muted-foreground', rule.environments.length > 0 && 'mono')}>{rule.environments.join(', ') || common.allEnvironments}</span>
       <span className="flex flex-wrap gap-x-3 gap-y-1">
         {rule.alertRecipients.length === 0 && <span className="text-sm text-muted-foreground">{t.nobody}</span>}

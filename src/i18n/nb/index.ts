@@ -6,6 +6,7 @@ import { logs } from './logs'
 import { performance } from './performance'
 import { settings } from './settings'
 import { shell } from './shell'
+import { uptime } from './uptime'
 
 // Norwegian Bokmål: every key of the English catalog, with the same arguments.
-export const nb: Messages = { common, shell, auth, account, settings, performance, logs }
+export const nb: Messages = { common, shell, auth, account, settings, performance, logs, uptime }

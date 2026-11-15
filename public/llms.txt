@@ -1,6 +1,6 @@
 # Faultline
 
-> Faultline is an open-source (MIT), modern frontend for self-hosted GlitchTip, the Sentry-compatible error tracker. It is built to replace the stock GlitchTip UI completely (coverage is tracked in the parity checklist): issues, uptime monitors and status pages, performance, logs, releases, alerts, organisation and project settings, and sign-in with MFA and social logins. It ships as one Docker image (`ghcr.io/snnbotchway/faultline`) that serves the app and proxies the GlitchTip backend on the same origin. It is not affiliated with GlitchTip.
+> Faultline is an open-source (MIT), modern frontend for self-hosted GlitchTip, the Sentry-compatible error tracker. It is at parity with the stock GlitchTip UI, in English, French and Norwegian Bokmål: issues, uptime monitors and status pages, performance, logs, releases, alerts, organisation and project settings, and sign-in with MFA and social logins. It ships as one Docker image (`ghcr.io/snnbotchway/faultline`) that serves the app and proxies the GlitchTip backend on the same origin. It is not affiliated with GlitchTip.
 
 Install: `docker run -d -p 8080:8080 -e BACKEND_URL=http://<glitchtip-host>:8000 ghcr.io/snnbotchway/faultline`, then set GlitchTip's `GLITCHTIP_DOMAIN` to Faultline's URL. The GlitchTip backend stays unmodified, and Faultline keeps GlitchTip's URL paths, so existing alert links work.
 
@@ -8,7 +8,8 @@ Install: `docker run -d -p 8080:8080 -e BACKEND_URL=http://<glitchtip-host>:8000
 
 - [README](https://github.com/snnbotchway/faultline/blob/main/README.md): what it is, quick start, configuration
 - [Compatibility](https://github.com/snnbotchway/faultline/blob/main/docs/compatibility.md): GlitchTip versions tested in CI
-- [Parity checklist](https://github.com/snnbotchway/faultline/blob/main/docs/parity.md): every stock GlitchTip screen and Faultline's coverage
+- [Parity checklist](https://github.com/snnbotchway/faultline/blob/main/docs/parity.md): every stock GlitchTip screen and how Faultline covers it
+- [Languages](https://github.com/snnbotchway/faultline/blob/main/docs/i18n.md): how to add text in English, French and Norwegian
 - [Changelog](https://github.com/snnbotchway/faultline/blob/main/CHANGELOG.md)
 
 ## Contributing

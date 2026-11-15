@@ -1,11 +1,11 @@
 # Contributing to Faultline
 
-Thanks for helping. Faultline is a volunteer project: a frontend for self-hosted GlitchTip that aims to replace the stock UI completely.
+Thanks for helping. Faultline is a volunteer project: a frontend for self-hosted GlitchTip that replaces the stock UI completely.
 
 ## Before you start
 
 - For anything bigger than a small fix, open an issue first so we can agree on the approach.
-- Check `docs/parity.md` for what is still missing; unticked rows are good places to start.
+- `docs/parity.md` records how each stock GlitchTip screen is covered; a change to a stock screen keeps its row true.
 - Faultline is not affiliated with GlitchTip. Bugs in the GlitchTip backend belong at https://gitlab.com/glitchtip/glitchtip-backend.
 
 ## Set up
@@ -14,9 +14,9 @@ You need [Bun](https://bun.sh) and Docker.
 
 ```sh
 bun install
-bun run backend:up   # GlitchTip 7.0.0 + Postgres + Valkey on :8600
-bun run seed         # demo@example.com / demo-pass-123, org demo-co
-bun run dev          # http://localhost:5190
+bun run backend:up         # GlitchTip 7.0.0 + Postgres + Valkey on :8600
+bun run seed:performance   # demo@example.com / demo-pass-123, org demo-co, with transactions and logs
+bun run dev                # http://localhost:5190
 ```
 
 ## Working on the code

@@ -15,7 +15,8 @@ import { explain, isNotFound } from '@/api/errors'
 import { errorParts } from '@/features/issues/event'
 import { bytes, ago, brief, compact, exact } from '@/features/issues/format'
 import { LevelGlyph } from '@/features/issues/level'
-import { countWord, releaseName } from '@/lib/text'
+import { useT } from '@/i18n'
+import { releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { cn } from '@/lib/utils'
 import { EventsChart } from './events-chart'
@@ -25,16 +26,17 @@ const SHA_SHOWN = 7
 
 /** One release: the issues it brought and the ones still happening in it, where it was deployed, its commits and its files. */
 export function ReleasePage({ org, version }: { org: string; version: string }) {
+  const { releases: t, common } = useT()
   const openable = canOpenRelease(version)
   const release = useQuery({ ...releaseQuery(org, version), enabled: openable })
-  useTitle(releaseName(version), 'Releases')
+  useTitle(releaseName(version), t.title)
 
   const bar = (
     <PageBar>
       <Crumbs
         root={
           <Link to="/$org/releases" params={{ org }} className={CRUMB_LINK}>
-            Releases
+            {t.title}
           </Link>
         }
       >
@@ -48,10 +50,10 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
     return (
       <>
         {bar}
-        <Screen title="Releases with a slash in the version can't be opened">
+        <Screen title={t.page.slashTitle}>
           <Button asChild>
             <Link to="/$org/releases" params={{ org }}>
-              Go to releases
+              {t.goTo}
             </Link>
           </Button>
         </Screen>
@@ -62,15 +64,15 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
     return (
       <>
         {bar}
-        <Screen title={missing ? 'Release not found' : "This release didn't load"}>
+        <Screen title={missing ? t.page.notFound : t.page.failed}>
           {missing ? (
             <Button asChild>
               <Link to="/$org/releases" params={{ org }}>
-                Go to releases
+                {t.goTo}
               </Link>
             </Button>
           ) : (
-            <Button onClick={() => void release.refetch()}>Try again</Button>
+            <Button onClick={() => void release.refetch()}>{common.tryAgain}</Button>
           )}
         </Screen>
       </>
@@ -110,35 +112,37 @@ export function ReleasePage({ org, version }: { org: string; version: string }) 
 
 // The errors of the release's projects over the last two weeks, with this release marked where it was made.
 function ReleaseEvents({ org, release }: { org: string; release: Release }) {
+  const t = useT().releases.page
   const projects = useQuery(projectsQuery(org)).data
   const ids = projects?.filter((project) => release.projects.some((other) => other.slug === project.slug)).map((project) => Number(project.id))
   if (!ids) return <Skeleton className="mb-8 h-25" />
   // A release of no project has no errors to chart.
   if (ids.length === 0) return null
   return (
-    <Section label="Errors in its projects" className="mb-8">
+    <Section label={t.projectsErrors} className="mb-8">
       <EventsChart org={org} releases={[release]} projects={ids} className="pt-3" />
     </Section>
   )
 }
 
 function ReleaseIssues({ org, version }: { org: string; version: string }) {
+  const t = useT().releases.page
   const issues = useInfiniteQuery(releaseIssuesQuery(org, version))
   if (issues.isPending) return <Skeleton className="h-40" />
-  if (issues.isError) return <p className="border-t py-4 text-muted-foreground">The issues in this release didn't load.</p>
+  if (issues.isError) return <p className="border-t py-4 text-muted-foreground">{t.issuesFailed}</p>
   const items = issues.data.pages.flatMap((page) => page.items)
-  if (!items.length) return <p className="border-t py-4 text-muted-foreground">No open issues have events in this release.</p>
+  if (!items.length) return <p className="border-t py-4 text-muted-foreground">{t.noIssues}</p>
   const fresh = items.filter((issue) => isNewIn(issue, version))
   const known = items.filter((issue) => !isNewIn(issue, version))
   // Counts are of the issues loaded so far; more pages may add to either list.
   const more = issues.hasNextPage ? '+' : ''
   return (
     <>
-      {fresh.length > 0 && <IssueList org={org} label="First seen in this release" count={`${fresh.length}${more}`} issues={fresh} fresh />}
-      {known.length > 0 && <IssueList org={org} label="Seen before, still happening" count={`${known.length}${more}`} issues={known} className={fresh.length ? 'mt-6' : undefined} />}
+      {fresh.length > 0 && <IssueList org={org} label={t.firstSeen} count={`${fresh.length}${more}`} issues={fresh} fresh />}
+      {known.length > 0 && <IssueList org={org} label={t.seenBefore} count={`${known.length}${more}`} issues={known} className={fresh.length ? 'mt-6' : undefined} />}
       {issues.hasNextPage && (
         <Button className="mt-3" aria-busy={issues.isFetchingNextPage} disabled={issues.isFetchingNextPage} onClick={() => void issues.fetchNextPage()}>
-          More issues
+          {t.moreIssues}
         </Button>
       )}
     </>
@@ -148,6 +152,7 @@ function ReleaseIssues({ org, version }: { org: string; version: string }) {
 const ISSUE_COLUMNS = 'grid-cols-[minmax(0,1fr)_56px_80px] lg:grid-cols-[minmax(0,1fr)_64px_88px]'
 
 function IssueList({ org, label, count, issues, fresh = false, className }: { org: string; label: string; count: string; issues: Issue[]; fresh?: boolean; className?: string }) {
+  const t = useT().releases.page
   return (
     <section aria-label={label} className={className}>
       <h2 className={cn('label-caps flex h-9 items-center gap-2 border-b', fresh && 'font-semibold text-trend-new')}>
@@ -156,8 +161,8 @@ function IssueList({ org, label, count, issues, fresh = false, className }: { or
       </h2>
       <div aria-hidden className={cn('grid h-8 items-center gap-x-4 border-b whitespace-nowrap', ISSUE_COLUMNS)}>
         <span />
-        <span className="label-caps text-right">Events</span>
-        <span className="label-caps text-right">Last seen</span>
+        <span className="label-caps text-right">{t.events}</span>
+        <span className="label-caps text-right">{t.lastSeen}</span>
       </div>
       <ul>
         {issues.map((issue) => {
@@ -189,15 +194,16 @@ function IssueList({ org, label, count, issues, fresh = false, className }: { or
 }
 
 function Deploys({ org, version }: { org: string; version: string }) {
+  const t = useT().releases.page
   const deploys = useQuery(releaseDeploysQuery(org, version))
   return (
-    <Section label="Deploys" count={deploys.data?.length}>
+    <Section label={t.deploys} count={deploys.data?.length}>
       {deploys.isPending ? (
         <Skeleton className="mt-3 h-12" />
       ) : deploys.isError ? (
-        <p className="py-3 text-muted-foreground">The deploys didn't load.</p>
+        <p className="py-3 text-muted-foreground">{t.deploysFailed}</p>
       ) : deploys.data.length === 0 ? (
-        <p className="py-3 text-muted-foreground">No deploys recorded.</p>
+        <p className="py-3 text-muted-foreground">{t.noDeploys}</p>
       ) : (
         <ul>
           {deploys.data.map((deploy) => (
@@ -218,16 +224,17 @@ function Deploys({ org, version }: { org: string; version: string }) {
 }
 
 function Commits({ org, version }: { org: string; version: string }) {
+  const t = useT().releases.page
   const commits = useQuery(releaseCommitsQuery(org, version))
   const [all, setAll] = useState(false)
   return (
-    <Section label="Commits" count={commits.data?.length}>
+    <Section label={t.commits} count={commits.data?.length}>
       {commits.isPending ? (
         <Skeleton className="mt-3 h-12" />
       ) : commits.isError ? (
-        <p className="py-3 text-muted-foreground">The commits didn't load.</p>
+        <p className="py-3 text-muted-foreground">{t.commitsFailed}</p>
       ) : commits.data.length === 0 ? (
-        <p className="py-3 text-muted-foreground">No commits sent.</p>
+        <p className="py-3 text-muted-foreground">{t.noCommits}</p>
       ) : (
         <>
           <ul>
@@ -243,7 +250,7 @@ function Commits({ org, version }: { org: string; version: string }) {
           </ul>
           {!all && commits.data.length > COMMITS_SHOWN && (
             <Button className="mt-3" onClick={() => setAll(true)}>
-              All {commits.data.length} commits
+              {t.allCommits(commits.data.length)}
             </Button>
           )}
         </>
@@ -253,6 +260,8 @@ function Commits({ org, version }: { org: string; version: string }) {
 }
 
 function Files({ org, version }: { org: string; version: string }) {
+  const { releases, common } = useT()
+  const t = releases.page
   const files = useInfiniteQuery(releaseFilesQuery(org, version))
   const canManage = canManageReleases(useQuery(organizationQuery(org)).data?.access)
   const [shown, setShown] = useState(false)
@@ -260,12 +269,12 @@ function Files({ org, version }: { org: string; version: string }) {
   const count = files.hasNextPage ? `${items.length}+` : items.length
   return (
     <Section
-      label="Files"
+      label={t.files}
       count={files.data ? items.length : undefined}
       action={
         items.length > 0 && (
           <Button variant="ghost" aria-expanded={shown} onClick={() => setShown((current) => !current)}>
-            {shown ? 'Hide' : 'Show'}
+            {shown ? common.hide : common.show}
           </Button>
         )
       }
@@ -273,12 +282,12 @@ function Files({ org, version }: { org: string; version: string }) {
       {files.isPending ? (
         <Skeleton className="mt-3 h-8" />
       ) : files.isError ? (
-        <p className="py-3 text-muted-foreground">The files didn't load.</p>
+        <p className="py-3 text-muted-foreground">{t.filesFailed}</p>
       ) : items.length === 0 ? (
-        <p className="py-3 text-muted-foreground">No source maps uploaded.</p>
+        <p className="py-3 text-muted-foreground">{t.noFiles}</p>
       ) : !shown ? (
         <p className="mono py-3 text-muted-foreground">
-          {count} {countWord(items.length, 'file')}, {bytes(items.reduce((sum, file) => sum + file.size, 0))}
+          {t.filesSummary(count, bytes(items.reduce((sum, file) => sum + file.size, 0)))}
         </p>
       ) : (
         <>
@@ -289,7 +298,7 @@ function Files({ org, version }: { org: string; version: string }) {
           </ul>
           {files.hasNextPage && (
             <Button className="mt-3" aria-busy={files.isFetchingNextPage} onClick={() => void files.fetchNextPage()}>
-              More files
+              {t.moreFiles}
             </Button>
           )}
         </>
@@ -299,6 +308,8 @@ function Files({ org, version }: { org: string; version: string }) {
 }
 
 function FileRow({ org, version, file, canDelete }: { org: string; version: string; file: ReleaseFile; canDelete: boolean }) {
+  const { releases, common } = useT()
+  const t = releases.page
   const queryClient = useQueryClient()
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string>()
@@ -308,7 +319,7 @@ function FileRow({ org, version, file, canDelete }: { org: string; version: stri
       setConfirming(false)
       void queryClient.invalidateQueries({ queryKey: releaseKeys.files(org, version) })
     },
-    onError: (failure) => setError(explain(failure, 'delete the file')),
+    onError: (failure) => setError(explain(failure, t.deleteFileAction)),
   })
   const name = file.name.replace(/^~\//, '')
   return (
@@ -319,14 +330,14 @@ function FileRow({ org, version, file, canDelete }: { org: string; version: stri
       <span className="mono text-muted-foreground">{bytes(file.size)}</span>
       {canDelete && (
         <RowButton danger onClick={() => setConfirming(true)}>
-          Delete
+          {common.delete}
         </RowButton>
       )}
       <ConfirmDialog
         open={confirming}
-        title={`Delete ${name}?`}
-        description="New errors in this release that need this file won't be matched to your source. This can't be undone."
-        action="Delete file"
+        title={t.deleteFileTitle(name)}
+        description={t.deleteFileLoses}
+        action={t.deleteFile}
         busy={remove.isPending}
         error={error}
         onConfirm={() => {

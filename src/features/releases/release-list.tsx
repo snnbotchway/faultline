@@ -6,14 +6,15 @@ import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { clock, compact, dayName, exact } from '@/features/issues/format'
-import { countWord, releaseName } from '@/lib/text'
+import { localized, useT } from '@/i18n'
+import { releaseName } from '@/lib/text'
 import { useTitle } from '@/lib/title'
 import { EventsChart } from './events-chart'
 
 // How many unresolved issues a release brought, when the one page of newest issues covers it.
 // Every row's time column is as wide as the longest time of day, so the release names line up
 // in locales whose clock grows, such as "10:15 a.m." beside "9:05 a.m.".
-const WIDEST_CLOCKS = [new Date(2000, 0, 1, 10, 58), new Date(2000, 0, 1, 22, 58)].map(clock)
+const widestClocks = localized(() => [new Date(2000, 0, 1, 10, 58), new Date(2000, 0, 1, 22, 58)].map(clock))
 
 function newIssues(counts: NewIssueCounts | undefined, release: Release): number | undefined {
   if (!counts) return undefined
@@ -23,7 +24,8 @@ function newIssues(counts: NewIssueCounts | undefined, release: Release): number
 
 /** Releases newest first, grouped by day, under the organization's events per day with each release marked on it. */
 export function ReleaseList({ org }: { org: string }) {
-  useTitle('Releases')
+  const { releases: t, common } = useT()
+  useTitle(t.title)
   const list = useInfiniteQuery(releaseListQuery(org))
   const counts = useQuery(newIssuesByReleaseQuery(org)).data
   const releases = useMemo(() => list.data?.pages.flatMap((page) => page.items) ?? [], [list.data])
@@ -40,7 +42,7 @@ export function ReleaseList({ org }: { org: string }) {
 
   const bar = (
     <PageBar>
-      <h1 className="text-2xl font-semibold">Releases</h1>
+      <h1 className="text-2xl font-semibold">{t.title}</h1>
       {hits !== undefined && <span className="mono text-muted-foreground">{compact(hits)}</span>}
     </PageBar>
   )
@@ -48,8 +50,8 @@ export function ReleaseList({ org }: { org: string }) {
     return (
       <>
         {bar}
-        <Screen title="The releases didn't load">
-          <Button onClick={() => void list.refetch()}>Try again</Button>
+        <Screen title={t.loadFailed}>
+          <Button onClick={() => void list.refetch()}>{common.tryAgain}</Button>
         </Screen>
       </>
     )
@@ -57,7 +59,7 @@ export function ReleaseList({ org }: { org: string }) {
     return (
       <>
         {bar}
-        <Screen title="Releases show here once an app reports one with its errors" />
+        <Screen title={t.empty} />
       </>
     )
 
@@ -67,7 +69,7 @@ export function ReleaseList({ org }: { org: string }) {
       <div className="mx-auto w-full max-w-4xl pb-16">
         <EventsChart org={org} releases={releases} className="border-b px-3 pt-4 pb-3 lg:px-4" />
         {list.isPending ? (
-          <div aria-busy aria-label="Loading releases">
+          <div aria-busy aria-label={t.loading}>
             {Array.from({ length: 5 }, (_, index) => (
               <div key={index} className="flex flex-col gap-2 border-b px-3 py-3 lg:px-4">
                 <Skeleton className="h-4 w-40" />
@@ -94,7 +96,7 @@ export function ReleaseList({ org }: { org: string }) {
                           <time dateTime={release.dateCreated} title={exact(release.dateCreated)}>
                             {clock(release.dateCreated)}
                           </time>
-                          {WIDEST_CLOCKS.map((time) => (
+                          {widestClocks().map((time) => (
                             <span key={time} aria-hidden className="invisible">
                               {time}
                             </span>
@@ -107,7 +109,7 @@ export function ReleaseList({ org }: { org: string }) {
                             </span>
                             {fresh !== undefined && fresh > 0 && (
                               <span className="shrink-0 text-trend-new">
-                                <span className="mono font-semibold">{fresh}</span> new {countWord(fresh, 'issue')}
+                                {t.newIssues(fresh, <span className="mono font-semibold">{fresh}</span>)}
                               </span>
                             )}
                           </span>
@@ -118,12 +120,12 @@ export function ReleaseList({ org }: { org: string }) {
                               {/* A release without deploys may still be live: GlitchTip only knows of deploys a pipeline reports. */}
                               {release.deployCount > 0 && (
                                 <span>
-                                  <Counted count={release.deployCount} word="deploy" />
+                                  {t.deploysCount(release.deployCount, <span className="mono">{release.deployCount}</span>)}
                                 </span>
                               )}
                               {release.commitCount > 0 && (
                                 <span>
-                                  <Counted count={release.commitCount} word="commit" />
+                                  {t.commitsCount(release.commitCount, <span className="mono">{release.commitCount}</span>)}
                                 </span>
                               )}
                             </span>
@@ -140,20 +142,11 @@ export function ReleaseList({ org }: { org: string }) {
         {list.hasNextPage && (
           <div className="px-3 py-4 lg:px-4">
             <Button onClick={() => void list.fetchNextPage()} aria-busy={list.isFetchingNextPage}>
-              More releases
+              {t.more}
             </Button>
           </div>
         )}
       </div>
-    </>
-  )
-}
-
-// `2 deploys`: the figure in mono, the word in the sans.
-function Counted({ count, word }: { count: number; word: string }) {
-  return (
-    <>
-      <span className="mono">{count}</span> {countWord(count, word)}
     </>
   )
 }

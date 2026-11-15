@@ -3,6 +3,7 @@ import { dailyEventsQuery } from '@/api/releases'
 import { Skeleton } from '@/components/ui/skeleton'
 import { compact, dayLabel } from '@/features/issues/format'
 import { ReleaseTrace } from '@/features/issues/trace'
+import { useT } from '@/i18n'
 import { releaseMarks, spanAxis } from '@/features/issues/trend'
 import { DAY_MS } from '@/lib/time'
 
@@ -23,11 +24,12 @@ export function EventsChart({
   projects?: number[]
   className?: string
 }) {
+  const { releases: t, common } = useT()
   const events = useQuery({ ...dailyEventsQuery(org, EVENT_DAYS, projects), enabled: !projects || projects.length > 0 })
   if (!events.data)
     return (
       <div className={className}>
-        {events.isError ? <p className="flex h-25 items-center text-muted-foreground">The events per day didn't load.</p> : <Skeleton className="h-25" />}
+        {events.isError ? <p className="flex h-25 items-center text-muted-foreground">{t.chart.loadFailed}</p> : <Skeleton className="h-25" />}
       </div>
     )
   const { start, counts } = events.data
@@ -38,10 +40,8 @@ export function EventsChart({
       <ReleaseTrace buckets={counts} marks={marks} height={56} />
       <p className="label-caps mt-2 flex justify-between gap-3">
         <span>{dayLabel(start / 1000)}</span>
-        <span>
-          Errors · peak <span className="mono text-foreground">{compact(peak)}</span>/day
-        </span>
-        <span>Today</span>
+        <span>{t.chart.peak(<span className="mono text-foreground">{compact(peak)}</span>)}</span>
+        <span>{common.time.today}</span>
       </p>
     </div>
   )

@@ -51,19 +51,19 @@ export function VerifyEmailBanner() {
   )
 }
 
-// Shown above every page while the open organization drops a share of its incoming events. Without billing the
-// share is set by hand in the backend's admin, which only a superuser can open; with billing the quota check sets it
-// from the plan, which an owner changes.
+// Shown above every page while the open organization drops a share of its incoming events, or turns them all away.
+// Without billing the share and the switch are set by hand in the backend's admin, which only a superuser can open;
+// with billing the quota check sets them from the plan, which an owner changes.
 export function OverLimitBanner({ org }: { org: string }) {
   const organization = useQuery(organizationQuery(org)).data
   const billing = useQuery(instanceSettingsQuery).data?.billingEnabled
   const superuser = useQuery(currentUserQuery).data?.isSuperuser === true
   const rate = organization?.eventThrottleRate ?? 0
-  if (!organization || rate <= 0) return null
-  const dropped = rate >= 100 ? 'every new event' : `${rate}% of new events`
+  if (!organization || (organization.isAcceptingEvents && rate <= 0)) return null
+  const state = !organization.isAcceptingEvents ? "isn't accepting events" : `is dropping ${rate >= 100 ? 'every new event' : `${rate}% of new events`}`
   return (
-    <Banner label="Events dropped" icon={<Gauge />}>
-      <span className="min-w-0">{billing ? `${organization.name} is over its plan's event limit and is dropping ${dropped}.` : `${organization.name} is dropping ${dropped}.`}</span>
+    <Banner label={organization.isAcceptingEvents ? 'Events dropped' : 'Not accepting events'} icon={<Gauge />}>
+      <span className="min-w-0">{billing ? `${organization.name} is over its plan's event limit and ${state}.` : `${organization.name} ${state}.`}</span>
       {billing ? (
         <span className="text-muted-foreground">An owner can raise the plan's limit.</span>
       ) : superuser ? (
@@ -75,7 +75,7 @@ export function OverLimitBanner({ org }: { org: string }) {
           </a>
         </Button>
       ) : (
-        <span className="text-muted-foreground">Ask a server admin to lift it.</span>
+        <span className="text-muted-foreground">{organization.isAcceptingEvents ? 'Ask a server admin to lift it.' : 'Ask a server admin to turn them back on.'}</span>
       )}
     </Banner>
   )

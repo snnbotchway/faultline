@@ -38,7 +38,7 @@ export function DropRows({ org, organization, accepting, projects, open, onToggl
             </span>
           </>
         }
-        aside={organization >= BLOCKED && <span className="text-muted-foreground max-lg:mt-1">{accepting ? 'Set for the organization' : 'Turned off for the organization'}</span>}
+        aside={organization >= BLOCKED && <span className="text-muted-foreground max-lg:mt-1">{accepting ? 'Set for the organization' : 'Not accepting events'}</span>}
       />
       {unfolded && (
         <ul aria-label="Events to drop by project">

@@ -36,6 +36,17 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
     return matches
   }, [text, onSearch])
 
+  // Each run of commands under one heading is a group the heading names; `index` is the command's place in the whole list.
+  const groups = useMemo(() => {
+    const result: { name: CommandGroup; items: { command: Command; index: number }[] }[] = []
+    shown.forEach((command, index) => {
+      const last = result[result.length - 1]
+      if (last?.name === command.group) last.items.push({ command, index })
+      else result.push({ name: command.group, items: [{ command, index }] })
+    })
+    return result
+  }, [shown])
+
   const run = (command: Command | undefined) => {
     if (!command) return
     palette.close()
@@ -75,25 +86,30 @@ function PaletteContent({ onSearch }: { onSearch?: (text: string) => void }) {
         <Kbd>esc</Kbd>
       </div>
       <div className="max-h-[min(68vh,560px)] overflow-y-auto py-1" id={`${id}-list`} role="listbox" aria-label="Commands">
-        {shown.map((command, index) => (
-          <div key={command.id}>
-            {command.group !== shown[index - 1]?.group && <div className="label-caps px-3 pt-3 pb-1">{command.group}</div>}
-            {/* Focus stays in the field; the field's active descendant tells a screen reader which command is current. */}
-            <button
-              type="button"
-              id={`${id}-${index}`}
-              role="option"
-              tabIndex={-1}
-              aria-selected={index === cursor}
-              onMouseMove={() => setCursor(index)}
-              onClick={() => run(command)}
-              ref={index === cursor ? (node) => node?.scrollIntoView({ block: 'nearest' }) : undefined}
-              className={cn('flex min-h-8 w-full items-center gap-3 px-3 py-1 text-left max-lg:min-h-11', index === cursor && 'bg-accent')}
-            >
-              <span className="min-w-0 flex-1 truncate">{command.label}</span>
-              {command.detail && <span className="mono shrink-0 text-muted-foreground">{command.detail}</span>}
-              {command.keys && <Kbd>{command.keys}</Kbd>}
-            </button>
+        {groups.map((group, at) => (
+          <div key={group.name} role="group" aria-labelledby={`${id}-group-${at}`}>
+            <div id={`${id}-group-${at}`} className="label-caps px-3 pt-3 pb-1">
+              {group.name}
+            </div>
+            {group.items.map(({ command, index }) => (
+              // Focus stays in the field; the field's active descendant tells a screen reader which command is current.
+              <button
+                key={command.id}
+                type="button"
+                id={`${id}-${index}`}
+                role="option"
+                tabIndex={-1}
+                aria-selected={index === cursor}
+                onMouseMove={() => setCursor(index)}
+                onClick={() => run(command)}
+                ref={index === cursor ? (node) => node?.scrollIntoView({ block: 'nearest' }) : undefined}
+                className={cn('flex min-h-8 w-full items-center gap-3 px-3 py-1 text-left max-lg:min-h-11', index === cursor && 'bg-accent outline-2 -outline-offset-2 outline-foreground')}
+              >
+                <span className="min-w-0 flex-1 truncate">{command.label}</span>
+                {command.detail && <span className="mono shrink-0 text-muted-foreground">{command.detail}</span>}
+                {command.keys && <Kbd>{command.keys}</Kbd>}
+              </button>
+            ))}
           </div>
         ))}
         {shown.length === 0 && <Mark className="mx-auto my-6 size-6 text-muted-foreground" />}

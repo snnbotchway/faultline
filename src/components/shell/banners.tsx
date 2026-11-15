@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Check, ExternalLink, Gauge, MailWarning } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { account, emailsQuery } from '@/api/account'
-import { Feature, currentUserQuery, instanceSettingsQuery, organizationAdminUrl, organizationQuery } from '@/api/organizations'
+import { Feature, instanceSettingsQuery, organizationAdminUrl, organizationQuery } from '@/api/organizations'
 import { Button } from '@/components/ui/button'
 import { useAction } from '@/features/account/use-action'
+import { useIsSuperuser } from '@/features/settings/access'
 import { useT } from '@/i18n'
 
 function Banner({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
@@ -56,7 +57,7 @@ export function VerifyEmailBanner() {
 export function OverLimitBanner({ org }: { org: string }) {
   const organization = useQuery(organizationQuery(org)).data
   const billing = useQuery(instanceSettingsQuery).data?.billingEnabled
-  const superuser = useQuery(currentUserQuery).data?.isSuperuser === true
+  const superuser = useIsSuperuser()
   const { shell, common } = useT()
   const text = shell.banners
   const rate = organization?.eventThrottleRate ?? 0

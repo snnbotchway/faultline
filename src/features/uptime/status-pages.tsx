@@ -2,7 +2,6 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { ExternalLink, Globe, Lock } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { MonitorSort, STATUS_PAGE_ADMIN_URL, monitorActions, monitorKeys, monitorListQuery, statusPageUrl, statusPagesQuery, type StatusPage } from '@/api/monitors'
-import { currentUserQuery } from '@/api/organizations'
 import { PageBar, Screen } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,6 +19,7 @@ import { HEALTH, HEALTH_ORDER, healthInline } from './describe'
 import { HealthGlyph, UptimeTabs } from './parts'
 import { useMonitorHealth } from './use-health'
 import { CopyButton } from '@/features/settings/parts'
+import { useIsSuperuser } from '@/features/settings/access'
 
 // A row's action as a plain word (DESIGN.md, Rows), above the row's own link so it can be tapped on its own.
 const ADMIN_LINK = 'relative z-10 flex min-h-8 shrink-0 cursor-pointer items-center gap-1 text-sm font-medium hover:underline max-lg:min-h-11'
@@ -37,7 +37,7 @@ export function StatusPages({ org }: { org: string }) {
   const list = useInfiniteQuery(monitorListQuery(org, MonitorSort.name))
   const monitors = useMemo(() => list.data?.pages.flatMap((page) => page.items) ?? [], [list.data])
   // Only a superuser can put monitors on a page (in the backend's admin), so a page made by anyone else would stay empty.
-  const canAdmin = useQuery(currentUserQuery).data?.isSuperuser === true
+  const canAdmin = useIsSuperuser()
   const [creating, setCreating] = useState(false)
   const [opened] = useState(Date.now)
   const now = pages.dataUpdatedAt || opened

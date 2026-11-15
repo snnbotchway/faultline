@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ago, exact } from '@/features/issues/format'
 import { Trace } from '@/features/issues/trace'
-import { useAccess, useCanCreateOrganization, useLastOrganization } from '@/features/settings/access'
+import { useAccess, useOrganizationCreationOpen, useLastOrganization } from '@/features/settings/access'
 import { platformName } from '@/features/settings/platforms'
 import { useT } from '@/i18n'
 import { hasWords, searchWords } from '@/lib/text'
@@ -36,7 +36,7 @@ export function ProjectList({ org }: { org?: string }) {
   const nameOf = (slug: string) => organizations.data?.find((organization) => organization.slug === slug)?.name ?? slug
   const lists = useQueries({ queries: slugs.map((slug) => projectsQuery(slug)) })
   const [query, setQuery] = useState('')
-  const canCreateOrganization = useCanCreateOrganization()
+  const creationOpen = useOrganizationCreationOpen()
   // New projects go into the organization on screen, or the one the shell is showing.
   const target = org ?? last
 
@@ -47,7 +47,7 @@ export function ProjectList({ org }: { org?: string }) {
         <Button asChild variant="default">
           <Link to="/organizations/new">{t.createOrganization}</Link>
         </Button>
-        {!canCreateOrganization && <p className="prose-text text-muted-foreground">{t.orAskOwner}</p>}
+        {creationOpen === false && <p className="prose-text text-muted-foreground">{t.orAskOwner}</p>}
       </Screen>
     )
 

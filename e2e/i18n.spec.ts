@@ -27,7 +27,10 @@ test.afterEach(async ({ page }) => {
 test('someone switches to French, sees the shell and settings in French, and it sticks after a reload', async ({ page }) => {
   await page.goto('/profile')
   await page.getByRole('button', { name: /^Language/ }).click()
+  // The pick is saved to the account; leaving the page before the save lands would lose it.
+  const saved = page.waitForResponse((response) => response.url().endsWith('/api/0/users/me/') && response.request().method() === 'PUT')
   await page.getByRole('menuitemradio', { name: 'Français' }).click()
+  expect((await saved).ok()).toBe(true)
   await expect(page.getByRole('button', { name: /^Langue/ })).toContainText('Français')
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
 

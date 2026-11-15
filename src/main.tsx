@@ -4,6 +4,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BASE_PATH } from './api/base'
 import { setSignedOutHandler } from './api/client'
+import { startLocale } from './i18n'
 import './index.css'
 import { forgetSession } from './lib/session'
 import { routeTree } from './routeTree.gen'
@@ -25,10 +26,13 @@ setSignedOutHandler(() => {
   void router.navigate({ to: '/login', search: { next: href } })
 })
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </StrictMode>,
+// The page stays blank until this browser's language is loaded, so it never paints in English first.
+void startLocale().then(() =>
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </StrictMode>,
+  ),
 )

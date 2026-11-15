@@ -1,0 +1,76 @@
+import type { Messages } from '../en'
+
+export const auth: Messages['auth'] = {
+  email: 'E-post',
+  password: 'Passord',
+  newPassword: 'Nytt passord',
+  passwordRule: '8 tegn eller flere',
+  signIn: 'Logg inn',
+  createAccount: 'Opprett konto',
+  signInInstead: 'Logg inn i stedet',
+  backToSignIn: 'Tilbake til innlogging',
+  useAnotherAccount: 'Bruk en annen konto',
+  forgotPassword: 'Glemt passordet?',
+  continueWith: (provider) => `Fortsett med ${provider}`,
+  signInAction: 'logge deg inn',
+  createAccountAction: 'opprette kontoen din',
+
+  login: {
+    passwordChanged: 'Passordet er endret. Logg inn med det nye.',
+    socialFailed: 'Den innloggingen gikk ikke gjennom. Prøv igjen, eller bruk e-post og passord.',
+    timedOut: 'Innloggingen ble tidsavbrutt. Logg inn på nytt.',
+    providerNoEmail: (provider) => `${provider ?? 'Leverandøren din'} delte ingen e-postadresse`,
+  },
+
+  twoStep: {
+    title: 'Totrinnsbekreftelse',
+    appOrRecovery: 'Autentiserings- eller gjenopprettingskode',
+    app: 'Autentiseringskode',
+    recovery: 'Gjenopprettingskode',
+    verify: 'Bekreft',
+    checkAction: 'sjekke den koden',
+    keyFailedOrCode: 'Den sikkerhetsnøkkelen virket ikke. Prøv den igjen, eller skriv inn en kode.',
+    keyFailed: 'Den sikkerhetsnøkkelen virket ikke. Prøv den igjen.',
+    waitingForKey: 'Venter på sikkerhetsnøkkelen din',
+    tryKeyAgain: 'Prøv sikkerhetsnøkkelen igjen',
+    useKey: 'Bruk en sikkerhetsnøkkel',
+  },
+
+  signUp: {
+    closed: 'Registreringen er stengt',
+    askAdmin: 'Be en administrator om å invitere deg.',
+  },
+
+  reset: {
+    title: 'Tilbakestill passord',
+    sendLink: 'Send tilbakestillingslenke',
+    sendAction: 'sende tilbakestillingslenken',
+    noEmail: 'Be en administrator om å tilbakestille passordet ditt',
+    tooMany: 'For mange tilbakestillings-e-poster',
+    checkEmail: 'Sjekk e-posten din',
+    onItsWay: (email) => <>Hvis {email} har en konto, er en tilbakestillingslenke på vei.</>,
+    sendAgainIn: 'Send på nytt om',
+    sendAgain: 'Send på nytt',
+    setNew: 'Angi et nytt passord',
+    setAction: 'angi passordet ditt',
+    expired: 'Denne tilbakestillingslenken er utløpt eller allerede brukt',
+    sendNewLink: 'Send en ny lenke',
+    setPassword: 'Angi passord',
+  },
+
+  invite: {
+    title: 'Invitasjon',
+    didntLoad: 'Denne invitasjonen lastet ikke',
+    expired: 'Denne invitasjonen er utløpt eller allerede brukt',
+    askForNew: 'Be den som inviterte deg, om å sende en ny.',
+    invitedAs: 'Invitert som',
+    alreadyIn: (organization) => `Du er allerede med i ${organization}`,
+    open: (organization) => `Åpne ${organization}`,
+    join: (organization) => `Bli med i ${organization}`,
+    signedInAs: 'Logget inn som',
+    acceptAction: 'godta invitasjonen',
+    createAndJoin: 'Opprett konto og bli med',
+    signInAndJoin: 'Logg inn og bli med',
+    createInstead: 'Opprett en konto i stedet',
+  },
+}

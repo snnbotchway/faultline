@@ -1,0 +1,76 @@
+import type { Messages } from '../en'
+
+export const auth: Messages['auth'] = {
+  email: 'E-mail',
+  password: 'Mot de passe',
+  newPassword: 'Nouveau mot de passe',
+  passwordRule: '8 caractères ou plus',
+  signIn: 'Se connecter',
+  createAccount: 'Créer un compte',
+  signInInstead: 'Se connecter plutôt',
+  backToSignIn: 'Retour à la connexion',
+  useAnotherAccount: 'Utiliser un autre compte',
+  forgotPassword: 'Mot de passe oublié ?',
+  continueWith: (provider) => `Continuer avec ${provider}`,
+  signInAction: 'vous connecter',
+  createAccountAction: 'créer votre compte',
+
+  login: {
+    passwordChanged: 'Mot de passe modifié. Connectez-vous avec le nouveau.',
+    socialFailed: 'Cette connexion n’a pas abouti. Réessayez, ou utilisez votre e-mail et votre mot de passe.',
+    timedOut: 'La connexion a expiré. Reconnectez-vous.',
+    providerNoEmail: (provider) => `${provider ?? 'Votre fournisseur'} n’a pas partagé d’adresse e-mail`,
+  },
+
+  twoStep: {
+    title: 'Validation en deux étapes',
+    appOrRecovery: 'Code d’authentification ou de récupération',
+    app: 'Code d’authentification',
+    recovery: 'Code de récupération',
+    verify: 'Vérifier',
+    checkAction: 'vérifier ce code',
+    keyFailedOrCode: 'Cette clé de sécurité n’a pas fonctionné. Réessayez-la, ou saisissez un code.',
+    keyFailed: 'Cette clé de sécurité n’a pas fonctionné. Réessayez-la.',
+    waitingForKey: 'En attente de votre clé de sécurité',
+    tryKeyAgain: 'Réessayer la clé de sécurité',
+    useKey: 'Utiliser une clé de sécurité',
+  },
+
+  signUp: {
+    closed: 'Les inscriptions sont fermées',
+    askAdmin: 'Demandez à un administrateur de vous inviter.',
+  },
+
+  reset: {
+    title: 'Réinitialiser le mot de passe',
+    sendLink: 'Envoyer le lien de réinitialisation',
+    sendAction: 'envoyer le lien de réinitialisation',
+    noEmail: 'Demandez à un administrateur de réinitialiser votre mot de passe',
+    tooMany: 'Trop d’e-mails de réinitialisation',
+    checkEmail: 'Consultez vos e-mails',
+    onItsWay: (email) => <>Si {email} a un compte, un lien de réinitialisation est en route.</>,
+    sendAgainIn: 'Renvoyer dans',
+    sendAgain: 'Renvoyer',
+    setNew: 'Définir un nouveau mot de passe',
+    setAction: 'définir votre mot de passe',
+    expired: 'Ce lien de réinitialisation a expiré ou a déjà été utilisé',
+    sendNewLink: 'Envoyer un nouveau lien',
+    setPassword: 'Définir le mot de passe',
+  },
+
+  invite: {
+    title: 'Invitation',
+    didntLoad: 'Cette invitation ne s’est pas chargée',
+    expired: 'Cette invitation a expiré ou a déjà été utilisée',
+    askForNew: 'Demandez à la personne qui vous a invité d’en envoyer une nouvelle.',
+    invitedAs: 'Invité en tant que',
+    alreadyIn: (organization) => `Vous êtes déjà dans ${organization}`,
+    open: (organization) => `Ouvrir ${organization}`,
+    join: (organization) => `Rejoindre ${organization}`,
+    signedInAs: 'Connecté en tant que',
+    acceptAction: 'accepter l’invitation',
+    createAndJoin: 'Créer un compte et rejoindre',
+    signInAndJoin: 'Se connecter et rejoindre',
+    createInstead: 'Créer un compte plutôt',
+  },
+}

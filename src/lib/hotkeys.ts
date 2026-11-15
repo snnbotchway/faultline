@@ -35,7 +35,8 @@ export function useHotkeys(keys: Record<string, Handler>) {
         }
         return
       }
-      if (event.altKey || overlayOpen() || activates(event)) return
+      // A key something else took, such as the Esc that closed a dialog before this runs, is not a shortcut too.
+      if (event.defaultPrevented || event.altKey || overlayOpen() || activates(event)) return
       if (isTyping(event.target)) {
         if (event.key === 'Escape') (event.target as HTMLElement).blur()
         return

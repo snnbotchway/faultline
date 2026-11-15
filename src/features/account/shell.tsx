@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { organizationsQuery } from '@/api/organizations'
 import { Wordmark } from '@/components/mark'
+import { PROJECT_LIST_STATE } from '@/features/projects/link'
 import { AppShell, Main, Notice, SkipLink } from '@/components/shell/app-shell'
 import { Button } from '@/components/ui/button'
 import { useT } from '@/i18n'
@@ -22,7 +23,7 @@ export function BareShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       <SkipLink />
       <header className="flex h-11 shrink-0 items-center gap-1 border-b px-3 md:px-4">
-        <Link to="/" state={{ projectList: true }} aria-label="Faultline" className="mr-auto">
+        <Link to="/" state={PROJECT_LIST_STATE} aria-label="Faultline" className="mr-auto">
           <Wordmark />
         </Link>
         <Button variant="ghost" size="sm" className="max-lg:h-11" asChild>

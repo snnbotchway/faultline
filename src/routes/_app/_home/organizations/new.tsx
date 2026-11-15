@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { PROJECT_LIST_STATE } from '@/features/projects/link'
 import { ProjectList } from '@/features/projects/project-list'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
 
@@ -10,7 +11,7 @@ function NewOrganizationPage() {
   return (
     <>
       <ProjectList />
-      <NewOrganizationDialog onClose={() => void navigate({ to: '/' })} />
+      <NewOrganizationDialog onClose={() => void navigate({ to: '/', state: PROJECT_LIST_STATE })} />
     </>
   )
 }

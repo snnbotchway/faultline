@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Kbd } from '@/components/ui/kbd'
+import { PROJECT_LIST_STATE } from '@/features/projects/link'
 import { useOrganizationCreationOpen } from '@/features/settings/access'
 import { NewOrganizationDialog } from '@/features/settings/new-organization'
 import { LOCALE_NAMES, Locale, useChosenLocale, useLocale, useT } from '@/i18n'
@@ -117,7 +118,7 @@ function TopBar({ org, current, inbox }: { org: string; current: string | undefi
   const ThemeIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b px-3 md:px-4">
-      <Link to="/" state={{ projectList: true }} aria-label={t.shell.home} className="flex h-11 items-center">
+      <Link to="/" state={PROJECT_LIST_STATE} aria-label={t.shell.home} className="flex h-11 items-center">
         <Wordmark />
       </Link>
       <div className="flex min-w-0 items-center gap-1">

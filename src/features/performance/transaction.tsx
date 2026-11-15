@@ -167,6 +167,7 @@ export function TransactionPage({ org, groupId }: { org: string; groupId: string
   return (
     <>
       <PageBar>
+        <h1 className="sr-only">Transaction</h1>
         <Link
           to="/$org/performance/transaction-groups"
           params={{ org }}

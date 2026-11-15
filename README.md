@@ -1,6 +1,12 @@
 # Faultline
 
-**A modern frontend for self-hosted [GlitchTip](https://glitchtip.com).** Issues, uptime monitors, performance, logs, releases, alerts, settings and sign-in in one fast, keyboard-first app that works on your phone. It is built to replace the stock UI entirely, and runs against an unmodified GlitchTip backend.
+[![CI](https://github.com/snnbotchway/faultline/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/snnbotchway/faultline/actions/workflows/ci.yml?query=branch%3Amain)
+[![Release](https://img.shields.io/github/v/release/snnbotchway/faultline)](https://github.com/snnbotchway/faultline/releases/latest)
+[![Licence: MIT](https://img.shields.io/github/license/snnbotchway/faultline)](LICENSE)
+[![Image on GHCR](https://img.shields.io/badge/image-ghcr.io%2Fsnnbotchway%2Ffaultline-2496ED?logo=docker&logoColor=white)](https://github.com/snnbotchway/faultline/pkgs/container/faultline)
+[![Tested against GlitchTip 7.0.0](https://img.shields.io/badge/GlitchTip-7.0.0-6C5FC7)](docs/compatibility.md)
+
+**A modern frontend for self-hosted [GlitchTip](https://glitchtip.com).** It covers every screen of the stock GlitchTip UI: issues, uptime monitors and status pages, performance, logs, releases, alerts, usage, settings and sign-in. It ships in English, French and Norwegian Bokmål, and runs against an unmodified GlitchTip backend.
 
 Faultline is an independent project and is not affiliated with or endorsed by GlitchTip.
 
@@ -20,10 +26,11 @@ Faultline is an independent project and is not affiliated with or endorsed by Gl
 
 GlitchTip is a great open-source, Sentry-compatible error tracker. Faultline gives it a dense, fast interface built for daily triage:
 
+- **At parity with the stock frontend:** every stock screen and route is covered, as [the parity checklist](docs/parity.md) records, so you never need to switch back.
 - **Keyboard first:** `j`/`k` to move, `x` to select, `e` to resolve, `/` to search, `⌘K` for everything else.
 - **See what's new and spiking at a glance:** every issue sits on one shared timeline, with release markers.
-- **A full replacement:** the goal is every screen of the stock UI, tracked in [the parity checklist](docs/parity.md), so you never need to switch back.
 - **Works on a phone:** triage an alert from wherever you are.
+- **Three languages:** English, French and Norwegian Bokmål, chosen under Profile or taken from the browser.
 - **Light and dark** themes.
 - **Drop-in:** one container in front of your existing GlitchTip. Old alert and email links keep working because Faultline uses the same URLs.
 
@@ -59,29 +66,21 @@ Set GlitchTip's `GLITCHTIP_DOMAIN` to Faultline's public URL, so the links in al
 |---|---|---|
 | `BACKEND_URL` | (required) | Where the GlitchTip web service listens, as Faultline's container sees it, e.g. `http://glitchtip:8000`. |
 | `PORT` | `8080` | Port Faultline listens on inside the container. |
-| `BASE_PATH` | (empty) | Serve Faultline and the backend paths under a prefix, e.g. `/faultline`, for a proxy that shares one host between apps. Letters, digits and `. _ ~ - /` only. Give GlitchTip the same `BASE_PATH`, and set its `GLITCHTIP_DOMAIN` to the URL with the prefix (`https://example.com/faultline`), so its admin, alert emails and DSNs use the prefix too. GlitchTip 7.0.0 still sends its admin styles from `/static/` and its password-reset and email-confirmation links to the root, outside the prefix. Faultline writes the prefix into a copy of the app under `/tmp`, so a read-only root filesystem needs a tmpfs there. |
+| `BASE_PATH` | (empty) | Serve Faultline under a prefix such as `/faultline`, for a proxy that shares one host between apps. Letters, digits and `. _ ~ - /` only. See below. |
 
-Performance needs GlitchTip's cold storage for span breakdowns, weekly trends and repeated queries: set `GLITCHTIP_ENABLE_DUCKDB=true` and `GLITCHTIP_COLD_STORAGE_DIR` (on a volume) or a storage bucket on the GlitchTip service. Without it the screens ask users to have an admin turn on "request details". See [docs/compatibility.md](docs/compatibility.md#cold-storage-for-performance).
+**Under a `BASE_PATH`**, give GlitchTip the same `BASE_PATH` and set its `GLITCHTIP_DOMAIN` to the URL with the prefix (`https://example.com/faultline`), so its admin, alert emails and DSNs use it too. GlitchTip 7.0.0 still serves its admin styles from `/static/` and sends password-reset and email-confirmation links to the root, outside the prefix. Faultline writes the prefix into a copy of the app under `/tmp`, so a read-only root filesystem needs a tmpfs there.
 
-Behind a TLS proxy that forwards the original `Host` header (Caddy, Traefik, Tailscale Serve, most nginx setups), nothing else is needed. If your proxy rewrites `Host`, add Faultline's URL to GlitchTip's `CSRF_TRUSTED_ORIGINS`.
+**Behind a TLS proxy** that forwards the original `Host` header (Caddy, Traefik, Tailscale Serve, most nginx setups), nothing else is needed. If your proxy rewrites `Host`, add Faultline's URL to GlitchTip's `CSRF_TRUSTED_ORIGINS`.
+
+**Performance** needs GlitchTip's cold storage for span breakdowns, weekly trends and repeated queries; see [docs/compatibility.md](docs/compatibility.md#cold-storage-for-performance).
 
 ## Compatibility
 
-Faultline is tested in CI against real GlitchTip backends. See [docs/compatibility.md](docs/compatibility.md) for the tested versions.
-
-| Faultline | GlitchTip |
-|---|---|
-| 0.3.0 | 7.0.0 |
-| 0.2.1 | 7.0.0 |
-| 0.2.0 | 7.0.0 |
-| 0.1.1 | 7.0.0 |
-| 0.1.0 | 7.0.0 |
-
-## Status
-
-Faultline is young. [docs/parity.md](docs/parity.md) lists every screen and feature of the stock GlitchTip UI and which ones Faultline covers so far.
+Every release is tested in CI against a real GlitchTip backend. Faultline 0.3.0 is tested against GlitchTip 7.0.0; [docs/compatibility.md](docs/compatibility.md) lists every release, and the organisation slugs that clash with backend paths.
 
 ## Develop
+
+You need [Bun](https://bun.sh) and Docker.
 
 ```sh
 bun install
@@ -90,6 +89,8 @@ bun run dev                                      # http://localhost:5190, demo@e
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Coding agents: start with [AGENTS.md](AGENTS.md) or [llms.txt](public/llms.txt).
+
+More in [docs/](docs): [parity checklist](docs/parity.md), [compatibility](docs/compatibility.md), [languages](docs/i18n.md), [GlitchTip backend notes](docs/research/backend-integration.md), and the [changelog](CHANGELOG.md).
 
 ## Licence
 

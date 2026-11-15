@@ -4,17 +4,17 @@ import type { IntervalUnit } from '../en/uptime'
 import { count as number, plural, type PluralForms } from '../format'
 
 const INTERVAL: Record<IntervalUnit, PluralForms> = {
-  day: { one: '# jour', other: '# jours' },
-  hour: { one: '# heure', other: '# heures' },
-  minute: { one: '# minute', other: '# minutes' },
-  second: { one: '# seconde', other: '# secondes' },
+  day: { one: '# jour', other: '# jours' },
+  hour: { one: '# heure', other: '# heures' },
+  minute: { one: '# minute', other: '# minutes' },
+  second: { one: '# seconde', other: '# secondes' },
 }
 
 const EVERY: Record<IntervalUnit, PluralForms> = {
-  day: { one: 'chaque jour', other: 'tous les # jours' },
-  hour: { one: 'chaque heure', other: 'toutes les # heures' },
-  minute: { one: 'chaque minute', other: 'toutes les # minutes' },
-  second: { one: 'chaque seconde', other: 'toutes les # secondes' },
+  day: { one: 'chaque jour', other: 'tous les # jours' },
+  hour: { one: 'chaque heure', other: 'toutes les # heures' },
+  minute: { one: 'chaque minute', other: 'toutes les # minutes' },
+  second: { one: 'chaque seconde', other: 'toutes les # secondes' },
 }
 
 export const uptime: Messages['uptime'] = {
@@ -50,9 +50,9 @@ export const uptime: Messages['uptime'] = {
   // The reason first: on a phone the line is cut, and the reason is what matters.
   downSince: (since, reason) => (since ? `${reason} · depuis ${since}` : `Hors ligne · ${reason}`),
   flappingSince: (downs, when) => `Hors ligne ${downs} fois depuis ${when.charAt(0).toLowerCase()}${when.slice(1)}`,
-  slowLine: (typical, timeout) => `${typical} pour un délai de ${timeout} s`,
+  slowLine: (typical, timeout) => `${typical} pour un délai de ${timeout} s`,
   upSince: (since) => (since ? `En ligne depuis ${since}` : 'En ligne'),
-  seconds: (count) => `${count} s`,
+  seconds: (count) => `${count} s`,
 
   interval: (unit, count) => plural(count, INTERVAL[unit]),
   every: (unit, count) => plural(count, EVERY[unit]),
@@ -117,7 +117,15 @@ export const uptime: Messages['uptime'] = {
     ),
     ago: (time) => `il y a ${time}`,
     agoWidth: '108px',
-    lasting: (span, ongoing) => (ongoing ? `${span} jusqu’ici` : span),
+    lasting: (span, ongoing) =>
+      ongoing ? (
+        <>
+          {span}
+          <span className="max-sm:sr-only"> jusqu’ici</span>
+        </>
+      ) : (
+        span
+      ),
 
     checks: 'Vérifications',
     showChecks: 'Afficher les vérifications',

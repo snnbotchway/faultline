@@ -116,7 +116,15 @@ export const uptime: Messages['uptime'] = {
     ),
     ago: (time) => `${time} siden`,
     agoWidth: '100px',
-    lasting: (span, ongoing) => (ongoing ? `${span} så langt` : span),
+    lasting: (span, ongoing) =>
+      ongoing ? (
+        <>
+          {span}
+          <span className="max-sm:sr-only"> så langt</span>
+        </>
+      ) : (
+        span
+      ),
 
     checks: 'Sjekker',
     showChecks: 'Vis sjekker',

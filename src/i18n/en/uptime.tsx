@@ -127,7 +127,17 @@ export const uptime = {
     ago: (time: string) => `${time} ago`,
     // The width of the first column of a downtime row, which holds `ago`.
     agoWidth: '64px',
-    lasting: (span: string, ongoing: boolean) => (ongoing ? `${span} so far` : span),
+    // On a phone the qualifier is left to screen readers, so the reason keeps its room; the row's colour and glyph
+    // already say the downtime is ongoing.
+    lasting: (span: string, ongoing: boolean): ReactNode =>
+      ongoing ? (
+        <>
+          {span}
+          <span className="max-sm:sr-only"> so far</span>
+        </>
+      ) : (
+        span
+      ),
 
     checks: 'Checks',
     showChecks: 'Show checks',

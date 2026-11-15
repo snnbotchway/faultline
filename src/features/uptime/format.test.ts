@@ -36,7 +36,7 @@ describe('in another language', () => {
 
   it('agrees "every" with the unit in French and numbers it in Norwegian', async () => {
     await setLocale(Locale.fr)
-    expect([60, 300, 3600, 7200, 86_400].map(everyPhrase)).toEqual(['chaque minute', 'toutes les 5 minutes', 'chaque heure', 'toutes les 2 heures', 'chaque jour'])
+    expect([60, 300, 3600, 7200, 86_400].map(everyPhrase)).toEqual(['chaque minute', 'toutes les 5\u00a0minutes', 'chaque heure', 'toutes les 2\u00a0heures', 'chaque jour'])
     expect(span(3 * HOUR_MS + 20 * MINUTE_MS).replace(/\u00a0/g, ' ')).toBe('3 h 20 min')
     await setLocale(Locale.nb)
     expect([60, 300, 3600, 86_400].map(everyPhrase)).toEqual(['hvert minutt', 'hvert 5. minutt', 'hver time', 'hver dag'])

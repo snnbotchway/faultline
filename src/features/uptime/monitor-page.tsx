@@ -20,7 +20,7 @@ import { RuleEditor } from '@/features/alerts/open-rule'
 import { recipientMeta } from '@/features/alerts/recipient-kinds'
 import { MarkLabels, PeriodToggle } from '@/features/issues/trace'
 import { releaseBefore, releaseMarks, spanAxis } from '@/features/issues/trend'
-import { useT } from '@/i18n'
+import { count, useT } from '@/i18n'
 import { releaseName } from '@/lib/text'
 import { ago, brief, clock, dayName, dayTime, exact } from '@/features/issues/format'
 import { useTitle } from '@/lib/title'
@@ -436,7 +436,7 @@ function Checks({ org, monitor, now }: { org: string; monitor: MonitorDetail; no
   const { hits, maxHits } = checks.data ?? {}
   const older = checks.data?.cursors.next
   // The backend counts no further than its cap.
-  const total = hits === undefined ? undefined : maxHits !== undefined && hits >= maxHits ? `${hits}+` : hits
+  const total = hits === undefined ? undefined : maxHits !== undefined && hits >= maxHits ? `${count(hits)}+` : hits
   const offset = (cursors.length - 1) * CHECKS_PAGE_SIZE
   // Until the page asked for is in, the one shown belongs to another page or view.
   const stale = checks.isPlaceholderData

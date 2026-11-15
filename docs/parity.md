@@ -316,7 +316,7 @@ These are not required for parity. Tick only if Faultline chooses to ship them.
 ## 16. Stock quirks we should not copy
 
 - System-info "Organization creation" reads `enableUserRegistration` (wrong flag).
-- `canCreateOrg` is `enableOrganizationCreation || user || orgCount`, so the create-org UI is always shown; the backend (`is_organization_creation_open`) also allows it when no org exists or the user is a superuser. Faultline should gate on `enableOrganizationCreation || orgs.length === 0 || user.isSuperuser`.
+- `canCreateOrg` is `enableOrganizationCreation || user || orgCount`, so the create-org UI is always shown; the backend (`is_organization_creation_open`) also allows it when no org exists or the user is a superuser. Faultline offers it when creation is open or the user is a superuser, and always on the no-organization screen, since the UI can't see whether the server has one yet.
 - `PAGE_LIMIT = 200` but the server caps at 100; fetch-all therefore needs up to 5 pages of 100 (500 rows max) and silently truncates beyond that.
 - Recovery-code confirm treats every non-200 as success (the endpoint returns 204 and 400 on a bad code).
 - Link-header parsing relies on a loose regex because the backend wraps the header in `{'...'}` (see integration doc).

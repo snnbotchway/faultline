@@ -15,7 +15,7 @@ All notable changes to Faultline are listed here. The format follows
 
 ### Fixed
 
-- Superusers are offered New organization even when organization creation is closed to everyone else, as the backend allows.
+- Superusers are offered New organization even when creation is closed to everyone else.
 - A user in no organization is offered to create one, since anyone may create a server's first organization; when the server refuses, the form says only an administrator can.
 
 ## [0.3.0] - 2026-11-15

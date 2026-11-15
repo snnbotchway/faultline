@@ -61,7 +61,7 @@ export const common: Messages['common'] = {
       serverUrlRequired: 'Skriv inn leverandørens adresse.',
       tooManyApps: 'Denne organisasjonen har så mange påloggingsapper den kan ha. Slett en først.',
       notInPlan: 'Abonnementet ditt omfatter ikke påloggingsapper.',
-      creationClosed: 'Bare en administrator kan opprette organisasjoner på denne serveren. Be en eier om å invitere deg til organisasjonen sin.',
+      creationClosed: 'Bare en administrator kan opprette organisasjoner på denne serveren.',
       alreadyMember: 'Personen er allerede medlem av denne organisasjonen.',
       alreadyInvited: 'Personen er allerede invitert. Åpne raden deres for å sende invitasjonen på nytt.',
     },

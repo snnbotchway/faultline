@@ -6,7 +6,7 @@ const projects = (count: number | string) => plural(count, { one: '# prosjekt', 
 
 export const settings: Messages['settings'] = {
   title: 'Innstillinger',
-  find: 'Finn en innstilling, et prosjekt eller en person',
+  find: 'Innstilling, prosjekt eller person',
   matches: 'Treff',
   noMatch: (query) => `Ingenting i innstillingene samsvarer med «${query}».`,
   name: 'Navn',

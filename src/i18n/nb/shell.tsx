@@ -42,11 +42,12 @@ export const shell: Messages['shell'] = {
   },
 
   palette: {
-    placeholder: 'Kjør en kommando eller søk i problemer',
+    placeholder: 'Kommando eller søk i problemer',
     command: 'Kommando',
     searchIssues: (text) => `Søk i problemer etter «${text}»`,
     switchTo: (name) => `Bytt til ${name}`,
-    theme: (name) => `Tema: ${name.toLowerCase()}`,
+    // Shown under the Tema heading, which the search also reads.
+    theme: (name) => name,
     groups: {
       selection: 'utvalg',
       issue: 'problem',

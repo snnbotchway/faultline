@@ -6,7 +6,7 @@ const projects = (count: number | string) => plural(count, { one: '# projet', ma
 
 export const settings: Messages['settings'] = {
   title: 'Paramètres',
-  find: 'Chercher un paramètre, un projet ou une personne',
+  find: 'Paramètre, projet ou personne',
   matches: 'Résultats',
   noMatch: (query) => `Rien dans les paramètres ne correspond à « ${query} ».`,
   name: 'Nom',
@@ -38,7 +38,7 @@ export const settings: Messages['settings'] = {
 
   search: {
     invited: 'Invité',
-    newSignInApp: 'Nouvelle application de connexion',
+    newSignInApp: 'Nouvelle application',
     singleSignOn: 'authentification unique',
     platform: 'Plateforme',
     teamsWithAccess: 'Équipes ayant accès',
@@ -269,7 +269,7 @@ export const settings: Messages['settings'] = {
 
   signInApps: {
     title: 'Applications de connexion',
-    new: 'Nouvelle application de connexion',
+    new: 'Nouvelle application',
     none: 'Aucune application de connexion pour l’instant',
     server: 'Serveur',
     clientId: 'ID client',

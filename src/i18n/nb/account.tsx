@@ -13,7 +13,7 @@ export const account: Messages['account'] = {
   turnOn: 'Slå på',
   turnOff: 'Slå av',
 
-  groups: { account: 'Konto', signIn: 'Innlogging', twoStep: 'Totrinnsbekreftelse', notifications: 'Varsler', tokens: 'API-tokener' },
+  groups: { account: 'Konto', signIn: 'Innlogging', twoStep: 'Totrinnsbekreftelse', notifications: 'Varslinger', tokens: 'API-tokener' },
   rows: {
     name: 'Navn',
     timeZone: 'Tidssone',
@@ -111,7 +111,7 @@ export const account: Messages['account'] = {
   },
 
   notifications: {
-    title: 'Varsler',
+    title: 'Varslinger',
     alertEmails: 'Varsler på e-post',
     default: 'Standard',
     forProject: (project) => `Varsler på e-post for ${project}`,

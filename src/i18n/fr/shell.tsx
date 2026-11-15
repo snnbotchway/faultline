@@ -42,7 +42,7 @@ export const shell: Messages['shell'] = {
   },
 
   palette: {
-    placeholder: 'Lancer une commande ou chercher des problèmes',
+    placeholder: 'Commande ou recherche de problèmes',
     command: 'Commande',
     searchIssues: (text) => `Chercher « ${text} » dans les problèmes`,
     switchTo: (name) => `Passer à ${name}`,
@@ -62,7 +62,7 @@ export const shell: Messages['shell'] = {
 
   language: {
     label: 'Langue',
-    browser: 'Celle du navigateur',
+    browser: 'Langue du navigateur',
     saveFailed: 'Impossible d’enregistrer votre langue. Choisissez-la de nouveau pour réessayer.',
     loadFailed: 'Impossible de charger cette langue. Vérifiez votre connexion, puis réessayez.',
   },

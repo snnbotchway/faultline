@@ -66,3 +66,27 @@ test('a segmented switch moves with the arrow keys', async ({ page }) => {
   await page.keyboard.press('ArrowLeft')
   await expect(all).toBeChecked()
 })
+
+test('a dialog opened from a menu gives focus back to the menu\'s button', async ({ page }) => {
+  await page.goto(`/${DEMO.org}/issues`)
+  const trigger = page.getByRole('button', { name: /^First seen/ })
+  await trigger.click()
+  await page.getByRole('menuitem', { name: 'Custom range' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+})
+
+test('the command palette gives focus back to its button', async ({ page }) => {
+  await page.goto(`/${DEMO.org}/issues`)
+  const trigger = page.getByRole('button', { name: 'Commands' })
+  await trigger.focus()
+  await page.keyboard.press('Enter')
+  const palette = page.getByRole('dialog', { name: 'Commands' })
+  await expect(palette.getByRole('combobox')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(palette).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+})

@@ -69,6 +69,7 @@ const SCREENS: Screen[] = [
   { name: 'performance', path: `${org}/performance`, ready: (page) => page.getByRole('list', { name: 'Transactions' }).getByRole('listitem').first() },
   { name: 'logs', path: `${org}/logs` },
   { name: 'organization settings', path: `${org}/settings` },
+  { name: 'usage', path: `${org}/settings/subscription` },
   { name: 'project settings', path: `${org}/settings/projects/web-app` },
   { name: 'profile', path: '/profile' },
   {

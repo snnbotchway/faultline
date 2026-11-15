@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { InboxSearch } from '@/features/issues/search'
 import { useAccess } from '@/features/settings/access'
-import { valueName } from '@/lib/text'
+import { ALL_ENVIRONMENTS, valueName } from '@/lib/text'
 import { cn } from '@/lib/utils'
 
 const TRIGGER = 'flex h-7 min-w-0 items-center gap-2 px-2 text-sm hover:bg-accent aria-expanded:bg-accent max-lg:h-11 max-lg:border max-lg:bg-card max-lg:px-3'
-const ALL_ENVIRONMENTS = ''
+const NO_ENVIRONMENT = ''
 
 // Project and environment filters of the inbox. They live in the URL, so a filtered view can be shared.
 export function ScopeFilters({ org, className }: { org: string; className?: string }) {
@@ -38,6 +38,7 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
       ...(search.environment ? [search.environment] : []),
     ]),
   ].sort()
+  const environment = search.environment ?? ALL_ENVIRONMENTS
   const update = (patch: Partial<InboxSearch>) =>
     void navigate({ to: '/$org/issues', params: { org }, search: (previous) => ({ ...previous, ...patch }), replace: true })
   // Each pick reads the URL as it is then, so quick clicks while the menu stays open all count.
@@ -99,13 +100,13 @@ export function ScopeFilters({ org, className }: { org: string; className?: stri
       </DropdownMenu>
       <span className="text-muted-foreground max-lg:hidden">/</span>
       <DropdownMenu>
-        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName('Environment', search.environment ?? 'All environments')}>
-          <span className={cn('truncate', search.environment && 'mono')}>{search.environment ?? 'All environments'}</span>
+        <DropdownMenuTrigger className={TRIGGER} aria-label={valueName('Environment', environment)}>
+          <span className={cn('truncate', search.environment && 'mono')}>{environment}</span>
           <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuRadioGroup value={search.environment ?? ALL_ENVIRONMENTS} onValueChange={(value) => update({ environment: value || undefined })}>
-            <DropdownMenuRadioItem value={ALL_ENVIRONMENTS}>All environments</DropdownMenuRadioItem>
+          <DropdownMenuRadioGroup value={search.environment ?? NO_ENVIRONMENT} onValueChange={(value) => update({ environment: value || undefined })}>
+            <DropdownMenuRadioItem value={NO_ENVIRONMENT}>{ALL_ENVIRONMENTS}</DropdownMenuRadioItem>
             {environments.map((name) => (
               <DropdownMenuRadioItem key={name} value={name} className="mono">
                 {name}

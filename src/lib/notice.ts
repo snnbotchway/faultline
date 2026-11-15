@@ -7,7 +7,7 @@ export type NoticeAction = { label: string; run: () => void }
 // One short message at a time, for an action whose result the screen cannot show by itself (usually a failure).
 let current: { id: number; text: string; error: boolean; action?: NoticeAction } | undefined
 const listeners = new Set<() => void>()
-const SHOWN_FOR = 6000
+export const SHOWN_FOR = 6000
 let timer: ReturnType<typeof setTimeout> | undefined
 
 // While the pointer or focus is on the message it stays, so its action can still be reached. Letting go of both

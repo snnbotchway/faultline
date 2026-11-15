@@ -1,8 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearNotice, holdNotice, notify, NoticeHold, releaseNotice, useNotice } from './notice'
-
-const SHOWN_FOR = 6000
+import { clearNotice, holdNotice, notify, NoticeHold, releaseNotice, SHOWN_FOR, useNotice } from './notice'
 
 function shown() {
   return renderHook(() => useNotice()).result

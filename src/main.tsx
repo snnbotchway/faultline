@@ -17,7 +17,7 @@ declare module '@tanstack/react-router' {
     router: typeof router
   }
   interface HistoryState {
-    // Set by the Faultline mark: the user asked for home, so it stays on the project list even with a single project.
+    // Set by links that ask for home itself (PROJECT_LIST_STATE), so it stays on the project list even with a single project.
     projectList?: boolean
   }
 }

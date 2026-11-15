@@ -3,19 +3,23 @@ import { organizationsQuery, projectsQuery } from '@/api/organizations'
 import { projectLink } from '@/features/projects/link'
 import { ProjectList } from '@/features/projects/project-list'
 
-// With a single project there is nothing to pick, so arriving at home opens it. Clicking the Faultline mark keeps the
-// list, as does /:org/projects, for creating another.
+// With a single project there is nothing to pick, so arriving at home opens it. Links that carry PROJECT_LIST_STATE
+// (the Faultline mark, closing the new-organization dialog) keep the list, as does /:org/projects.
 export const Route = createFileRoute('/_app/_home/')({
-  loader: async ({ context: { queryClient }, location }) => {
-    if (location.state.projectList) return
-    // Both fetched again once stale, so an organization just deleted or left, a second project, or a project's first
-    // event is seen. A list that fails to load is left for the screen to report.
-    const organizations = await queryClient.fetchQuery(organizationsQuery).catch(() => undefined)
-    if (!organizations) return
-    const lists = await Promise.all(organizations.map(({ slug }) => queryClient.fetchQuery(projectsQuery(slug)).catch(() => undefined)))
-    if (lists.some((list) => list === undefined)) return
-    const all = lists.flatMap((list, index) => (list ?? []).map((project) => ({ org: organizations[index]!.slug, project })))
-    if (all.length === 1) throw redirect({ ...projectLink(all[0]!.org, all[0]!.project), replace: true })
+  loader: {
+    // Decided before the screen changes, so a list cached from a visit with the flag never flashes before the redirect.
+    staleReloadMode: 'blocking',
+    handler: async ({ context: { queryClient }, location }) => {
+      if (location.state.projectList) return
+      // Both fetched again once stale, so an organization just deleted or left, a second project, or a project's first
+      // event is seen. A list that fails to load is left for the screen to report.
+      const organizations = await queryClient.fetchQuery(organizationsQuery).catch(() => undefined)
+      if (!organizations) return
+      const lists = await Promise.all(organizations.map(({ slug }) => queryClient.fetchQuery(projectsQuery(slug)).catch(() => undefined)))
+      if (lists.some((list) => list === undefined)) return
+      const all = lists.flatMap((list, index) => (list ?? []).map((project) => ({ org: organizations[index]!.slug, project })))
+      if (all.length === 1) throw redirect({ ...projectLink(all[0]!.org, all[0]!.project), replace: true })
+    },
   },
   // Run on every visit, so a match preloaded with or without the list flag is not reused for the other kind of link.
   shouldReload: true,

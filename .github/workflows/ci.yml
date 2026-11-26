@@ -6,14 +6,16 @@ on:
     branches: [main]
     paths-ignore: ['**.md', 'docs/**', '.scratch/**', '.impeccable/**']
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore: ['**.md', 'docs/**', '.scratch/**', '.impeccable/**']
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -24,6 +26,7 @@ jobs:
       - run: bun run test
 
   e2e:
+    if: github.event.pull_request.draft != true
     name: e2e (GlitchTip ${{ matrix.glitchtip }})
     runs-on: ubuntu-latest
     strategy:
@@ -52,6 +55,7 @@ jobs:
           path: playwright-report
 
   image:
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -1,12 +1,12 @@
 name: CI
 
 on:
-  # A change that touches only docs runs no checks. No code reads these files.
+  # A change that touches only docs or agent config runs no checks. No code reads these files.
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**', '.scratch/**']
+    paths-ignore: ['**.md', 'docs/**', '.scratch/**', '.impeccable/**']
   pull_request:
-    paths-ignore: ['**.md', 'docs/**', '.scratch/**']
+    paths-ignore: ['**.md', 'docs/**', '.scratch/**', '.impeccable/**']
 
 concurrency:
   group: ci-${{ github.ref }}
